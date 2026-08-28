@@ -1,0 +1,220 @@
+<template>
+    <div class="page-wrapper" style="min-height: 732px;">
+        <div class="content">
+
+            <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
+                <div class="my-auto mb-2">
+                    <h2 class="mb-1">Work From Home Management</h2>
+                    <nav>
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item">
+                                <a href="javascript:void(0);"><i class="ti ti-smart-home"></i></a>
+                            </li>
+                            <li class="breadcrumb-item">Attendance</li>
+                            <li class="breadcrumb-item active" aria-current="page">Work From Home Management</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="d-flex my-xl-auto right-content align-items-center flex-wrap ">
+                    <div class="mb-2 me-2">
+                        <div class="dropdown">
+                            <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                <i class="ti ti-file-export me-1"></i>Export
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end p-3">
+                                <li>
+                                    <a href="javascript:void(0);" class="dropdown-item rounded-1" onclick={handleExportPDF}><i class="ti ti-file-type-pdf me-1"></i>Export as PDF</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);" class="dropdown-item rounded-1" onclick={handleExportExcel}><i class="ti ti-file-type-xls me-1"></i>Export as Excel </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <button class="btn btn-primary d-flex align-items-center" onclick={handleOpenAddModal}>
+                            <i class="ti ti-circle-plus me-2"></i>Add New Request
+                        </button>
+                    </div>
+                    <div class="head-icons ms-2">
+                        <a href="javascript:void(0);" data-bs-toggle="tooltip" title="Collapse">
+                            <i class="ti ti-chevrons-up"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+                    <h5>WFH management</h5>
+                    <div class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3">
+                        <div class="me-3">
+                            <div class="input-icon position-relative">
+                                <span class="input-icon-addon"><i class="ti ti-calendar text-gray-9"></i></span>
+                                <input type="text" class="form-control date-range" placeholder="dd/mm/yyyy - dd/mm/yyyy" onchange={handleFilterChange}>
+                            </div>
+                        </div>
+                        <template for:each={filterConfigs} for:item="filter">
+                            <div class="dropdown me-3" key={filter.label}>
+                                <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                    {filter.label}
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end p-3">
+                                    <template for:each={filter.options} for:item="opt">
+                                        <li key={opt}><a href="javascript:void(0);" class="dropdown-item rounded-1" data-type={filter.type} data-value={opt} onclick={handleDropdownFilter}>{opt}</a></li>
+                                    </template>
+                                </ul>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    <div class="custom-datatable-filter table-responsive">
+                        <div class="dataTables_wrapper dt-bootstrap5 no-footer">
+                            <div class="row p-3">
+                                <div class="col-sm-12 col-md-6">
+                                    <div class="dataTables_length"><label>Row Per Page 
+                                        <select class="form-select form-select-sm" onchange={handlePageSizeChange}>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                        </select> Entries</label>
+                                    </div>
+                                </div>
+                                <div class="col-sm-12 col-md-6">
+                                    <div class="dataTables_filter"><label> 
+                                        <input type="search" class="form-control form-control-sm" placeholder="Search" oninput={handleSearch}>
+                                    </label></div>
+                                </div>
+                            </div>
+
+                            <div class="row dt-row">
+                                <div class="col-sm-12 table-responsive">
+                                    <table class="table datatable dataTable no-footer">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th class="no-sort"><div class="form-check form-check-md"><input class="form-check-input" type="checkbox" onchange={handleSelectAll}></div></th>
+                                                <th>Emp ID</th>
+                                                <th>Name</th>
+                                                <th>Designation</th>
+                                                <th>Shift</th>
+                                                <th>Reason</th>
+                                                <th>Date</th>
+                                                <th>Status</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template for:each={visibleRequests} for:item="req">
+                                                <tr key={req.id} class="odd">
+                                                    <td><div class="form-check form-check-md"><input class="form-check-input" type="checkbox" checked={req.selected}></div></td>
+                                                    <td><a href="javascript:void(0);">{req.empId}</a></td>
+                                                    <td>
+                                                        <div class="d-flex align-items-center file-name-icon">
+                                                            <a href="javascript:void(0);" class="avatar avatar-md border avatar-rounded">
+                                                                <img src={req.userImage} class="img-fluid" alt="img">
+                                                            </a>
+                                                            <div class="ms-2"><a class="fw-medium fs-14 text-dark">{req.name}</a></div>
+                                                        </div>
+                                                    </td>
+                                                    <td>{req.designation}</td>
+                                                    <td>{req.shift}</td>
+                                                    <td>{req.reason}</td>
+                                                    <td>{req.date}</td>
+                                                    <td><span class={req.statusClass}>{req.status}</span></td>
+                                                    <td>
+                                                        <div class="action-icon d-inline-flex">
+                                                            <a href="javascript:void(0);" class="me-2" onclick={handleEdit} data-id={req.id}><i class="ti ti-edit"></i></a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="row p-3">
+                                <div class="col-sm-12 col-md-5">
+                                    <div class="dataTables_info">Showing 1 - {visibleRequests.length} of {totalRecords} entries</div>
+                                </div>
+                                <div class="col-sm-12 col-md-7">
+                                    <div class="dataTables_paginate paging_simple_numbers">
+                                        <ul class="pagination">
+                                            <li class="paginate_button page-item previous disabled"><a href="javascript:void(0);" class="page-link"><i class="ti ti-chevron-left"></i></a></li>
+                                            <li class="paginate_button page-item active"><a href="javascript:void(0);" class="page-link">1</a></li>
+                                            <li class="paginate_button page-item next disabled"><a href="javascript:void(0);" class="page-link"><i class="ti ti-chevron-right"></i></a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
+                <p class="mb-0">2014 - 2026 © SmartHR.</p>
+                <p>Designed & Developed By <a href="javascript:void(0);" class="text-primary">Dreams</a></p>
+            </div>
+        </div>
+
+        <template if:true={isAddModalOpen}>
+            <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Add Request</h4>
+                            <button type="button" class="btn-close custom-btn-close" onclick={handleCloseModal}><i class="ti ti-x"></i></button>
+                        </div>
+                        <form onsubmit={handleSaveNewRequest}>
+                            <div class="modal-body pb-0">
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label">Employee Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="name" required>
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label">Designation <span class="text-danger">*</span></label>
+                                        <select class="form-select" name="designation" required>
+                                            <option value="">Select</option>
+                                            <option>Accountant</option>
+                                            <option>App Developer</option>
+                                            <option>Technician</option>
+                                            <option>Web Developer</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label">Shift <span class="text-danger">*</span></label>
+                                        <select class="form-select" name="shift" required>
+                                            <option value="">Select</option>
+                                            <option>Regular</option>
+                                            <option>Night</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Start Date <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control" name="startDate" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">End Date <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control" name="endDate" required>
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label">Reviewer <span class="text-danger">*</span></label>
+                                        <textarea class="form-control" name="reviewer" required></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light me-2" onclick={handleCloseModal}>Cancel</button>
+                                <button type="submit" class="btn btn-primary">Add Request</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>

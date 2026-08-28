@@ -1,0 +1,240 @@
+<template>
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+      >
+        <!-- Header -->
+        <div
+          class="bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-5 text-white flex items-center justify-between"
+        >
+          <div>
+            <h1 class="text-xl font-bold">Pending Approvals</h1>
+            <p class="text-sm text-white/80 mt-1">
+              Review and process approval requests
+            </p>
+          </div>
+          <lightning-button-icon
+            icon-name="utility:refresh"
+            variant="border-filled"
+            alternative-text="Refresh"
+            onclick={handleRefresh}
+          ></lightning-button-icon>
+        </div>
+
+        <div class="p-4 md:p-6">
+          <template if:true={isLoading}>
+            <div class="flex justify-center items-center p-8">
+              <div
+                class="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"
+              ></div>
+            </div>
+          </template>
+
+          <template if:false={isLoading}>
+            <template if:true={hasApprovals}>
+              <!-- Header with count and pagination -->
+              <div
+                class="flex flex-col sm:flex-row items-center justify-between mb-4 gap-3"
+              >
+                <span class="text-sm font-medium text-gray-600"
+                  >{totalCount} pending approvals</span
+                >
+                <div class="flex items-center gap-2">
+                  <lightning-combobox
+                    value={pageSize}
+                    options={pageSizeOptions}
+                    onchange={handlePageSizeChange}
+                    variant="label-hidden"
+                    class="w-36"
+                  ></lightning-combobox>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <template for:each={approvals} for:item="item">
+                  <div key={item.workItemId}>
+                    <div
+                      class="approval-card p-5 bg-gray-50 rounded-xl border border-gray-200 hover:shadow-md transition-shadow"
+                    >
+                      <div class="flex justify-between items-start mb-3">
+                        <div
+                          class="text-lg font-semibold truncate text-gray-800"
+                          title={item.recordName}
+                        >
+                          <button
+                            type="button"
+                            class="btn-reset border-0 bg-transparent p-0 hover:text-amber-600"
+                            onclick={handleNavigate}
+                            data-record-id={item.recordId}
+                            title={item.recordName}
+                          >
+                            {item.recordName}
+                          </button>
+                        </div>
+                        <span
+                          class="status-badge px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-medium"
+                          >{item.objectType}</span
+                        >
+                      </div>
+
+                      <div class="mb-3">
+                        <div class="text-sm text-gray-500">Submitted By</div>
+                        <div class="text-base text-gray-900 font-medium">
+                          {item.submitterName}
+                        </div>
+                      </div>
+
+                      <div class="mb-4">
+                        <div class="text-sm text-gray-500">Date Submitted</div>
+                        <div class="text-base text-gray-900">
+                          <lightning-formatted-date-time
+                            value={item.dateSubmitted}
+                            year="numeric"
+                            month="short"
+                            day="2-digit"
+                            hour="2-digit"
+                            minute="2-digit"
+                          ></lightning-formatted-date-time>
+                        </div>
+                      </div>
+
+                      <div
+                        class="grid grid-cols-2 gap-2 pt-3 border-t border-gray-200"
+                      >
+                        <lightning-button
+                          variant="neutral"
+                          label="Reject"
+                          title="Reject Request"
+                          class="w-full"
+                          data-id={item.workItemId}
+                          onclick={handleReject}
+                        ></lightning-button>
+                        <lightning-button
+                          variant="brand"
+                          label="Approve"
+                          title="Approve Request"
+                          class="w-full"
+                          data-id={item.workItemId}
+                          onclick={handleApprove}
+                        ></lightning-button>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+
+              <!-- Pagination Controls -->
+              <div
+                class="flex flex-col sm:flex-row items-center justify-between mt-6 gap-3 bg-gray-50 rounded-xl px-4 py-4"
+              >
+                <span class="text-sm text-gray-600">{pageInfo}</span>
+                <div class="flex gap-1">
+                  <button
+                    class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    onclick={handlePrevPage}
+                    disabled={isPrevDisabled}
+                  >
+                    ← Prev
+                  </button>
+                  <button
+                    class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    onclick={handleNextPage}
+                    disabled={isNextDisabled}
+                  >
+                    Next →
+                  </button>
+                </div>
+              </div>
+            </template>
+            <template if:false={hasApprovals}>
+              <div
+                class="flex flex-col items-center justify-center py-12 text-center"
+              >
+                <div
+                  class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"
+                >
+                  <lightning-icon
+                    icon-name="utility:check"
+                    size="medium"
+                    class="text-gray-400"
+                  ></lightning-icon>
+                </div>
+                <p class="text-gray-500">No pending approvals found.</p>
+              </div>
+            </template>
+          </template>
+        </div>
+      </div>
+
+      <!-- Confirmation Modal -->
+      <template if:true={isModalOpen}>
+        <div class="fixed inset-0 z-50 flex items-center justify-center">
+          <button
+            type="button"
+            class="fixed inset-0 bg-black/50 backdrop-blur-sm"
+            aria-label="Close dialog"
+            onclick={closeModal}
+          ></button>
+
+          <div
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 animate-modal-enter border-0 p-0 relative z-10"
+            aria-label="Approval confirmation"
+          >
+            <div
+              class="flex items-center justify-between px-6 py-4 border-b border-gray-200"
+            >
+              <h2
+                id="approvalDialogTitle"
+                class="text-xl font-bold text-gray-800"
+              >
+                {modalTitle}
+              </h2>
+              <button
+                class="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                onclick={closeModal}
+              >
+                <svg
+                  class="w-5 h-5 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+            <div class="p-6">
+              <lightning-textarea
+                name="comments"
+                label="Comments (Optional)"
+                value={commentValue}
+                onchange={handleCommentChange}
+              ></lightning-textarea>
+            </div>
+            <div
+              class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl"
+            >
+              <lightning-button
+                label="Cancel"
+                title="Cancel"
+                onclick={closeModal}
+              ></lightning-button>
+              <lightning-button
+                variant={modalButtonVariant}
+                label={modalButtonLabel}
+                title={modalButtonLabel}
+                onclick={handleProcess}
+              ></lightning-button>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+</template>

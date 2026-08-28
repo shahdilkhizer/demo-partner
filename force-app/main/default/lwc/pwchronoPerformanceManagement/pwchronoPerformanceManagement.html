@@ -1,0 +1,176 @@
+<template>
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <div class="page-header">
+        <div class="row align-items-center">
+          <div class="col">
+            <h3 class="page-title">{pageTitle}</h3>
+            <ul class="breadcrumb">
+              <li class="breadcrumb-item">
+                <a href="javascript:void(0);"
+                  ><i class="fa-solid fa-house"></i
+                ></a>
+              </li>
+              <li class="breadcrumb-item">{breadcrumbParent}</li>
+              <li class="breadcrumb-item active">{breadcrumbActive}</li>
+            </ul>
+          </div>
+          <div class="col-auto float-end ms-auto">
+            <button
+              class="btn btn-primary d-flex align-items-center"
+              data-action="openAdd"
+              onclick={handleActionClick}
+            >
+              <i class="fa-solid fa-circle-plus me-2"></i>{addBtnLabel}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div
+          class="card-header d-flex align-items-center justify-content-between"
+        >
+          <h5>{listTitle}</h5>
+          <button class="btn btn-white dropdown-toggle">{sortByLabel}</button>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-striped custom-table mb-0 datatable">
+              <thead>
+                <tr>
+                  <th style="width: 30px"><input type="checkbox" /></th>
+                  <th>{colDesignation}</th>
+                  <th>{colDepartment}</th>
+                  <th>{colApprovedBy}</th>
+                  <th>{colCreatedDate}</th>
+                  <th>{colStatus}</th>
+                  <th class="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template for:each={indicatorData} for:item="row">
+                  <tr key={row.id}>
+                    <td><input type="checkbox" /></td>
+                    <td><strong>{row.designation}</strong></td>
+                    <td>{row.department}</td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <c-pwchrono-avatar
+                          container-class="avatar avatar-md avatar-rounded me-2"
+                          image-url={row.approvedByImg}
+                          name={row.approvedByName}
+                          alt-text={row.approvedByName}
+                          image-class="img-fluid rounded-circle"
+                          title-class="initial-wrap"
+                          fallback-bg-class="bg-secondary"
+                        ></c-pwchrono-avatar>
+                        <div>
+                          <h6 class="fw-medium mb-0">{row.approvedByName}</h6>
+                          <p class="fs-12 mb-0">{row.approvedByRole}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{row.createdDate}</td>
+                    <td><span class={row.statusClass}>{row.status}</span></td>
+                    <td class="text-end">
+                      <div class="action-icon d-inline-flex">
+                        <button
+                          class="btn btn-link p-0 me-2"
+                          data-id={row.id}
+                          data-action="edit"
+                          onclick={handleActionClick}
+                        >
+                          <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button
+                          class="btn btn-link p-0 text-danger"
+                          data-id={row.id}
+                          data-action="delete"
+                          onclick={handleActionClick}
+                        >
+                          <i class="fa-solid fa-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <template lwc:if={isModalOpen}>
+    <dialog
+      class="modal custom-modal fade show d-block"
+      style="background: rgba(0, 0, 0, 0.6); z-index: 1050; border: none"
+      aria-labelledby="performance-modal-heading"
+      aria-modal="true"
+      open
+    >
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title" id="performance-modal-heading">
+              {addBtnLabel}
+            </h4>
+            <button
+              type="button"
+              class="btn-close"
+              data-action="closeModal"
+              onclick={handleActionClick}
+            ></button>
+          </div>
+          <div class="modal-body pb-0">
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label for="designationInput" class="form-label"
+                  >{colDesignation}</label
+                >
+                <input
+                  id="designationInput"
+                  type="text"
+                  class="form-control"
+                  name="designation"
+                  value={selectedIndicator.designation}
+                  onchange={handleInputChange}
+                />
+              </div>
+              <div class="col-md-12 mb-3">
+                <label for="statusSelect" class="form-label">{colStatus}</label>
+                <select
+                  id="statusSelect"
+                  class="form-select"
+                  name="status"
+                  onchange={handleInputChange}
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              class="btn btn-light"
+              data-action="closeModal"
+              onclick={handleActionClick}
+            >
+              Cancel
+            </button>
+            <button
+              class="btn btn-primary"
+              data-action="save"
+              onclick={handleActionClick}
+            >
+              Save Indicator
+            </button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+  </template>
+</template>

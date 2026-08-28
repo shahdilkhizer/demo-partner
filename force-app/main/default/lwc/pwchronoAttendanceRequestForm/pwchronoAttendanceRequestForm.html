@@ -1,0 +1,122 @@
+<template>
+  <!-- Modal Backdrop -->
+  <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+      <div class="modal-content">
+
+        <!-- Header -->
+        <div class="modal-header border-bottom py-3">
+          <h6 class="modal-title fw-semibold mb-0">New Attendance Correction</h6>
+          <button type="button" class="btn-close" onclick={handleCancel}></button>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body px-4 py-3">
+
+          <!-- Inline error -->
+          <template if:true={formError}>
+            <div class="alert alert-danger py-2 small">{formError}</div>
+          </template>
+
+          <!-- Attendance Date -->
+          <div class="mb-3">
+            <label class="form-label small fw-medium" for="arf-attendance-date">Attendance Date <span class="text-danger">*</span></label>
+            <input type="date"
+                   id="arf-attendance-date"
+                   class={dateClass}
+                   value={formData.attendanceDate}
+                   max={todayIso}
+                   onchange={handleFieldChange}
+                   data-field="attendanceDate" />
+            <template if:true={dateError}>
+              <div class="invalid-feedback">{dateError}</div>
+            </template>
+          </div>
+
+          <!-- Correction Type -->
+          <div class="mb-3">
+            <label class="form-label small fw-medium" for="arf-correction-type">Correction Type <span class="text-danger">*</span></label>
+            <select id="arf-correction-type" class={typeClass}
+                    onchange={handleFieldChange}
+                    data-field="correctionType">
+              <option value="">-- Select Type --</option>
+              <template for:each={correctionTypeOptions} for:item="opt">
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              </template>
+            </select>
+            <template if:true={typeError}>
+              <div class="invalid-feedback">{typeError}</div>
+            </template>
+          </div>
+
+          <!-- Time fields — shown conditionally based on correction type -->
+          <template if:true={showCheckIn}>
+            <div class="mb-3">
+              <label class="form-label small fw-medium" for="arf-checkin">
+                Requested Check-In
+                <template if:true={checkInRequired}><span class="text-danger">*</span></template>
+              </label>
+              <input type="time"
+                     id="arf-checkin"
+                     class={checkInClass}
+                     value={formData.requestedCheckIn}
+                     onchange={handleFieldChange}
+                     data-field="requestedCheckIn" />
+              <template if:true={checkInError}>
+                <div class="invalid-feedback">{checkInError}</div>
+              </template>
+            </div>
+          </template>
+
+          <template if:true={showCheckOut}>
+            <div class="mb-3">
+              <label class="form-label small fw-medium" for="arf-checkout">
+                Requested Check-Out
+                <template if:true={checkOutRequired}><span class="text-danger">*</span></template>
+              </label>
+              <input type="time"
+                     id="arf-checkout"
+                     class={checkOutClass}
+                     value={formData.requestedCheckOut}
+                     onchange={handleFieldChange}
+                     data-field="requestedCheckOut" />
+              <template if:true={checkOutError}>
+                <div class="invalid-feedback">{checkOutError}</div>
+              </template>
+            </div>
+          </template>
+
+          <!-- Reason -->
+          <div class="mb-3">
+            <label class="form-label small fw-medium" for="arf-reason">Reason <span class="text-danger">*</span></label>
+            <textarea id="arf-reason" class={reasonClass}
+                      rows="3"
+                      placeholder="Briefly describe the reason for this correction..."
+                      onchange={handleFieldChange}
+                      data-field="reason">{formData.reason}</textarea>
+            <template if:true={reasonError}>
+              <div class="invalid-feedback">{reasonError}</div>
+            </template>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer border-top py-3">
+          <button class="btn btn-sm btn-outline-secondary" onclick={handleCancel} disabled={isSubmitting}>
+            Cancel
+          </button>
+          <button class="btn btn-sm btn-primary ms-2" onclick={handleSubmit} disabled={isSubmitting}>
+            <template if:true={isSubmitting}>
+              <span class="spinner-border spinner-border-sm me-1"></span>Submitting...
+            </template>
+            <template if:false={isSubmitting}>
+              Submit Request
+            </template>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</template>

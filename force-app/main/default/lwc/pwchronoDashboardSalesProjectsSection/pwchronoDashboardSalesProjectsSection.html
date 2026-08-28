@@ -1,0 +1,51 @@
+<template lwc:render-mode="light">
+  <div class="row">
+    <!-- Sales Overview -->
+    <div class="col-xl-12 d-flex">
+      <div class="card flex-fill">
+        <div
+          class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
+        >
+          <h5 class="mb-2">Sales Overview</h5>
+          <div class="d-flex align-items-center">
+            <div class="dropdown mb-2">
+              <button
+                type="button"
+                class="dropdown-toggle btn btn-white border-0 btn-sm d-inline-flex align-items-center fs-13 me-2"
+                onclick={handleFilterDepartments}
+              >
+                All Departments
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="card-body pb-0">
+          <div
+            class="d-flex align-items-center justify-content-between flex-wrap"
+          >
+            <div class="d-flex align-items-center mb-1">
+              <p class="fs-13 text-gray-9 me-3 mb-0">
+                <i
+                  class="fa-solid fa-square me-2 text-primary"
+                  aria-hidden="true"
+                ></i
+                >Income
+              </p>
+              <p class="fs-13 text-gray-9 mb-0">
+                <i
+                  class="fa-solid fa-square me-2 text-gray-2"
+                  aria-hidden="true"
+                ></i
+                >Expenses
+              </p>
+            </div>
+            <p class="fs-13 mb-1">Last Updated at 11:30PM</p>
+          </div>
+          <div id="sales-income" class="">
+            <canvas class="w-100" data-chart="sales"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

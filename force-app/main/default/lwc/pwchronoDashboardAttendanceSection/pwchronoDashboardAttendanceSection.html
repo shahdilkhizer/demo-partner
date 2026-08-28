@@ -1,0 +1,85 @@
+<template lwc:render-mode="light">
+  <div class="row h-100">
+    <div class="col-12 d-flex h-100">
+      <div class="card flex-fill mb-0">
+        <div
+          class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
+        >
+          <h5 class="mb-2">Attendance Overview</h5>
+          <div class="dropdown mb-2">
+            <a
+              href="javascript:void(0);"
+              class="btn btn-white border btn-sm d-inline-flex align-items-center"
+            >
+              <i class="fa-solid fa-calendar-days me-1" aria-hidden="true"></i
+              >{attendanceDateLabel}
+            </a>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="chartjs-wrapper-demo position-relative mb-4">
+            <canvas data-chart="attendance" height="200"></canvas>
+            <div class="position-absolute text-center attendance-canvas">
+              <p class="fs-13 mb-1">Total Attendance</p>
+              <h3>{totalAttendance}</h3>
+            </div>
+          </div>
+
+          <h6 class="mb-3">Status</h6>
+          <template for:each={attendanceStatusRows} for:item="row">
+            <div
+              key={row.key}
+              class="d-flex align-items-center justify-content-between"
+            >
+              <p class="f-13 mb-2"><i class={row.iconClass}></i>{row.label}</p>
+              <p class="f-13 fw-medium text-gray-9 mb-2">{row.percentLabel}</p>
+            </div>
+          </template>
+
+          <div
+            class="bg-light br-5 box-shadow-xs p-2 pb-0 d-flex align-items-center justify-content-between flex-wrap"
+          >
+            <div class="d-flex align-items-center">
+              <p class="mb-2 me-2">Total Absenties</p>
+              <div class="avatar-list-stacked avatar-group-sm mb-2">
+                <template if:true={hasAbsentees}>
+                  <template for:each={absenteeAvatars} for:item="avatar">
+                    <a
+                      key={avatar.key}
+                      class={avatar.className}
+                      href="javascript:void(0);"
+                      title={avatar.name}
+                      >{avatar.initials}</a
+                    >
+                  </template>
+                  <template if:true={hasMoreAbsentees}>
+                    <a
+                      class="avatar bg-primary avatar-rounded text-fixed-white fs-10"
+                      href="javascript:void(0);"
+                    >
+                      +{moreAbsenteesCount}
+                    </a>
+                  </template>
+                </template>
+                <template if:false={hasAbsentees}>
+                  <a
+                    class="avatar bg-success avatar-rounded text-fixed-white fs-10"
+                    href="javascript:void(0);"
+                  >
+                    0
+                  </a>
+                </template>
+              </div>
+            </div>
+            <button
+              class="btn btn-link fs-13 link-primary text-decoration-underline mb-2 p-0 border-0 align-baseline"
+              onclick={handleViewDetails}
+            >
+              View Details
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

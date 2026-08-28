@@ -1,0 +1,227 @@
+<template lwc:render-mode="light">
+  <div class="card flex-fill">
+    <div
+      class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
+    >
+      <h5 class="mb-2">Projects</h5>
+      <div class="d-flex align-items-center">
+        <div class="dropdown mb-2">
+          <a
+            href="javascript:void(0);"
+            class="btn btn-white border btn-sm d-inline-flex align-items-center"
+            data-bs-toggle="dropdown"
+          >
+            <i class="fa-solid fa-calendar-days me-1" aria-hidden="true"></i
+            >This Week
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end p-3">
+            <li>
+              <a href="javascript:void(0);" class="dropdown-item rounded-1"
+                >This Month</a
+              >
+            </li>
+            <li>
+              <a href="javascript:void(0);" class="dropdown-item rounded-1"
+                >This Week</a
+              >
+            </li>
+            <li>
+              <a href="javascript:void(0);" class="dropdown-item rounded-1"
+                >Today</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-nowrap mb-0">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Team</th>
+              <th>Hours</th>
+              <th>Deadline</th>
+              <th>Priority</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template for:each={projects} for:item="proj">
+              <tr key={proj.id}>
+                <td>
+                  <a
+                    href="javascript:void(0);"
+                    class="link-default"
+                    data-id={proj.id}
+                    onclick={handleOpenProject}
+                    >{proj.code}</a
+                  >
+                </td>
+                <td>
+                  <h6 class="fw-medium">
+                    <a
+                      href="javascript:void(0);"
+                      data-id={proj.id}
+                      onclick={handleOpenProject}
+                      >{proj.name}</a
+                    >
+                  </h6>
+                </td>
+                <td>
+                  <div class="avatar-list-stacked avatar-group-sm">
+                    <template for:each={proj.teamAvatars} for:item="av">
+                      <span key={av.key} class={av.className} title={av.title}
+                        >{av.text}</span
+                      >
+                    </template>
+                    <template if:true={proj.hasMoreMembers}>
+                      <a
+                        class="avatar bg-primary avatar-rounded text-fixed-white fs-10 fw-medium"
+                        href="javascript:void(0);"
+                        >+{proj.moreCount}</a
+                      >
+                    </template>
+                  </div>
+                </td>
+                <td>
+                  <p class="mb-1">{proj.hoursText}</p>
+                  <div
+                    class="progress progress-xs w-100"
+                    role="progressbar"
+                    aria-valuenow={proj.progressPct}
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                  >
+                    <div
+                      class="progress-bar bg-primary"
+                      style={proj.progressWidthStyle}
+                    ></div>
+                  </div>
+                </td>
+                <td>{proj.date}</td>
+                <td>
+                  <span class={proj.priorityBadgeClass}>
+                    <i class="fa-solid fa-circle me-1" aria-hidden="true"></i
+                    >{proj.priority}
+                  </span>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Project Modal -->
+  <template if:true={showModal}>
+    <dialog
+      class="modal fade show d-block"
+      open
+      aria-modal="true"
+      style="background: rgba(0, 0, 0, 0.5); border: none; padding: 0"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{modalTitle}</h5>
+            <button
+              type="button"
+              class="btn-close"
+              aria-label="Close"
+              onclick={closeModal}
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label w-100">
+                Project Name
+                <input
+                  type="text"
+                  class="form-control mt-1"
+                  data-field="Name"
+                  value={currentProject.Name}
+                  onchange={handleFieldChange}
+                />
+              </label>
+            </div>
+            <div class="mb-3">
+              <label class="form-label w-100">
+                Description
+                <textarea
+                  class="form-control mt-1"
+                  data-field="Description__c"
+                  onchange={handleFieldChange}
+                >
+{currentProject.Description__c}</textarea
+                >
+              </label>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label w-100">
+                  Status
+                  <select
+                    class="form-select mt-1"
+                    data-field="Status__c"
+                    onchange={handleFieldChange}
+                  >
+                    <option value="Active" selected={currentProject.isActive}>
+                      Active
+                    </option>
+                    <option
+                      value="Completed"
+                      selected={currentProject.isCompleted}
+                    >
+                      Completed
+                    </option>
+                    <option
+                      value="Inactive"
+                      selected={currentProject.isInactive}
+                    >
+                      Inactive
+                    </option>
+                  </select>
+                </label>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label w-100">
+                  Deadline (End Date)
+                  <input
+                    type="date"
+                    class="form-control mt-1"
+                    data-field="End_Date__c"
+                    value={currentProject.End_Date__c}
+                    onchange={handleFieldChange}
+                  />
+                </label>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label w-100">
+                Amount
+                <input
+                  type="number"
+                  class="form-control mt-1"
+                  data-field="Amount__c"
+                  value={currentProject.Amount__c}
+                  onchange={handleFieldChange}
+                />
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-light" onclick={closeModal}>
+              Cancel
+            </button>
+            <button type="button" class="btn btn-primary" onclick={saveProject}>
+              Save Project
+            </button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+  </template>
+</template>

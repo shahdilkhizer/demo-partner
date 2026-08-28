@@ -1,0 +1,44 @@
+<template lwc:render-mode="light">
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <!-- Detail View -->
+      <template if:true={isDetailView}>
+        <c-pwchrono-leave-request-detail
+          leave-id={selectedLeaveId}
+          onback={handleBackToList}
+          onleaveactioned={handleLeaveActioned}
+        ></c-pwchrono-leave-request-detail>
+      </template>
+
+      <!-- Main Dashboard View -->
+      <template if:false={isDetailView}>
+        <!-- Leave Application Modal (controlled via @api open/close) -->
+        <c-pwchrono-leave-application
+          onleaveapplied={handleLeaveApplied}
+        ></c-pwchrono-leave-application>
+
+        <div class="row g-3">
+          <div class="col-12 col-xl-5">
+            <c-pwchrono-leave-balance-widget></c-pwchrono-leave-balance-widget>
+          </div>
+          <div class="col-12 col-xl-7">
+            <c-pwchrono-leave-calendar></c-pwchrono-leave-calendar>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <c-pwchrono-leave-employee
+            onnewleave={handleNewLeave}
+            onviewdetail={handleViewDetail}
+          ></c-pwchrono-leave-employee>
+        </div>
+
+        <div class="mt-3">
+          <c-pwchrono-leave-admin
+            onviewdetail={handleViewDetail}
+          ></c-pwchrono-leave-admin>
+        </div>
+      </template>
+    </div>
+  </div>
+</template>

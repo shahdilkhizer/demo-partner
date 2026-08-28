@@ -1,0 +1,172 @@
+<template lwc:render-mode="light">
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="content-page-header">
+          <h5>Object Permissions</h5>
+          <div class="list-btn">
+            <ul class="filter-list">
+              <li>
+                <button class="btn btn-primary" onclick={handleSave}>
+                  <i class="fa-solid fa-floppy-disk me-2" aria-hidden="true"></i
+                  >Save Changes
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <!-- /Page Header -->
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+                <!-- Search and Info Header -->
+                <div class="row align-items-center mb-4">
+                  <div class="col-md-6">
+                    <lightning-input
+                      type="search"
+                      label="Search Objects"
+                      placeholder="Filter by object name..."
+                      variant="label-hidden"
+                      onchange={handleSearch}
+                      value={searchTerm}
+                      class="form-control-sm"
+                    >
+                    </lightning-input>
+                  </div>
+                  <div class="col-md-6 text-end text-muted">
+                    <p>Manage CRUD access for this profile.</p>
+                  </div>
+                </div>
+
+                <template lwc:if={isLoading}>
+                  <div class="text-center p-5">
+                    <lightning-spinner
+                      alternative-text="Loading"
+                      size="medium"
+                    ></lightning-spinner>
+                  </div>
+                </template>
+
+                <template lwc:else>
+                  <template lwc:if={hasPermissions}>
+                    <div class="table-responsive">
+                      <table class="table table-center table-hover mb-0">
+                        <thead class="thead-light">
+                          <tr>
+                            <th style="width: 30%">Object Name</th>
+                            <th style="width: 15%">Enable Access</th>
+                            <th>Read</th>
+                            <th>Create</th>
+                            <th>Edit</th>
+                            <th>Delete</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <template
+                            for:each={filteredPermissions}
+                            for:item="perm"
+                          >
+                            <tr key={perm.objectName}>
+                              <td>
+                                <div class="d-flex align-items-center">
+                                  <lightning-icon
+                                    icon-name="standard:custom"
+                                    size="small"
+                                    class="me-2"
+                                  ></lightning-icon>
+                                  <strong>{perm.objectName}</strong>
+                                </div>
+                              </td>
+                              <td>
+                                <lightning-input
+                                  type="toggle"
+                                  label="Access"
+                                  variant="label-hidden"
+                                  message-toggle-active="On"
+                                  message-toggle-inactive="Off"
+                                  checked={perm.isAssigned}
+                                  data-id={perm.objectName}
+                                  data-field="isAssigned"
+                                  onchange={handleChange}
+                                  class="toggle-assigned"
+                                >
+                                </lightning-input>
+                              </td>
+                              <td>
+                                <lightning-input
+                                  type="checkbox"
+                                  label="Read"
+                                  variant="label-hidden"
+                                  checked={perm.canView}
+                                  disabled={perm.disabled}
+                                  data-id={perm.objectName}
+                                  data-field="canView"
+                                  onchange={handleChange}
+                                  class="permission-checkbox"
+                                ></lightning-input>
+                              </td>
+                              <td>
+                                <lightning-input
+                                  type="checkbox"
+                                  label="Create"
+                                  variant="label-hidden"
+                                  checked={perm.canCreate}
+                                  disabled={perm.disabled}
+                                  data-id={perm.objectName}
+                                  data-field="canCreate"
+                                  onchange={handleChange}
+                                  class="permission-checkbox"
+                                ></lightning-input>
+                              </td>
+                              <td>
+                                <lightning-input
+                                  type="checkbox"
+                                  label="Edit"
+                                  variant="label-hidden"
+                                  checked={perm.canEdit}
+                                  disabled={perm.disabled}
+                                  data-id={perm.objectName}
+                                  data-field="canEdit"
+                                  onchange={handleChange}
+                                  class="permission-checkbox"
+                                ></lightning-input>
+                              </td>
+                              <td>
+                                <lightning-input
+                                  type="checkbox"
+                                  label="Delete"
+                                  variant="label-hidden"
+                                  checked={perm.canDelete}
+                                  disabled={perm.disabled}
+                                  data-id={perm.objectName}
+                                  data-field="canDelete"
+                                  onchange={handleChange}
+                                  class="permission-checkbox"
+                                ></lightning-input>
+                              </td>
+                            </tr>
+                          </template>
+                        </tbody>
+                      </table>
+                    </div>
+                  </template>
+                  <template lwc:else>
+                    <div class="text-center p-5">
+                      <h3>No Objects Found</h3>
+                      <p class="text-muted">Try adjusting your search terms.</p>
+                    </div>
+                  </template>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+	<apiVersion>64.0</apiVersion>
+	<isExposed>true</isExposed>
+	<masterLabel>PWChrono Profile Update (Salesforce Action)</masterLabel>
+	<description>
+		Quick Action wrapper around pwchronoProfileUpdate that loads Bootstrap CSS from Static Resources.
+	</description>
+	<targets>
+		<target>lightning__RecordAction</target>
+	</targets>
+	<targetConfigs>
+		<targetConfig targets="lightning__RecordAction">
+			<objects>
+				<object>Portal_Users__c</object>
+			</objects>
+			<actionType>ScreenAction</actionType>
+		</targetConfig>
+	</targetConfigs>
+</LightningComponentBundle>

@@ -1,0 +1,205 @@
+<template lwc:render-mode="light">
+  <!-- Loading -->
+  <template if:true={isLoading}>
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  </template>
+
+  <!-- Error -->
+  <template if:true={loadError}>
+    <div class="alert alert-danger m-3">
+      <i class="fa-solid fa-circle-exclamation me-2"></i>{loadError}
+    </div>
+  </template>
+
+  <template if:true={hasData}>
+    <div class="page-wrapper">
+      <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+
+        <!-- Back Button -->
+        <div class="mb-3">
+          <button type="button" class="btn btn-sm btn-white" onclick={handleBack}>
+            <i class="fa-solid fa-arrow-left me-1"></i>Back to Claims
+          </button>
+        </div>
+
+        <!-- Request Header -->
+        <c-pwchrono-request-header
+          record-name={claimName}
+          record-type="Expense Claim"
+          status={claimStatus}
+          submitted-by={employeeName}
+          submitted-date={appliedDate}
+        ></c-pwchrono-request-header>
+
+        <!-- Status alert banners -->
+        <template if:true={rejectionReason}>
+          <div class="alert alert-danger mt-3 mb-0 d-flex align-items-start gap-2">
+            <i class="fa-solid fa-circle-xmark mt-1 flex-shrink-0"></i>
+            <div>
+              <strong>Rejected:</strong> {rejectionReason}
+            </div>
+          </div>
+        </template>
+        <template if:true={cancelledReason}>
+          <div class="alert alert-secondary mt-3 mb-0 d-flex align-items-start gap-2">
+            <i class="fa-solid fa-ban mt-1 flex-shrink-0"></i>
+            <div>
+              <strong>Cancelled:</strong> {cancelledReason}
+            </div>
+          </div>
+        </template>
+        <template if:true={approverComments}>
+          <div class="alert alert-info mt-3 mb-0 d-flex align-items-start gap-2">
+            <i class="fa-solid fa-comment mt-1 flex-shrink-0"></i>
+            <div>
+              <strong>Approver Notes:</strong> {approverComments}
+            </div>
+          </div>
+        </template>
+
+        <div class="row g-3 mt-1">
+          <!-- Left Column: Details + Line Items + Files -->
+          <div class="col-12 col-xl-8">
+
+            <!-- Claim Details Card -->
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">Claim Details</h5>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <span class="form-label text-muted fs-12 mb-1">Claim Date</span>
+                    <p class="fw-medium mb-0">{claimDate}</p>
+                  </div>
+                  <div class="col-md-6">
+                    <span class="form-label text-muted fs-12 mb-1">Status</span>
+                    <div>
+                      <c-pwchrono-request-status-badge status={claimStatus}></c-pwchrono-request-status-badge>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <span class="form-label text-muted fs-12 mb-1">Submitted By</span>
+                    <p class="fw-medium mb-0">{employeeName}</p>
+                  </div>
+                  <div class="col-md-6">
+                    <span class="form-label text-muted fs-12 mb-1">Approver</span>
+                    <p class="fw-medium mb-0">{approverName}</p>
+                  </div>
+                  <template if:true={appliedDate}>
+                    <div class="col-md-6">
+                      <span class="form-label text-muted fs-12 mb-1">Applied Date</span>
+                      <p class="fw-medium mb-0">{appliedDate}</p>
+                    </div>
+                  </template>
+                  <template if:true={approvalDate}>
+                    <div class="col-md-6">
+                      <span class="form-label text-muted fs-12 mb-1">Approval Date</span>
+                      <p class="fw-medium mb-0">{approvalDate}</p>
+                    </div>
+                  </template>
+                  <div class="col-12">
+                    <span class="form-label text-muted fs-12 mb-1">Description</span>
+                    <p class="mb-0">{description}</p>
+                  </div>
+                  <template if:true={businessPurpose}>
+                    <div class="col-12">
+                      <span class="form-label text-muted fs-12 mb-1">Business Purpose</span>
+                      <p class="mb-0">{businessPurpose}</p>
+                    </div>
+                  </template>
+                  <div class="col-md-6">
+                    <span class="form-label text-muted fs-12 mb-1">Total Amount</span>
+                    <p class="fw-bold mb-0 text-primary">
+                      <lightning-formatted-number
+                        value={totalAmount}
+                        format-style="currency"
+                        currency-code="MYR"
+                        minimum-fraction-digits="2"
+                      ></lightning-formatted-number>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Line Items Card -->
+            <div class="card mt-3">
+              <div class="card-header">
+                <h5 class="mb-0">Expense Items</h5>
+              </div>
+              <div class="card-body p-3">
+                <c-pwchrono-expense-line-item-editor
+                  value={lineItems}
+                  read-only="true"
+                ></c-pwchrono-expense-line-item-editor>
+              </div>
+            </div>
+
+            <!-- Attachments -->
+            <div class="mt-3">
+              <c-pwchrono-file-upload-panel
+                files={files}
+                allow-upload={canUploadFiles}
+                accept=".pdf,.jpg,.jpeg,.png,.gif,.xlsx,.xls,.csv"
+                onfilesselected={handleFilesSelected}
+              ></c-pwchrono-file-upload-panel>
+            </div>
+
+          </div>
+
+          <!-- Right Column: Actions + Comments -->
+          <div class="col-12 col-xl-4">
+
+            <!-- Shared Action Bar (Approve / Reject / Cancel) -->
+            <c-pwchrono-request-action-bar
+              status={claimStatus}
+              is-approver={isApprover}
+              is-owner={isOwner}
+              onrequestaction={handleRequestAction}
+            ></c-pwchrono-request-action-bar>
+
+            <!-- Owner action buttons (Edit / Re-submit) -->
+            <template if:true={canEdit}>
+              <div class="card mt-3">
+                <div class="card-body d-flex flex-column gap-2">
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary btn-sm w-100"
+                    onclick={handleEdit}
+                  >
+                    <i class="fa-solid fa-pen me-1"></i>Edit Claim
+                  </button>
+                  <template if:true={canResubmit}>
+                    <button
+                      type="button"
+                      class="btn btn-primary btn-sm w-100"
+                      onclick={handleResubmit}
+                    >
+                      <i class="fa-solid fa-paper-plane me-1"></i>Submit for Approval
+                    </button>
+                  </template>
+                </div>
+              </div>
+            </template>
+
+            <!-- Timeline / Comments -->
+            <div class="mt-3">
+              <c-pwchrono-request-comments
+                entries={timelineEntries}
+                allow-new-comment={canComment}
+                onnewcomment={handleNewComment}
+              ></c-pwchrono-request-comments>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </template>
+</template>

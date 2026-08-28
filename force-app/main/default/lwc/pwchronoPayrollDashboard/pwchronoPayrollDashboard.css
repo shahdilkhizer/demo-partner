@@ -1,0 +1,11 @@
+/* Cards must be shadow only (no borders) */
+.card {
+  border: 0 !important;
+  box-shadow: 0 6px 18px rgba(16, 24, 40, 0.08) !important;
+}
+
+/* Canvas fill behavior */
+canvas {
+  width: 100% !important;
+  height: 100% !important;
+}

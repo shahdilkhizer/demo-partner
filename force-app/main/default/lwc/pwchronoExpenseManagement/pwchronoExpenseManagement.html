@@ -1,0 +1,91 @@
+<template lwc:render-mode="light">
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+
+      <!-- Page Header (hidden when detail view is active) -->
+      <template if:false={isDetailView}>
+        <div class="page-header">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="page-title">Expense Management</h3>
+              <ul class="breadcrumb">
+                <li class="breadcrumb-item">
+                  <a href="#"><i class="fa-solid fa-house"></i></a>
+                </li>
+                <li class="breadcrumb-item active">Expense Management</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ── DETAIL VIEW ─────────────────────────────────────────────────── -->
+      <template if:true={isDetailView}>
+        <c-pwchrono-expense-claim-detail
+          claim-id={selectedClaimId}
+          onback={handleBack}
+          onclaimactioned={handleClaimActioned}
+          oneditclaim={handleEditClaim}
+        ></c-pwchrono-expense-claim-detail>
+      </template>
+
+      <!-- ── TABS + LIST / DASHBOARD VIEW ───────────────────────────────── -->
+      <template if:false={isDetailView}>
+
+        <!-- Tab nav -->
+        <ul class="nav nav-tabs mb-3">
+          <li class="nav-item">
+            <button class={dashboardTabClass} onclick={handleTabDashboard}>
+              <i class="fa-solid fa-chart-pie me-1"></i>Dashboard
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class={myClaimsTabClass} onclick={handleTabMyClaims}>
+              <i class="fa-solid fa-receipt me-1"></i>My Claims
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class={approvalsTabClass} onclick={handleTabApprovals}>
+              <i class="fa-solid fa-check-circle me-1"></i>Approvals
+            </button>
+          </li>
+        </ul>
+
+        <!-- Dashboard tab -->
+        <template if:true={isDashboardTab}>
+          <c-pwchrono-expense-dashboard
+            onnewclaim={handleNewClaim}
+            onviewall={handleViewAll}
+            onviewdetail={handleViewDetail}
+          ></c-pwchrono-expense-dashboard>
+        </template>
+
+        <!-- My Claims tab -->
+        <template if:true={isMyClaimsTab}>
+          <c-pwchrono-expense-claim-list
+            onnewclaim={handleNewClaim}
+            onviewdetail={handleViewDetail}
+          ></c-pwchrono-expense-claim-list>
+        </template>
+
+        <!-- Approvals tab -->
+        <template if:true={isApprovalsTab}>
+          <c-pwchrono-expense-claim-admin
+            onviewdetail={handleViewDetail}
+          ></c-pwchrono-expense-claim-admin>
+        </template>
+
+      </template>
+
+      <!-- ── CLAIM FORM MODAL ────────────────────────────────────────────── -->
+      <template if:true={showClaimForm}>
+        <c-pwchrono-expense-claim-form
+          claim-id={editClaimId}
+          onclaimsubmitted={handleClaimSubmitted}
+          oncancel={handleFormCancel}
+        ></c-pwchrono-expense-claim-form>
+      </template>
+
+    </div>
+  </div>
+</template>

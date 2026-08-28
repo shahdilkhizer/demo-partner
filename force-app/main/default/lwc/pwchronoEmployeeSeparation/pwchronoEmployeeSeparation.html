@@ -1,0 +1,433 @@
+<template>
+    <c-pwchrono-main-layout>
+        <div slot="main-content">
+            <!-- Page header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="fw-bold mb-1">
+                        <i class="fa-solid fa-person-walking-arrow-right fa-fw me-2 text-primary"></i>Employee Separation
+                    </h4>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="#" onclick={handleHome}>Home</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Employee Separation</li>
+                        </ol>
+                    </nav>
+                </div>
+                <template if:true={isHrAdmin}>
+                    <button class="btn btn-primary btn-sm" onclick={handleCreate}>
+                        <i class="fa-solid fa-plus fa-fw me-1"></i>New Separation
+                    </button>
+                </template>
+            </div>
+
+            <!-- Error alert -->
+            <template if:true={errorMessage}>
+                <div class="alert alert-danger alert-dismissible d-flex align-items-center mb-3" role="alert">
+                    <i class="fa-solid fa-circle-exclamation fa-fw me-2"></i>
+                    <div>{errorMessage}</div>
+                    <button type="button" class="btn-close" onclick={clearError}></button>
+                </div>
+            </template>
+
+            <!-- Metric cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold text-primary">{totalCount}</div>
+                            <div class="text-muted small">Total</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold text-secondary">{pendingCount}</div>
+                            <div class="text-muted small">Pending</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold text-warning">{inProcessCount}</div>
+                            <div class="text-muted small">In Process</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold text-success">{completedCount}</div>
+                            <div class="text-muted small">Completed</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter bar -->
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body py-2">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-auto">
+                            <label class="form-label mb-0 fw-semibold small">Status</label>
+                        </div>
+                        <div class="col-auto">
+                            <select class="form-select form-select-sm" onchange={handleFilterChange}>
+                                <template for:each={statusOptions} for:item="opt">
+                                    <option key={opt.value} value={opt.value}
+                                        selected={opt.selected}>{opt.label}</option>
+                                </template>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <template if:true={isLoading}>
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Table -->
+            <template if:false={isLoading}>
+                <div class="card border-0 shadow-sm">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Separation #</th>
+                                    <th>Employee</th>
+                                    <th>Resignation Date</th>
+                                    <th>Relieving Date</th>
+                                    <th>Department</th>
+                                    <th>Designation</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template if:true={hasRecords}>
+                                    <template for:each={enrichedRecords} for:item="row">
+                                        <tr key={row.Id}>
+                                            <td class="text-muted small">{row.Name}</td>
+                                            <td class="fw-semibold">{row.employeeName}</td>
+                                            <td>{row.Resignation_Letter_Date__c}</td>
+                                            <td>{row.Relieving_Date__c}</td>
+                                            <td>{row.deptName}</td>
+                                            <td>{row.desigName}</td>
+                                            <td>
+                                                <span class={row.statusBadgeClass}>{row.Status__c}</span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary me-1"
+                                                    data-id={row.Id} onclick={handleEdit} title="Edit">
+                                                    <i class="fa-solid fa-pen-to-square fa-fw"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-info me-1"
+                                                    data-id={row.Id} onclick={handleViewChecklist} title="Checklist">
+                                                    <i class="fa-solid fa-list-check fa-fw"></i>
+                                                </button>
+                                                <template if:true={isHrAdmin}>
+                                                    <button class="btn btn-sm btn-outline-danger"
+                                                        data-id={row.Id} onclick={handleDelete} title="Delete">
+                                                        <i class="fa-solid fa-trash fa-fw"></i>
+                                                    </button>
+                                                </template>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </template>
+                                <template if:false={hasRecords}>
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-4">
+                                            <i class="fa-solid fa-inbox fa-fw me-2"></i>No separation records found.
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Create / Edit Modal -->
+            <template if:true={showModal}>
+                <div class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+                    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title fw-semibold">
+                                    <i class="fa-solid fa-person-walking-arrow-right fa-fw me-2 text-primary"></i>
+                                    {modalTitle}
+                                </h5>
+                                <button type="button" class="btn-close" onclick={handleModalClose}></button>
+                            </div>
+                            <div class="modal-body">
+                                <!-- Validation error -->
+                                <template if:true={validationError}>
+                                    <div class="alert alert-warning d-flex align-items-center mb-3">
+                                        <i class="fa-solid fa-triangle-exclamation fa-fw me-2"></i>
+                                        {validationError}
+                                    </div>
+                                </template>
+
+                                <div class="row g-3">
+                                    <!-- Employee -->
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold small">Employee <span class="text-danger">*</span></label>
+                                        <select class="form-select form-select-sm" data-field="Employee__c" onchange={handleFieldChange}>
+                                            <option value="">-- Select Employee --</option>
+                                            <template for:each={employeeOptions} for:item="opt">
+                                                <option key={opt.value} value={opt.value}
+                                                    selected={opt.selected}>{opt.label}</option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <!-- Employee Name -->
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold small">Employee Name</label>
+                                        <input type="text" class="form-control form-control-sm"
+                                            data-field="Employee_Name__c" value={editRecord.Employee_Name__c}
+                                            onchange={handleFieldChange} />
+                                    </div>
+                                    <!-- Company -->
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold small">Company</label>
+                                        <input type="text" class="form-control form-control-sm"
+                                            data-field="Company__c" value={editRecord.Company__c}
+                                            onchange={handleFieldChange} />
+                                    </div>
+                                    <!-- Department -->
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold small">Department</label>
+                                        <select class="form-select form-select-sm" data-field="Department__c" onchange={handleFieldChange}>
+                                            <option value="">-- Select --</option>
+                                            <template for:each={departmentOptions} for:item="opt">
+                                                <option key={opt.value} value={opt.value}
+                                                    selected={opt.selected}>{opt.label}</option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <!-- Designation -->
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold small">Designation</label>
+                                        <select class="form-select form-select-sm" data-field="Designation__c" onchange={handleFieldChange}>
+                                            <option value="">-- Select --</option>
+                                            <template for:each={designationOptions} for:item="opt">
+                                                <option key={opt.value} value={opt.value}
+                                                    selected={opt.selected}>{opt.label}</option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <!-- Separation Template -->
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold small">Separation Template</label>
+                                        <select class="form-select form-select-sm" data-field="Separation_Template__c" onchange={handleFieldChange}>
+                                            <option value="">-- None --</option>
+                                            <template for:each={templateOptions} for:item="opt">
+                                                <option key={opt.value} value={opt.value}
+                                                    selected={opt.selected}>{opt.label}</option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <!-- Resignation Letter Date -->
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold small">Resignation Letter Date <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control form-control-sm"
+                                            data-field="Resignation_Letter_Date__c"
+                                            value={editRecord.Resignation_Letter_Date__c}
+                                            onchange={handleFieldChange} />
+                                    </div>
+                                    <!-- Relieving Date -->
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold small">Relieving Date</label>
+                                        <input type="date" class="form-control form-control-sm"
+                                            data-field="Relieving_Date__c"
+                                            value={editRecord.Relieving_Date__c}
+                                            onchange={handleFieldChange} />
+                                    </div>
+                                    <!-- Status (HR only) -->
+                                    <template if:true={isHrAdmin}>
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-semibold small">Status</label>
+                                            <select class="form-select form-select-sm" data-field="Status__c" onchange={handleFieldChange}>
+                                                <template for:each={sepStatusOptions} for:item="opt">
+                                                    <option key={opt.value} value={opt.value}
+                                                        selected={opt.selected}>{opt.label}</option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                    </template>
+
+                                    <!-- Reason for Leaving -->
+                                    <div class="col-12">
+                                        <hr class="my-1" />
+                                        <label class="form-label fw-semibold small">Reason for Leaving</label>
+                                        <textarea class="form-control form-control-sm" rows="3"
+                                            data-field="Reason_for_Leaving__c"
+                                            onchange={handleFieldChange}>{editRecord.Reason_for_Leaving__c}</textarea>
+                                    </div>
+
+                                    <!-- Exit Checklist -->
+                                    <div class="col-12">
+                                        <hr class="my-1" />
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <p class="fw-semibold small mb-0 text-muted text-uppercase">Exit Checklist</p>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick={handleAddChecklistRow}>
+                                                <i class="fa-solid fa-plus fa-fw me-1"></i>Add Item
+                                            </button>
+                                        </div>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-bordered align-middle mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Activity Name</th>
+                                                        <th>Assigned To</th>
+                                                        <th>Status</th>
+                                                        <th>Required</th>
+                                                        <th>Notes</th>
+                                                        <th></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <template if:true={hasChecklistRows}>
+                                                        <template for:each={checklistRows} for:item="row">
+                                                            <tr key={row._key}>
+                                                                <td>
+                                                                    <input type="text" class="form-control form-control-sm"
+                                                                        data-key={row._key} data-field="Name"
+                                                                        value={row.Name} onchange={handleChecklistChange} />
+                                                                </td>
+                                                                <td>
+                                                                    <select class="form-select form-select-sm"
+                                                                        data-key={row._key} data-field="Assigned_To__c"
+                                                                        onchange={handleChecklistChange}>
+                                                                        <option value="">-- None --</option>
+                                                                        <template for:each={employeeOptions} for:item="opt">
+                                                                            <option key={opt.value} value={opt.value}
+                                                                                selected={opt.selected}>{opt.label}</option>
+                                                                        </template>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <select class="form-select form-select-sm"
+                                                                        data-key={row._key} data-field="Status__c"
+                                                                        onchange={handleChecklistChange}>
+                                                                        <option value="Pending" selected={row.isPending}>Pending</option>
+                                                                        <option value="In Progress" selected={row.isInProgress}>In Progress</option>
+                                                                        <option value="Completed" selected={row.isCompleted}>Completed</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td class="text-center">
+                                                                    <input type="checkbox" class="form-check-input"
+                                                                        data-key={row._key} data-field="Is_Required__c"
+                                                                        checked={row.Is_Required__c}
+                                                                        onchange={handleChecklistChange} />
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control form-control-sm"
+                                                                        data-key={row._key} data-field="Notes__c"
+                                                                        value={row.Notes__c} onchange={handleChecklistChange} />
+                                                                </td>
+                                                                <td>
+                                                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                                                        data-key={row._key} onclick={handleRemoveChecklistRow}>
+                                                                        <i class="fa-solid fa-xmark fa-fw"></i>
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        </template>
+                                                    </template>
+                                                    <template if:false={hasChecklistRows}>
+                                                        <tr>
+                                                            <td colspan="6" class="text-muted text-center small py-2">No checklist items. Click "Add Item" to add one.</td>
+                                                        </tr>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <template if:true={isHrAdmin}>
+                                    <template if:true={isEditMode}>
+                                        <button type="button" class="btn btn-danger btn-sm me-auto"
+                                            data-id={editRecord.Id} onclick={handleDelete}>
+                                            <i class="fa-solid fa-trash fa-fw me-1"></i>Delete
+                                        </button>
+                                    </template>
+                                </template>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick={handleModalClose}>Cancel</button>
+                                <button type="button" class="btn btn-primary btn-sm" onclick={handleSave} disabled={isSaving}>
+                                    <template if:true={isSaving}>
+                                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                    </template>
+                                    <i class="fa-solid fa-floppy-disk fa-fw me-1"></i>Save
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Checklist View Modal -->
+            <template if:true={showChecklistModal}>
+                <div class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title fw-semibold">
+                                    <i class="fa-solid fa-list-check fa-fw me-2 text-info"></i>
+                                    Exit Checklist
+                                </h5>
+                                <button type="button" class="btn-close" onclick={handleChecklistModalClose}></button>
+                            </div>
+                            <div class="modal-body">
+                                <template if:true={isChecklistLoading}>
+                                    <div class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status"></div>
+                                    </div>
+                                </template>
+                                <template if:false={isChecklistLoading}>
+                                    <template if:true={hasViewChecklistItems}>
+                                        <ul class="list-group">
+                                            <template for:each={viewChecklistItems} for:item="item">
+                                                <li key={item.Id} class="list-group-item d-flex justify-content-between align-items-start">
+                                                    <div>
+                                                        <div class="fw-semibold">{item.Name}
+                                                            <template if:true={item.Is_Required__c}>
+                                                                <span class="badge bg-danger ms-1 small">Required</span>
+                                                            </template>
+                                                        </div>
+                                                        <small class="text-muted">{item.assignedToName}</small>
+                                                        <template if:true={item.Notes__c}>
+                                                            <div class="text-muted small mt-1">{item.Notes__c}</div>
+                                                        </template>
+                                                    </div>
+                                                    <span class={item.checklistBadge}>{item.Status__c}</span>
+                                                </li>
+                                            </template>
+                                        </ul>
+                                    </template>
+                                    <template if:false={hasViewChecklistItems}>
+                                        <p class="text-muted text-center py-3">No checklist items for this separation.</p>
+                                    </template>
+                                </template>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary btn-sm" onclick={handleChecklistModalClose}>Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </c-pwchrono-main-layout>
+</template>

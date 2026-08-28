@@ -1,0 +1,126 @@
+<template>
+  <div class="card flex-fill">
+    <div
+      class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
+    >
+      <h5 class="mb-2">Invoices</h5>
+      <div class="d-flex align-items-center">
+        <div class="dropdown mb-2">
+          <a
+            href="javascript:void(0);"
+            class="dropdown-toggle btn btn-white btn-sm d-inline-flex align-items-center fs-13 me-2 border-0"
+            data-bs-toggle="dropdown"
+          >
+            Invoices
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end p-3">
+            <li>
+              <a href="javascript:void(0);" class="dropdown-item rounded-1"
+                >Invoices</a
+              >
+            </li>
+            <li>
+              <a href="javascript:void(0);" class="dropdown-item rounded-1"
+                >Paid</a
+              >
+            </li>
+            <li>
+              <a href="javascript:void(0);" class="dropdown-item rounded-1"
+                >Unpaid</a
+              >
+            </li>
+          </ul>
+        </div>
+        <div class="dropdown mb-2">
+          <a
+            href="javascript:void(0);"
+            class="btn btn-white border btn-sm d-inline-flex align-items-center"
+            data-bs-toggle="dropdown"
+          >
+            <i class="fa-solid fa-calendar-days me-1" aria-hidden="true"></i
+            >This Week
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end p-3">
+            <li>
+              <a href="javascript:void(0);" class="dropdown-item rounded-1"
+                >This Month</a
+              >
+            </li>
+            <li>
+              <a href="javascript:void(0);" class="dropdown-item rounded-1"
+                >This Week</a
+              >
+            </li>
+            <li>
+              <a href="javascript:void(0);" class="dropdown-item rounded-1"
+                >Today</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="card-body pt-2">
+      <div class="table-responsive pt-1">
+        <table class="table table-nowrap table-borderless mb-0">
+          <tbody>
+            <template for:each={invoices} for:item="inv">
+              <tr key={inv.id}>
+                <td class="px-0">
+                  <div class="d-flex align-items-center">
+                    <a href="javascript:void(0);" class="avatar">
+                      <c-pwchrono-avatar
+                        container-class="avatar avatar-rounded"
+                        image-url={inv.avatarUrl}
+                        name={inv.client}
+                        initials={inv.initials}
+                        alt-text={inv.client}
+                        image-class="img-fluid rounded-circle"
+                        title-class="initial-wrap"
+                        fallback-bg-class="bg-primary"
+                      ></c-pwchrono-avatar>
+                    </a>
+                    <div class="ms-2">
+                      <h6 class="fw-medium">
+                        <a href="javascript:void(0);">{inv.title}</a>
+                      </h6>
+                      <span class="fs-13 d-inline-flex align-items-center"
+                        >{inv.invoiceId}<i
+                          class="fa-solid fa-circle fs-4 mx-1 text-primary"
+                          aria-hidden="true"
+                        ></i
+                        >{inv.client}</span
+                      >
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <p class="fs-13 mb-1">Payment</p>
+                  <h6 class="fw-medium">{inv.amount}</h6>
+                </td>
+                <td class="px-0 text-end">
+                  <span class={inv.badgeClass}
+                    ><i
+                      class="fa-solid fa-circle fs-5 me-1"
+                      aria-hidden="true"
+                    ></i
+                    >{inv.status}</span
+                  >
+                </td>
+              </tr>
+            </template>
+            <template if:true={showEmptyState}>
+              <tr>
+                <td colspan="3" class="px-0">
+                  <div class="text-center text-muted py-2">
+                    No invoices found
+                  </div>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</template>

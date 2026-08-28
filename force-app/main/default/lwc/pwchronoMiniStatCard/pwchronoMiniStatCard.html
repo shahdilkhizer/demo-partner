@@ -1,0 +1,18 @@
+<template>
+  <div class="mini-stat-card">
+    <div class="card-content">
+      <p class="label">{label}</p>
+      <p class="value">{value}</p>
+    </div>
+    <template if:true={iconName}>
+      <div class="icon-container">
+        <lightning-icon
+          icon-name={iconName}
+          size="small"
+          alternative-text={alternativeText}
+          class="icon"
+        ></lightning-icon>
+      </div>
+    </template>
+  </div>
+</template>

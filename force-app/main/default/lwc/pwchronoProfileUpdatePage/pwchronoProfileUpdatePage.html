@@ -1,0 +1,96 @@
+<!--
+  @description       : 
+  @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+  @group             : 
+  @last modified on  : 01-17-2026
+  @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+-->
+<template lwc:render-mode="light">
+  <c-pwchrono-main-layout>
+    <div slot="main-content">
+      <div class="page-wrapper">
+        <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+          <!-- Page Header -->
+          <div class="page-header">
+            <div class="content-page-header">
+              <h5>Portal User Profile</h5>
+            </div>
+          </div>
+          <!-- /Page Header -->
+
+          <template if:true={isPortalUserProfileRecord}>
+            <div class="row">
+              <div class="col-md-12">
+                <div class="card shadow-sm">
+                  <div class="card-header">
+                    <h4 class="card-title">Select Portal User</h4>
+                  </div>
+                  <div class="card-body">
+                    <div class="slds-p-around_medium">
+                      <template if:true={isUsersLoading}>
+                        <lightning-spinner
+                          alternative-text="Loading"
+                          size="small"
+                        ></lightning-spinner>
+                      </template>
+
+                      <template if:false={isUsersLoading}>
+                        <template if:true={hasPortalUsers}>
+                          <lightning-datatable
+                            key-field="id"
+                            data={portalUsers}
+                            columns={userColumns}
+                            hide-checkbox-column
+                            onrowaction={handleUserRowAction}
+                          ></lightning-datatable>
+                        </template>
+                        <template if:false={hasPortalUsers}>
+                          <div class="slds-text-color_weak">
+                            No Portal Users are assigned to this profile.
+                          </div>
+                        </template>
+                      </template>
+
+                      <div class="slds-m-top_large">
+                        <div
+                          class="slds-text-heading_small slds-m-bottom_small"
+                        >
+                          Selected Portal User Profile
+                        </div>
+                        <template if:true={selectedPortalUserId}>
+                          <c-pwchrono-profile-update
+                            employee-id={selectedPortalUserId}
+                          ></c-pwchrono-profile-update>
+                        </template>
+                        <template if:false={selectedPortalUserId}>
+                          <div class="slds-text-color_weak">
+                            Select a Portal User to edit their profile.
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <template if:false={isPortalUserProfileRecord}>
+            <!-- Fallback behavior when used elsewhere (e.g. Portal_Users__c record page) -->
+            <div class="row">
+              <div class="col-md-12">
+                <div class="card shadow-sm">
+                  <div class="card-body">
+                    <c-pwchrono-profile-update
+                      employee-id={effectiveEmployeeId}
+                    ></c-pwchrono-profile-update>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </c-pwchrono-main-layout>
+</template>

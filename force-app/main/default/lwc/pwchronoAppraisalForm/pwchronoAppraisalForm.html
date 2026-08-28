@@ -1,0 +1,359 @@
+<template>
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <!-- Loading Access Check -->
+      <template if:false={accessLoaded}>
+        <div class="flex flex-col items-center justify-center py-16">
+          <div
+            class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"
+          ></div>
+          <p class="text-gray-500">Checking access...</p>
+        </div>
+      </template>
+
+      <template if:true={accessLoaded}>
+        <template if:true={hasAccess}>
+          <div
+            class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+          >
+            <!-- Header -->
+            <div
+              class="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-5 text-white gap-4"
+            >
+              <div>
+                <h1 class="text-xl font-bold">My Appraisals</h1>
+                <p class="text-sm text-white/80 mt-1">
+                  View and manage your performance reviews
+                </p>
+              </div>
+              <lightning-button
+                label="New Appraisal"
+                onclick={handleNewAppraisal}
+                variant="neutral"
+              ></lightning-button>
+            </div>
+
+            <div class="p-4 md:p-6">
+              <!-- Loading State -->
+              <template if:true={isLoading}>
+                <div class="flex flex-col items-center justify-center py-12">
+                  <div
+                    class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"
+                  ></div>
+                  <p class="text-gray-500">Loading appraisals...</p>
+                </div>
+              </template>
+
+              <template if:false={isLoading}>
+                <!-- Filters -->
+                <div class="flex flex-wrap gap-4 mb-4 items-end">
+                  <div class="flex-1 min-w-[200px]">
+                    <label
+                      for="searchPeriod"
+                      class="block text-xs font-medium text-gray-600 mb-1"
+                      >Search Period</label
+                    >
+                    <input
+                      id="searchPeriod"
+                      type="text"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="Search by period..."
+                      value={searchFilter}
+                      onkeyup={handleSearchFilter}
+                    />
+                  </div>
+                  <div class="w-[160px]">
+                    <label
+                      for="statusFilter"
+                      class="block text-xs font-medium text-gray-600 mb-1"
+                      >Status</label
+                    >
+                    <lightning-combobox
+                      id="statusFilter"
+                      value={statusFilter}
+                      options={filterStatusOptions}
+                      onchange={handleStatusFilterChange}
+                      variant="label-hidden"
+                      placeholder="Filter by status"
+                    >
+                    </lightning-combobox>
+                  </div>
+                  <div class="w-[100px]">
+                    <label
+                      for="pageSize"
+                      class="block text-xs font-medium text-gray-600 mb-1"
+                      >Per Page</label
+                    >
+                    <lightning-combobox
+                      id="pageSize"
+                      value={pageSize}
+                      options={pageSizeOptions}
+                      onchange={handlePageSizeChange}
+                      variant="label-hidden"
+                    >
+                    </lightning-combobox>
+                  </div>
+                </div>
+
+                <!-- Appraisals List -->
+                <template if:true={hasAppraisals}>
+                  <div
+                    class="overflow-x-auto rounded-xl border border-gray-200"
+                  >
+                    <lightning-datatable
+                      key-field="Id"
+                      data={appraisals}
+                      columns={columns}
+                      hide-checkbox-column
+                      onrowaction={handleRowAction}
+                    >
+                    </lightning-datatable>
+                  </div>
+
+                  <!-- Pagination -->
+                  <div
+                    class="flex items-center justify-between mt-4 p-3 bg-gray-50 rounded-lg"
+                  >
+                    <span class="text-sm text-gray-600">{paginationInfo}</span>
+                    <div class="flex gap-2 items-center">
+                      <lightning-button-icon
+                        icon-name="utility:chevronleft"
+                        alternative-text="Previous"
+                        onclick={handlePrevPage}
+                        disabled={isPrevDisabled}
+                        variant="border-filled"
+                      >
+                      </lightning-button-icon>
+                      <span class="px-3 py-1 text-sm text-gray-700"
+                        >Page {currentPage} of {totalPages}</span
+                      >
+                      <lightning-button-icon
+                        icon-name="utility:chevronright"
+                        alternative-text="Next"
+                        onclick={handleNextPage}
+                        disabled={isNextDisabled}
+                        variant="border-filled"
+                      >
+                      </lightning-button-icon>
+                    </div>
+                  </div>
+                </template>
+
+                <template if:true={hasNoAppraisals}>
+                  <div
+                    class="flex flex-col items-center justify-center py-12 text-center bg-gray-50 rounded-xl"
+                  >
+                    <div
+                      class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"
+                    >
+                      <lightning-icon
+                        icon-name="utility:metrics"
+                        size="medium"
+                        class="text-gray-400"
+                      ></lightning-icon>
+                    </div>
+                    <p class="text-gray-500">No appraisals found.</p>
+                    <p class="text-sm text-gray-400 mt-1">
+                      Click "New Appraisal" to create one.
+                    </p>
+                  </div>
+                </template>
+
+                <template if:true={error}>
+                  <div
+                    class="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600"
+                  >
+                    {error}
+                  </div>
+                </template>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <template if:false={hasAccess}>
+          <div class="min-h-[60vh] flex items-center justify-center p-6">
+            <div
+              class="bg-white rounded-2xl shadow-xl p-10 text-center max-w-md"
+            >
+              <div
+                class="w-20 h-20 mx-auto mb-6 flex items-center justify-center bg-red-100 rounded-full"
+              >
+                <lightning-icon
+                  icon-name="utility:lock"
+                  size="large"
+                  class="text-red-500"
+                ></lightning-icon>
+              </div>
+              <h2 class="text-xl font-bold text-gray-800 mb-2">
+                Access Denied
+              </h2>
+              <p class="text-gray-500">
+                You do not have permission to view Appraisals.
+              </p>
+            </div>
+          </div>
+        </template>
+      </template>
+
+      <!-- Appraisal Edit Modal -->
+      <template if:true={showModal}>
+        <div
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        >
+          <div
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-modal-enter"
+          >
+            <!-- Modal Header -->
+            <div
+              class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white"
+            >
+              <h2 class="text-lg font-bold">{modalTitle}</h2>
+              <button
+                class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
+                title="Close"
+                onclick={closeModal}
+              >
+                <lightning-icon
+                  icon-name="utility:close"
+                  size="small"
+                  class="text-white"
+                ></lightning-icon>
+              </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <lightning-input
+                    label="Appraisal Period"
+                    value={currentAppraisal.Appraisal_Period__c}
+                    onchange={handleFieldChange}
+                    data-field="Appraisal_Period__c"
+                    required
+                    disabled={isReadOnly}
+                  ></lightning-input>
+                </div>
+                <div>
+                  <lightning-combobox
+                    label="Status"
+                    value={currentAppraisal.Status__c}
+                    options={statusOptions}
+                    disabled
+                  ></lightning-combobox>
+                </div>
+                <div>
+                  <lightning-input
+                    type="date"
+                    label="Start Date"
+                    value={currentAppraisal.Start_Date__c}
+                    onchange={handleFieldChange}
+                    data-field="Start_Date__c"
+                    disabled={isReadOnly}
+                  ></lightning-input>
+                </div>
+                <div>
+                  <lightning-input
+                    type="date"
+                    label="End Date"
+                    value={currentAppraisal.End_Date__c}
+                    onchange={handleFieldChange}
+                    data-field="End_Date__c"
+                    disabled={isReadOnly}
+                  ></lightning-input>
+                </div>
+              </div>
+
+              <!-- Self Assessment Section -->
+              <div>
+                <h3
+                  class="text-base font-semibold text-gray-800 pb-2 border-b border-gray-200 mb-4"
+                >
+                  Self Assessment
+                </h3>
+                <div class="space-y-4">
+                  <lightning-slider
+                    label="Self Rating (1-5)"
+                    value={currentAppraisal.Self_Rating__c}
+                    min="1"
+                    max="5"
+                    step="1"
+                    onchange={handleFieldChange}
+                    data-field="Self_Rating__c"
+                    disabled={isReadOnly}
+                  ></lightning-slider>
+
+                  <lightning-textarea
+                    label="Achievements & Goals Met"
+                    value={currentAppraisal.Achievements__c}
+                    onchange={handleFieldChange}
+                    data-field="Achievements__c"
+                    required
+                    class="tall-textarea"
+                    disabled={isReadOnly}
+                  ></lightning-textarea>
+                </div>
+              </div>
+
+              <!-- Manager Feedback Section (Read Only) -->
+              <template if:true={currentAppraisal.Feedback__c}>
+                <div>
+                  <h3
+                    class="text-base font-semibold text-gray-800 pb-2 border-b border-gray-200 mb-4"
+                  >
+                    Manager Feedback
+                  </h3>
+                  <div class="bg-gray-50 rounded-xl p-4 space-y-3">
+                    <div>
+                      <p
+                        class="text-xs uppercase tracking-wide text-gray-500 font-medium"
+                      >
+                        Overall Rating
+                      </p>
+                      <p class="text-lg font-bold text-gray-800">
+                        {currentAppraisal.Overall_Rating__c} / 5
+                      </p>
+                    </div>
+                    <div>
+                      <p
+                        class="text-xs uppercase tracking-wide text-gray-500 font-medium"
+                      >
+                        Feedback
+                      </p>
+                      <p class="text-gray-700 mt-1">
+                        {currentAppraisal.Feedback__c}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <!-- Modal Footer -->
+            <div
+              class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50"
+            >
+              <lightning-button
+                label="Cancel"
+                onclick={closeModal}
+              ></lightning-button>
+              <template if:false={isReadOnly}>
+                <lightning-button
+                  variant="neutral"
+                  label="Save Draft"
+                  onclick={handleSaveDraft}
+                ></lightning-button>
+                <lightning-button
+                  variant="brand"
+                  label="Submit"
+                  onclick={handleSubmit}
+                ></lightning-button>
+              </template>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+</template>

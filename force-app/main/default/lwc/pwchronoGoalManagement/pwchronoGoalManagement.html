@@ -1,0 +1,449 @@
+<template>
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <!-- Page Header (Standardized) -->
+      <div
+        class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3"
+      >
+        <div class="my-auto mb-2">
+          <h2 class="mb-1 text-2xl font-bold text-gray-900">My Goals</h2>
+          <p class="text-muted text-sm text-gray-500">
+            Track and manage your professional objectives
+          </p>
+        </div>
+        <div class="d-flex my-xl-auto right-content">
+          <button
+            class="btn btn-primary bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+            onclick={handleNewGoal}
+          >
+            <lightning-icon
+              icon-name="utility:add"
+              size="x-small"
+              variant="inverse"
+              class="mr-2"
+            ></lightning-icon>
+            New Goal
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Overview -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+        <div
+          class="stat-card total bg-white rounded-xl p-4 flex items-center gap-3 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all"
+        >
+          <div
+            class="w-11 h-11 flex items-center justify-center rounded-lg bg-blue-100"
+          >
+            <lightning-icon
+              icon-name="utility:target"
+              size="small"
+              class="text-blue-600"
+            ></lightning-icon>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-2xl md:text-3xl font-bold text-gray-900"
+              >{totalGoals}</span
+            >
+            <span
+              class="text-xs uppercase tracking-wide text-gray-500 font-medium"
+              >Total Goals</span
+            >
+          </div>
+        </div>
+        <div
+          class="stat-card in-progress bg-white rounded-xl p-4 flex items-center gap-3 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all"
+        >
+          <div
+            class="w-11 h-11 flex items-center justify-center rounded-lg bg-amber-100"
+          >
+            <lightning-icon
+              icon-name="utility:sync"
+              size="small"
+              class="text-amber-600"
+            ></lightning-icon>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-2xl md:text-3xl font-bold text-gray-900"
+              >{inProgressCount}</span
+            >
+            <span
+              class="text-xs uppercase tracking-wide text-gray-500 font-medium"
+              >In Progress</span
+            >
+          </div>
+        </div>
+        <div
+          class="stat-card completed bg-white rounded-xl p-4 flex items-center gap-3 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all"
+        >
+          <div
+            class="w-11 h-11 flex items-center justify-center rounded-lg bg-green-100"
+          >
+            <lightning-icon
+              icon-name="utility:check"
+              size="small"
+              class="text-green-600"
+            ></lightning-icon>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-2xl md:text-3xl font-bold text-gray-900"
+              >{completedCount}</span
+            >
+            <span
+              class="text-xs uppercase tracking-wide text-gray-500 font-medium"
+              >Completed</span
+            >
+          </div>
+        </div>
+        <div
+          class="stat-card average bg-white rounded-xl p-4 flex items-center gap-3 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all"
+        >
+          <div
+            class="w-11 h-11 flex items-center justify-center rounded-lg bg-purple-100"
+          >
+            <lightning-icon
+              icon-name="utility:trending"
+              size="small"
+              class="text-purple-600"
+            ></lightning-icon>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-2xl md:text-3xl font-bold text-gray-900"
+              >{averageProgress}%</span
+            >
+            <span
+              class="text-xs uppercase tracking-wide text-gray-500 font-medium"
+              >Avg Progress</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div
+        class="bg-white rounded-xl p-3 mb-6 shadow-sm border border-gray-100"
+      >
+        <div class="flex gap-2 flex-wrap justify-center md:justify-start">
+          <button
+            class={allFilterClass}
+            data-status="All"
+            onclick={handleStatusFilterChange}
+          >
+            All
+          </button>
+          <button
+            class={notStartedFilterClass}
+            data-status="Not Started"
+            onclick={handleStatusFilterChange}
+          >
+            Not Started
+          </button>
+          <button
+            class={inProgressFilterClass}
+            data-status="In Progress"
+            onclick={handleStatusFilterChange}
+          >
+            In Progress
+          </button>
+          <button
+            class={completedFilterClass}
+            data-status="Completed"
+            onclick={handleStatusFilterChange}
+          >
+            Completed
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <template if:true={isLoading}>
+        <div class="flex flex-col items-center justify-center py-16 gap-4">
+          <div class="loading-pulse relative w-16 h-16">
+            <div
+              class="pulse-ring absolute inset-0 border-3 border-orange-200 rounded-full"
+            ></div>
+            <div
+              class="pulse-dot absolute inset-5 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full"
+            ></div>
+          </div>
+          <p class="text-gray-500 text-sm">Loading goals...</p>
+        </div>
+      </template>
+
+      <!-- Goals Content -->
+      <template if:false={isLoading}>
+        <!-- Goals Grid -->
+        <template if:true={hasGoals}>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <template for:each={goals} for:item="goal">
+              <article
+                key={goal.Id}
+                class="goal-card bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col hover:shadow-lg hover:-translate-y-1 transition-all"
+                data-status={goal.Status__c}
+              >
+                <div class="flex justify-between items-center mb-4">
+                  <span class={goal.badgeClass}>{goal.Status__c}</span>
+                  <button
+                    class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-orange-100 transition-colors edit-btn"
+                    onclick={handleEditGoal}
+                    data-id={goal.Id}
+                  >
+                    <lightning-icon
+                      icon-name="utility:edit"
+                      size="xx-small"
+                      class="text-gray-500"
+                    ></lightning-icon>
+                  </button>
+                </div>
+
+                <div class="flex-1 mb-4">
+                  <button
+                    class="text-left w-full text-lg font-semibold text-gray-900 mb-2 cursor-pointer hover:text-orange-500 transition-colors"
+                    onclick={handleEditGoal}
+                    data-id={goal.Id}
+                  >
+                    {goal.Name}
+                  </button>
+                  <p class="text-sm text-gray-500 leading-relaxed line-clamp-2">
+                    {goal.Description__c}
+                  </p>
+                </div>
+
+                <div class="border-t border-gray-100 pt-4">
+                  <div class="mb-4">
+                    <div
+                      class="inline-flex items-center gap-1 text-xs text-gray-500"
+                    >
+                      <lightning-icon
+                        icon-name="utility:event"
+                        size="xx-small"
+                        class="text-gray-400"
+                      ></lightning-icon>
+                      <span>{goal.formattedDate}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div class="flex justify-between items-center mb-2">
+                      <span class="text-xs font-medium text-gray-600"
+                        >Progress</span
+                      >
+                      <span class="text-sm font-bold text-orange-500"
+                        >{goal.Progress__c}%</span
+                      >
+                    </div>
+                    <div
+                      class="h-2 bg-gray-100 rounded-full overflow-hidden mb-2"
+                    >
+                      <div
+                        class="progress-bar-fill h-full bg-gradient-to-r from-orange-500 to-orange-600 rounded-full transition-all duration-300"
+                        style={goal.progressStyle}
+                      ></div>
+                    </div>
+                    <div class="mt-2">
+                      <lightning-slider
+                        value={goal.Progress__c}
+                        min="0"
+                        max="100"
+                        step="5"
+                        data-id={goal.Id}
+                        onchange={handleProgressChange}
+                        variant="label-hidden"
+                      ></lightning-slider>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </template>
+          </div>
+        </template>
+
+        <!-- Empty State -->
+        <template if:false={hasGoals}>
+          <div
+            class="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100"
+          >
+            <div
+              class="w-20 h-20 mx-auto mb-6 flex items-center justify-center bg-gray-100 rounded-full"
+            >
+              <lightning-icon
+                icon-name="utility:target"
+                size="large"
+                class="text-gray-400"
+              ></lightning-icon>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">
+              No Goals Found
+            </h3>
+            <p class="text-gray-500 mb-6 max-w-xs mx-auto">
+              Start setting goals to track your professional growth and
+              achievements.
+            </p>
+            <button
+              class="inline-flex items-center gap-2 px-6 py-3 bg-orange-500 text-white font-semibold text-sm rounded-xl hover:bg-orange-600 hover:-translate-y-0.5 transition-all"
+              onclick={handleNewGoal}
+            >
+              <lightning-icon
+                icon-name="utility:add"
+                size="x-small"
+              ></lightning-icon>
+              Create Your First Goal
+            </button>
+          </div>
+        </template>
+      </template>
+    </div>
+  </div>
+
+  <!-- New/Edit Goal Modal -->
+  <template if:true={isModalOpen}>
+    <div
+      class="modal-overlay fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onclick={closeModal}
+      onkeypress={closeModal}
+      role="button"
+      tabindex="0"
+    >
+      <div
+        class="modal-container bg-white rounded-2xl shadow-2xl max-w-xl w-full max-h-90vh overflow-hidden animate-slideUp"
+        onclick={stopPropagation}
+        onkeypress={stopPropagation}
+        role="button"
+        tabindex="0"
+      >
+        <header
+          class="flex justify-between items-center px-6 py-4 border-b border-gray-200 bg-gray-50"
+        >
+          <h2 class="text-xl font-semibold text-gray-900">{modalTitle}</h2>
+          <lightning-button-icon
+            icon-name="utility:close"
+            variant="bare"
+            onclick={closeModal}
+            alternative-text="Close"
+          ></lightning-button-icon>
+        </header>
+
+        <div class="p-6 max-h-60vh overflow-y-auto">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="md:col-span-2">
+              <label
+                for="goalName"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >Goal Name <span class="text-red-500">*</span></label
+              >
+              <lightning-input
+                id="goalName"
+                type="text"
+                name="Name"
+                value={currentGoal.Name}
+                onchange={handleInputChange}
+                required
+                placeholder="Enter goal name"
+                variant="label-hidden"
+              ></lightning-input>
+            </div>
+
+            <div>
+              <label
+                for="targetDate"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >Target Date <span class="text-red-500">*</span></label
+              >
+              <lightning-input
+                id="targetDate"
+                type="date"
+                name="Target_Date__c"
+                value={currentGoal.Target_Date__c}
+                onchange={handleInputChange}
+                required
+                variant="label-hidden"
+              ></lightning-input>
+            </div>
+
+            <div>
+              <label
+                for="status"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >Status <span class="text-red-500">*</span></label
+              >
+              <lightning-combobox
+                id="status"
+                name="Status__c"
+                value={currentGoal.Status__c}
+                options={goalStatusOptions}
+                onchange={handleInputChange}
+                required
+                placeholder="Select status"
+                variant="label-hidden"
+              ></lightning-combobox>
+            </div>
+
+            <div class="md:col-span-2">
+              <label
+                for="description"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >Description</label
+              >
+              <lightning-textarea
+                id="description"
+                name="Description__c"
+                value={currentGoal.Description__c}
+                onchange={handleInputChange}
+                placeholder="Describe your goal..."
+                variant="label-hidden"
+              ></lightning-textarea>
+            </div>
+
+            <div class="md:col-span-2">
+              <label
+                for="progress"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >Progress ({currentGoal.Progress__c}%)</label
+              >
+              <div class="h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
+                <div
+                  class="h-full bg-gradient-to-r from-orange-500 to-orange-600 rounded-full"
+                  style={currentGoalProgressStyle}
+                ></div>
+              </div>
+              <lightning-slider
+                id="progress"
+                name="Progress__c"
+                value={currentGoal.Progress__c}
+                min="0"
+                max="100"
+                step="5"
+                onchange={handleInputChange}
+                variant="label-hidden"
+              ></lightning-slider>
+            </div>
+          </div>
+        </div>
+
+        <footer
+          class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50"
+        >
+          <button
+            class="px-5 py-2.5 bg-white text-gray-700 font-medium text-sm rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+            onclick={closeModal}
+          >
+            Cancel
+          </button>
+          <button
+            class="px-6 py-2.5 bg-orange-500 text-white font-semibold text-sm rounded-lg hover:bg-orange-600 transition-colors min-w-24 flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed"
+            onclick={handleSaveGoal}
+            disabled={isLoading}
+          >
+            <template if:true={isLoading}>
+              <lightning-spinner
+                alternative-text="Saving"
+                size="small"
+              ></lightning-spinner>
+            </template>
+            <template if:false={isLoading}> Save Goal </template>
+          </button>
+        </footer>
+      </div>
+    </div>
+  </template>
+</template>

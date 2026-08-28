@@ -1,0 +1,162 @@
+<template>
+  <div class="attendance-request-detail">
+
+    <!-- Back navigation -->
+    <button class="btn btn-sm btn-link p-0 mb-3 text-decoration-none" onclick={handleBack}>
+      &larr; Back
+    </button>
+
+    <!-- Loading skeleton -->
+    <template if:true={isLoading}>
+      <div class="card border-0 shadow-sm placeholder-glow p-4">
+        <span class="placeholder col-3 mb-2 d-block"></span>
+        <span class="placeholder col-6 placeholder-lg d-block mb-3"></span>
+        <span class="placeholder col-4 d-block mb-2"></span>
+        <span class="placeholder col-8 d-block"></span>
+      </div>
+    </template>
+
+    <!-- Error state -->
+    <template if:true={loadError}>
+      <div class="alert alert-danger">{loadError}</div>
+    </template>
+
+    <!-- Content -->
+    <template if:true={hasData}>
+
+      <!-- Request Header (shared component) -->
+      <c-pwchrono-request-header
+        record-name={request.Name}
+        record-type="Attendance Correction"
+        status={request.Status__c}
+        submitted-by={request.Employees__r.Name}
+        submitted-date={request.Applied_Date__c}>
+      </c-pwchrono-request-header>
+
+      <!-- Correction Details Card -->
+      <div class="card border-0 shadow-sm mt-3">
+        <div class="card-header bg-white py-3">
+          <h6 class="mb-0 fw-semibold">Correction Details</h6>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-12 col-md-4">
+              <p class="text-muted small mb-1">Attendance Date</p>
+              <p class="fw-medium mb-0">{request.Attendance_Date__c}</p>
+            </div>
+            <div class="col-12 col-md-4">
+              <p class="text-muted small mb-1">Correction Type</p>
+              <p class="fw-medium mb-0">{correctionTypeLabel}</p>
+            </div>
+            <div class="col-12 col-md-4">
+              <p class="text-muted small mb-1">Approver</p>
+              <p class="fw-medium mb-0">{approverName}</p>
+            </div>
+            <template if:true={hasCheckIn}>
+              <div class="col-12 col-md-4">
+                <p class="text-muted small mb-1">Requested Check-In</p>
+                <p class="fw-medium mb-0">{formattedCheckIn}</p>
+              </div>
+            </template>
+            <template if:true={hasCheckOut}>
+              <div class="col-12 col-md-4">
+                <p class="text-muted small mb-1">Requested Check-Out</p>
+                <p class="fw-medium mb-0">{formattedCheckOut}</p>
+              </div>
+            </template>
+            <template if:true={hasApproverComments}>
+              <div class="col-12">
+                <p class="text-muted small mb-1">Approver Comments</p>
+                <p class="fw-medium mb-0">{request.Approver_Comments__c}</p>
+              </div>
+            </template>
+            <template if:true={hasRejectionReason}>
+              <div class="col-12">
+                <p class="text-muted small mb-1 text-danger">Rejection Reason</p>
+                <p class="fw-medium mb-0 text-danger">{request.Rejection_Reason__c}</p>
+              </div>
+            </template>
+            <div class="col-12">
+              <p class="text-muted small mb-1">Reason</p>
+              <p class="mb-0">{request.Reason__c}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shift Context (if available) -->
+      <template if:true={hasShiftContext}>
+        <div class="card border-0 shadow-sm mt-3">
+          <div class="card-header bg-white py-3">
+            <h6 class="mb-0 fw-semibold">Shift Context</h6>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-12 col-md-4">
+                <p class="text-muted small mb-1">Shift</p>
+                <p class="fw-medium mb-0">{shiftName}</p>
+              </div>
+              <div class="col-12 col-md-4">
+                <p class="text-muted small mb-1">Shift Start</p>
+                <p class="fw-medium mb-0">{shiftStart}</p>
+              </div>
+              <div class="col-12 col-md-4">
+                <p class="text-muted small mb-1">Shift End</p>
+                <p class="fw-medium mb-0">{shiftEnd}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Action Bar (shared component) -->
+      <div class="mt-3">
+        <c-pwchrono-request-action-bar
+          status={request.Status__c}
+          is-approver={isApprover}
+          is-owner={isOwner}
+          onrequestaction={handleRequestAction}>
+        </c-pwchrono-request-action-bar>
+      </div>
+
+      <!-- Action error -->
+      <template if:true={actionError}>
+        <div class="alert alert-danger mt-2 small">{actionError}</div>
+      </template>
+
+      <!-- Comments Panel (shared component) -->
+      <div class="card border-0 shadow-sm mt-3">
+        <div class="card-header bg-white py-3">
+          <h6 class="mb-0 fw-semibold">Comments &amp; Activity</h6>
+        </div>
+        <div class="card-body p-0">
+          <c-pwchrono-request-comments
+            entries={commentEntries}
+            allow-new-comment={canComment}
+            onnewcomment={handleNewComment}>
+          </c-pwchrono-request-comments>
+        </div>
+      </div>
+
+      <!-- File Upload Panel (shared component) -->
+      <div class="card border-0 shadow-sm mt-3">
+        <div class="card-header bg-white py-3">
+          <h6 class="mb-0 fw-semibold">Supporting Documents</h6>
+        </div>
+        <div class="card-body">
+          <c-pwchrono-file-upload-panel
+            files={uploadedFiles}
+            allow-upload={canUploadFiles}
+            allow-remove="false"
+            accept=".pdf,.jpg,.jpeg,.png"
+            max-file-size={maxFileSize}
+            onfilesselected={handleFilesSelected}
+            onfileerror={handleFileError}>
+          </c-pwchrono-file-upload-panel>
+        </div>
+      </div>
+
+    </template>
+
+  </div>
+</template>

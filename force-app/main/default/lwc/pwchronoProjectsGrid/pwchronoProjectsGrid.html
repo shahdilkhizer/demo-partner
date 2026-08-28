@@ -1,0 +1,1085 @@
+<!--
+  @description       : 
+  @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+  @group             : 
+  @last modified on  : 01-17-2026
+  @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+-->
+<template>
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <!-- Breadcrumb (SmartHR-style) -->
+      <div
+        class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3"
+      >
+        <div class="my-auto mb-2">
+          <h2 class="mb-1">Projects</h2>
+          <nav aria-label="Breadcrumb">
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item">
+                <span class="d-inline-flex align-items-center">
+                  <i class="fa-solid fa-house" aria-hidden="true"></i>
+                </span>
+              </li>
+              <li class="breadcrumb-item">Dashboard</li>
+              <li class="breadcrumb-item active" aria-current="page">
+                Projects
+              </li>
+            </ol>
+          </nav>
+        </div>
+
+        <div
+          class="d-flex my-xl-auto right-content align-items-center flex-wrap"
+        >
+          <!-- View toggle (Table / Grid) -->
+          <template if:true={isListView}>
+            <div class="me-2 mb-2">
+              <div
+                class="d-flex align-items-center border bg-white rounded p-1 me-2 icon-list"
+              >
+                <button
+                  type="button"
+                  class={tableViewButtonClass}
+                  onclick={handleViewToggle}
+                  data-view="list"
+                  title="Table View"
+                  aria-label="Switch to Table View"
+                  aria-pressed="true"
+                >
+                  <i class="fa-solid fa-list" aria-hidden="true"></i>
+                </button>
+                <button
+                  type="button"
+                  class={gridViewButtonClass}
+                  onclick={handleViewToggle}
+                  data-view="grid"
+                  title="Grid View"
+                  aria-label="Switch to Grid View"
+                  aria-pressed="false"
+                >
+                  <i class="fa-solid fa-border-all" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+          </template>
+
+          <template if:false={isListView}>
+            <div class="me-2 mb-2">
+              <div
+                class="d-flex align-items-center border bg-white rounded p-1 me-2 icon-list"
+              >
+                <button
+                  type="button"
+                  class={tableViewButtonClass}
+                  onclick={handleViewToggle}
+                  data-view="list"
+                  title="Table View"
+                  aria-label="Switch to Table View"
+                  aria-pressed="false"
+                >
+                  <i class="fa-solid fa-list" aria-hidden="true"></i>
+                </button>
+                <button
+                  type="button"
+                  class={gridViewButtonClass}
+                  onclick={handleViewToggle}
+                  data-view="grid"
+                  title="Grid View"
+                  aria-label="Switch to Grid View"
+                  aria-pressed="true"
+                >
+                  <i class="fa-solid fa-border-all" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+          </template>
+
+          <!-- Export -->
+          <div class="me-2 mb-2">
+            <div class="dropdown">
+              <template if:true={showExportDropdown}>
+                <button
+                  type="button"
+                  class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
+                  onclick={toggleExportDropdown}
+                  aria-expanded="true"
+                  aria-haspopup="true"
+                >
+                  <i class="fa-solid fa-file-export me-1" aria-hidden="true"></i
+                  >Export
+                </button>
+              </template>
+              <template if:false={showExportDropdown}>
+                <button
+                  type="button"
+                  class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
+                  onclick={toggleExportDropdown}
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                >
+                  <i class="fa-solid fa-file-export me-1" aria-hidden="true"></i
+                  >Export
+                </button>
+              </template>
+              <div class={exportDropdownClass} role="menu">
+                <button
+                  type="button"
+                  class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100"
+                  onclick={handleExportPdf}
+                  role="menuitem"
+                >
+                  <i class="fa-solid fa-file-pdf me-1" aria-hidden="true"></i
+                  >Export as PDF
+                </button>
+                <button
+                  type="button"
+                  class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100"
+                  onclick={handleExportExcel}
+                  role="menuitem"
+                >
+                  <i class="fa-solid fa-file-excel me-1" aria-hidden="true"></i
+                  >Export as Excel
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Primary action -->
+          <div class="mb-2">
+            <button type="button" class="btn btn-primary" onclick={openModal}>
+              <i class="fa-solid fa-square-plus me-1" aria-hidden="true"></i>Add
+              Project
+            </button>
+          </div>
+
+          <!-- Header collapse icon (visual parity) -->
+          <div class="ms-2 head-icons">
+            <button
+              type="button"
+              class="btn btn-link p-0"
+              title="Collapse Header"
+              id="collapse-header"
+              aria-label="Collapse Header"
+            >
+              <i class="fa-solid fa-chevron-up" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading Spinner -->
+      <template if:true={isLoading}>
+        <div class="d-flex justify-content-center p-5">
+          <output class="spinner-border text-primary">
+            <span class="visually-hidden">Loading...</span>
+          </output>
+        </div>
+      </template>
+
+      <!-- Project Grid -->
+      <template if:false={isLoading}>
+        <!-- List View -->
+        <template if:true={isListView}>
+          <!-- Project list (SmartHR-style tabular view) -->
+          <div class="card">
+            <div
+              class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3"
+            >
+              <h5>Project list</h5>
+              <div
+                class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3"
+              >
+                <div class="dropdown me-3">
+                  <template if:true={showFilterDropdown}>
+                    <button
+                      type="button"
+                      class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
+                      onclick={toggleFilterDropdown}
+                      aria-expanded="true"
+                      aria-haspopup="true"
+                    >
+                      {filterLabel}
+                    </button>
+                  </template>
+                  <template if:false={showFilterDropdown}>
+                    <button
+                      type="button"
+                      class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
+                      onclick={toggleFilterDropdown}
+                      aria-expanded="false"
+                      aria-haspopup="true"
+                    >
+                      {filterLabel}
+                    </button>
+                  </template>
+                  <div class={filterDropdownClass} role="menu">
+                    <button
+                      type="button"
+                      class="dropdown-item rounded-1"
+                      data-value="All"
+                      onclick={handleFilterSelect}
+                      role="menuitem"
+                    >
+                      All
+                    </button>
+                    <button
+                      type="button"
+                      class="dropdown-item rounded-1"
+                      data-value="Active"
+                      onclick={handleFilterSelect}
+                      role="menuitem"
+                    >
+                      Active
+                    </button>
+                    <button
+                      type="button"
+                      class="dropdown-item rounded-1"
+                      data-value="On Hold"
+                      onclick={handleFilterSelect}
+                      role="menuitem"
+                    >
+                      On Hold
+                    </button>
+                    <button
+                      type="button"
+                      class="dropdown-item rounded-1"
+                      data-value="Completed"
+                      onclick={handleFilterSelect}
+                      role="menuitem"
+                    >
+                      Completed
+                    </button>
+                  </div>
+                </div>
+
+                <div class="dropdown">
+                  <template if:true={showSortDropdown}>
+                    <button
+                      type="button"
+                      class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
+                      onclick={toggleSortDropdown}
+                      title="Sort"
+                      aria-expanded="true"
+                      aria-haspopup="true"
+                    >
+                      Sort : {sortLabel}
+                    </button>
+                  </template>
+                  <template if:false={showSortDropdown}>
+                    <button
+                      type="button"
+                      class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
+                      onclick={toggleSortDropdown}
+                      title="Sort"
+                      aria-expanded="false"
+                      aria-haspopup="true"
+                    >
+                      Sort : {sortLabel}
+                    </button>
+                  </template>
+                  <div class={sortDropdownClass} role="menu">
+                    <button
+                      type="button"
+                      class="dropdown-item rounded-1"
+                      data-value="Recent"
+                      onclick={handleSortSelect}
+                      role="menuitem"
+                    >
+                      Recent
+                    </button>
+                    <button
+                      type="button"
+                      class="dropdown-item rounded-1"
+                      data-value="Name A-Z"
+                      onclick={handleSortSelect}
+                      role="menuitem"
+                    >
+                      Name A-Z
+                    </button>
+                    <button
+                      type="button"
+                      class="dropdown-item rounded-1"
+                      data-value="Name Z-A"
+                      onclick={handleSortSelect}
+                      role="menuitem"
+                    >
+                      Name Z-A
+                    </button>
+                    <button
+                      type="button"
+                      class="dropdown-item rounded-1"
+                      data-value="Deadline ↑"
+                      onclick={handleSortSelect}
+                      role="menuitem"
+                    >
+                      Deadline ↑
+                    </button>
+                    <button
+                      type="button"
+                      class="dropdown-item rounded-1"
+                      data-value="Deadline ↓"
+                      onclick={handleSortSelect}
+                      role="menuitem"
+                    >
+                      Deadline ↓
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-body p-0">
+              <div class="table-responsive custom-table">
+                <table class="table daaatable table-borderless hover-table">
+                  <thead class="thead-light">
+                    <tr>
+                      <th class="no-sort" scope="col">
+                        <div class="form-check form-check-md">
+                          <input
+                            class="form-check-input"
+                            type="checkbox"
+                            aria-label="Select all"
+                          />
+                        </div>
+                      </th>
+                      <th scope="col">Project ID</th>
+                      <th scope="col">Project Name</th>
+                      <th scope="col">Leader</th>
+                      <th scope="col">Team</th>
+                      <th scope="col">Deadline</th>
+                      <th scope="col">Priority</th>
+                      <th scope="col">Status</th>
+                      <th scope="col">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template for:each={projectsWithMenuState} for:item="proj">
+                      <tr key={proj.id}>
+                        <td>
+                          <div class="form-check form-check-md">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              aria-label="Select row"
+                            />
+                          </div>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            class="btn btn-link p-0 text-decoration-none"
+                            title="Project ID"
+                          >
+                            {proj.shortId}
+                          </button>
+                        </td>
+                        <td>
+                          <h6 class="fw-medium mb-0">
+                            <button
+                              type="button"
+                              class="btn btn-link p-0 text-decoration-none link-dark"
+                              title={proj.name}
+                            >
+                              {proj.name}
+                            </button>
+                          </h6>
+                        </td>
+                        <td>
+                          <div class="d-flex align-items-center file-name-icon">
+                            <span
+                              class="avatar avatar-sm border avatar-rounded"
+                              aria-hidden="true"
+                            >
+                              <template if:true={proj.showProjectLogo}>
+                                <img
+                                  src={proj.logoUrl}
+                                  alt={proj.name}
+                                  class="rounded-circle avatar-img"
+                                  data-id={proj.id}
+                                  onerror={handleProjectLogoError}
+                                />
+                              </template>
+                              <template if:false={proj.showProjectLogo}>
+                                <span
+                                  class="avatar-title rounded-circle bg-secondary text-white"
+                                >
+                                  {proj.projectInitials}
+                                </span>
+                              </template>
+                            </span>
+                            <div class="ms-2">
+                              <h6 class="fw-normal mb-0">
+                                <button
+                                  type="button"
+                                  class="btn btn-link p-0 text-decoration-none"
+                                  title={proj.leaderName}
+                                >
+                                  {proj.leaderName}
+                                </button>
+                              </h6>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <div class="avatar-list-stacked avatar-group-sm">
+                            <template for:each={proj.teamPreview} for:item="m">
+                              <span class="avatar avatar-rounded" key={m.key}>
+                                <span
+                                  class="avatar avatar-md border avatar-rounded d-inline-flex align-items-center justify-content-center"
+                                  title={m.name}
+                                >
+                                  <i
+                                    class="fa-solid fa-user"
+                                    aria-hidden="true"
+                                  ></i>
+                                </span>
+                              </span>
+                            </template>
+                            <template if:true={proj.hasTeamExtra}>
+                              <span
+                                class="avatar bg-primary avatar-rounded text-fixed-white fs-12 fw-medium"
+                                title="More"
+                              >
+                                +{proj.teamExtraCount}
+                              </span>
+                            </template>
+                          </div>
+                        </td>
+                        <td>{proj.deadline}</td>
+                        <td>
+                          <span class={proj.priorityPillClass}>
+                            <i
+                              class="fa-solid fa-circle me-1"
+                              aria-hidden="true"
+                            ></i
+                            >{proj.priority}
+                          </span>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            class="btn btn-link p-0 me-2"
+                            data-id={proj.id}
+                            onclick={handleEditProject}
+                            title="Edit"
+                            aria-label="Edit Project"
+                          >
+                            <i
+                              class="fa-solid fa-pen-to-square"
+                              aria-hidden="true"
+                            ></i>
+                          </button>
+                          <button
+                            type="button"
+                            class="btn btn-link p-0"
+                            data-id={proj.id}
+                            onclick={handleDeleteProject}
+                            title="Delete"
+                            aria-label="Delete Project"
+                          >
+                            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Grid View -->
+        <template if:true={isGridView}>
+          <div class="row">
+            <template for:each={projectsWithMenuState} for:item="proj">
+              <div class="col-xxl-3 col-lg-4 col-md-6" key={proj.id}>
+                <div class="card">
+                  <div class="card-body">
+                    <div
+                      class="d-flex align-items-center justify-content-between mb-2"
+                    >
+                      <h6>
+                        <button
+                          type="button"
+                          class="btn btn-link p-0 text-decoration-none link-dark fw-bold"
+                        >
+                          {proj.name}
+                        </button>
+                      </h6>
+                      <span class={proj.statusClass}
+                        ><i class="fas fa-circle fs-6 me-1"></i
+                        >{proj.status}</span
+                      >
+                      <div class="dropdown">
+                        <template if:true={proj.isMenuOpen}>
+                          <button
+                            type="button"
+                            class="btn btn-link link-dark p-0 d-inline-flex align-items-center no-underline"
+                            data-id={proj.id}
+                            onclick={handleToggleActions}
+                            aria-label="Project Actions"
+                            aria-haspopup="true"
+                            aria-expanded="true"
+                          >
+                            <i
+                              class="fa-solid fa-ellipsis-vertical"
+                              aria-hidden="true"
+                            ></i>
+                          </button>
+                        </template>
+                        <template if:false={proj.isMenuOpen}>
+                          <button
+                            type="button"
+                            class="btn btn-link link-dark p-0 d-inline-flex align-items-center no-underline"
+                            data-id={proj.id}
+                            onclick={handleToggleActions}
+                            aria-label="Project Actions"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                          >
+                            <i
+                              class="fa-solid fa-ellipsis-vertical"
+                              aria-hidden="true"
+                            ></i>
+                          </button>
+                        </template>
+                        <template if:true={proj.isMenuOpen}>
+                          <div
+                            class="dropdown-menu dropdown-menu-end p-3 show"
+                            role="menu"
+                          >
+                            <button
+                              type="button"
+                              class="dropdown-item rounded-1"
+                              data-id={proj.id}
+                              onclick={handleEditProject}
+                              role="menuitem"
+                            >
+                              <i
+                                class="fa-solid fa-pen-to-square me-2"
+                                aria-hidden="true"
+                              ></i
+                              >Edit
+                            </button>
+                            <button
+                              type="button"
+                              class="dropdown-item rounded-1"
+                              data-id={proj.id}
+                              onclick={handleDeleteProject}
+                              role="menuitem"
+                            >
+                              <i
+                                class="fa-solid fa-trash me-1"
+                                aria-hidden="true"
+                              ></i
+                              >Delete
+                            </button>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                    <div class="mb-3 pb-3 border-bottom">
+                      <p class="text-truncate line-clamb-3 mb-0">
+                        {proj.description}
+                      </p>
+                    </div>
+                    <div
+                      class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom"
+                    >
+                      <div class="d-flex align-items-center file-name-icon">
+                        <button
+                          type="button"
+                          class="btn btn-link p-0 border-0 avatar avatar-sm avatar-rounded flex-shrink-0"
+                        >
+                          <template if:true={proj.showProjectLogo}>
+                            <img
+                              src={proj.logoUrl}
+                              alt={proj.name}
+                              class="rounded-circle border border-white avatar-img"
+                              data-id={proj.id}
+                              onerror={handleProjectLogoError}
+                            />
+                          </template>
+                          <template if:false={proj.showProjectLogo}>
+                            <span
+                              class="avatar-title rounded-circle border border-white bg-secondary text-white"
+                              >{proj.projectInitials}</span
+                            >
+                          </template>
+                        </button>
+                        <div class="ms-2">
+                          <h6 class="fw-normal fs-12">
+                            <button
+                              type="button"
+                              class="btn btn-link p-0 text-decoration-none link-dark"
+                            >
+                              {proj.leaderName}
+                            </button>
+                          </h6>
+                          <span class="fs-12 fw-normal">Project Leader</span>
+                        </div>
+                      </div>
+                      <div class="d-flex align-items-center">
+                        <div>
+                          <span class="fs-12 fw-normal">Deadline</span>
+                          <p class="mb-0 fs-12">{proj.deadline}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      class="d-flex align-items-center justify-content-between"
+                    >
+                      <div class="d-flex align-items-center">
+                        <span
+                          class="avatar avatar-sm avatar-rounded bg-success-transparent flex-shrink-0 me-2"
+                        >
+                          <i
+                            class="fa-solid fa-list-check text-success fs-16"
+                            aria-hidden="true"
+                          ></i>
+                        </span>
+                        <p>
+                          <small>Hours Logged : </small>
+                          <span class="text-dark">{proj.hoursLogged}</span>
+                        </p>
+                      </div>
+                      <div class="d-flex align-items-center">
+                        <span class={proj.priorityClass}>{proj.priority}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </template>
+      </template>
+
+      <!-- Add/Edit Project Modal -->
+      <template if:true={showProjectModal}>
+        <dialog
+          class="modal fade show d-block project-modal"
+          open
+          aria-modal="true"
+          aria-labelledby="modal-title-id"
+        >
+          <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+              <div
+                class="modal-header header-border align-items-center justify-content-between"
+              >
+                <div class="d-flex align-items-center">
+                  <h5 id="modal-title-id" class="modal-title me-2">
+                    {modalTitle}
+                  </h5>
+                </div>
+                <button
+                  type="button"
+                  class="btn-close custom-btn-close"
+                  onclick={closeModal}
+                  aria-label="Close"
+                >
+                  <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+              </div>
+              <div class="add-info-fieldset">
+                <div class="contact-grids-tab p-3 pb-0">
+                  <!-- Helper role removed to satisfy S6842 for non-interactive parent -->
+                  <div class="nav nav-underline" role="tablist">
+                    <span class="nav-item">
+                      <template if:true={isBasicTab}>
+                        <button
+                          class={basicTabClass}
+                          type="button"
+                          role="tab"
+                          aria-selected="true"
+                          aria-controls="basic-tab-pane"
+                          id="basic-tab-selected"
+                          data-tab="basic"
+                          onclick={handleTabChange}
+                        >
+                          Basic Information
+                        </button>
+                      </template>
+                      <template if:false={isBasicTab}>
+                        <button
+                          class={basicTabClass}
+                          type="button"
+                          role="tab"
+                          aria-selected="false"
+                          aria-controls="basic-tab-pane"
+                          id="basic-tab"
+                          data-tab="basic"
+                          onclick={handleTabChange}
+                        >
+                          Basic Information
+                        </button>
+                      </template>
+                    </span>
+                    <span class="nav-item">
+                      <template if:true={isMembersTab}>
+                        <button
+                          class={membersTabClass}
+                          type="button"
+                          role="tab"
+                          aria-selected="true"
+                          aria-controls="members-tab-pane"
+                          id="members-tab-selected"
+                          data-tab="members"
+                          onclick={handleTabChange}
+                        >
+                          Members
+                        </button>
+                      </template>
+                      <template if:false={isMembersTab}>
+                        <button
+                          class={membersTabClass}
+                          type="button"
+                          role="tab"
+                          aria-selected="false"
+                          aria-controls="members-tab-pane"
+                          id="members-tab"
+                          data-tab="members"
+                          onclick={handleTabChange}
+                        >
+                          Members
+                        </button>
+                      </template>
+                    </span>
+                  </div>
+                </div>
+                <div class="tab-content">
+                  <template if:true={isBasicTab}>
+                    <div
+                      class="tab-pane fade show active p-3"
+                      role="tabpanel"
+                      id="basic-tab-pane"
+                      aria-labelledby="basic-tab-selected"
+                    >
+                      <div class="row">
+                        <div class="col-md-12">
+                          <div
+                            class="d-flex align-items-center flex-wrap row-gap-3 bg-light w-100 rounded p-3 mb-4"
+                          >
+                            <div
+                              class="d-flex align-items-center justify-content-center avatar avatar-xxl rounded-circle border border-dashed me-2 flex-shrink-0 text-dark frames"
+                            >
+                              <i
+                                class="fa-solid fa-image text-gray-2 fs-16"
+                                aria-hidden="true"
+                              ></i>
+                            </div>
+                            <div class="profile-upload">
+                              <div class="mb-2">
+                                <h6 class="mb-1">Upload Project Logo</h6>
+                                <p class="fs-12">Image should be below 4 mb</p>
+                              </div>
+                              <div
+                                class="profile-uploader d-flex align-items-center"
+                              >
+                                <div
+                                  class="drag-upload-btn btn btn-sm btn-primary me-2"
+                                >
+                                  Upload
+                                  <input
+                                    type="file"
+                                    class="form-control image-sign"
+                                    accept="image/*"
+                                    onchange={handleLogoSelected}
+                                    disabled={logoUploadDisabled}
+                                  />
+                                </div>
+                                <template if:false={hasCurrentProjectId}>
+                                  <span class="text-muted fs-12">
+                                    Save the project first to enable logo
+                                    upload.
+                                  </span>
+                                </template>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-12">
+                          <lightning-input
+                            label="Project Name"
+                            data-field="Name"
+                            value={currentProject.Name}
+                            onchange={handleFieldChange}
+                            class="mb-3"
+                          ></lightning-input>
+                        </div>
+                        <div class="col-md-12">
+                          <lightning-combobox
+                            label="Client"
+                            data-field="Account__c"
+                            value={currentProject.Account__c}
+                            options={clientOptions}
+                            onchange={handleFieldChange}
+                            disabled={clientsLoading}
+                            placeholder="Select Client"
+                            class="mb-3"
+                          ></lightning-combobox>
+                          <template if:true={clientsLoading}>
+                            <div class="form-text">Loading clients…</div>
+                          </template>
+                        </div>
+                        <div class="col-md-12">
+                          <div class="row">
+                            <div class="col-md-6">
+                              <lightning-input
+                                type="date"
+                                label="Start Date"
+                                data-field="Start_Date__c"
+                                value={currentProject.Start_Date__c}
+                                onchange={handleFieldChange}
+                                class="mb-3"
+                              ></lightning-input>
+                            </div>
+                            <div class="col-md-6">
+                              <lightning-input
+                                type="date"
+                                label="End Date"
+                                data-field="End_Date__c"
+                                value={currentProject.End_Date__c}
+                                onchange={handleFieldChange}
+                                class="mb-3"
+                              ></lightning-input>
+                            </div>
+                            <div class="col-md-4">
+                              <lightning-combobox
+                                label="Priority"
+                                data-field="Priority__c"
+                                value={currentProject.Priority__c}
+                                options={priorityOptions}
+                                onchange={handleFieldChange}
+                                class="mb-3"
+                              ></lightning-combobox>
+                            </div>
+                            <div class="col-md-4">
+                              <lightning-input
+                                type="number"
+                                label="Project Value"
+                                data-field="Amount__c"
+                                value={currentProject.Amount__c}
+                                onchange={handleFieldChange}
+                                class="mb-3"
+                              ></lightning-input>
+                            </div>
+                            <div class="col-md-4">
+                              <lightning-combobox
+                                label="Status"
+                                data-field="Status__c"
+                                value={currentProject.Status__c}
+                                options={statusOptions}
+                                onchange={handleFieldChange}
+                                class="mb-3"
+                              ></lightning-combobox>
+                            </div>
+
+                            <div class="col-md-6">
+                              <lightning-input
+                                type="number"
+                                label="Team Size"
+                                data-field="Team_Size__c"
+                                value={currentProject.Team_Size__c}
+                                onchange={handleFieldChange}
+                                class="mb-3"
+                              ></lightning-input>
+                            </div>
+                            <div class="col-md-6">
+                              <lightning-input
+                                type="number"
+                                label="Hours Logged"
+                                data-field="Hours_Logged__c"
+                                value={currentProject.Hours_Logged__c}
+                                onchange={handleFieldChange}
+                                class="mb-3"
+                              ></lightning-input>
+                            </div>
+
+                            <div class="col-md-6">
+                              <lightning-input
+                                type="number"
+                                label="Total Working Hours"
+                                data-field="Total_Hours__c"
+                                value={currentProject.Total_Hours__c}
+                                onchange={handleFieldChange}
+                                class="mb-3"
+                              ></lightning-input>
+                            </div>
+                            <div class="col-md-6">
+                              <lightning-input
+                                type="number"
+                                label="Extra Time"
+                                value={computedExtraTime}
+                                disabled
+                                class="mb-3"
+                              ></lightning-input>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-12">
+                          <lightning-textarea
+                            label="Description"
+                            data-field="Description__c"
+                            value={currentProject.Description__c}
+                            onchange={handleFieldChange}
+                            class="mb-3"
+                          ></lightning-textarea>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button
+                          type="button"
+                          class="btn btn-light me-2"
+                          onclick={closeModal}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-primary"
+                          onclick={saveProject}
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  </template>
+
+                  <template if:true={isMembersTab}>
+                    <div
+                      class="tab-pane fade show active p-3"
+                      role="tabpanel"
+                      id="members-tab-pane"
+                      aria-labelledby="members-tab-selected"
+                    >
+                      <div class="row">
+                        <div class="col-md-12">
+                          <div class="mb-3">
+                            <lightning-textarea
+                              label="Team Members"
+                              data-field="Project_Members__c"
+                              value={currentProject.Project_Members__c}
+                              onchange={handleFieldChange}
+                            ></lightning-textarea>
+                            <div class="form-text">
+                              Enter names separated by commas.
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="col-md-6">
+                          <lightning-input
+                            label="Team Leader"
+                            data-field="Project_Leader__c"
+                            value={currentProject.Project_Leader__c}
+                            onchange={handleFieldChange}
+                            class="mb-3"
+                          ></lightning-input>
+                        </div>
+
+                        <div class="col-md-6">
+                          <lightning-input
+                            label="Project Manager"
+                            data-field="Project_Manager_Name__c"
+                            value={currentProject.Project_Manager_Name__c}
+                            onchange={handleFieldChange}
+                            class="mb-3"
+                          ></lightning-input>
+                        </div>
+
+                        <div class="col-md-12">
+                          <div class="mb-0">
+                            <lightning-input
+                              label="Tags"
+                              data-field="Project_Tags__c"
+                              value={currentProject.Project_Tags__c}
+                              onchange={handleFieldChange}
+                            ></lightning-input>
+                            <div class="form-text">
+                              Example: UI, Backend, Urgent
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button
+                          type="button"
+                          class="btn btn-light me-2"
+                          onclick={closeModal}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-primary"
+                          onclick={saveProject}
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+        </dialog>
+      </template>
+
+      <!-- Delete Project Modal -->
+      <template if:true={showDeleteModal}>
+        <dialog
+          class="modal fade show d-block project-modal"
+          open
+          aria-modal="true"
+          aria-labelledby="delete-modal-title"
+        >
+          <div class="modal-dialog modal-dialog-centered modal-md">
+            <div class="modal-content">
+              <div
+                class="modal-header header-border align-items-center justify-content-between"
+              >
+                <h5 class="modal-title" id="delete-modal-title">
+                  Delete Project
+                </h5>
+                <button
+                  type="button"
+                  class="btn-close custom-btn-close"
+                  onclick={closeDeleteModal}
+                  aria-label="Close"
+                >
+                  <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+              </div>
+              <div class="modal-body">
+                <p class="mb-0">
+                  Are you sure you want to delete this project?
+                </p>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-light me-2"
+                  onclick={closeDeleteModal}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-danger"
+                  onclick={confirmDeleteProject}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </dialog>
+      </template>
+    </div>
+  </div>
+</template>

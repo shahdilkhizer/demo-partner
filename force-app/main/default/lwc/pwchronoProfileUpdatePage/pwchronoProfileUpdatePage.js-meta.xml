@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>59.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>PWChrono Profile Update Page</masterLabel>
+    <targets>
+        <target>lightning__RecordPage</target>
+        <target>lightningCommunity__Page</target>
+        <target>lightningCommunity__Default</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage">
+            <objects>
+                <object>Portal_User_Profile__c</object>
+                <object>Portal_Users__c</object>
+            </objects>
+            <property
+        name="employeeId"
+        type="String"
+        label="Employee ID"
+        description="Optional override (Portal_Users__c Id). If blank, the component will only auto-use recordId when the record page is for Portal_Users__c; otherwise it will fall back to the logged-in portal user."
+      />
+                <property
+        name="showEmployeesTab"
+        type="Boolean"
+        label="Show Employees Tab"
+        description="Optional. If unchecked, hides the Employees tab regardless of feature access."
+      />
+                <property
+        name="showDashboardTab"
+        type="Boolean"
+        label="Show Dashboard Tab"
+        description="Optional. If unchecked, hides the Dashboard tab regardless of feature access."
+      />
+                <property
+        name="showAttendanceTab"
+        type="Boolean"
+        label="Show Attendance Tab"
+        description="Optional. If unchecked, hides the Attendance tab regardless of feature access."
+      />
+                <property
+        name="showPortalUsersTab"
+        type="Boolean"
+        label="Show Portal Users Tab"
+        description="Optional. If unchecked, hides the Portal Users sub-tab."
+      />
+                <property
+        name="showSelectedUserTab"
+        type="Boolean"
+        label="Show Selected User Tab"
+        description="Optional. If unchecked, hides the Selected User sub-tab."
+      />
+                <property
+        name="showPermissionsTab"
+        type="Boolean"
+        label="Show Permissions Tab"
+        description="Optional. If unchecked, hides the Permissions sub-tab."
+      />
+                <property
+        name="employeesTabFeature"
+        type="String"
+        label="Employees Tab Feature Required"
+        description="Optional. Feature label required to show Employees. Defaults to the site navigation label 'Employee Directory'."
+      />
+                <property
+        name="dashboardTabFeature"
+        type="String"
+        label="Dashboard Tab Feature Required"
+        description="Optional. Feature label required to show Dashboard. Defaults to no requirement (Dashboard is always visible on the site)."
+      />
+                <property
+        name="attendanceTabFeature"
+        type="String"
+        label="Attendance Tab Feature Required"
+        description="Optional. Feature label required to show Attendance. Defaults to the site navigation label 'Attendance Management'."
+      />
+                <property
+        name="portalUsersTabFeature"
+        type="String"
+        label="Portal Users Tab Feature Required"
+        description="Optional. Feature name that must be present to show Portal Users. Defaults to Employees feature requirement."
+      />
+                <property
+        name="selectedUserTabFeature"
+        type="String"
+        label="Selected User Tab Feature Required"
+        description="Optional. Feature name that must be present to show Selected User. Defaults to Employees feature requirement."
+      />
+                <property
+        name="permissionsTabFeature"
+        type="String"
+        label="Permissions Tab Feature Required"
+        description="Optional. Feature name that must be present to show Permissions. Defaults to Employees feature requirement."
+      />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

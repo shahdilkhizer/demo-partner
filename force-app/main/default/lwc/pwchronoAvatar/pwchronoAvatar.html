@@ -1,0 +1,19 @@
+<template lwc:render-mode="light">
+  <span class={computedContainerClass} style={containerStyle}>
+    <template if:true={shouldRenderImage}>
+      <img
+        src={imageUrl}
+        alt={computedAltText}
+        class={computedImageClass}
+        style={imageStyle}
+        onerror={handleImgError}
+      />
+    </template>
+
+    <template if:false={shouldRenderImage}>
+      <span class={computedTitleClass} style={titleStyle}
+        >{computedInitials}</span
+      >
+    </template>
+  </span>
+</template>

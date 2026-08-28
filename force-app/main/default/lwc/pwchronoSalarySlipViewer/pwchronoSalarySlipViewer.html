@@ -1,0 +1,620 @@
+<template>
+  <!-- Loading state while checking access -->
+  <template lwc:if={accessLoaded}>
+    <template lwc:if={hasAccess}>
+      <div class="page-wrapper no-print">
+        <div class="content min-h-screen bg-gray-50 p-4 md:p-6">
+          <div class="max-w-6xl mx-auto">
+            <!-- Page Header (Standardized) -->
+            <div
+              class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3"
+            >
+              <div class="my-auto mb-2">
+                <h2 class="mb-1 text-2xl font-bold text-gray-900">
+                  My Salary Slips
+                </h2>
+                <p class="text-muted text-sm text-gray-500">
+                  View and download your payroll statements
+                </p>
+              </div>
+            </div>
+
+            <!-- Filters Card -->
+            <div
+              class="bg-white rounded-xl p-4 md:p-6 mb-6 shadow-sm border border-gray-100"
+            >
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <lightning-combobox
+                    label="Employee"
+                    value={selectedEmployeeId}
+                    options={employeeOptions}
+                    onchange={handleEmployeeChange}
+                    disabled={isEmployeeDropdownReadOnly}
+                  >
+                  </lightning-combobox>
+                </div>
+                <div>
+                  <lightning-combobox
+                    label="Year"
+                    value={selectedYear}
+                    options={yearOptions}
+                    onchange={handleYearChange}
+                  >
+                  </lightning-combobox>
+                </div>
+                <div>
+                  <lightning-combobox
+                    label="Month"
+                    value={selectedMonth}
+                    options={monthOptions}
+                    onchange={handleMonthChange}
+                  >
+                  </lightning-combobox>
+                </div>
+              </div>
+            </div>
+
+            <!-- Loading State -->
+            <template lwc:if={isLoading}>
+              <div
+                class="flex flex-col items-center justify-center py-16 gap-4"
+              >
+                <div class="loading-pulse relative w-16 h-16">
+                  <div
+                    class="pulse-ring absolute inset-0 border-3 border-orange-200 rounded-full"
+                  ></div>
+                  <div
+                    class="pulse-dot absolute inset-5 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full"
+                  ></div>
+                </div>
+                <p class="text-gray-500 text-sm">Loading salary slips...</p>
+              </div>
+            </template>
+
+            <!-- Slips Content -->
+            <template lwc:elseif={salarySlips}>
+              <!-- Slips Table Card -->
+              <div
+                class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+              >
+                <div
+                  class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50"
+                >
+                  <h2 class="text-lg font-semibold text-gray-900">
+                    Salary Records
+                  </h2>
+                  <span
+                    class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full"
+                    >{slipCount} records</span
+                  >
+                </div>
+                <div>
+                  <lightning-datatable
+                    key-field="Id"
+                    data={salarySlips}
+                    columns={columns}
+                    hide-checkbox-column
+                    onrowaction={handleRowAction}
+                  >
+                  </lightning-datatable>
+                </div>
+                <!-- Pagination Controls -->
+                <div
+                  class="flex flex-col sm:flex-row items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-100 gap-3"
+                >
+                  <div class="flex items-center gap-2">
+                    <lightning-combobox
+                      value={pageSize}
+                      options={pageSizeOptions}
+                      onchange={handlePageSizeChange}
+                      variant="label-hidden"
+                      class="w-36"
+                    ></lightning-combobox>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="text-sm text-gray-600">{pageInfo}</span>
+                    <div class="flex gap-1">
+                      <button
+                        class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        onclick={handlePrevPage}
+                        disabled={isPrevDisabled}
+                      >
+                        ← Prev
+                      </button>
+                      <button
+                        class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        onclick={handleNextPage}
+                        disabled={isNextDisabled}
+                      >
+                        Next →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- Empty State -->
+            <template lwc:else>
+              <div
+                class="bg-white rounded-2xl shadow-sm border border-gray-100 text-center py-16 px-6"
+              >
+                <div
+                  class="w-20 h-20 mx-auto mb-6 flex items-center justify-center bg-gray-100 rounded-full"
+                >
+                  <lightning-icon
+                    icon-name="utility:money"
+                    size="large"
+                    class="text-gray-400"
+                  ></lightning-icon>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                  No Salary Slips Found
+                </h3>
+                <p class="text-gray-500 max-w-xs mx-auto">
+                  No payroll records are available for the selected period.
+                </p>
+              </div>
+            </template>
+
+            <!-- Error State -->
+            <template lwc:if={error}>
+              <div
+                class="flex items-center gap-3 bg-red-50 border border-red-300 rounded-lg p-4 mt-4"
+              >
+                <lightning-icon
+                  icon-name="utility:error"
+                  size="small"
+                  class="text-red-500"
+                ></lightning-icon>
+                <span class="text-red-600 font-medium">{error}</span>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Access Denied -->
+    <template lwc:elseif={accessDenied}>
+      <div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-lg p-8 max-w-md text-center">
+          <div
+            class="w-20 h-20 mx-auto mb-6 flex items-center justify-center bg-red-100 rounded-full"
+          >
+            <lightning-icon
+              icon-name="utility:lock"
+              size="large"
+              class="text-red-500"
+            ></lightning-icon>
+          </div>
+          <h1 class="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
+          <p class="text-gray-600 leading-relaxed">
+            You do not have permission to view Salary Slips. Please contact your
+            administrator.
+          </p>
+        </div>
+      </div>
+    </template>
+  </template>
+
+  <!-- Initial Loading -->
+  <template lwc:else>
+    <div
+      class="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4"
+    >
+      <div class="loading-pulse relative w-16 h-16">
+        <div
+          class="pulse-ring absolute inset-0 border-3 border-orange-200 rounded-full"
+        ></div>
+        <div
+          class="pulse-dot absolute inset-5 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full"
+        ></div>
+      </div>
+      <p class="text-gray-500 text-sm">Loading salary slips...</p>
+    </div>
+  </template>
+
+  <!-- Salary Slip Detail Modal -->
+  <template lwc:if={showDetailModal}>
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 no-print"
+    >
+      <button
+        type="button"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm"
+        aria-label="Close dialog"
+        onclick={closeModal}
+      ></button>
+
+      <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-90vh overflow-hidden animate-slideUp border-0 p-0 relative z-10"
+        aria-label="Salary slip details"
+      >
+        <header
+          class="flex justify-between items-center px-6 py-4 border-b border-gray-200 bg-gray-50"
+        >
+          <h2
+            id="salarySlipDialogTitle"
+            class="text-xl font-semibold text-gray-900"
+          >
+            Salary Slip: {selectedSlipName}
+          </h2>
+          <div class="flex items-center gap-2">
+            <button
+              class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+              onclick={handleOpenEmailModal}
+            >
+              <lightning-icon
+                icon-name="utility:email"
+                size="x-small"
+              ></lightning-icon>
+              Email
+            </button>
+            <button
+              class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors"
+              onclick={handlePrint}
+            >
+              <lightning-icon
+                icon-name="utility:print"
+                size="x-small"
+              ></lightning-icon>
+              Print / PDF
+            </button>
+            <lightning-button-icon
+              icon-name="utility:close"
+              variant="bare"
+              onclick={closeModal}
+              alternative-text="Close"
+            ></lightning-button-icon>
+          </div>
+        </header>
+
+        <div class="p-6 max-h-60vh overflow-y-auto">
+          <template lwc:if={slipDetails}>
+            <!-- Header Summary -->
+            <div
+              class="grid grid-cols-1 md:grid-cols-3 gap-4 p-5 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl mb-6"
+            >
+              <div class="flex flex-col gap-1">
+                <span
+                  class="text-xs font-semibold text-gray-500 uppercase tracking-wide"
+                  >Employee</span
+                >
+                <span class="text-base font-semibold text-gray-900"
+                  >{employeeName}</span
+                >
+              </div>
+              <div class="flex flex-col gap-1">
+                <span
+                  class="text-xs font-semibold text-gray-500 uppercase tracking-wide"
+                  >Pay Period</span
+                >
+                <span class="text-base font-semibold text-gray-900"
+                  >{formattedPeriod}</span
+                >
+              </div>
+              <div class="flex flex-col gap-1 md:text-right">
+                <span
+                  class="text-xs font-semibold text-gray-500 uppercase tracking-wide"
+                  >Net Pay</span
+                >
+                <span class="text-2xl font-bold text-green-600">
+                  <lightning-formatted-number
+                    value={slipDetails.salarySlip.Net_Pay__c}
+                    format-style="currency"
+                    currency-code={currencyCode}
+                  ></lightning-formatted-number>
+                </span>
+              </div>
+            </div>
+
+            <!-- Breakdown Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Earnings -->
+              <div
+                class="border border-gray-200 rounded-xl overflow-hidden earnings-card"
+              >
+                <div
+                  class="flex items-center gap-2 px-4 py-3 bg-gray-50 border-b border-gray-100"
+                >
+                  <lightning-icon
+                    icon-name="utility:trending"
+                    size="x-small"
+                    class="text-green-600"
+                  ></lightning-icon>
+                  <h3 class="text-base font-semibold text-gray-800">
+                    Earnings
+                  </h3>
+                </div>
+                <div class="px-4 py-2">
+                  <template for:each={slipDetails.earnings} for:item="earning">
+                    <div
+                      key={earning.name}
+                      class="flex justify-between py-3 border-b border-gray-100 last:border-b-0"
+                    >
+                      <span class="text-sm text-gray-600">{earning.name}</span>
+                      <span class="text-sm font-medium text-gray-800">
+                        <lightning-formatted-number
+                          value={earning.amount}
+                          format-style="currency"
+                          currency-code={currencyCode}
+                        ></lightning-formatted-number>
+                      </span>
+                    </div>
+                  </template>
+                </div>
+                <div
+                  class="flex justify-between px-4 py-3 bg-gray-50 border-t border-gray-200 font-semibold"
+                >
+                  <span>Total Earnings</span>
+                  <span class="text-green-600">
+                    <lightning-formatted-number
+                      value={slipDetails.salarySlip.Gross_Pay__c}
+                      format-style="currency"
+                      currency-code={currencyCode}
+                    ></lightning-formatted-number>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Deductions -->
+              <div
+                class="border border-gray-200 rounded-xl overflow-hidden deductions-card"
+              >
+                <div
+                  class="flex items-center gap-2 px-4 py-3 bg-gray-50 border-b border-gray-100"
+                >
+                  <lightning-icon
+                    icon-name="utility:dash"
+                    size="x-small"
+                    class="text-red-500"
+                  ></lightning-icon>
+                  <h3 class="text-base font-semibold text-gray-800">
+                    Deductions
+                  </h3>
+                </div>
+                <div class="px-4 py-2">
+                  <template
+                    for:each={slipDetails.deductions}
+                    for:item="deduction"
+                  >
+                    <div
+                      key={deduction.name}
+                      class="flex justify-between py-3 border-b border-gray-100 last:border-b-0"
+                    >
+                      <span class="text-sm text-gray-600"
+                        >{deduction.name}</span
+                      >
+                      <span class="text-sm font-medium text-gray-800">
+                        <lightning-formatted-number
+                          value={deduction.amount}
+                          format-style="currency"
+                          currency-code={currencyCode}
+                        ></lightning-formatted-number>
+                      </span>
+                    </div>
+                  </template>
+                </div>
+                <div
+                  class="flex justify-between px-4 py-3 bg-gray-50 border-t border-gray-200 font-semibold"
+                >
+                  <span>Total Deductions</span>
+                  <span class="text-red-500">
+                    <lightning-formatted-number
+                      value={slipDetails.salarySlip.Total_Deductions__c}
+                      format-style="currency"
+                      currency-code={currencyCode}
+                    ></lightning-formatted-number>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <template lwc:if={isLoadingDetails}>
+            <div class="flex flex-col items-center justify-center py-16 gap-4">
+              <lightning-spinner
+                alternative-text="Loading"
+                size="medium"
+              ></lightning-spinner>
+              <p class="text-gray-500">Loading slip details...</p>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Email Modal -->
+  <template lwc:if={showEmailModal}>
+    <div
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 no-print"
+    >
+      <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-slideUp"
+      >
+        <header
+          class="flex justify-between items-center px-6 py-4 border-b border-gray-200"
+        >
+          <h2 class="text-xl font-bold text-gray-800">Send Salary Slip</h2>
+          <lightning-button-icon
+            icon-name="utility:close"
+            variant="bare"
+            onclick={handleCloseEmailModal}
+            alternative-text="Close"
+          ></lightning-button-icon>
+        </header>
+        <div class="p-6 flex flex-col gap-4">
+          <lightning-input
+            label="To"
+            value={emailTo}
+            disabled
+          ></lightning-input>
+          <lightning-input
+            label="CC"
+            value={emailCc}
+            disabled
+          ></lightning-input>
+          <lightning-input
+            label="Subject"
+            name="emailSubject"
+            value={emailSubject}
+            onchange={handleEmailFieldChange}
+          ></lightning-input>
+          <lightning-input-rich-text
+            label="Body"
+            name="emailBody"
+            value={emailBody}
+            onchange={handleEmailFieldChange}
+          ></lightning-input-rich-text>
+        </div>
+        <footer
+          class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3"
+        >
+          <lightning-button
+            label="Cancel"
+            onclick={handleCloseEmailModal}
+          ></lightning-button>
+          <lightning-button
+            label={sendButtonLabel}
+            variant="brand"
+            onclick={handleSendEmail}
+            disabled={isSendDisabled}
+          ></lightning-button>
+        </footer>
+      </div>
+    </div>
+  </template>
+
+  <!-- Printable View (Hidden by default, visible on print) -->
+  <template lwc:if={slipDetails}>
+    <div class="printable-view hidden">
+      <!-- Letterhead -->
+      <div class="text-center mb-8 border-b-2 border-gray-800 pb-4">
+        <h1 class="text-3xl font-bold text-gray-900 uppercase tracking-wider">
+          The Lodestone Group
+        </h1>
+        <p class="text-sm text-gray-600 mt-1">
+          123 Corporate Blvd, Business City, ST 12345
+        </p>
+        <p class="text-sm text-gray-600">
+          Phone: (555) 123-4567 | Email: hr@lodestonegroup.com
+        </p>
+      </div>
+
+      <div class="flex justify-between items-end mb-8">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-800">Salary Slip</h2>
+          <p class="text-gray-600">Period: {formattedPeriod}</p>
+        </div>
+        <div class="text-right">
+          <p class="font-bold text-gray-800">{employeeName}</p>
+          <p class="text-gray-600">
+            ID: {slipDetails.salarySlip.Employees__r.Name}
+          </p>
+        </div>
+      </div>
+
+      <table class="w-full mb-8 border-collapse">
+        <thead>
+          <tr class="bg-gray-100 border-b border-gray-300">
+            <th class="text-left p-2 font-bold text-gray-700">Description</th>
+            <th class="text-right p-2 font-bold text-gray-700">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Earnings -->
+          <tr>
+            <td colspan="2" class="p-2 font-bold text-gray-800 bg-gray-50">
+              Earnings
+            </td>
+          </tr>
+          <template for:each={slipDetails.earnings} for:item="earning">
+            <tr key={earning.name} class="border-b border-gray-200">
+              <td class="p-2 text-gray-700 pl-6">{earning.name}</td>
+              <td class="p-2 text-right text-gray-700">
+                <lightning-formatted-number
+                  value={earning.amount}
+                  format-style="currency"
+                  currency-code={currencyCode}
+                ></lightning-formatted-number>
+              </td>
+            </tr>
+          </template>
+          <tr class="font-bold">
+            <td class="p-2 text-gray-800 pl-6">Total Earnings</td>
+            <td class="p-2 text-right text-gray-800">
+              <lightning-formatted-number
+                value={slipDetails.salarySlip.Gross_Pay__c}
+                format-style="currency"
+                currency-code={currencyCode}
+              ></lightning-formatted-number>
+            </td>
+          </tr>
+
+          <!-- Deductions -->
+          <tr>
+            <td colspan="2" class="p-2 font-bold text-gray-800 bg-gray-50 mt-4">
+              Deductions
+            </td>
+          </tr>
+          <template for:each={slipDetails.deductions} for:item="deduction">
+            <tr key={deduction.name} class="border-b border-gray-200">
+              <td class="p-2 text-gray-700 pl-6">{deduction.name}</td>
+              <td class="p-2 text-right text-gray-700">
+                <lightning-formatted-number
+                  value={deduction.amount}
+                  format-style="currency"
+                  currency-code={currencyCode}
+                ></lightning-formatted-number>
+              </td>
+            </tr>
+          </template>
+          <tr class="font-bold">
+            <td class="p-2 text-gray-800 pl-6">Total Deductions</td>
+            <td class="p-2 text-right text-red-600">
+              <lightning-formatted-number
+                value={slipDetails.salarySlip.Total_Deductions__c}
+                format-style="currency"
+                currency-code={currencyCode}
+              ></lightning-formatted-number>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="bg-gray-100 border-t-2 border-gray-800">
+            <td class="p-4 font-bold text-lg text-gray-900">Net Pay</td>
+            <td class="p-4 font-bold text-lg text-right text-green-700">
+              <lightning-formatted-number
+                value={slipDetails.salarySlip.Net_Pay__c}
+                format-style="currency"
+                currency-code={currencyCode}
+              ></lightning-formatted-number>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div
+        class="mt-12 pt-8 border-t border-gray-300 flex justify-between text-sm text-gray-500"
+      >
+        <div>
+          <p>
+            Generated on:
+            <lightning-formatted-date-time
+              value={today}
+              year="numeric"
+              month="long"
+              day="numeric"
+            ></lightning-formatted-date-time>
+          </p>
+        </div>
+        <div class="text-right">
+          <p>Authorized Signature</p>
+        </div>
+      </div>
+    </div>
+  </template>
+</template>

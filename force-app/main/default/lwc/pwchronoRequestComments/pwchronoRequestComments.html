@@ -1,0 +1,55 @@
+<template lwc:render-mode="light">
+  <div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between">
+      <h5 class="mb-0">Comments &amp; History</h5>
+      <span class="badge bg-primary-transparent">{entryCount}</span>
+    </div>
+    <div class="card-body p-0">
+      <!-- Timeline -->
+      <div class="p-3">
+        <template if:true={hasEntries}>
+          <template for:each={entries} for:item="entry">
+            <div key={entry.key} class="d-flex mb-3">
+              <div class="flex-shrink-0 me-3">
+                <span class="avatar avatar-sm avatar-rounded bg-light d-flex align-items-center justify-content-center">
+                  <i class={entry.iconClass}></i>
+                </span>
+              </div>
+              <div class="flex-grow-1">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                  <h6 class="mb-0 fw-medium fs-13">{entry.authorName}</h6>
+                  <span class="text-muted fs-12">{entry.displayDate}</span>
+                </div>
+                <p class="text-muted fs-13 mb-0">{entry.text}</p>
+              </div>
+            </div>
+          </template>
+        </template>
+        <template if:false={hasEntries}>
+          <p class="text-muted text-center py-3 mb-0">No comments yet.</p>
+        </template>
+      </div>
+
+      <!-- Add Comment -->
+      <template if:true={allowNewComment}>
+        <div class="border-top p-3">
+          <div class="d-flex">
+            <div class="flex-grow-1 me-2">
+              <textarea
+                class="form-control"
+                rows="2"
+                onchange={handleCommentChange}
+                placeholder="Add a comment..."
+              >{newComment}</textarea>
+            </div>
+            <div class="flex-shrink-0 d-flex align-items-end">
+              <button type="button" class="btn btn-primary btn-sm" onclick={handleAddComment} disabled={isCommentEmpty}>
+                <i class="fa-solid fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+</template>

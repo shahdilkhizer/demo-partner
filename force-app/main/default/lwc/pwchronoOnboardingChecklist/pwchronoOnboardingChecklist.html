@@ -1,0 +1,130 @@
+<template>
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+      >
+        <!-- Header -->
+        <div
+          class="bg-gradient-to-r from-sky-500 to-sky-600 px-6 py-5 text-white"
+        >
+          <h1 class="text-xl font-bold">Onboarding Checklist</h1>
+          <p class="text-sm text-white/80 mt-1">
+            Complete your onboarding tasks
+          </p>
+        </div>
+
+        <div class="p-4 md:p-6">
+          <!-- Loading State -->
+          <template if:true={isLoading}>
+            <div class="flex items-center justify-center py-12">
+              <div
+                class="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600"
+              ></div>
+              <span class="ml-3 text-gray-600">Loading tasks...</span>
+            </div>
+          </template>
+
+          <template if:false={isLoading}>
+            <!-- Progress Bar -->
+            <div class="mb-6">
+              <div
+                class="flex items-center justify-between text-sm text-gray-600 mb-2"
+              >
+                <span class="font-medium">Progress</span>
+                <span class="font-bold text-sky-600">{progress}%</span>
+              </div>
+              <lightning-progress-bar
+                value={progress}
+                variant="circular"
+              ></lightning-progress-bar>
+            </div>
+
+            <!-- Task List -->
+            <template if:true={tasks}>
+              <template if:true={hasTasks}>
+                <div class="space-y-3">
+                  <template for:each={tasks} for:item="task">
+                    <div
+                      key={task.Id}
+                      class="flex items-start gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                    >
+                      <div class="flex-shrink-0 mt-1">
+                        <lightning-icon
+                          icon-name={task.iconName}
+                          size="small"
+                          variant={task.iconVariant}
+                        ></lightning-icon>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                          <h3 class="text-base font-semibold text-gray-800">
+                            {task.Name}
+                          </h3>
+                          <template if:true={task.Is_Mandatory__c}>
+                            <span
+                              class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800"
+                            >
+                              Mandatory
+                            </span>
+                          </template>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">
+                          {task.Description__c}
+                        </p>
+                        <div
+                          class="flex items-center gap-4 text-xs text-gray-500"
+                        >
+                          <span
+                            >Due:
+                            <lightning-formatted-date-time
+                              value={task.Due_Date__c}
+                            ></lightning-formatted-date-time
+                          ></span>
+                          <span>Status: {task.Status__c}</span>
+                        </div>
+                      </div>
+                      <template if:false={task.isCompleted}>
+                        <lightning-button-icon
+                          icon-name="utility:check"
+                          variant="brand"
+                          alternative-text="Mark as Complete"
+                          title="Mark as Complete"
+                          data-id={task.Id}
+                          onclick={handleMarkComplete}
+                        ></lightning-button-icon>
+                      </template>
+                    </div>
+                  </template>
+                </div>
+              </template>
+              <template if:false={hasTasks}>
+                <div
+                  class="flex flex-col items-center justify-center py-12 text-center"
+                >
+                  <div
+                    class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"
+                  >
+                    <lightning-icon
+                      icon-name="utility:task"
+                      size="medium"
+                      class="text-gray-400"
+                    ></lightning-icon>
+                  </div>
+                  <p class="text-gray-500">No onboarding tasks assigned.</p>
+                </div>
+              </template>
+            </template>
+            <template if:true={error}>
+              <div
+                class="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600"
+              >
+                {error}
+              </div>
+            </template>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

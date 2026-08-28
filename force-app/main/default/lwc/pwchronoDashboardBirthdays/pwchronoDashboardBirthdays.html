@@ -1,0 +1,47 @@
+<template>
+  <div class="card flex-fill">
+    <div
+      class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
+    >
+      <h5 class="mb-2">Birthdays</h5>
+      <a href="javascript:void(0);" class="btn btn-light btn-md mb-2"
+        >View All</a
+      >
+    </div>
+    <div class="card-body pb-1">
+      <template for:each={birthdays} for:item="group">
+        <h6 key={group.date} class="mb-2">{group.date}</h6>
+        <template for:each={group.people} for:item="person">
+          <div
+            key={person.id}
+            class="bg-light p-2 border border-dashed rounded-top mb-3"
+          >
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center">
+                <a href="javascript:void(0);" class="d-inline-flex">
+                  <c-pwchrono-avatar
+                    container-class="avatar avatar-rounded"
+                    image-url={person.avatarUrl}
+                    name={person.name}
+                    alt-text={person.name}
+                    image-class="rounded-circle"
+                    title-class="initial-wrap"
+                    fallback-bg-class="bg-secondary"
+                  ></c-pwchrono-avatar>
+                </a>
+                <div class="ms-2 overflow-hidden">
+                  <h6 class="fs-medium">{person.name}</h6>
+                  <p class="fs-13">{person.role}</p>
+                </div>
+              </div>
+              <a href="javascript:void(0);" class="btn btn-secondary btn-xs"
+                ><i class="fa-solid fa-cake-candles me-1" aria-hidden="true"></i
+                >Send</a
+              >
+            </div>
+          </div>
+        </template>
+      </template>
+    </div>
+  </div>
+</template>

@@ -1,0 +1,232 @@
+<template>
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <!-- PwChrono Standard Header -->
+      <div
+        class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3"
+      >
+        <div class="my-auto mb-2">
+          <h2 class="mb-1 text-2xl font-bold text-gray-900">Training Portal</h2>
+          <p class="text-muted text-sm text-gray-500">
+            Access training programs and resources
+          </p>
+        </div>
+        <div class="d-flex my-xl-auto right-content"></div>
+      </div>
+
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+      >
+        <div class="p-4 md:p-6">
+          <lightning-tabset>
+            <lightning-tab label="Upcoming Trainings">
+              <div class="py-4">
+                <template if:true={hasUpcomingTrainings}>
+                  <div
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                  >
+                    <template for:each={upcomingTrainings} for:item="training">
+                      <div
+                        key={training.Id}
+                        class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                      >
+                        <div class="p-5">
+                          <h3 class="text-lg font-bold text-gray-800 mb-2">
+                            {training.Training_Program__r.Name}
+                          </h3>
+                          <p class="text-sm text-gray-600 mb-4 line-clamp-2">
+                            {training.Training_Program__r.Description__c}
+                          </p>
+                          <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <p
+                                class="text-xs text-gray-500 uppercase tracking-wide font-medium"
+                              >
+                                Date
+                              </p>
+                              <p class="text-gray-800">
+                                <lightning-formatted-date-time
+                                  value={training.Start_Date__c}
+                                ></lightning-formatted-date-time>
+                              </p>
+                            </div>
+                            <div>
+                              <p
+                                class="text-xs text-gray-500 uppercase tracking-wide font-medium"
+                              >
+                                Location
+                              </p>
+                              <p class="text-gray-800">
+                                {training.Location__c}
+                              </p>
+                            </div>
+                            <div>
+                              <p
+                                class="text-xs text-gray-500 uppercase tracking-wide font-medium"
+                              >
+                                Trainer
+                              </p>
+                              <p class="text-gray-800">
+                                {training.Training_Program__r.Trainer__c}
+                              </p>
+                            </div>
+                            <div>
+                              <p
+                                class="text-xs text-gray-500 uppercase tracking-wide font-medium"
+                              >
+                                Duration
+                              </p>
+                              <p class="text-gray-800">
+                                {training.Training_Program__r.Duration_Hours__c}
+                                Hours
+                              </p>
+                            </div>
+                          </div>
+                          <div class="pt-4 mt-4 border-t border-gray-200">
+                            <lightning-button
+                              label="Register"
+                              variant="brand"
+                              onclick={handleRegister}
+                              data-id={training.Id}
+                            ></lightning-button>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+                <template if:false={hasUpcomingTrainings}>
+                  <div
+                    class="flex flex-col items-center justify-center py-12 text-center"
+                  >
+                    <div
+                      class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"
+                    >
+                      <lightning-icon
+                        icon-name="utility:education"
+                        size="medium"
+                        class="text-gray-400"
+                      ></lightning-icon>
+                    </div>
+                    <p class="text-gray-500">
+                      No upcoming trainings scheduled.
+                    </p>
+                  </div>
+                </template>
+              </div>
+            </lightning-tab>
+            <lightning-tab label="My Registrations">
+              <div class="py-4">
+                <!-- Loading State -->
+                <template if:true={isRegistrationsLoading}>
+                  <div class="flex flex-col items-center justify-center py-12">
+                    <div
+                      class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"
+                    ></div>
+                    <p class="text-gray-500">Loading registrations...</p>
+                  </div>
+                </template>
+
+                <template if:false={isRegistrationsLoading}>
+                  <!-- Filters -->
+                  <div class="flex flex-wrap gap-4 mb-4 items-end">
+                    <div class="flex-1 min-w-[200px]">
+                      <label
+                        for="searchFilter"
+                        class="block text-xs font-medium text-gray-600 mb-1"
+                        >Search</label
+                      >
+                      <input
+                        id="searchFilter"
+                        type="text"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Search programs..."
+                        value={searchFilter}
+                        onkeyup={handleSearchFilter}
+                      />
+                    </div>
+                    <div class="w-[100px]">
+                      <span class="block text-xs font-medium text-gray-600 mb-1"
+                        >Per Page</span
+                      >
+                      <lightning-combobox
+                        label="Per Page"
+                        value={pageSize}
+                        options={pageSizeOptions}
+                        onchange={handlePageSizeChange}
+                        variant="label-hidden"
+                      >
+                      </lightning-combobox>
+                    </div>
+                  </div>
+
+                  <template if:true={hasMyRegistrations}>
+                    <div
+                      class="overflow-x-auto rounded-xl border border-gray-200"
+                    >
+                      <lightning-datatable
+                        key-field="Id"
+                        data={myRegistrations}
+                        columns={columns}
+                        onrowaction={handleRowAction}
+                        hide-checkbox-column
+                      ></lightning-datatable>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div
+                      class="flex items-center justify-between mt-4 p-3 bg-gray-50 rounded-lg"
+                    >
+                      <span class="text-sm text-gray-600"
+                        >{paginationInfo}</span
+                      >
+                      <div class="flex gap-2 items-center">
+                        <lightning-button-icon
+                          icon-name="utility:chevronleft"
+                          alternative-text="Previous"
+                          onclick={handlePrevPage}
+                          disabled={isPrevDisabled}
+                          variant="border-filled"
+                        >
+                        </lightning-button-icon>
+                        <span class="px-3 py-1 text-sm text-gray-700"
+                          >Page {currentPage} of {totalPages}</span
+                        >
+                        <lightning-button-icon
+                          icon-name="utility:chevronright"
+                          alternative-text="Next"
+                          onclick={handleNextPage}
+                          disabled={isNextDisabled}
+                          variant="border-filled"
+                        >
+                        </lightning-button-icon>
+                      </div>
+                    </div>
+                  </template>
+                  <template if:false={hasMyRegistrations}>
+                    <div
+                      class="flex flex-col items-center justify-center py-12 text-center"
+                    >
+                      <div
+                        class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"
+                      >
+                        <lightning-icon
+                          icon-name="utility:check"
+                          size="medium"
+                          class="text-gray-400"
+                        ></lightning-icon>
+                      </div>
+                      <p class="text-gray-500">
+                        You have not registered for any trainings.
+                      </p>
+                    </div>
+                  </template>
+                </template>
+              </div>
+            </lightning-tab>
+          </lightning-tabset>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

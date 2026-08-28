@@ -1,0 +1,61 @@
+<template lwc:render-mode="light">
+  <!-- Action Bar -->
+  <template if:true={showActions}>
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <template if:true={canApprove}>
+        <button type="button" class="btn btn-success d-flex align-items-center" onclick={handleApprove}>
+          <i class="fa-solid fa-check me-1"></i>Approve
+        </button>
+      </template>
+      <template if:true={canReject}>
+        <button type="button" class="btn btn-danger d-flex align-items-center" onclick={handleRejectClick}>
+          <i class="fa-solid fa-xmark me-1"></i>Reject
+        </button>
+      </template>
+      <template if:true={canCancel}>
+        <button type="button" class="btn btn-warning d-flex align-items-center" onclick={handleCancelClick}>
+          <i class="fa-solid fa-ban me-1"></i>Cancel
+        </button>
+      </template>
+    </div>
+  </template>
+
+  <!-- Reject / Cancel Reason Modal -->
+  <template if:true={showReasonModal}>
+    <dialog open tabindex="-1" class="slds-modal slds-fade-in-open">
+      <div class="slds-modal__container">
+        <div class="slds-modal__header">
+          <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" onclick={handleCloseModal}>
+            <i class="fa-solid fa-xmark"></i>
+            <span class="slds-assistive-text">Close</span>
+          </button>
+          <h2 class="slds-modal__title">{modalTitle}</h2>
+        </div>
+        <div class="slds-modal__content slds-p-around_medium">
+          <div class="slds-form-element">
+            <label class="slds-form-element__label" for="reason-input">
+              <abbr class="slds-required" title="required">*</abbr>
+              {reasonLabel}
+            </label>
+            <div class="slds-form-element__control">
+              <textarea
+                id="reason-input"
+                class="form-control"
+                rows="3"
+                onchange={handleReasonChange}
+                placeholder={reasonPlaceholder}
+              >{reasonText}</textarea>
+            </div>
+          </div>
+        </div>
+        <div class="slds-modal__footer">
+          <button class="btn btn-white me-2" onclick={handleCloseModal}>Cancel</button>
+          <button class={confirmButtonClass} onclick={handleConfirmAction} disabled={isReasonEmpty}>
+            {confirmButtonLabel}
+          </button>
+        </div>
+      </div>
+    </dialog>
+    <div class="slds-backdrop slds-backdrop_open"></div>
+  </template>
+</template>

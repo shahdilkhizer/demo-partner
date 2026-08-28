@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>58.0</apiVersion>
+    <isExposed>true</isExposed>
+    <targets>
+        <target>lightning__AppPage</target>
+        <target>lightning__RecordPage</target>
+        <target>lightning__HomePage</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig
+      targets="lightning__AppPage,lightning__RecordPage,lightning__HomePage"
+    >
+            <property
+        name="title"
+        type="String"
+        label="Title"
+        description="The main title of the card."
+      />
+            <property
+        name="value"
+        type="String"
+        label="Value"
+        description="The primary value to display."
+      />
+            <property
+        name="trend"
+        type="String"
+        label="Trend"
+        description="The percentage trend (e.g., '5.4' or '-2.1')."
+      />
+            <property
+        name="iconName"
+        type="String"
+        label="Icon Name"
+        description="Salesforce icon name (e.g., utility:up)."
+      />
+            <property
+        name="variant"
+        type="String"
+        label="Variant"
+        datasource="success,warning,danger,info"
+        description="Controls the color scheme."
+      />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

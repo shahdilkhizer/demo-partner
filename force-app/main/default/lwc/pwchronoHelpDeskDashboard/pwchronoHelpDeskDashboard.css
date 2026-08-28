@@ -1,0 +1,26 @@
+/* Cards: shadow only, no borders */
+.card {
+  border: 0 !important;
+  box-shadow: 0 6px 18px rgba(16, 24, 40, 0.08) !important;
+}
+
+.card.shadow-none {
+  border: 0 !important;
+  box-shadow: 0 6px 18px rgba(16, 24, 40, 0.08) !important;
+}
+
+/* Chart canvases should expand inside their containers */
+canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Center text overlays used by gauge sections */
+.gauge-center-text {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-weight: 600;
+  font-size: 12px;
+  pointer-events: none;
+}

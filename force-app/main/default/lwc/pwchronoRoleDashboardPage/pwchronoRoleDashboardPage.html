@@ -1,0 +1,41 @@
+<!--
+  @description       : 
+  @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+  @group             : 
+  @last modified on  : 01-17-2026
+  @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+-->
+<template>
+  <template if:true={isLoggedIn}>
+    <c-pwchrono-main-layout>
+      <div slot="main-content">
+        <template if:true={isAdmin}>
+          <c-pwchrono-admin-dashboard-design></c-pwchrono-admin-dashboard-design>
+        </template>
+        <template if:true={isManager}>
+          <c-pwchrono-new-manager-dashboard></c-pwchrono-new-manager-dashboard>
+        </template>
+        <template if:true={isProjectManager}>
+          <c-pwchrono-project-manager-dashboard></c-pwchrono-project-manager-dashboard>
+        </template>
+        <template if:true={isEmployee}>
+          <c-pwchrono-dashboard-page></c-pwchrono-dashboard-page>
+        </template>
+      </div>
+    </c-pwchrono-main-layout>
+  </template>
+
+  <template if:false={isLoggedIn}>
+    <!-- Keep markup minimal; site header/theme supplies styling. -->
+    <div class="page-wrapper">
+      <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+        <div class="card">
+          <div class="card-body">
+            <h3 class="mb-2">Welcome</h3>
+            <p class="mb-0">Please sign in to view your dashboard.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+</template>

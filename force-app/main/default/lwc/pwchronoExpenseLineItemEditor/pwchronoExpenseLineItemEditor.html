@@ -1,0 +1,190 @@
+<template lwc:render-mode="light">
+  <div class="expense-line-item-editor">
+
+    <!-- Section header -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h6 class="fw-semibold mb-0">
+        Expense Items
+        <span class="badge bg-secondary ms-1" style="font-size:0.7rem">{items.length}</span>
+      </h6>
+      <template if:false={readOnly}>
+        <button type="button" class="btn btn-outline-primary btn-sm" onclick={handleAddItem}>
+          <i class="fa-solid fa-plus me-1"></i>Add Item
+        </button>
+      </template>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive rounded border">
+      <table class="table table-sm mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th style="width:115px">Date</th>
+            <th style="width:160px">Type</th>
+            <th>Description</th>
+            <th style="width:140px">Merchant</th>
+            <th style="width:120px" class="text-end">Amount (MYR)</th>
+            <template if:false={readOnly}>
+              <th style="width:48px"></th>
+            </template>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Existing rows -->
+          <template for:each={items} for:item="item">
+            <tr key={item._key}>
+              <!-- Date -->
+              <td>
+                <template if:false={readOnly}>
+                  <input
+                    type="date"
+                    class="form-control form-control-sm"
+                    value={item.expenseDate}
+                    data-key={item._key}
+                    data-field="expenseDate"
+                    onchange={handleFieldChange}
+                  />
+                </template>
+                <template if:true={readOnly}>
+                  <span class="text-nowrap">{item.expenseDate}</span>
+                </template>
+              </td>
+              <!-- Type -->
+              <td>
+                <template if:false={readOnly}>
+                  <lightning-combobox
+                    variant="label-hidden"
+                    value={item.itemType}
+                    options={typeOptions}
+                    data-key={item._key}
+                    data-field="itemType"
+                    onchange={handleFieldChange}
+                  ></lightning-combobox>
+                </template>
+                <template if:true={readOnly}>
+                  <span class="badge bg-light text-dark border">{item.itemType}</span>
+                </template>
+              </td>
+              <!-- Description -->
+              <td>
+                <template if:false={readOnly}>
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    value={item.description}
+                    placeholder="What was purchased?"
+                    data-key={item._key}
+                    data-field="description"
+                    onchange={handleFieldChange}
+                  />
+                </template>
+                <template if:true={readOnly}>
+                  <span>{item.description}</span>
+                </template>
+              </td>
+              <!-- Merchant -->
+              <td>
+                <template if:false={readOnly}>
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    value={item.merchant}
+                    placeholder="Vendor / merchant"
+                    data-key={item._key}
+                    data-field="merchant"
+                    onchange={handleFieldChange}
+                  />
+                </template>
+                <template if:true={readOnly}>
+                  <span class="text-muted">{item.merchant}</span>
+                </template>
+              </td>
+              <!-- Amount -->
+              <td class="text-end">
+                <template if:false={readOnly}>
+                  <input
+                    type="number"
+                    class="form-control form-control-sm text-end"
+                    value={item.amount}
+                    min="0.01"
+                    step="0.01"
+                    placeholder="0.00"
+                    data-key={item._key}
+                    data-field="amount"
+                    onchange={handleFieldChange}
+                  />
+                </template>
+                <template if:true={readOnly}>
+                  <span class="fw-medium">
+                    <lightning-formatted-number
+                      value={item.amount}
+                      format-style="currency"
+                      currency-code="MYR"
+                      minimum-fraction-digits="2"
+                    ></lightning-formatted-number>
+                  </span>
+                </template>
+              </td>
+              <!-- Remove -->
+              <template if:false={readOnly}>
+                <td class="text-center">
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-link text-danger p-0"
+                    data-key={item._key}
+                    onclick={handleRemoveItem}
+                    title="Remove item"
+                  >
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </td>
+              </template>
+            </tr>
+          </template>
+
+          <!-- Empty state (edit mode) -->
+          <template if:true={showEmptyRow}>
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4" style="font-size:0.875rem">
+                <i class="fa-solid fa-list-ul me-1"></i>
+                No items yet — click <strong>Add Item</strong> to add an expense.
+              </td>
+            </tr>
+          </template>
+
+          <!-- Empty state (read-only) -->
+          <template if:false={hasItems}>
+            <template if:true={readOnly}>
+              <tr>
+                <td colspan="5" class="text-center text-muted py-3" style="font-size:0.875rem">
+                  No expense items.
+                </td>
+              </tr>
+            </template>
+          </template>
+        </tbody>
+
+        <!-- Total footer -->
+        <template if:true={hasItems}>
+          <tfoot class="table-light">
+            <tr>
+              <td colspan="4" class="text-end fw-semibold">Total</td>
+              <td class="text-end fw-bold">
+                <lightning-formatted-number
+                  value={totalAmount}
+                  format-style="currency"
+                  currency-code="MYR"
+                  minimum-fraction-digits="2"
+                ></lightning-formatted-number>
+              </td>
+              <template if:false={readOnly}>
+                <td></td>
+              </template>
+            </tr>
+          </tfoot>
+        </template>
+      </table>
+    </div>
+
+  </div>
+</template>

@@ -1,0 +1,118 @@
+<template lwc:render-mode="light">
+  <div class="row">
+    <!-- Schedules -->
+    <div class="col-xxl-4 d-flex">
+      <div class="card flex-fill">
+        <div
+          class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
+        >
+          <h5 class="mb-2">Schedules</h5>
+          <button
+            type="button"
+            class="btn btn-light btn-md mb-2"
+            onclick={handleViewAllSchedules}
+          >
+            View All
+          </button>
+        </div>
+        <div class="card-body">
+          <template for:each={normalizedSchedules} for:item="sch">
+            <div key={sch.id} class={sch.itemClass}>
+              <span class={sch.badgeClass}>{sch.department}</span>
+              <h6 class="mb-2 text-truncate">{sch.title}</h6>
+              <div class="d-flex align-items-center flex-wrap">
+                <p class="fs-13 mb-1 me-2">
+                  <i
+                    class="fa-solid fa-calendar-days me-2"
+                    aria-hidden="true"
+                  ></i
+                  >{sch.date}
+                </p>
+                <p class="fs-13 mb-1">
+                  <i class="fa-solid fa-clock me-2" aria-hidden="true"></i
+                  >{sch.time}
+                </p>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activities -->
+    <div class="col-xxl-4 col-xl-6 d-flex">
+      <div class="card flex-fill">
+        <div
+          class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
+        >
+          <h5 class="mb-2">Recent Activities</h5>
+          <button
+            type="button"
+            class="btn btn-light btn-md mb-2"
+            onclick={handleViewAllActivities}
+          >
+            View All
+          </button>
+        </div>
+        <div class="card-body">
+          <template if:true={isLoadingActivities}>
+            <template for:each={skeletonItems} for:item="item">
+              <div key={item} class="recent-item">
+                <div class="d-flex justify-content-between">
+                  <div class="d-flex align-items-center w-100">
+                    <span class="avatar flex-shrink-0"></span>
+                    <div class="ms-2 flex-fill">
+                      <div
+                        class="d-flex align-items-center justify-content-between"
+                      >
+                        <h6 class="fs-medium text-truncate">Loading…</h6>
+                        <p class="fs-13">—</p>
+                      </div>
+                      <p class="fs-13">Loading activity</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </template>
+          <template if:false={isLoadingActivities}>
+            <template for:each={normalizedActivities} for:item="act">
+              <div key={act.id} class="recent-item">
+                <div class="d-flex justify-content-between">
+                  <div class="d-flex align-items-center w-100">
+                    <a
+                      href="#"
+                      onclick={handleNoop}
+                      class="avatar flex-shrink-0"
+                    >
+                      <span
+                        class="d-inline-flex align-items-center justify-content-center w-100 h-100"
+                        >{act.initials}</span
+                      >
+                    </a>
+                    <div class="ms-2 flex-fill">
+                      <div
+                        class="d-flex align-items-center justify-content-between"
+                      >
+                        <h6 class="fs-medium text-truncate">{act.name}</h6>
+                        <p class="fs-13">{act.time}</p>
+                      </div>
+                      <p class="fs-13">{act.action}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Birthdays -->
+    <div class="col-xxl-4 d-flex">
+      <c-pwchrono-dashboard-birthdays
+        class="flex-fill w-100"
+      ></c-pwchrono-dashboard-birthdays>
+    </div>
+  </div>
+</template>

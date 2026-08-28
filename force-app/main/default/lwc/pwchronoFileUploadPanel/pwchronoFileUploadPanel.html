@@ -1,0 +1,62 @@
+<template lwc:render-mode="light">
+  <div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between">
+      <h5 class="mb-0">Attachments</h5>
+      <span class="badge bg-primary-transparent">{fileCount}</span>
+    </div>
+    <div class="card-body">
+      <!-- Existing Files -->
+      <template if:true={hasFiles}>
+        <div class="mb-3">
+          <template for:each={files} for:item="file">
+            <div key={file.id} class="d-flex align-items-center justify-content-between py-2 border-bottom">
+              <div class="d-flex align-items-center">
+                <i class="fa-solid fa-file-alt text-primary me-2"></i>
+                <div>
+                  <p class="mb-0 fw-medium fs-13">{file.name}</p>
+                  <template if:true={file.sizeLabel}>
+                    <span class="text-muted fs-12">{file.sizeLabel}</span>
+                  </template>
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <template if:true={file.downloadUrl}>
+                  <a href={file.downloadUrl} class="btn btn-icon btn-sm btn-light" download>
+                    <i class="fa-solid fa-download"></i>
+                  </a>
+                </template>
+                <template if:true={allowRemove}>
+                  <button type="button" class="btn btn-icon btn-sm btn-light" onclick={handleRemoveFile} data-id={file.id}>
+                    <i class="fa-solid fa-trash text-danger"></i>
+                  </button>
+                </template>
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
+
+      <!-- Upload Area -->
+      <template if:true={allowUpload}>
+        <button type="button" class="border border-dashed rounded-3 p-4 text-center d-block w-100 bg-transparent" ondragover={handleDragOver} ondrop={handleDrop} aria-label="File drop zone">
+          <i class="fa-solid fa-cloud-arrow-up text-muted fs-24 mb-2 d-block"></i>
+          <p class="text-muted mb-2">Drag &amp; drop files here or</p>
+          <label class="btn btn-sm btn-primary">
+            Browse Files
+            <input type="file" class="d-none" onchange={handleFileSelected} multiple={multiple} accept={accept} />
+          </label>
+          <template if:true={maxSizeLabel}>
+            <p class="text-muted fs-12 mt-2 mb-0">Max file size: {maxSizeLabel}</p>
+          </template>
+        </button>
+      </template>
+
+      <!-- No files message -->
+      <template if:false={hasFiles}>
+        <template if:false={allowUpload}>
+          <p class="text-muted text-center py-2 mb-0">No attachments.</p>
+        </template>
+      </template>
+    </div>
+  </div>
+</template>

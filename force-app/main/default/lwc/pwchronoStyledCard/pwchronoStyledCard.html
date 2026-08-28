@@ -1,0 +1,13 @@
+<template>
+  <article class="styled-card">
+    <div class="card-header">
+      <h2 class="card-title">{title}</h2>
+      <div class="card-actions">
+        <slot name="actions"></slot>
+      </div>
+    </div>
+    <div class="card-body">
+      <slot></slot>
+    </div>
+  </article>
+</template>

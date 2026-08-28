@@ -1,0 +1,228 @@
+<template>
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+      >
+        <!-- Header -->
+        <div
+          class="bg-gradient-to-r from-zinc-600 to-zinc-700 px-6 py-5 text-white"
+        >
+          <h1 class="text-xl font-bold">PWChrono Role Feature Mapping</h1>
+          <p class="text-sm text-white/80 mt-1">
+            Manage role-based feature access
+          </p>
+        </div>
+
+        <div class="p-4 md:p-6">
+          <template if:true={isLoading}>
+            <div class="flex justify-center items-center p-8">
+              <div
+                class="animate-spin rounded-full h-12 w-12 border-b-2 border-zinc-500"
+              ></div>
+            </div>
+          </template>
+          <template if:false={isLoading}>
+            <!-- Filters -->
+            <div class="flex flex-wrap gap-4 mb-4 items-end">
+              <div class="flex-1 min-w-[150px]">
+                <label
+                  for="featureSearch"
+                  class="block text-xs font-medium text-gray-600 mb-1"
+                  >Search Feature</label
+                >
+                <input
+                  id="featureSearch"
+                  type="text"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-zinc-500 focus:border-zinc-500"
+                  placeholder="Search features..."
+                  value={featureFilter}
+                  onkeyup={handleFeatureFilter}
+                />
+              </div>
+              <div class="w-[160px]">
+                <span class="block text-xs font-medium text-gray-600 mb-1"
+                  >Role</span
+                >
+                <lightning-combobox
+                  label="Role"
+                  value={roleFilter}
+                  options={filterRoleOptions}
+                  onchange={handleRoleFilter}
+                  variant="label-hidden"
+                  placeholder="Filter by role"
+                >
+                </lightning-combobox>
+              </div>
+              <div class="w-[100px]">
+                <span class="block text-xs font-medium text-gray-600 mb-1"
+                  >Per Page</span
+                >
+                <lightning-combobox
+                  label="Per Page"
+                  value={pageSize}
+                  options={pageSizeOptions}
+                  onchange={handlePageSizeChange}
+                  variant="label-hidden"
+                >
+                </lightning-combobox>
+              </div>
+            </div>
+
+            <template if:true={hasMappings}>
+              <div class="overflow-x-auto rounded-xl border border-gray-200">
+                <lightning-datatable
+                  key-field="id"
+                  data={mappings}
+                  columns={columns}
+                  onrowaction={handleRowAction}
+                  hide-checkbox-column
+                ></lightning-datatable>
+              </div>
+
+              <!-- Pagination -->
+              <div
+                class="flex items-center justify-between mt-4 p-3 bg-gray-50 rounded-lg"
+              >
+                <span class="text-sm text-gray-600">{paginationInfo}</span>
+                <div class="flex gap-2 items-center">
+                  <lightning-button-icon
+                    icon-name="utility:chevronleft"
+                    alternative-text="Previous"
+                    onclick={handlePrevPage}
+                    disabled={isPrevDisabled}
+                    variant="border-filled"
+                  >
+                  </lightning-button-icon>
+                  <span class="px-3 py-1 text-sm text-gray-700"
+                    >Page {currentPage} of {totalPages}</span
+                  >
+                  <lightning-button-icon
+                    icon-name="utility:chevronright"
+                    alternative-text="Next"
+                    onclick={handleNextPage}
+                    disabled={isNextDisabled}
+                    variant="border-filled"
+                  >
+                  </lightning-button-icon>
+                </div>
+              </div>
+            </template>
+
+            <template if:false={hasMappings}>
+              <div
+                class="flex flex-col items-center justify-center py-12 text-center bg-gray-50 rounded-xl"
+              >
+                <div
+                  class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"
+                >
+                  <lightning-icon
+                    icon-name="utility:settings"
+                    size="medium"
+                    class="text-gray-400"
+                  ></lightning-icon>
+                </div>
+                <p class="text-gray-500">No role-feature mappings found.</p>
+                <p class="text-sm text-gray-400 mt-1">
+                  Click "New Mapping" to create one.
+                </p>
+              </div>
+            </template>
+          </template>
+
+          <div class="mt-6 pt-4 border-t border-gray-200">
+            <lightning-button
+              label="New Mapping"
+              variant="brand"
+              icon-name="utility:add"
+              onclick={handleNewMapping}
+              disabled={isSaving}
+            ></lightning-button>
+          </div>
+        </div>
+      </div>
+
+      <template if:true={isModalOpen}>
+        <!-- Modal Overlay -->
+        <div
+          class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        >
+          <!-- Modal Container -->
+          <dialog
+            class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-modal-enter"
+            aria-labelledby="role-feature-modal-heading"
+            aria-modal="true"
+            open
+          >
+            <!-- Modal Header -->
+            <div
+              class="px-6 py-4 border-b border-gray-200 flex items-center justify-between"
+            >
+              <h2
+                id="role-feature-modal-heading"
+                class="text-lg font-semibold text-gray-900"
+              >
+                New Role Feature Mapping
+              </h2>
+              <button
+                class="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                onclick={closeModal}
+                type="button"
+              >
+                <svg
+                  class="w-5 h-5 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="px-6 py-4 space-y-4">
+              <lightning-combobox
+                data-id="Role__c"
+                label="Role"
+                value={currentRecord.Role__c}
+                placeholder="Select Role"
+                options={roleOptions}
+                onchange={handleInputChange}
+                required
+              ></lightning-combobox>
+              <lightning-input
+                data-id="Feature__c"
+                label="Feature"
+                value={currentRecord.Feature__c}
+                onchange={handleInputChange}
+                required
+              ></lightning-input>
+            </div>
+
+            <!-- Modal Footer -->
+            <div
+              class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50 rounded-b-2xl"
+            >
+              <lightning-button
+                label="Cancel"
+                onclick={closeModal}
+              ></lightning-button>
+              <lightning-button
+                label="Save"
+                variant="brand"
+                onclick={handleSave}
+                disabled={isSaving}
+              ></lightning-button>
+            </div>
+          </dialog>
+        </div>
+      </template>
+    </div>
+  </div>
+</template>

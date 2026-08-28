@@ -1,0 +1,43 @@
+<!--
+  @description       : 
+  @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+  @group             : 
+  @last modified on  : 01-17-2026
+  @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+-->
+<template lwc:render-mode="light">
+  <!-- Main Wrapper (Classes inactive if CSS not loaded) -->
+  <div class="main-wrapper">
+    <template if:true={shouldRenderPortalChrome}>
+      <c-pwchrono-ui-assets></c-pwchrono-ui-assets>
+
+      <c-pwchrono-header
+        onlogout={handleLogout}
+        onnavigate={handleHeaderNavigate}
+        ontogglesidebar={handleSidebarToggle}
+      >
+      </c-pwchrono-header>
+
+      <c-pwchrono-sidebar
+        features={features}
+        is-salesforce-user={isSalesforceUser}
+        onnavigate={handleHeaderNavigate}
+      >
+      </c-pwchrono-sidebar>
+    </template>
+
+    <!-- Page Content Slot -->
+    <slot name="main-content"></slot>
+
+    <template if:true={shouldRenderPortalChrome}>
+      <!-- Overlay used by the SmartHR template to dismiss the sidebar on mobile -->
+      <button
+        type="button"
+        class="sidebar-overlay"
+        data-region="sidebarOverlay"
+        aria-label="Close sidebar"
+        onclick={handleSidebarOverlayClick}
+      ></button>
+    </template>
+  </div>
+</template>

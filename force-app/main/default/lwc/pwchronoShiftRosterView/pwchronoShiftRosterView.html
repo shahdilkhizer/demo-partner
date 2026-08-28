@@ -1,0 +1,125 @@
+<template>
+  <div class="page-wrapper">
+    <div class="content roster-page container-fluid p-3 pb-0">
+      <!-- Page Header (Standardized) -->
+      <div
+        class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3"
+      >
+        <div class="my-auto mb-2">
+          <h2 class="mb-1 text-2xl font-bold text-gray-900">My Shift Roster</h2>
+          <p class="text-muted text-sm text-gray-500">
+            View your weekly work schedule
+          </p>
+        </div>
+        <div class="week-nav flex items-center gap-3">
+          <lightning-button-icon
+            icon-name="utility:chevronleft"
+            alternative-text="Previous"
+            variant="border-filled"
+            onclick={handlePrevWeek}
+          ></lightning-button-icon>
+          <span class="week-label font-semibold text-gray-700"
+            >{weekLabel}</span
+          >
+          <lightning-button-icon
+            icon-name="utility:chevronright"
+            alternative-text="Next"
+            variant="border-filled"
+            onclick={handleNextWeek}
+          ></lightning-button-icon>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <template if:true={isLoading}>
+        <div class="loading-state">
+          <div class="loading-pulse">
+            <div class="pulse-ring"></div>
+            <div class="pulse-dot"></div>
+          </div>
+          <p>Loading shift schedule...</p>
+        </div>
+      </template>
+
+      <!-- Roster Content -->
+      <template if:false={isLoading}>
+        <!-- Weekly Summary -->
+        <div class="summary-bar">
+          <div class="summary-item">
+            <lightning-icon
+              icon-name="utility:clock"
+              size="x-small"
+            ></lightning-icon>
+            <span>{workingDaysCount} working days</span>
+          </div>
+          <div class="summary-item">
+            <lightning-icon
+              icon-name="utility:date_input"
+              size="x-small"
+            ></lightning-icon>
+            <span>{offDaysCount} days off</span>
+          </div>
+        </div>
+
+        <!-- Shift Cards -->
+        <div class="roster-grid">
+          <template for:each={weekDays} for:item="day">
+            <article
+              key={day.isoDate}
+              class={day.cardClass}
+              data-today={day.isToday}
+            >
+              <div class="day-header">
+                <span class="day-name">{day.dayName}</span>
+                <span class="day-date">{day.dateString}</span>
+                <template if:true={day.isToday}>
+                  <span class="today-badge">Today</span>
+                </template>
+              </div>
+
+              <div class="day-body">
+                <template if:true={day.shift}>
+                  <div class="shift-info">
+                    <div class="shift-name">{day.shift.name}</div>
+                    <div class="shift-time">
+                      <lightning-icon
+                        icon-name="utility:clock"
+                        size="xx-small"
+                      ></lightning-icon>
+                      <span>{day.shift.start} - {day.shift.end}</span>
+                    </div>
+                  </div>
+                </template>
+                <template if:false={day.shift}>
+                  <div class="off-day">
+                    <lightning-icon
+                      icon-name="utility:home"
+                      size="small"
+                    ></lightning-icon>
+                    <span>Day Off</span>
+                  </div>
+                </template>
+              </div>
+            </article>
+          </template>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+          <div class="legend-item">
+            <span class="legend-dot working"></span>
+            <span>Working Day</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot off"></span>
+            <span>Day Off</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot today"></span>
+            <span>Today</span>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+</template>

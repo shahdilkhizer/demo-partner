@@ -1,0 +1,32 @@
+<template lwc:render-mode="light">
+  <div class="row">
+    <!-- Widget Info (left) -->
+    <div class="col-xxl-8 d-flex">
+      <div class="row flex-fill">
+        <template for:each={normalizedCards} for:item="card">
+          <div key={card.key} class="col-md-3 d-flex">
+            <c-pwchrono-stat-card
+              class="flex-fill w-100"
+              title={card.title}
+              value={card.value}
+              variant={card.variant}
+              trend={card.trend}
+              link-text={card.linkText}
+            >
+            </c-pwchrono-stat-card>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Employees By Department (right) -->
+    <div class="col-xxl-4 d-flex">
+      <c-pwchrono-dashboard-employees-section
+        class="flex-fill w-100"
+        employees-by-department={employeesByDepartment}
+        employee-trend={employeeTrend}
+      >
+      </c-pwchrono-dashboard-employees-section>
+    </div>
+  </div>
+</template>

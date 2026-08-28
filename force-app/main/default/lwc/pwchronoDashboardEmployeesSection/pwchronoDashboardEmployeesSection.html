@@ -1,0 +1,48 @@
+<template lwc:render-mode="light">
+  <div class="card flex-fill">
+    <div
+      class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
+    >
+      <h5 class="mb-2">Employees By Department</h5>
+      <div class="dropdown mb-2">
+        <a
+          href="javascript:void(0);"
+          class="btn btn-white border btn-sm d-inline-flex align-items-center"
+        >
+          <i class="fa-solid fa-calendar-days me-1" aria-hidden="true"></i>This
+          Week
+        </a>
+      </div>
+    </div>
+    <div class="card-body">
+      <template for:each={departmentData} for:item="dept">
+        <div key={dept.name} class="mb-3">
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <p class="fs-13 mb-0">{dept.name}</p>
+            <h6 class="fw-medium mb-0">{dept.count}</h6>
+          </div>
+          <div
+            class="progress progress-xs w-100"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow={dept.percent}
+          >
+            <div class={dept.barClass}></div>
+          </div>
+        </div>
+      </template>
+      <template if:true={hasEmployeeTrend}>
+        <p class="fs-13 mb-0">
+          <i
+            class="fa-solid fa-circle me-2 fs-8 text-primary"
+            aria-hidden="true"
+          ></i>
+          No of Employees changed by
+          <span class={employeeTrendValueClass}>{employeeTrend}</span>
+          in last 30 days
+        </p>
+      </template>
+    </div>
+  </div>
+</template>

@@ -1,0 +1,133 @@
+<template lwc:render-mode="light">
+  <!-- Modal overlay -->
+  <div class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+
+        <!-- Header -->
+        <div class="modal-header">
+          <h5 class="modal-title fw-semibold">{modalTitle}</h5>
+          <button type="button" class="btn-close" onclick={handleCancel} aria-label="Close"></button>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body">
+
+          <!-- Loading -->
+          <template if:true={isLoading}>
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" aria-label="Loading">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          </template>
+
+          <template if:false={isLoading}>
+
+            <!-- Validation errors -->
+            <template if:true={hasErrors}>
+              <div class="alert alert-danger">
+                <ul class="mb-0 ps-3">
+                  <template for:each={formErrors} for:item="err">
+                    <li key={err}>{err}</li>
+                  </template>
+                </ul>
+              </div>
+            </template>
+
+            <!-- Header fields -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-3">
+                <label class="form-label fw-medium" style="font-size:0.875rem" for="ecf-claim-date">
+                  Claim Date <span class="text-danger">*</span>
+                </label>
+                <input
+                  id="ecf-claim-date"
+                  type="date"
+                  class="form-control form-control-sm"
+                  value={claimDate}
+                  onchange={handleClaimDateChange}
+                />
+              </div>
+              <div class="col-md-9">
+                <label class="form-label fw-medium" style="font-size:0.875rem" for="ecf-description">
+                  Description <span class="text-danger">*</span>
+                </label>
+                <input
+                  id="ecf-description"
+                  type="text"
+                  class="form-control form-control-sm"
+                  value={description}
+                  placeholder="Brief title for this claim (e.g. Q1 Client Travel)"
+                  onchange={handleDescriptionChange}
+                  maxlength="255"
+                />
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-medium" style="font-size:0.875rem" for="ecf-business-purpose">Business Purpose</label>
+                <textarea
+                  id="ecf-business-purpose"
+                  class="form-control form-control-sm"
+                  rows="2"
+                  placeholder="Describe the business justification for these expenses..."
+                  onchange={handleBusinessPurposeChange}
+                >{businessPurpose}</textarea>
+              </div>
+            </div>
+
+            <!-- Divider -->
+            <hr class="my-0 mb-3" />
+
+            <!-- Line item editor -->
+            <c-pwchrono-expense-line-item-editor
+              value={items}
+              onitemschange={handleItemsChange}
+            ></c-pwchrono-expense-line-item-editor>
+
+          </template>
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer bg-light">
+          <button
+            type="button"
+            class="btn btn-outline-secondary btn-sm"
+            onclick={handleCancel}
+            disabled={isSaving}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-primary btn-sm"
+            onclick={handleSaveDraft}
+            disabled={isSaving}
+          >
+            <template if:true={isSaving}>
+              <span class="spinner-border spinner-border-sm me-1" aria-label="Loading"></span>
+            </template>
+            <template if:false={isSaving}>
+              <i class="fa-regular fa-floppy-disk me-1"></i>
+            </template>
+            Save Draft
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary btn-sm"
+            onclick={handleSaveAndSubmit}
+            disabled={isSaving}
+          >
+            <template if:true={isSaving}>
+              <span class="spinner-border spinner-border-sm me-1" aria-label="Loading"></span>
+            </template>
+            <template if:false={isSaving}>
+              <i class="fa-solid fa-paper-plane me-1"></i>
+            </template>
+            Save &amp; Submit
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</template>

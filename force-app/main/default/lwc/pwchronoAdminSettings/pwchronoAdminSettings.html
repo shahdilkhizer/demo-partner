@@ -1,0 +1,428 @@
+<template>
+  <template if:true={hasAccess}>
+    <div class="page-wrapper">
+      <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+        <div
+          class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+        >
+          <!-- Header -->
+          <div
+            class="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-5 text-white"
+          >
+            <h1 class="text-xl font-bold">Admin Settings Panel</h1>
+            <p class="text-sm text-white/80 mt-1">
+              Configure system modules and user access
+            </p>
+          </div>
+
+          <div class="p-4 md:p-6">
+            <lightning-tabset>
+              <!-- Feature Settings Tab -->
+              <lightning-tab label="Feature Configuration" value="features">
+                <template if:true={featureSettings}>
+                  <div class="py-4 space-y-8">
+                    <!-- Module Toggles -->
+                    <div>
+                      <h3
+                        class="text-base font-semibold text-gray-800 pb-2 border-b border-gray-200 mb-4"
+                      >
+                        Module Enablement
+                      </h3>
+                      <div
+                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                      >
+                        <div class="p-4 bg-gray-50 rounded-xl">
+                          <lightning-input
+                            type="toggle"
+                            label="Payroll Module"
+                            checked={featureSettings.Enable_Payroll_Module__c}
+                            name="Enable_Payroll_Module__c"
+                            onchange={handleFeatureChange}
+                            message-toggle-active="Enabled"
+                            message-toggle-inactive="Disabled"
+                          ></lightning-input>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-xl">
+                          <lightning-input
+                            type="toggle"
+                            label="Recruitment Module"
+                            checked={featureSettings.Enable_Recruitment_Module__c}
+                            name="Enable_Recruitment_Module__c"
+                            onchange={handleFeatureChange}
+                            message-toggle-active="Enabled"
+                            message-toggle-inactive="Disabled"
+                          ></lightning-input>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-xl">
+                          <lightning-input
+                            type="toggle"
+                            label="Performance Module"
+                            checked={featureSettings.Enable_Performance_Module__c}
+                            name="Enable_Performance_Module__c"
+                            onchange={handleFeatureChange}
+                            message-toggle-active="Enabled"
+                            message-toggle-inactive="Disabled"
+                          ></lightning-input>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-xl">
+                          <lightning-input
+                            type="toggle"
+                            label="Training Module"
+                            checked={featureSettings.Enable_Training_Module__c}
+                            name="Enable_Training_Module__c"
+                            onchange={handleFeatureChange}
+                            message-toggle-active="Enabled"
+                            message-toggle-inactive="Disabled"
+                          ></lightning-input>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-xl">
+                          <lightning-input
+                            type="toggle"
+                            label="Self Service Portal"
+                            checked={featureSettings.Enable_Self_Service_Portal__c}
+                            name="Enable_Self_Service_Portal__c"
+                            onchange={handleFeatureChange}
+                            message-toggle-active="Enabled"
+                            message-toggle-inactive="Disabled"
+                          ></lightning-input>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Operational Settings -->
+                    <div>
+                      <h3
+                        class="text-base font-semibold text-gray-800 pb-2 border-b border-gray-200 mb-4"
+                      >
+                        Operational Settings
+                      </h3>
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                          <div class="p-4 bg-gray-50 rounded-xl">
+                            <lightning-input
+                              type="toggle"
+                              label="Enable Leave Encashment"
+                              checked={featureSettings.Enable_Leave_Encashment__c}
+                              name="Enable_Leave_Encashment__c"
+                              onchange={handleFeatureChange}
+                            ></lightning-input>
+                          </div>
+                          <div class="p-4 bg-gray-50 rounded-xl">
+                            <lightning-input
+                              type="toggle"
+                              label="Auto-Approve Attendance"
+                              checked={featureSettings.Auto_Approve_Attendance_Request__c}
+                              name="Auto_Approve_Attendance_Request__c"
+                              onchange={handleFeatureChange}
+                            ></lightning-input>
+                          </div>
+                          <div class="p-4 bg-gray-50 rounded-xl">
+                            <lightning-input
+                              type="toggle"
+                              label="Enable Manager Delegation"
+                              checked={featureSettings.Enable_Manager_Delegation__c}
+                              name="Enable_Manager_Delegation__c"
+                              onchange={handleFeatureChange}
+                            ></lightning-input>
+                          </div>
+                          <div class="p-4 bg-gray-50 rounded-xl">
+                            <lightning-input
+                              type="toggle"
+                              label="Email Notifications"
+                              checked={featureSettings.Notification_Email_Enabled__c}
+                              name="Notification_Email_Enabled__c"
+                              onchange={handleFeatureChange}
+                            ></lightning-input>
+                          </div>
+                        </div>
+                        <div class="space-y-4">
+                          <div class="p-4 bg-gray-50 rounded-xl">
+                            <lightning-input
+                              type="number"
+                              label="Advance Leave Application (Days)"
+                              value={featureSettings.Advance_Leave_Application_Days__c}
+                              name="Advance_Leave_Application_Days__c"
+                              onchange={handleFeatureChange}
+                            ></lightning-input>
+                          </div>
+                          <div class="p-4 bg-gray-50 rounded-xl">
+                            <lightning-input
+                              type="number"
+                              label="Allow Backdated Leave (Days)"
+                              value={featureSettings.Allow_Backdated_Leave_Days__c}
+                              name="Allow_Backdated_Leave_Days__c"
+                              onchange={handleFeatureChange}
+                            ></lightning-input>
+                          </div>
+                          <div class="p-4 bg-gray-50 rounded-xl">
+                            <lightning-input
+                              type="number"
+                              label="Require Medical Cert (Days)"
+                              value={featureSettings.Require_Medical_Certificate_Days__c}
+                              name="Require_Medical_Certificate_Days__c"
+                              onchange={handleFeatureChange}
+                            ></lightning-input>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="flex justify-end pt-4">
+                      <lightning-button
+                        variant="brand"
+                        label="Save Changes"
+                        onclick={handleSave}
+                        disabled={isSaving}
+                      ></lightning-button>
+                    </div>
+                  </div>
+                </template>
+              </lightning-tab>
+
+              <!-- Global Settings Tab -->
+              <lightning-tab
+                label="Global Configuration (Read-Only)"
+                value="global"
+              >
+                <template if:true={globalSettings}>
+                  <div class="py-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 rounded-2xl p-6">
+                      <h3
+                        class="text-base font-semibold text-gray-800 pb-2 border-b border-gray-200 mb-4"
+                      >
+                        Time &amp; Attendance
+                      </h3>
+                      <div class="space-y-3">
+                        <div class="flex justify-between py-2">
+                          <span class="text-sm text-gray-500"
+                            >Standard Working Hours</span
+                          >
+                          <span class="text-sm font-medium text-gray-800"
+                            >{globalSettings.Standard_Working_Hours__c}</span
+                          >
+                        </div>
+                        <div class="flex justify-between py-2">
+                          <span class="text-sm text-gray-500"
+                            >Working Days/Week</span
+                          >
+                          <span class="text-sm font-medium text-gray-800"
+                            >{globalSettings.Working_Days_Per_Week__c}</span
+                          >
+                        </div>
+                        <div class="flex justify-between py-2">
+                          <span class="text-sm text-gray-500"
+                            >Weekend Days</span
+                          >
+                          <span class="text-sm font-medium text-gray-800"
+                            >{globalSettings.Weekend_Day_1__c},
+                            {globalSettings.Weekend_Day_2__c}</span
+                          >
+                        </div>
+                        <div class="flex justify-between py-2">
+                          <span class="text-sm text-gray-500"
+                            >Grace Period (Mins)</span
+                          >
+                          <span class="text-sm font-medium text-gray-800"
+                            >{globalSettings.Default_Grace_Period_Minutes__c}</span
+                          >
+                        </div>
+                        <div class="flex justify-between py-2">
+                          <span class="text-sm text-gray-500">Time Zone</span>
+                          <span class="text-sm font-medium text-gray-800"
+                            >{globalSettings.Time_Zone__c}</span
+                          >
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-2xl p-6">
+                      <h3
+                        class="text-base font-semibold text-gray-800 pb-2 border-b border-gray-200 mb-4"
+                      >
+                        Leave &amp; Policy
+                      </h3>
+                      <div class="space-y-3">
+                        <div class="flex justify-between py-2">
+                          <span class="text-sm text-gray-500"
+                            >Leave Year Start</span
+                          >
+                          <span class="text-sm font-medium text-gray-800"
+                            >{globalSettings.Leave_Year_Start_Month__c}</span
+                          >
+                        </div>
+                        <div class="flex justify-between py-2">
+                          <span class="text-sm text-gray-500"
+                            >Max Consecutive Leave</span
+                          >
+                          <span class="text-sm font-medium text-gray-800"
+                            >{globalSettings.Max_Consecutive_Leave_Days__c}
+                            Days</span
+                          >
+                        </div>
+                        <div class="flex justify-between py-2">
+                          <span class="text-sm text-gray-500"
+                            >Probation Period</span
+                          >
+                          <span class="text-sm font-medium text-gray-800"
+                            >{globalSettings.Probation_Period_Days__c}
+                            Days</span
+                          >
+                        </div>
+                        <div class="flex justify-between py-2">
+                          <span class="text-sm text-gray-500"
+                            >Currency Code</span
+                          >
+                          <span class="text-sm font-medium text-gray-800"
+                            >{globalSettings.Currency_Code__c}</span
+                          >
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-4 italic">
+                    * Global settings are managed via Custom Metadata Types and
+                    cannot be edited here.
+                  </p>
+                </template>
+              </lightning-tab>
+
+              <!-- User Access Management Tab -->
+              <lightning-tab label="User Access" value="users">
+                <div class="py-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <!-- Search Section -->
+                  <div class="lg:col-span-1">
+                    <lightning-input
+                      type="search"
+                      label="Search Portal Users"
+                      placeholder="Type name..."
+                      value={userSearchTerm}
+                      onchange={handleUserSearch}
+                      class="mb-4"
+                    ></lightning-input>
+
+                    <template if:true={userSearchResults.length}>
+                      <div
+                        class="bg-gray-50 rounded-xl border border-gray-200 divide-y divide-gray-200"
+                      >
+                        <template for:each={userSearchResults} for:item="user">
+                          <button
+                            type="button"
+                            key={user.Id}
+                            class="p-4 hover:bg-gray-100 cursor-pointer transition-colors w-full text-left appearance-none bg-transparent border-0 block"
+                            onclick={selectUser}
+                            data-id={user.Id}
+                          >
+                            <p class="font-semibold text-gray-800">
+                              {user.Name}
+                            </p>
+                            <p class="text-sm text-gray-500">{user.Role__c}</p>
+                          </button>
+                        </template>
+                      </div>
+                    </template>
+                  </div>
+
+                  <!-- Edit Section -->
+                  <div class="lg:col-span-2">
+                    <template if:true={selectedUser}>
+                      <div
+                        class="bg-gray-50 rounded-2xl p-6 border border-gray-200"
+                      >
+                        <h3 class="text-lg font-semibold text-gray-800 mb-6">
+                          Edit Access for {selectedUser.Name}
+                        </h3>
+
+                        <div class="mb-6">
+                          <lightning-combobox
+                            name="role"
+                            label="Role"
+                            value={selectedRole}
+                            placeholder="Select Role"
+                            options={roleOptions}
+                            onchange={handleRoleChange}
+                          ></lightning-combobox>
+                        </div>
+
+                        <div class="mb-6">
+                          <lightning-checkbox-group
+                            name="features"
+                            label="Accessible Features"
+                            options={featureOptions}
+                            value={selectedFeatures}
+                            onchange={handleUserFeatureChange}
+                          ></lightning-checkbox-group>
+                        </div>
+
+                        <div class="flex justify-center gap-3">
+                          <lightning-button
+                            label="Cancel"
+                            onclick={cancelUserEdit}
+                          ></lightning-button>
+                          <lightning-button
+                            variant="brand"
+                            label="Save Access"
+                            onclick={saveUserAccess}
+                            disabled={isSaving}
+                          ></lightning-button>
+                        </div>
+                      </div>
+                    </template>
+                    <template if:false={selectedUser}>
+                      <div
+                        class="flex flex-col items-center justify-center py-16 text-center"
+                      >
+                        <div
+                          class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"
+                        >
+                          <lightning-icon
+                            icon-name="utility:user"
+                            size="medium"
+                            class="text-gray-400"
+                          ></lightning-icon>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-600">
+                          Select a user to edit access
+                        </h3>
+                        <p class="text-sm text-gray-400 mt-1">
+                          Search and click on a user from the list
+                        </p>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </lightning-tab>
+            </lightning-tabset>
+
+            <template if:true={error}>
+              <div
+                class="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600"
+              >
+                {error}
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template if:false={hasAccess}>
+    <div class="min-h-[60vh] flex items-center justify-center p-6">
+      <div class="bg-white rounded-2xl shadow-xl p-10 text-center max-w-md">
+        <div
+          class="w-20 h-20 mx-auto mb-6 flex items-center justify-center bg-red-100 rounded-full"
+        >
+          <lightning-icon
+            icon-name="utility:lock"
+            size="large"
+            class="text-red-500"
+          ></lightning-icon>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">Access Denied</h2>
+        <p class="text-gray-500">
+          You do not have permission to view the Admin Settings.
+        </p>
+      </div>
+    </div>
+  </template>
+</template>

@@ -1,0 +1,415 @@
+<template>
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <!-- Breadcrumb -->
+      <div
+        class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3"
+      >
+        <div class="my-auto mb-2">
+          <h2 class="mb-1">Leave Requests</h2>
+          <nav>
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item">
+                <a href="javascript:void(0);" onclick={handleNoop}
+                  ><i class="fa-solid fa-house"></i
+                ></a>
+              </li>
+              <li class="breadcrumb-item">Admin</li>
+              <li class="breadcrumb-item active" aria-current="page">
+                Leave Requests
+              </li>
+            </ol>
+          </nav>
+        </div>
+        <div
+          class="d-flex my-xl-auto right-content align-items-center flex-wrap"
+        >
+          <div class="me-2 mb-2">
+            <div class="dropdown">
+              <a
+                href="javascript:void(0);"
+                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
+                data-bs-toggle="dropdown"
+                onclick={handleNoop}
+              >
+                <i class="fa-solid fa-file-export me-1"></i>Export
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end p-3">
+                <li>
+                  <a
+                    href="javascript:void(0);"
+                    class="dropdown-item rounded-1"
+                    onclick={handleNoop}
+                    ><i class="fa-solid fa-file-pdf me-1"></i>PDF</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="javascript:void(0);"
+                    class="dropdown-item rounded-1"
+                    onclick={handleNoop}
+                    ><i class="fa-solid fa-file-excel me-1"></i>Excel</a
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="mb-2">
+            <button
+              type="button"
+              class="btn btn-primary d-flex align-items-center"
+              onclick={handleNoop}
+            >
+              <i class="fa-solid fa-circle-plus me-2"></i>New Request
+            </button>
+          </div>
+          <div class="head-icons ms-2">
+            <a
+              href="javascript:void(0);"
+              onclick={handleNoop}
+              class=""
+              data-bs-toggle="tooltip"
+              data-bs-placement="top"
+              data-bs-original-title="Collapse"
+              id="collapse-header"
+            >
+              <i class="fa-solid fa-chevron-up"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      <!-- /Breadcrumb -->
+
+      <!-- Leaves Info -->
+      <div class="row">
+        <div class="col-xl-3 col-md-6">
+          <div class="card bg-green-img">
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                  <div class="flex-shrink-0 me-2">
+                    <span
+                      class="avatar avatar-md rounded-circle bg-white d-flex align-items-center justify-content-center"
+                    >
+                      <i class="fa-solid fa-user-check text-success fs-18"></i>
+                    </span>
+                  </div>
+                </div>
+                <div class="text-end">
+                  <p class="mb-1">Approved Leaves</p>
+                  <h4>{approvedCount}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="card bg-pink-img">
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                  <div class="flex-shrink-0 me-2">
+                    <span
+                      class="avatar avatar-md rounded-circle bg-white d-flex align-items-center justify-content-center"
+                    >
+                      <i class="fa-solid fa-user-pen text-pink fs-18"></i>
+                    </span>
+                  </div>
+                </div>
+                <div class="text-end">
+                  <p class="mb-1">Pending Requests</p>
+                  <h4>{pendingCount}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="card bg-yellow-img">
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                  <div class="flex-shrink-0 me-2">
+                    <span
+                      class="avatar avatar-md rounded-circle bg-white d-flex align-items-center justify-content-center"
+                    >
+                      <i class="fa-solid fa-user-xmark text-warning fs-18"></i>
+                    </span>
+                  </div>
+                </div>
+                <div class="text-end">
+                  <p class="mb-1">Rejected Leaves</p>
+                  <h4>{rejectedCount}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="card bg-blue-img">
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                  <div class="flex-shrink-0 me-2">
+                    <span
+                      class="avatar avatar-md rounded-circle bg-white d-flex align-items-center justify-content-center"
+                    >
+                      <i
+                        class="fa-solid fa-circle-question text-info fs-18"
+                      ></i>
+                    </span>
+                  </div>
+                </div>
+                <div class="text-end">
+                  <p class="mb-1">Total Requests</p>
+                  <h4>{totalCount}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- /Leaves Info -->
+
+      <!-- Leaves list -->
+      <div class="card">
+        <div
+          class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3"
+        >
+          <h5>Leave Requests</h5>
+          <div
+            class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3"
+          >
+            <div class="me-3">
+              <div class="input-icon-end position-relative">
+                <input
+                  type="date"
+                  class="form-control"
+                  onchange={handleDateFilter}
+                  placeholder="Select Date"
+                />
+                <span class="input-icon-addon">
+                  <i class="fa-solid fa-chevron-down"></i>
+                </span>
+              </div>
+            </div>
+            <div class="dropdown me-3">
+              <a
+                href="javascript:void(0);"
+                class="dropdown-toggle btn btn-sm btn-white d-inline-flex align-items-center"
+                data-bs-toggle="dropdown"
+                onclick={handleNoop}
+              >
+                {selectedLeaveType}
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end p-3">
+                <li>
+                  <button
+                    type="button"
+                    class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100"
+                    onclick={handleLeaveTypeFilter}
+                    data-value="All"
+                  >
+                    All Types
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100"
+                    onclick={handleLeaveTypeFilter}
+                    data-value="Casual Leave"
+                  >
+                    Casual Leave
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100"
+                    onclick={handleLeaveTypeFilter}
+                    data-value="Medical Leave"
+                  >
+                    Medical Leave
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100"
+                    onclick={handleLeaveTypeFilter}
+                    data-value="Loss of Pay"
+                  >
+                    Loss of Pay
+                  </button>
+                </li>
+              </ul>
+            </div>
+            <div class="dropdown">
+              <a
+                href="javascript:void(0);"
+                class="dropdown-toggle btn btn-sm btn-white d-inline-flex align-items-center"
+                data-bs-toggle="dropdown"
+                onclick={handleNoop}
+              >
+                {selectedStatus}
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end p-3">
+                <li>
+                  <button
+                    type="button"
+                    class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100"
+                    onclick={handleStatusFilter}
+                    data-value="All"
+                  >
+                    All Status
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100"
+                    onclick={handleStatusFilter}
+                    data-value="Approved"
+                  >
+                    Approved
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100"
+                    onclick={handleStatusFilter}
+                    data-value="Pending"
+                  >
+                    Pending
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100"
+                    onclick={handleStatusFilter}
+                    data-value="Rejected"
+                  >
+                    Rejected
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="custom-datatable-filter table-responsive">
+            <table class="table datatable">
+              <thead class="thead-light">
+                <tr>
+                  <th class="no-sort">
+                    <div class="form-check form-check-md">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="select-all"
+                      />
+                    </div>
+                  </th>
+                  <th>Employee</th>
+                  <th>Leave Type</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>No of Days</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template for:each={teamLeaves} for:item="leave">
+                  <tr key={leave.Id}>
+                    <td>
+                      <div class="form-check form-check-md">
+                        <input class="form-check-input" type="checkbox" />
+                      </div>
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center file-name-icon">
+                        <a
+                          href="javascript:void(0);"
+                          onclick={handleNoop}
+                          class="avatar avatar-md border avatar-rounded"
+                        >
+                          <span
+                            class="avatar avatar-md border avatar-rounded d-inline-flex align-items-center justify-content-center"
+                          >
+                            <i class="fa-solid fa-user"></i>
+                          </span>
+                        </a>
+                        <div class="ms-2">
+                          <h6 class="fw-medium">
+                            <a href="javascript:void(0);" onclick={handleNoop}
+                              >{leave.employeeName}</a
+                            >
+                          </h6>
+                          <span class="fs-12 fw-normal">Employee</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <p
+                          class="fs-14 fw-medium d-flex align-items-center mb-0"
+                        >
+                          {leave.leaveTypeName}
+                        </p>
+                        <a
+                          href="javascript:void(0);"
+                          onclick={handleNoop}
+                          class="ms-2"
+                          data-bs-toggle="tooltip"
+                          data-bs-placement="right"
+                          title={leave.Reason__c}
+                        >
+                          <i class="fa-solid fa-circle-info text-info"></i>
+                        </a>
+                      </div>
+                    </td>
+                    <td>{leave.Start_Date__c}</td>
+                    <td>{leave.End_Date__c}</td>
+                    <td>{leave.Total_Days__c} Days</td>
+                    <td>
+                      <span class="badge badge-soft-info"
+                        >{leave.Status__c}</span
+                      >
+                    </td>
+                    <td>
+                      <div class="action-icon d-inline-flex">
+                        <button
+                          type="button"
+                          class="btn btn-icon btn-sm border-0 bg-transparent me-2"
+                          onclick={handleApprove}
+                          data-id={leave.Id}
+                          title="Approve"
+                        >
+                          <i class="fa-solid fa-check"></i>
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-icon btn-sm border-0 bg-transparent"
+                          onclick={handleReject}
+                          data-id={leave.Id}
+                          title="Reject"
+                        >
+                          <i class="fa-solid fa-xmark"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <!-- /Leaves list -->
+    </div>
+  </div>
+</template>

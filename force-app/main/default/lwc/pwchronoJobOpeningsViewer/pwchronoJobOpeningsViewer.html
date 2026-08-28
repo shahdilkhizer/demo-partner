@@ -1,0 +1,228 @@
+<template>
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <!-- Page Header (Standardized) -->
+      <div
+        class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3"
+      >
+        <div class="my-auto mb-2">
+          <h2 class="mb-1 text-2xl font-bold text-gray-900">
+            Internal Job Postings
+          </h2>
+          <p class="text-muted text-sm text-gray-500">
+            Explore career opportunities and refer candidates
+          </p>
+        </div>
+      </div>
+
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+      >
+        <!-- Header Removed (Standardized above) -->
+
+        <div class="p-4 md:p-6">
+          <!-- Loading State -->
+          <template if:true={isLoading}>
+            <div class="flex items-center justify-center py-12">
+              <div
+                class="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-600"
+              ></div>
+              <span class="ml-3 text-gray-600">Loading job openings...</span>
+            </div>
+          </template>
+
+          <template if:false={isLoading}>
+            <template if:true={hasJobs}>
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <template for:each={jobs} for:item="job">
+                  <div
+                    key={job.Id}
+                    class="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                  >
+                    <div class="p-5">
+                      <h3 class="text-lg font-bold text-gray-800 mb-3">
+                        {job.designationName}
+                      </h3>
+                      <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <p
+                            class="text-xs text-gray-500 uppercase tracking-wide font-medium"
+                          >
+                            Department
+                          </p>
+                          <p class="text-sm text-gray-800">
+                            {job.departmentName}
+                          </p>
+                        </div>
+                        <div>
+                          <p
+                            class="text-xs text-gray-500 uppercase tracking-wide font-medium"
+                          >
+                            Positions
+                          </p>
+                          <p class="text-sm text-gray-800">
+                            {job.No_of_Positions__c}
+                          </p>
+                        </div>
+                        <div>
+                          <p
+                            class="text-xs text-gray-500 uppercase tracking-wide font-medium"
+                          >
+                            Closing Date
+                          </p>
+                          <p class="text-sm text-gray-800">
+                            <lightning-formatted-date-time
+                              value={job.Closing_Date__c}
+                            ></lightning-formatted-date-time>
+                          </p>
+                        </div>
+                      </div>
+                      <div class="mb-4">
+                        <p
+                          class="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1"
+                        >
+                          Description
+                        </p>
+                        <p class="text-sm text-gray-700 line-clamp-3">
+                          {job.Job_Description__c}
+                        </p>
+                      </div>
+                      <div class="pt-3 border-t border-gray-200">
+                        <lightning-button
+                          label="Refer Candidate"
+                          variant="brand"
+                          onclick={handleRefer}
+                          data-id={job.Id}
+                          data-title={job.designationName}
+                        ></lightning-button>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </template>
+            <template if:false={hasJobs}>
+              <div
+                class="flex flex-col items-center justify-center py-12 text-center"
+              >
+                <div
+                  class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"
+                >
+                  <lightning-icon
+                    icon-name="utility:work_order"
+                    size="medium"
+                    class="text-gray-400"
+                  ></lightning-icon>
+                </div>
+                <p class="text-gray-500">No open positions at the moment.</p>
+              </div>
+            </template>
+          </template>
+        </div>
+      </div>
+
+      <!-- Referral Modal -->
+      <template if:true={isModalOpen}>
+        <div
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        >
+          <div
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-modal-enter"
+          >
+            <!-- Modal Header -->
+            <div
+              class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-rose-500 to-rose-600 text-white"
+            >
+              <h2 class="text-lg font-bold">
+                Refer Candidate for {selectedJobTitle}
+              </h2>
+              <button
+                class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
+                title="Close"
+                onclick={closeModal}
+              >
+                <lightning-icon
+                  icon-name="utility:close"
+                  size="small"
+                  class="text-white"
+                ></lightning-icon>
+              </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <lightning-input
+                    label="First Name"
+                    name="firstName"
+                    value={referral.firstName}
+                    onchange={handleFieldChange}
+                    required
+                  ></lightning-input>
+                </div>
+                <div>
+                  <lightning-input
+                    label="Last Name"
+                    name="lastName"
+                    value={referral.lastName}
+                    onchange={handleFieldChange}
+                    required
+                  ></lightning-input>
+                </div>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <lightning-input
+                    type="email"
+                    label="Email"
+                    name="email"
+                    value={referral.email}
+                    onchange={handleFieldChange}
+                    required
+                  ></lightning-input>
+                </div>
+                <div>
+                  <lightning-input
+                    type="tel"
+                    label="Phone"
+                    name="phone"
+                    value={referral.phone}
+                    onchange={handleFieldChange}
+                    required
+                  ></lightning-input>
+                </div>
+              </div>
+              <div>
+                <lightning-input
+                  type="number"
+                  label="Experience (Years)"
+                  name="experience"
+                  value={referral.experience}
+                  step="0.1"
+                  onchange={handleFieldChange}
+                  required
+                ></lightning-input>
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div
+              class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50"
+            >
+              <lightning-button
+                label="Cancel"
+                onclick={closeModal}
+              ></lightning-button>
+              <lightning-button
+                label="Submit Referral"
+                variant="brand"
+                onclick={handleSubmit}
+              ></lightning-button>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+</template>

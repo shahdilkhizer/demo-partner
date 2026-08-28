@@ -1,0 +1,42 @@
+<template>
+  <article class="slds-card slds-m-bottom_small">
+    <div class="slds-card__body slds-card__body_inner">
+      <div class="slds-grid slds-wrap slds-gutters">
+        <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3">
+          <p class="slds-text-heading_small slds-truncate" title={subject}>
+            {subject}
+          </p>
+          <p class="slds-text-body_small slds-text-color_weak">
+            Case #{caseNumber}
+          </p>
+        </div>
+
+        <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-6">
+          <p class="slds-text-title">Status</p>
+          <p class="slds-truncate" title={status}>{status}</p>
+        </div>
+
+        <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-6">
+          <p class="slds-text-title">Due</p>
+          <template if:true={hasDueDate}>
+            <lightning-formatted-date-time
+              value={dueDate}
+              year="numeric"
+              month="short"
+              day="2-digit"
+            ></lightning-formatted-date-time>
+          </template>
+          <template if:false={hasDueDate}>
+            <span class="slds-text-color_weak">—</span>
+          </template>
+        </div>
+      </div>
+
+      <template if:true={priority}>
+        <div class="slds-m-top_x-small">
+          <lightning-badge label={priority}></lightning-badge>
+        </div>
+      </template>
+    </div>
+  </article>
+</template>

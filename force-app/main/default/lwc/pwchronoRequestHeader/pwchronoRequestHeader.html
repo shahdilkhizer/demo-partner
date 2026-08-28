@@ -1,0 +1,23 @@
+<template lwc:render-mode="light">
+  <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+    <div class="d-flex align-items-center">
+      <div class="me-3">
+        <h4 class="mb-0 fw-semibold">{recordName}</h4>
+        <span class="text-muted fs-13">{recordType}</span>
+      </div>
+      <c-pwchrono-request-status-badge status={status}></c-pwchrono-request-status-badge>
+    </div>
+    <div class="text-end">
+      <template if:true={hasMetadata}>
+        <p class="mb-0 text-muted fs-13">
+          <template if:true={submittedBy}>
+            <span>By <strong>{submittedBy}</strong></span>
+          </template>
+          <template if:true={submittedDate}>
+            <span class="ms-2">on {submittedDate}</span>
+          </template>
+        </p>
+      </template>
+    </div>
+  </div>
+</template>

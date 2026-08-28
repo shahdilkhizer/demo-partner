@@ -1,0 +1,114 @@
+<template lwc:render-mode="light">
+  <div class="row">
+    <!-- Jobs Applicants -->
+    <div class="col-xxl-4 col-xl-6 d-flex">
+      <div class="card flex-fill">
+        <div
+          class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
+        >
+          <h5 class="mb-2">Jobs Applicants</h5>
+          <a
+            href="javascript:void(0);"
+            class="btn btn-light btn-md mb-2"
+            onclick={handleViewAllApplicants}
+            >View All</a
+          >
+        </div>
+        <div class="card-body">
+          <template if:true={hasJobApplicants}>
+            <template for:each={jobApplicants} for:item="a">
+              <div
+                key={a.Id}
+                class="d-flex align-items-center justify-content-between mb-4"
+              >
+                <div class="d-flex align-items-center">
+                  <a
+                    href="javascript:void(0);"
+                    class="avatar overflow-hidden flex-shrink-0"
+                  >
+                    <span
+                      class="d-inline-flex align-items-center justify-content-center w-100 h-100"
+                      >{a.initials}</span
+                    >
+                  </a>
+                  <div class="ms-2 overflow-hidden">
+                    <p class="text-dark fw-medium text-truncate mb-0">
+                      {a.Name}
+                    </p>
+                    <span class="fs-13 d-inline-flex align-items-center">
+                      {a.Job_Opening__r.Position_Title__c}
+                    </span>
+                  </div>
+                </div>
+                <span class="badge badge-secondary badge-xs"
+                  >{a.Status__c}</span
+                >
+              </div>
+            </template>
+          </template>
+          <template if:false={hasJobApplicants}>
+            <p class="fs-13 mb-0">No job applicants yet</p>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Employees -->
+    <div class="col-xxl-4 col-xl-6 d-flex">
+      <c-pwchrono-dashboard-employees-table></c-pwchrono-dashboard-employees-table>
+    </div>
+
+    <!-- Todo -->
+    <div class="col-xxl-4 col-xl-6 d-flex">
+      <div class="card flex-fill">
+        <div
+          class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
+        >
+          <h5 class="mb-2">Todo</h5>
+          <div class="d-flex align-items-center">
+            <div class="dropdown mb-2 me-2">
+              <a
+                href="javascript:void(0);"
+                class="btn btn-white border btn-sm d-inline-flex align-items-center"
+              >
+                <i class="fa-solid fa-calendar-days me-1" aria-hidden="true"></i
+                >Today
+              </a>
+            </div>
+            <a
+              href="javascript:void(0);"
+              class="btn btn-primary btn-icon btn-xs rounded-circle d-flex align-items-center justify-content-center p-0 mb-2"
+            >
+              <i class="fa-solid fa-plus fs-16" aria-hidden="true"></i>
+            </a>
+          </div>
+        </div>
+        <div class="card-body">
+          <template if:true={hasTodoTasks}>
+            <template for:each={todoTasks} for:item="todo" for:index="idx">
+              <div key={todo.id} class={todo.itemClass}>
+                <i class="fa-solid fa-grip me-2" aria-hidden="true"></i>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    checked={todo.done}
+                    data-id={todo.id}
+                    onchange={handleTodoToggle}
+                    id={todo.inputId}
+                  />
+                  <label class={todo.textClass} for={todo.inputId}
+                    >{todo.title}</label
+                  >
+                </div>
+              </div>
+            </template>
+          </template>
+          <template if:false={hasTodoTasks}>
+            <p class="fs-13 mb-0">No pending tasks</p>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

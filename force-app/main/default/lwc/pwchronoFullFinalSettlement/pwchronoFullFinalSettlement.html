@@ -1,0 +1,624 @@
+<template>
+    <div class="container-fluid py-4">
+
+        <!-- Page Header -->
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1">
+                        <li class="breadcrumb-item text-muted small">HRMS</li>
+                        <li class="breadcrumb-item active small">Full &amp; Final Settlement</li>
+                    </ol>
+                </nav>
+                <h4 class="fw-bold mb-0">
+                    <i class="fa-solid fa-file-invoice-dollar fa-fw me-2 text-primary"></i>
+                    Full &amp; Final Settlement
+                </h4>
+            </div>
+            <template if:true={isHR}>
+                <button class="btn btn-primary" onclick={handleNew}>
+                    <i class="fa-solid fa-plus fa-fw me-1"></i> New Settlement
+                </button>
+            </template>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm text-center py-3">
+                    <div class="fs-4 fw-bold text-dark">{totalCount}</div>
+                    <div class="small text-muted">Total</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm text-center py-3">
+                    <div class="fs-4 fw-bold text-secondary">{draftCount}</div>
+                    <div class="small text-muted">Draft</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm text-center py-3">
+                    <div class="fs-4 fw-bold text-warning">{submittedCount}</div>
+                    <div class="small text-muted">Submitted</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm text-center py-3">
+                    <div class="fs-4 fw-bold text-success">{paidCount}</div>
+                    <div class="small text-muted">Paid</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter + Table Card -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+                <h6 class="mb-0 fw-semibold">Settlement List</h6>
+                <select class="form-select form-select-sm w-auto" onchange={handleFilterChange}>
+                    <option value="All">All Status</option>
+                    <option value="Draft">Draft</option>
+                    <option value="Submitted">Submitted</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+            </div>
+            <div class="card-body p-0">
+                <!-- Loading -->
+                <template if:true={isLoading}>
+                    <div class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-spinner fa-spin fa-lg me-2"></i> Loading...
+                    </div>
+                </template>
+
+                <!-- Error -->
+                <template if:true={errorMessage}>
+                    <div class="alert alert-danger m-3">{errorMessage}</div>
+                </template>
+
+                <!-- Table -->
+                <template if:false={isLoading}>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Settlement #</th>
+                                    <th>Employee</th>
+                                    <th>Relieving Date</th>
+                                    <th>Department</th>
+                                    <th class="text-end">Total Payable</th>
+                                    <th class="text-end">Total Receivable</th>
+                                    <th class="text-end">Net Payable</th>
+                                    <th>Status</th>
+                                    <th class="text-end pe-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template if:true={hasRecords}>
+                                    <template for:each={settlements} for:item="s">
+                                        <tr key={s.Id}>
+                                            <td class="ps-3 fw-semibold text-primary">{s.Name}</td>
+                                            <td>{s.Employee__r.Full_Name__c}</td>
+                                            <td>{s.Relieving_Date__c}</td>
+                                            <td>{s.Department__r.Name}</td>
+                                            <td class="text-end">{s.Total_Payable__c}</td>
+                                            <td class="text-end">{s.Total_Receivable__c}</td>
+                                            <td class="text-end fw-semibold">{s.Net_Payable__c}</td>
+                                            <td>
+                                                <span class={s._badgeClass}>{s.Status__c}</span>
+                                            </td>
+                                            <td class="text-end pe-3">
+                                                <button
+                                                    class="btn btn-sm btn-outline-secondary me-1"
+                                                    title="View"
+                                                    data-id={s.Id}
+                                                    onclick={handleView}
+                                                >
+                                                    <i class="fa-solid fa-eye fa-fw"></i>
+                                                </button>
+                                                <template if:true={isHR}>
+                                                    <button
+                                                        class="btn btn-sm btn-outline-primary me-1"
+                                                        title="Edit"
+                                                        data-id={s.Id}
+                                                        onclick={handleEdit}
+                                                    >
+                                                        <i class="fa-solid fa-pen fa-fw"></i>
+                                                    </button>
+                                                    <button
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        title="Delete"
+                                                        data-id={s.Id}
+                                                        onclick={handleDelete}
+                                                    >
+                                                        <i class="fa-solid fa-trash fa-fw"></i>
+                                                    </button>
+                                                </template>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </template>
+                                <template if:false={hasRecords}>
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted py-4">
+                                            No settlement records found.
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ─── Create / Edit Modal ─────────────────────────────────────────────── -->
+    <template if:true={showModal}>
+        <div class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-semibold">
+                            <i class="fa-solid fa-file-invoice-dollar fa-fw me-2 text-primary"></i>
+                            {modalTitle}
+                        </h5>
+                        <button class="btn-close" onclick={handleModalClose}></button>
+                    </div>
+                    <div class="modal-body">
+                        <template if:true={modalError}>
+                            <div class="alert alert-danger">{modalError}</div>
+                        </template>
+
+                        <!-- Employee Info -->
+                        <h6 class="fw-semibold text-muted mb-3">Employee Information</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Employee <span class="text-danger">*</span></label>
+                                <select
+                                    class="form-select"
+                                    data-field="Employee__c"
+                                    onchange={handleFieldChange}
+                                >
+                                    <option value="">-- Select Employee --</option>
+                                    <template for:each={employeeOptions} for:item="e">
+                                        <option key={e.value} value={e.value} selected={e.selected}>
+                                            {e.label}
+                                        </option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Employee Name</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    value={currentRecord.Employee_Name__c}
+                                    data-field="Employee_Name__c"
+                                    onchange={handleFieldChange}
+                                />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Company</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    value={currentRecord.Company__c}
+                                    data-field="Company__c"
+                                    onchange={handleFieldChange}
+                                />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Department</label>
+                                <select
+                                    class="form-select"
+                                    data-field="Department__c"
+                                    onchange={handleFieldChange}
+                                >
+                                    <option value="">-- Select Department --</option>
+                                    <template for:each={departmentOptions} for:item="d">
+                                        <option key={d.value} value={d.value} selected={d.selected}>
+                                            {d.label}
+                                        </option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Designation</label>
+                                <select
+                                    class="form-select"
+                                    data-field="Designation__c"
+                                    onchange={handleFieldChange}
+                                >
+                                    <option value="">-- Select Designation --</option>
+                                    <template for:each={designationOptions} for:item="d">
+                                        <option key={d.value} value={d.value} selected={d.selected}>
+                                            {d.label}
+                                        </option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Linked Separation</label>
+                                <select
+                                    class="form-select"
+                                    data-field="Separation__c"
+                                    onchange={handleFieldChange}
+                                >
+                                    <option value="">-- Select Separation --</option>
+                                    <template for:each={separationOptions} for:item="s">
+                                        <option key={s.value} value={s.value} selected={s.selected}>
+                                            {s.label}
+                                        </option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Dates & Status -->
+                        <h6 class="fw-semibold text-muted mb-3">Dates &amp; Status</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Date of Joining</label>
+                                <input
+                                    type="date"
+                                    class="form-control"
+                                    value={currentRecord.Date_of_Joining__c}
+                                    data-field="Date_of_Joining__c"
+                                    onchange={handleFieldChange}
+                                />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Relieving Date <span class="text-danger">*</span></label>
+                                <input
+                                    type="date"
+                                    class="form-control"
+                                    value={currentRecord.Relieving_Date__c}
+                                    data-field="Relieving_Date__c"
+                                    onchange={handleFieldChange}
+                                />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Status</label>
+                                <select
+                                    class="form-select"
+                                    data-field="Status__c"
+                                    onchange={handleFieldChange}
+                                    disabled={isEmployee}
+                                >
+                                    <template for:each={statusOptions} for:item="s">
+                                        <option key={s.value} value={s.value} selected={s.selected}>
+                                            {s.label}
+                                        </option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Payables Table -->
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <h6 class="fw-semibold text-muted mb-0">
+                                <i class="fa-solid fa-circle-plus fa-fw me-1 text-success"></i>
+                                Payable Items
+                            </h6>
+                            <button class="btn btn-sm btn-outline-success" onclick={handleAddPayable}>
+                                <i class="fa-solid fa-plus fa-fw me-1"></i> Add Row
+                            </button>
+                        </div>
+                        <div class="table-responsive mb-4">
+                            <table class="table table-bordered table-sm align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Component</th>
+                                        <th>Reference Document</th>
+                                        <th>Account</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th class="text-center">Remove</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template if:true={payableLines.length}>
+                                        <template for:each={payableLines} for:item="p">
+                                            <tr key={p._key}>
+                                                <td>
+                                                    <input
+                                                        type="text"
+                                                        class="form-control form-control-sm"
+                                                        value={p.Component__c}
+                                                        data-key={p._key}
+                                                        data-field="Component__c"
+                                                        data-table="payable"
+                                                        onchange={handleLineChange}
+                                                        placeholder="e.g. Basic Salary"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        type="text"
+                                                        class="form-control form-control-sm"
+                                                        value={p.Reference_Document__c}
+                                                        data-key={p._key}
+                                                        data-field="Reference_Document__c"
+                                                        data-table="payable"
+                                                        onchange={handleLineChange}
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        type="text"
+                                                        class="form-control form-control-sm"
+                                                        value={p.Account__c}
+                                                        data-key={p._key}
+                                                        data-field="Account__c"
+                                                        data-table="payable"
+                                                        onchange={handleLineChange}
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        type="number"
+                                                        class="form-control form-control-sm"
+                                                        value={p.Amount__c}
+                                                        data-key={p._key}
+                                                        data-field="Amount__c"
+                                                        data-table="payable"
+                                                        onchange={handleLineChange}
+                                                        min="0"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <select
+                                                        class="form-select form-select-sm"
+                                                        data-key={p._key}
+                                                        data-field="Status__c"
+                                                        data-table="payable"
+                                                        onchange={handleLineChange}
+                                                    >
+                                                        <option value="Pending" selected={p._statusPending}>Pending</option>
+                                                        <option value="Paid" selected={p._statusPaid}>Paid</option>
+                                                        <option value="Waived" selected={p._statusWaived}>Waived</option>
+                                                    </select>
+                                                </td>
+                                                <td class="text-center">
+                                                    <button
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        data-key={p._key}
+                                                        data-table="payable"
+                                                        onclick={handleRemoveLine}
+                                                    >
+                                                        <i class="fa-solid fa-times fa-fw"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </template>
+                                    <template if:false={payableLines.length}>
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted small py-2">
+                                                No payable items. Click "Add Row" to begin.
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Receivables Table -->
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <h6 class="fw-semibold text-muted mb-0">
+                                <i class="fa-solid fa-circle-minus fa-fw me-1 text-danger"></i>
+                                Receivable Items
+                            </h6>
+                            <button class="btn btn-sm btn-outline-danger" onclick={handleAddReceivable}>
+                                <i class="fa-solid fa-plus fa-fw me-1"></i> Add Row
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Component</th>
+                                        <th>Reference Document</th>
+                                        <th>Account</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th class="text-center">Remove</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template if:true={receivableLines.length}>
+                                        <template for:each={receivableLines} for:item="r">
+                                            <tr key={r._key}>
+                                                <td>
+                                                    <input
+                                                        type="text"
+                                                        class="form-control form-control-sm"
+                                                        value={r.Component__c}
+                                                        data-key={r._key}
+                                                        data-field="Component__c"
+                                                        data-table="receivable"
+                                                        onchange={handleLineChange}
+                                                        placeholder="e.g. Laptop Recovery"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        type="text"
+                                                        class="form-control form-control-sm"
+                                                        value={r.Reference_Document__c}
+                                                        data-key={r._key}
+                                                        data-field="Reference_Document__c"
+                                                        data-table="receivable"
+                                                        onchange={handleLineChange}
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        type="text"
+                                                        class="form-control form-control-sm"
+                                                        value={r.Account__c}
+                                                        data-key={r._key}
+                                                        data-field="Account__c"
+                                                        data-table="receivable"
+                                                        onchange={handleLineChange}
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        type="number"
+                                                        class="form-control form-control-sm"
+                                                        value={r.Amount__c}
+                                                        data-key={r._key}
+                                                        data-field="Amount__c"
+                                                        data-table="receivable"
+                                                        onchange={handleLineChange}
+                                                        min="0"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <select
+                                                        class="form-select form-select-sm"
+                                                        data-key={r._key}
+                                                        data-field="Status__c"
+                                                        data-table="receivable"
+                                                        onchange={handleLineChange}
+                                                    >
+                                                        <option value="Pending" selected={r._statusPending}>Pending</option>
+                                                        <option value="Recovered" selected={r._statusRecovered}>Recovered</option>
+                                                        <option value="Waived" selected={r._statusWaived}>Waived</option>
+                                                    </select>
+                                                </td>
+                                                <td class="text-center">
+                                                    <button
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        data-key={r._key}
+                                                        data-table="receivable"
+                                                        onclick={handleRemoveLine}
+                                                    >
+                                                        <i class="fa-solid fa-times fa-fw"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </template>
+                                    <template if:false={receivableLines.length}>
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted small py-2">
+                                                No receivable items. Click "Add Row" to begin.
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Net Summary Footer -->
+                    <div class="border-top px-4 py-3 bg-light">
+                        <div class="row justify-content-end g-2 text-end">
+                            <div class="col-auto">
+                                <span class="text-muted small">Total Payable:</span>
+                                <span class="fw-semibold ms-2">{computedTotalPayable}</span>
+                            </div>
+                            <div class="col-auto">
+                                <span class="text-muted small">Total Receivable:</span>
+                                <span class="fw-semibold ms-2">{computedTotalReceivable}</span>
+                            </div>
+                            <div class="col-auto">
+                                <span class="text-muted small">Net Payable / Recoverable:</span>
+                                <span class="fw-bold ms-2 text-primary">{computedNetPayable}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick={handleModalClose}>Cancel</button>
+                        <button class="btn btn-primary" onclick={handleSave} disabled={isSaving}>
+                            <template if:true={isSaving}>
+                                <i class="fa-solid fa-spinner fa-spin fa-fw me-1"></i>
+                            </template>
+                            Save Settlement
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- ─── View Modal ──────────────────────────────────────────────────────── -->
+    <template if:true={showViewModal}>
+        <div class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-semibold">
+                            <i class="fa-solid fa-file-invoice-dollar fa-fw me-2 text-primary"></i>
+                            Settlement Details — {viewRecord.Name}
+                        </h5>
+                        <button class="btn-close" onclick={handleViewClose}></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="small text-muted">Employee</div>
+                                <div class="fw-semibold">{viewRecord.Employee__r.Full_Name__c}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="small text-muted">Employee Name</div>
+                                <div>{viewRecord.Employee_Name__c}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="small text-muted">Company</div>
+                                <div>{viewRecord.Company__c}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="small text-muted">Department</div>
+                                <div>{viewRecord.Department__r.Name}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="small text-muted">Designation</div>
+                                <div>{viewRecord.Designation__r.Name}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="small text-muted">Linked Separation</div>
+                                <div>{viewRecord.Separation__r.Name}</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="small text-muted">Date of Joining</div>
+                                <div>{viewRecord.Date_of_Joining__c}</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="small text-muted">Relieving Date</div>
+                                <div>{viewRecord.Relieving_Date__c}</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="small text-muted">Status</div>
+                                <span class={viewRecord._badgeClass}>{viewRecord.Status__c}</span>
+                            </div>
+                        </div>
+                        <hr />
+                        <div class="row g-3 text-center">
+                            <div class="col-md-4">
+                                <div class="small text-muted">Total Payable</div>
+                                <div class="fs-5 fw-bold text-success">{viewRecord.Total_Payable__c}</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="small text-muted">Total Receivable</div>
+                                <div class="fs-5 fw-bold text-danger">{viewRecord.Total_Receivable__c}</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="small text-muted">Net Payable / Recoverable</div>
+                                <div class="fs-5 fw-bold text-primary">{viewRecord.Net_Payable__c}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick={handleViewClose}>Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+</template>

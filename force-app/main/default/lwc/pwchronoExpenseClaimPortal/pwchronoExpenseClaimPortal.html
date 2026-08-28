@@ -1,0 +1,272 @@
+<!--
+  @description       :
+  @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+  @group             :
+  @last modified on  : 01-17-2026
+  @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+-->
+<template>
+  <c-pwchrono-main-layout>
+    <div slot="main-content">
+      <div class="page-wrapper">
+        <c-pwchrono-header
+          title="Expense Claims"
+          icon-name="standard:service_contract"
+        >
+          <div slot="actions">
+            <lightning-button
+              label="New Claim"
+              icon-name="utility:add"
+              onclick={handleNew}
+              variant="brand"
+            ></lightning-button>
+          </div>
+        </c-pwchrono-header>
+
+        <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+          <template if:true={isLoading}>
+            <div class="card card-body">
+              <div class="d-flex flex-column align-items-center justify-content-center py-5">
+                <div class="spinner-border text-primary mb-3" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mb-0">Loading expense claims...</p>
+              </div>
+            </div>
+          </template>
+
+          <template if:false={isLoading}>
+            <div class="card card-body mb-4">
+              <div class="d-flex flex-wrap gap-3 align-items-end">
+                <div class="flex-grow-1">
+                  <label class="form-label small">Search Description</label>
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    placeholder="Search claims..."
+                    value={searchFilter}
+                    onkeyup={handleSearchFilter}
+                  />
+                </div>
+                <div>
+                  <label class="form-label small">Status</label>
+                  <lightning-combobox
+                    value={statusFilter}
+                    options={statusOptions}
+                    onchange={handleStatusFilter}
+                    variant="label-hidden"
+                    placeholder="Filter by status"
+                  ></lightning-combobox>
+                </div>
+                <div>
+                  <label class="form-label small">Per Page</label>
+                  <lightning-combobox
+                    value={pageSize}
+                    options={pageSizeOptions}
+                    onchange={handlePageSizeChange}
+                    variant="label-hidden"
+                  ></lightning-combobox>
+                </div>
+              </div>
+            </div>
+
+            <template if:true={hasClaims}>
+              <div class="card table-responsive">
+                <lightning-datatable
+                  key-field="Id"
+                  data={claims}
+                  columns={columns}
+                  onrowaction={handleRowAction}
+                  hide-checkbox-column
+                ></lightning-datatable>
+                <div class="d-flex align-items-center justify-content-between p-3 border-top">
+                  <span class="text-muted small">{paginationInfo}</span>
+                  <div class="d-flex gap-2 align-items-center">
+                    <lightning-button-icon
+                      icon-name="utility:chevronleft"
+                      alternative-text="Previous"
+                      onclick={handlePrevPage}
+                      disabled={isPrevDisabled}
+                      variant="border-filled"
+                    ></lightning-button-icon>
+                    <span class="small text-muted">Page {currentPage} of {totalPages}</span>
+                    <lightning-button-icon
+                      icon-name="utility:chevronright"
+                      alternative-text="Next"
+                      onclick={handleNextPage}
+                      disabled={isNextDisabled}
+                      variant="border-filled"
+                    ></lightning-button-icon>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <template if:true={hasNoClaims}>
+              <div class="card card-body text-center py-5">
+                <i class="ti ti-receipt-off fs-1 text-muted d-block mb-2"></i>
+                <p class="text-muted fw-medium mb-1">No expense claims found</p>
+                <p class="text-muted small mb-0">Create a new claim to get started</p>
+              </div>
+            </template>
+          </template>
+        </div>
+      </div>
+    </div>
+  </c-pwchrono-main-layout>
+
+  <template if:true={isModalOpen}>
+    <div class="modal fade show d-block" role="dialog" tabindex="-1">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{modalTitle}</h5>
+            <button type="button" class="btn-close" onclick={closeModal}></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="row g-3 mb-4">
+              <div class="col-12 col-md-4">
+                <lightning-input
+                  type="date"
+                  name="Claim_Date__c"
+                  label="Claim Date"
+                  value={currentClaim.Claim_Date__c}
+                  onchange={handleClaimFieldChange}
+                  required
+                  disabled={isReadOnly}
+                ></lightning-input>
+              </div>
+              <div class="col-12 col-md-8">
+                <lightning-input
+                  type="text"
+                  name="Description__c"
+                  label="Description"
+                  value={currentClaim.Description__c}
+                  onchange={handleClaimFieldChange}
+                  required
+                  disabled={isReadOnly}
+                ></lightning-input>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="mb-0 fw-semibold">Expense Items</h6>
+              <template if:false={isReadOnly}>
+                <lightning-button
+                  label="Add Item"
+                  icon-name="utility:add"
+                  onclick={handleAddItem}
+                  variant="neutral"
+                ></lightning-button>
+              </template>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th class="text-end">Amount</th>
+                    <template if:false={isReadOnly}>
+                      <th class="text-center">Action</th>
+                    </template>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template for:each={currentItems} for:item="item" for:index="index">
+                    <tr key={item.key}>
+                      <td>
+                        <lightning-input
+                          type="date"
+                          variant="label-hidden"
+                          value={item.Date__c}
+                          data-index={index}
+                          name="Date__c"
+                          onchange={handleItemChange}
+                          disabled={isReadOnly}
+                        ></lightning-input>
+                      </td>
+                      <td>
+                        <lightning-combobox
+                          variant="label-hidden"
+                          value={item.Type__c}
+                          options={typeOptions}
+                          data-index={index}
+                          name="Type__c"
+                          onchange={handleItemChange}
+                          disabled={isReadOnly}
+                        ></lightning-combobox>
+                      </td>
+                      <td>
+                        <lightning-input
+                          type="text"
+                          variant="label-hidden"
+                          value={item.Description__c}
+                          data-index={index}
+                          name="Description__c"
+                          onchange={handleItemChange}
+                          disabled={isReadOnly}
+                        ></lightning-input>
+                      </td>
+                      <td class="text-end">
+                        <lightning-input
+                          type="number"
+                          variant="label-hidden"
+                          value={item.Amount__c}
+                          formatter="currency"
+                          step="0.01"
+                          data-index={index}
+                          name="Amount__c"
+                          onchange={handleItemChange}
+                          disabled={isReadOnly}
+                        ></lightning-input>
+                      </td>
+                      <template if:false={isReadOnly}>
+                        <td class="text-center">
+                          <lightning-button-icon
+                            icon-name="utility:delete"
+                            alternative-text="Delete"
+                            title="Delete"
+                            data-index={index}
+                            onclick={handleDeleteItem}
+                          ></lightning-button-icon>
+                        </td>
+                      </template>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="d-flex justify-content-end pt-3 border-top mt-3">
+              <div class="text-end">
+                <p class="text-muted small mb-1">Total Amount</p>
+                <h4 class="fw-bold mb-0">
+                  <lightning-formatted-number
+                    value={totalAmount}
+                    format-style="currency"
+                    currency-code={currencyCode}
+                  ></lightning-formatted-number>
+                </h4>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <lightning-button label="Cancel" variant="neutral" onclick={closeModal}></lightning-button>
+            <template if:false={isReadOnly}>
+              <lightning-button label="Save Draft" variant="brand" onclick={handleSave}></lightning-button>
+              <template if:true={currentClaim.Id}>
+                <lightning-button label="Submit" variant="success" onclick={handleSubmit}></lightning-button>
+              </template>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+  </template>
+</template>

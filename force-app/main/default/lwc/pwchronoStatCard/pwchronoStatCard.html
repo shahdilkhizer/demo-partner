@@ -1,0 +1,32 @@
+<!--
+  @description       : 
+  @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+  @group             : 
+  @last modified on  : 12-29-2025
+  @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+-->
+<template lwc:render-mode="light">
+  <div class="card flex-fill">
+    <div class="card-body">
+      <span class={avatarClass}>
+        <i class={iconClass}></i>
+      </span>
+      <h6 class="fs-13 fw-medium text-default mb-1">{title}</h6>
+      <h3 class="mb-3">
+        {value}
+        <template if:true={hasTrend}>
+          <span class={trendTextClass}>
+            <i class={trendIconClass}></i>{trendLabel}
+          </span>
+        </template>
+      </h3>
+      <button
+        type="button"
+        class="link-default btn-reset border-0 bg-transparent p-0"
+        onclick={handleViewClick}
+      >
+        {linkText}
+      </button>
+    </div>
+  </div>
+</template>

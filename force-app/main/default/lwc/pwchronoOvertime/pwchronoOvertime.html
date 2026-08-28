@@ -1,0 +1,179 @@
+<template>
+    <div class="page-wrapper">
+        <div class="content">
+            <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
+                <div class="my-auto mb-2">
+                    <h2 class="mb-1">Overtime</h2>
+                    <nav>
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="javascript:void(0);"><i class="ti ti-smart-home"></i></a></li>
+                            <li class="breadcrumb-item">Attendance</li>
+                            <li class="breadcrumb-item active" aria-current="page">Overtime</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+                    <div class="me-2 mb-2">
+                        <div class="dropdown">
+                            <button class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                <i class="ti ti-file-export me-1"></i>Export
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end p-3">
+                                <li><a href="javascript:void(0);" onclick={exportPDF} class="dropdown-item rounded-1"><i class="ti ti-file-type-pdf me-1"></i>PDF</a></li>
+                                <li><a href="javascript:void(0);" onclick={exportExcel} class="dropdown-item rounded-1"><i class="ti ti-file-type-xls me-1"></i>Excel</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <button class="btn btn-primary d-flex align-items-center" onclick={openAddModal}>
+                            <i class="ti ti-circle-plus me-2"></i>Add Overtime
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <template for:each={stats} for:item="stat">
+                    <div class="col-xl-3 col-md-6" key={stat.label}>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center flex-wrap justify-content-between">
+                                    <div>
+                                        <p class="fs-12 fw-medium mb-0 text-gray-5">{stat.label}</p>
+                                        <h4>{stat.value}</h4>
+                                    </div>
+                                    <div>
+                                        <span class={stat.iconBgClass}><i class={stat.iconClass}></i></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <div class="card">
+                <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+                    <h5>Overtime List</h5>
+                    <div class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3">
+                        <div class="me-3">
+                            <input type="text" class="form-control" placeholder="Search Employee..." oninput={handleSearch}>
+                        </div>
+                        <div class="dropdown me-3">
+                            <button class="dropdown-toggle btn btn-white" data-bs-toggle="dropdown">Status</button>
+                            <ul class="dropdown-menu dropdown-menu-end p-3">
+                                <li><a href="javascript:void(0);" class="dropdown-item" onclick={handleFilter} data-status="Accepted">Accepted</a></li>
+                                <li><a href="javascript:void(0);" class="dropdown-item" onclick={handleFilter} data-status="Rejected">Rejected</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table datatable no-footer">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th onclick={handleSort} data-field="name" class="sorting">Employee</th>
+                                    <th>Date</th>
+                                    <th>Hours</th>
+                                    <th>Project</th>
+                                    <th>Approved By</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={filteredData} for:item="row">
+                                    <tr key={row.id}>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <span class="avatar avatar-md border avatar-rounded me-2">
+                                                    <img src={row.userImg} alt="img">
+                                                </span>
+                                                <div>
+                                                    <h6 class="fw-medium mb-0">{row.name}</h6>
+                                                    <span class="fs-12 text-gray-5">{row.team}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{row.date}</td>
+                                        <td>{row.hours}</td>
+                                        <td>{row.project}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <span class="avatar avatar-xs avatar-rounded me-2">
+                                                    <img src={row.approvedByImg} alt="img">
+                                                </span>
+                                                <span class="fs-14">{row.approvedBy}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class={row.statusBadgeClass}>
+                                                <i class="ti ti-point-filled me-1"></i>{row.status}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="action-icon d-inline-flex">
+                                                <a href="javascript:void(0);" onclick={handleEdit} data-id={row.id} class="me-2"><i class="ti ti-edit"></i></a>
+                                                <a href="javascript:void(0);" onclick={handleDelete} data-id={row.id}><i class="ti ti-trash"></i></a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <template if:true={isModalOpen}>
+            <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Add Overtime</h4>
+                            <button type="button" class="btn-close" onclick={closeModal}></button>
+                        </div>
+                        <form onsubmit={handleSave}>
+                            <div class="modal-body pb-0">
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label">Employee<span class="text-danger"> *</span></label>
+                                        <select class="form-select" name="employee" required>
+                                            <option value="">Select Employee</option>
+                                            <template for:each={employeeOptions} for:item="emp">
+                                                <option key={emp} value={emp}>{emp}</option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label">Overtime Date <span class="text-danger"> *</span></label>
+                                        <input type="date" class="form-control" name="date" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Overtime Hours<span class="text-danger"> *</span></label>
+                                        <input type="number" class="form-control" name="hours" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Remaining Hours</label>
+                                        <input type="number" class="form-control" name="remaining">
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label">Description</label>
+                                        <textarea class="form-control" name="desc" rows="3"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light me-2" onclick={closeModal}>Cancel</button>
+                                <button type="submit" class="btn btn-primary">Add Overtime</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>

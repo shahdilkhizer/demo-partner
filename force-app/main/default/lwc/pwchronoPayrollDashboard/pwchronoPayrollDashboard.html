@@ -1,0 +1,954 @@
+<template>
+  <div class="page-wrapper" style="min-height: 958px">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <!-- Breadcrumb -->
+      <div
+        class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3"
+      >
+        <div class="my-auto mb-2">
+          <h2 class="mb-1">Payroll Dashboard</h2>
+          <nav>
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item">
+                <a href="javascript:void(0);"
+                  ><i class="ti ti-smart-home"></i
+                ></a>
+              </li>
+              <li class="breadcrumb-item">Dashboard</li>
+              <li class="breadcrumb-item active" aria-current="page">
+                Payroll Dashboard
+              </li>
+            </ol>
+          </nav>
+        </div>
+        <div
+          class="d-flex my-xl-auto right-content align-items-center flex-wrap"
+        >
+          <div class="me-2 mb-2">
+            <div class="dropdown">
+              <a
+                href="javascript:void(0);"
+                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
+                data-bs-toggle="dropdown"
+              >
+                <i class="ti ti-arrow-bar-to-down me-1"></i>Montly Report
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end p-3">
+                <li>
+                  <a href="javascript:void(0);" class="dropdown-item rounded-1"
+                    >Daily Report</a
+                  >
+                </li>
+                <li>
+                  <a href="javascript:void(0);" class="dropdown-item rounded-1"
+                    >Weekly Report</a
+                  >
+                </li>
+                <li>
+                  <a href="javascript:void(0);" class="dropdown-item rounded-1"
+                    >Montly Report</a
+                  >
+                </li>
+                <li>
+                  <a href="javascript:void(0);" class="dropdown-item rounded-1"
+                    >Yearly Report</a
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="mb-2">
+            <div class="input-icon w-100 position-relative">
+              <span class="input-icon-addon">
+                <i class="ti ti-calendar text-gray-9"></i>
+              </span>
+              <input
+                type="text"
+                class="form-control yearpicker"
+                value="December 2025"
+              />
+            </div>
+          </div>
+
+          <div class="ms-2 head-icons">
+            <a
+              href="javascript:void(0);"
+              class=""
+              data-bs-toggle="tooltip"
+              data-bs-placement="top"
+              data-bs-original-title="Collapse"
+              id="collapse-header"
+            >
+              <i class="ti ti-chevrons-up"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      <!-- /Breadcrumb -->
+
+      <!-- Processing -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <div
+            class="d-flex align-items-center justify-content-between gap-3 flex-wrap"
+          >
+            <div class="d-flex align-items-center flex-wrap gap-3">
+              <div class="d-flex align-items-center gap-2 border-end pe-3">
+                <p class="mb-0 d-flex align-items-center gap-1 text-gray-9">
+                  <i class="ti ti-point-filled text-success lh-0"></i> Payroll
+                  Status:
+                </p>
+                <span
+                  class="badge badge-soft-success rounded border border-success"
+                  >Processing</span
+                >
+              </div>
+              <div class="d-flex align-items-center gap-2 border-end pe-3">
+                <p class="mb-0 d-flex align-items-center gap-1 text-gray-9">
+                  Cut-off: Dec 25, 2024
+                </p>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <p class="mb-0 d-flex align-items-center gap-1 text-gray-9">
+                  Payment Date: Dec 31, 2024
+                </p>
+              </div>
+            </div>
+            <a href="javascript:void(0);" class="btn btn-primary-gradient">
+              <i class="ti ti-analyze"></i> Run Payroll
+            </a>
+          </div>
+        </div>
+      </div>
+      <!-- /Processing -->
+
+      <!-- start row -->
+      <div class="row mb-4">
+        <div class="col-xxl-5">
+          <!-- Overview -->
+          <div
+            class="card bg-dark position-relative overflow-hidden overview-card"
+          >
+            <img
+              src={bg04}
+              alt="bg"
+              class="img-fluid position-absolute end-0 top-0 opacity-25"
+            />
+            <div class="card-body">
+              <div
+                class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4"
+              >
+                <h2 class="card-title text-white mb-0">Overview</h2>
+                <div class="dropdown">
+                  <a
+                    href="javascript:void(0);"
+                    class="border btn btn-white btn-icon btn-sm d-inline-flex align-items-center justify-content-center rounded-circle"
+                    data-bs-toggle="dropdown"
+                  >
+                    <i class="ti ti-dots-vertical fs-16"></i>
+                  </a>
+                  <ul class="dropdown-menu mt-2 p-3">
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >Today</a
+                      >
+                    </li>
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >Weekly</a
+                      >
+                    </li>
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >Monthly</a
+                      >
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                  <div class="bg-white rounded p-3 h-100">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                      <span class="avatar avatar-sm bg-primary rounded">
+                        <i class="ti ti-wallet text-white"></i>
+                      </span>
+                      <p class="mb-0 fs-12 text-gray-6">Total Gross Payroll</p>
+                    </div>
+                    <h6 class="mb-0">{totalGrossFormatted}</h6>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="bg-white rounded p-3 h-100">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                      <span class="avatar avatar-sm bg-secondary rounded">
+                        <i class="ti ti-cash text-white"></i>
+                      </span>
+                      <p class="mb-0 fs-12 text-gray-6">Net Payable Amount</p>
+                    </div>
+                    <h6 class="mb-0">{totalNetFormatted}</h6>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="bg-white rounded p-3 h-100">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                      <span class="avatar avatar-sm bg-warning rounded">
+                        <i class="ti ti-receipt-tax text-white"></i>
+                      </span>
+                      <p class="mb-0 fs-12 text-gray-6">Tax Deduction</p>
+                    </div>
+                    <h6 class="mb-0">{totalDeductionsFormatted}</h6>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="bg-white rounded p-3 h-100">
+                    <div
+                      class="d-flex align-items-center justify-content-between"
+                    >
+                      <div>
+                        <p class="mb-1 fs-12 text-gray-6">Highest Salary</p>
+                        <h6 class="mb-0">{highestGrossFormatted}</h6>
+                      </div>
+                      <span
+                        class="badge badge-soft-success border border-success"
+                        >+8.2%</span
+                      >
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="bg-white rounded p-3 h-100">
+                    <div
+                      class="d-flex align-items-center justify-content-between"
+                    >
+                      <div>
+                        <p class="mb-1 fs-12 text-gray-6">Lowest Salary</p>
+                        <h6 class="mb-0">{lowestGrossFormatted}</h6>
+                      </div>
+                      <span
+                        class="badge badge-soft-success border border-success"
+                        >+4.1%</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /Overview -->
+        </div>
+
+        <div class="col-xxl-7">
+          <!-- Salary Range Distribution -->
+          <div class="card mb-0 mt-xxl-0 mt-4">
+            <div class="card-body">
+              <div
+                class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-2"
+              >
+                <h5 class="mb-0 card-title">Salary Range Distribution</h5>
+                <div class="dropdown">
+                  <a
+                    href="javascript:void(0);"
+                    class="border btn btn-white btn-md fw-normal d-inline-flex align-items-center justify-content-center rounded gap-1 fw-medium"
+                    data-bs-toggle="dropdown"
+                  >
+                    <i class="ti ti-calendar fs-14"></i> Last 7 Days
+                  </a>
+                  <ul class="dropdown-menu mt-2 p-3">
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >Monthly</a
+                      >
+                    </li>
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >Weekly</a
+                      >
+                    </li>
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >Today</a
+                      >
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div>
+                <div
+                  class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-4"
+                >
+                  <h6
+                    class="fs-24 d-flex align-items-center gap-2 mb-0 main-title"
+                  >
+                    <span class="fs-14 fw-normal text-gray-6"
+                      >Average Salary</span
+                    >
+                    {averageGrossFormatted}
+                  </h6>
+                  <p class="d-flex align-items-center gap-1 mb-0 text-dark">
+                    <i class="ti ti-circle-filled text-primary fs-12"></i>
+                    Salary Range
+                  </p>
+                </div>
+
+                <!-- KEEP SAME CONTAINER ID -->
+                <div id="distribution-chart" style="min-height: 255px">
+                  <canvas id="salaryRangeChart"></canvas>
+                </div>
+
+                <div class="mt-3">
+                  <h6 class="fs-14 mb-0 fw-medium card-title">Range</h6>
+                  <div class="mt-3">
+                    <div class="range-item mb-3">
+                      <div
+                        class="d-flex align-items-center justify-content-between mb-1"
+                      >
+                        <p class="mb-0 text-gray-6">$10k - $25k</p>
+                        <p class="mb-0 text-gray-6">12%</p>
+                      </div>
+                      <div class="progress progress-xs">
+                        <div
+                          class="progress-bar bg-primary"
+                          style="width: 12%"
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div class="range-item mb-3">
+                      <div
+                        class="d-flex align-items-center justify-content-between mb-1"
+                      >
+                        <p class="mb-0 text-gray-6">$25k - $50k</p>
+                        <p class="mb-0 text-gray-6">24%</p>
+                      </div>
+                      <div class="progress progress-xs">
+                        <div
+                          class="progress-bar bg-primary"
+                          style="width: 24%"
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div class="range-item mb-3">
+                      <div
+                        class="d-flex align-items-center justify-content-between mb-1"
+                      >
+                        <p class="mb-0 text-gray-6">$50k - $75k</p>
+                        <p class="mb-0 text-gray-6">40%</p>
+                      </div>
+                      <div class="progress progress-xs">
+                        <div
+                          class="progress-bar bg-primary"
+                          style="width: 40%"
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div class="range-item mb-3">
+                      <div
+                        class="d-flex align-items-center justify-content-between mb-1"
+                      >
+                        <p class="mb-0 text-gray-6">$75k - $100k</p>
+                        <p class="mb-0 text-gray-6">18%</p>
+                      </div>
+                      <div class="progress progress-xs">
+                        <div
+                          class="progress-bar bg-primary"
+                          style="width: 18%"
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div class="range-item mb-4">
+                      <div
+                        class="d-flex align-items-center justify-content-between mb-1"
+                      >
+                        <p class="mb-0 text-gray-6">$100k+</p>
+                        <p class="mb-0 text-gray-6">6%</p>
+                      </div>
+                      <div class="progress progress-xs">
+                        <div
+                          class="progress-bar bg-primary"
+                          style="width: 6%"
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div class="text-center">
+                      <a href="javascript:void(0);" class="btn btn-white btn-sm"
+                        >View Salary Report in detail</a
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /Salary Range Distribution -->
+        </div>
+      </div>
+      <!-- end row -->
+
+      <!-- start row -->
+      <div class="row mb-4">
+        <div class="col-xxl-4 col-xl-6">
+          <!-- Batch Processing Status -->
+          <div class="card h-100">
+            <div class="card-body">
+              <div
+                class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4"
+              >
+                <h2 class="mb-0 card-title">Batch Processing Status</h2>
+                <div class="dropdown">
+                  <a
+                    href="javascript:void(0);"
+                    class="border btn btn-white btn-md d-inline-flex align-items-center"
+                    data-bs-toggle="dropdown"
+                  >
+                    <i class="ti ti-calendar me-1"></i>Montly
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end p-3">
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >Daily Report</a
+                      >
+                    </li>
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >Weekly Report</a
+                      >
+                    </li>
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >Montly Report</a
+                      >
+                    </li>
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >Yearly Report</a
+                      >
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div>
+                <p class="mb-1">Combined Total</p>
+                <h2 class="d-flex align-items-center align-items-center gap-2">
+                  $2,459,320
+                  <span
+                    class="badge badge-soft-success fs-12 border border-success rounded-pill"
+                    >3 Batches</span
+                  >
+                </h2>
+              </div>
+
+              <div class="process-chart">
+                <div class="chart-1 chart">
+                  <h3 class="title">
+                    1120&nbsp;Employees <span>$2,184,500</span>
+                  </h3>
+                  <div class="graph">
+                    <canvas id="batchProcessChart1"></canvas>
+                  </div>
+                </div>
+
+                <div class="chart-2 chart">
+                  <h3 class="title">60&nbsp;Employees <span>$124,850</span></h3>
+                  <div class="graph">
+                    <canvas id="batchProcessChart2"></canvas>
+                  </div>
+                </div>
+
+                <div class="chart-3 chart">
+                  <h3 class="title">63&nbsp;Employees <span>$154,850</span></h3>
+                  <div class="graph">
+                    <canvas id="batchProcessChart3"></canvas>
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-flex align-items-center gap-3 mt-3 flex-wrap">
+                <p
+                  class="d-flex align-items-center gap-2 fs-13 text-gray-9 mb-0"
+                >
+                  <i class="ti ti-circle-filled text-primary fs-12"></i> Full
+                  Time
+                </p>
+                <p
+                  class="d-flex align-items-center gap-2 fs-13 text-gray-9 mb-0"
+                >
+                  <i class="ti ti-circle-filled text-secondary fs-12"></i> Part
+                  Time
+                </p>
+                <p
+                  class="d-flex align-items-center gap-2 fs-13 text-gray-9 mb-0"
+                >
+                  <i class="ti ti-circle-filled text-dark fs-12"></i>
+                  Contractors
+                </p>
+              </div>
+            </div>
+          </div>
+          <!-- /Batch Processing Status -->
+        </div>
+
+        <div class="col-xxl-5 col-xl-6">
+          <!-- 6 Months Tax & Deduction Trend -->
+          <div class="card h-100">
+            <div class="card-body">
+              <div
+                class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-2"
+              >
+                <h2 class="mb-0 card-title">
+                  6 Months Tax &amp; Deduction Trend
+                </h2>
+                <div class="dropdown">
+                  <a
+                    href="javascript:void(0);"
+                    class="border btn btn-white btn-md fw-normal d-inline-flex align-items-center justify-content-center rounded gap-1 fw-medium"
+                    data-bs-toggle="dropdown"
+                  >
+                    <i class="ti ti-calendar fs-14"></i> Monthly
+                  </a>
+                  <ul class="dropdown-menu mt-2 p-3">
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >Today</a
+                      >
+                    </li>
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >Weekly</a
+                      >
+                    </li>
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >Monthly</a
+                      >
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- KEEP SAME CONTAINER ID -->
+              <div id="chart-trend" style="min-height: 220px">
+                <canvas id="taxDeductionTrendChart"></canvas>
+              </div>
+
+              <div class="d-flex align-items-center gap-3 flex-wrap mt-2">
+                <p class="d-flex align-items-center gap-1 mb-0 text-dark">
+                  <i class="ti ti-circle-filled text-primary fs-12"></i> Tax
+                </p>
+                <p class="d-flex align-items-center gap-1 mb-0 text-dark">
+                  <i class="ti ti-circle-filled text-warning fs-12"></i>
+                  Deduction
+                </p>
+              </div>
+            </div>
+          </div>
+          <!-- /6 Months Tax & Deduction Trend -->
+        </div>
+
+        <div class="col-xxl-3 col-xl-12">
+          <!-- Deductions -->
+          <div class="card h-100">
+            <div class="card-body">
+              <div
+                class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4"
+              >
+                <h5 class="mb-0">Deductions</h5>
+                <span class="badge badge-soft-success border border-success"
+                  >Per Employee</span
+                >
+              </div>
+
+              <div
+                class="d-flex align-items-center justify-content-between mb-3"
+              >
+                <div>
+                  <p class="mb-1 text-gray-6">Insurance</p>
+                  <h6 class="mb-0">$234k</h6>
+                </div>
+                <div id="insurence-chart" style="min-height: 40px; width: 90px">
+                  <canvas id="insuranceMiniChart"></canvas>
+                </div>
+              </div>
+
+              <div
+                class="d-flex align-items-center justify-content-between mb-3"
+              >
+                <div>
+                  <p class="mb-1 text-gray-6">401k Contribution</p>
+                  <h6 class="mb-0">$112k</h6>
+                </div>
+                <div
+                  id="contribution-chart"
+                  style="min-height: 40px; width: 90px"
+                >
+                  <canvas id="contributionMiniChart"></canvas>
+                </div>
+              </div>
+
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <p class="mb-1 text-gray-6">Health Insurance</p>
+                  <h6 class="mb-0">$87k</h6>
+                </div>
+                <div id="health-chart" style="min-height: 40px; width: 90px">
+                  <canvas id="healthMiniChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /Deductions -->
+        </div>
+      </div>
+      <!-- end row -->
+
+      <!-- start row -->
+      <div class="row">
+        <div class="col-xxl-8 col-xl-12">
+          <!-- Payroll Processing Pipeline -->
+          <div class="card">
+            <div class="card-body">
+              <div
+                class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4"
+              >
+                <h2 class="mb-0 card-title">Payroll Processing Pipeline</h2>
+                <span class="badge badge-soft-danger border border-danger"
+                  >Processing 4/8</span
+                >
+              </div>
+
+              <div class="mb-3">
+                <p class="mb-2 text-gray-6">Overall Progress</p>
+                <div class="progress progress-md">
+                  <div class="progress-bar bg-primary" style="width: 62%"></div>
+                </div>
+              </div>
+
+              <div class="pipeline-list">
+                <div
+                  class="d-flex align-items-center justify-content-between flex-wrap gap-3 py-3 border-bottom"
+                >
+                  <div class="d-flex align-items-center gap-2">
+                    <span
+                      class="avatar avatar-sm bg-primary-transparent rounded"
+                    >
+                      <i class="ti ti-check text-primary"></i>
+                    </span>
+                    <div>
+                      <h6 class="mb-1">Data Validation</h6>
+                      <p class="mb-0 fs-12 text-gray-6">
+                        Employee records validated
+                      </p>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="badge badge-soft-success border border-success"
+                      >Completed</span
+                    >
+                    <span
+                      class="avatar avatar-sm bg-white border rounded-circle"
+                    >
+                      <i class="ti ti-check text-success"></i>
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  class="d-flex align-items-center justify-content-between flex-wrap gap-3 py-3 border-bottom"
+                >
+                  <div class="d-flex align-items-center gap-2">
+                    <span
+                      class="avatar avatar-sm bg-primary-transparent rounded"
+                    >
+                      <i class="ti ti-check text-primary"></i>
+                    </span>
+                    <div>
+                      <h6 class="mb-1">Attendance Calculation</h6>
+                      <p class="mb-0 fs-12 text-gray-6">
+                        Attendance and overtime computed
+                      </p>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="badge badge-soft-success border border-success"
+                      >Completed</span
+                    >
+                    <span
+                      class="avatar avatar-sm bg-white border rounded-circle"
+                    >
+                      <i class="ti ti-check text-success"></i>
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  class="d-flex align-items-center justify-content-between flex-wrap gap-3 py-3 border-bottom"
+                >
+                  <div class="d-flex align-items-center gap-2">
+                    <span
+                      class="avatar avatar-sm bg-warning-transparent rounded"
+                    >
+                      <i class="ti ti-loader text-warning"></i>
+                    </span>
+                    <div>
+                      <h6 class="mb-1">Salary Computation</h6>
+                      <p class="mb-0 fs-12 text-gray-6">
+                        Salary components processing
+                      </p>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="badge badge-soft-warning border border-warning"
+                      >In Progress</span
+                    >
+                    <span
+                      class="avatar avatar-sm bg-white border rounded-circle"
+                    >
+                      <i class="ti ti-progress text-warning"></i>
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  class="d-flex align-items-center justify-content-between flex-wrap gap-3 py-3 border-bottom"
+                >
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="avatar avatar-sm bg-info-transparent rounded">
+                      <i class="ti ti-clock text-info"></i>
+                    </span>
+                    <div>
+                      <h6 class="mb-1">Deduction Processing</h6>
+                      <p class="mb-0 fs-12 text-gray-6">
+                        Tax and benefits deductions queued
+                      </p>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="badge badge-soft-info border border-info"
+                      >Queued</span
+                    >
+                    <span
+                      class="avatar avatar-sm bg-white border rounded-circle"
+                    >
+                      <i class="ti ti-circle text-gray-6"></i>
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  class="d-flex align-items-center justify-content-between flex-wrap gap-3 py-3 border-bottom"
+                >
+                  <div class="d-flex align-items-center gap-2">
+                    <span
+                      class="avatar avatar-sm bg-secondary-transparent rounded"
+                    >
+                      <i class="ti ti-circle text-secondary"></i>
+                    </span>
+                    <div>
+                      <h6 class="mb-1">Final Verification</h6>
+                      <p class="mb-0 fs-12 text-gray-6">
+                        Final payroll verification pending
+                      </p>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <span
+                      class="badge badge-soft-secondary border border-secondary"
+                      >Pending</span
+                    >
+                    <span
+                      class="avatar avatar-sm bg-white border rounded-circle"
+                    >
+                      <i class="ti ti-circle text-gray-6"></i>
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  class="d-flex align-items-center justify-content-between flex-wrap gap-3 py-3"
+                >
+                  <div class="d-flex align-items-center gap-2">
+                    <span
+                      class="avatar avatar-sm bg-secondary-transparent rounded"
+                    >
+                      <i class="ti ti-circle text-secondary"></i>
+                    </span>
+                    <div>
+                      <h6 class="mb-1">Payment Generation</h6>
+                      <p class="mb-0 fs-12 text-gray-6">
+                        Bank file generation after verification
+                      </p>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <span
+                      class="badge badge-soft-secondary border border-secondary"
+                      >Pending</span
+                    >
+                    <span
+                      class="avatar avatar-sm bg-white border rounded-circle"
+                    >
+                      <i class="ti ti-circle text-gray-6"></i>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-4"
+              >
+                <a
+                  href="javascript:void(0);"
+                  class="btn btn-primary-gradient w-100"
+                >
+                  <i class="ti ti-player-play me-1"></i> Continue Processing
+                </a>
+                <a href="javascript:void(0);" class="btn btn-white w-100">
+                  <i class="ti ti-file-export me-1"></i> Export Report
+                </a>
+              </div>
+            </div>
+          </div>
+          <!-- /Payroll Processing Pipeline -->
+        </div>
+
+        <div class="col-xxl-4 col-xl-12">
+          <!-- AI Assistant / Quick Actions -->
+          <div class="card">
+            <div class="card-body">
+              <div
+                class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3"
+              >
+                <div>
+                  <h6 class="mb-1">How can I help you today?</h6>
+                  <p class="mb-0 fs-12 text-gray-6">AI Payroll Assistant</p>
+                </div>
+                <span class="badge badge-soft-success border border-success"
+                  >Online</span
+                >
+              </div>
+
+              <div class="mb-3">
+                <p class="mb-2 fs-12 text-gray-6">Quick Actions</p>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <a href="javascript:void(0);" class="btn btn-sm btn-white"
+                    >Calculate overtime pay</a
+                  >
+                  <a href="javascript:void(0);" class="btn btn-sm btn-white"
+                    >Generate tax report</a
+                  >
+                  <a href="javascript:void(0);" class="btn btn-sm btn-white"
+                    >View deductions</a
+                  >
+                  <a href="javascript:void(0);" class="btn btn-sm btn-white"
+                    >Employee withholding</a
+                  >
+                  <a href="javascript:void(0);" class="btn btn-sm btn-white"
+                    >Analyze salary trends</a
+                  >
+                  <a href="javascript:void(0);" class="btn btn-sm btn-white"
+                    >Review payroll errors</a
+                  >
+                </div>
+              </div>
+
+              <div class="border rounded p-3 bg-light">
+                <p class="mb-2 fs-12 text-gray-6">AI Assistant</p>
+                <div class="d-flex align-items-start gap-2">
+                  <span
+                    class="avatar avatar-sm bg-primary-transparent flex-shrink-0"
+                  >
+                    <i class="ti ti-robot text-primary"></i>
+                  </span>
+                  <div>
+                    <p class="mb-1 text-dark fw-medium">
+                      Hi, I am your Payroll Assistant.
+                    </p>
+                    <p class="mb-0 fs-12 text-gray-6">
+                      I can help with payroll calculations, tax questions,
+                      compliance rules, and reporting. How can I assist you
+                      today?
+                    </p>
+                    <p class="mb-0 fs-12 text-gray-6 mt-2">11:42 PM</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-3">
+                <p class="mb-2 fs-12 text-gray-6">Suggested Questions</p>
+                <div class="d-flex flex-column gap-2">
+                  <a
+                    href="javascript:void(0);"
+                    class="btn btn-sm btn-white text-start"
+                    >How do I process a bonus payment?</a
+                  >
+                  <a
+                    href="javascript:void(0);"
+                    class="btn btn-sm btn-white text-start"
+                    >What are the tax implications of overtime?</a
+                  >
+                </div>
+              </div>
+
+              <div class="mt-3">
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Ask me anything about payroll"
+                />
+              </div>
+            </div>
+          </div>
+          <!-- /AI Assistant / Quick Actions -->
+        </div>
+      </div>
+      <!-- end row -->
+    </div>
+
+    <div
+      class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3"
+    >
+      <p class="mb-0">2014 - 2026 © SmartHR.</p>
+      <p>
+        Designed &amp; Developed By
+        <a href="javascript:void(0);" class="text-primary">Dreams</a>
+      </p>
+    </div>
+  </div>
+</template>

@@ -1,0 +1,28 @@
+<template lwc:render-mode="light">
+  <template if:true={stylesLoaded}>
+    <template if:true={styleLoadError}>
+      <div
+        class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_warning slds-m-bottom_small"
+        role="alert"
+      >
+        <span class="slds-assistive-text">Warning</span>
+        <h2>
+          One or more style resources failed to load. The page may look
+          unstyled.
+        </h2>
+      </div>
+    </template>
+    <c-pwchrono-profile-update
+      employee-id={effectiveEmployeeId}
+    ></c-pwchrono-profile-update>
+  </template>
+
+  <template if:false={stylesLoaded}>
+    <div class="slds-is-relative slds-p-around_medium">
+      <lightning-spinner
+        alternative-text="Loading styles"
+        size="small"
+      ></lightning-spinner>
+    </div>
+  </template>
+</template>

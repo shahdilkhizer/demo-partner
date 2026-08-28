@@ -1,0 +1,52 @@
+<template lwc:render-mode="light">
+  <div class="d-flex align-items-center justify-content-between p-3 border-bottom">
+    <!-- Left: Avatar + Info -->
+    <div class="d-flex align-items-center flex-grow-1">
+      <div class="flex-shrink-0 me-3">
+        <span class="avatar avatar-md border avatar-rounded d-flex align-items-center justify-content-center">
+          <i class="fa-solid fa-user"></i>
+        </span>
+      </div>
+      <div class="flex-grow-1">
+        <div class="d-flex align-items-center mb-1">
+          <h6 class="mb-0 fw-medium me-2">{employeeName}</h6>
+          <c-pwchrono-request-status-badge status={status} size="sm"></c-pwchrono-request-status-badge>
+        </div>
+        <p class="text-muted fs-13 mb-1">
+          {requestType}
+          <template if:true={dateRange}>
+            <span class="mx-1">&middot;</span>
+            {dateRange}
+          </template>
+          <template if:true={daysLabel}>
+            <span class="mx-1">&middot;</span>
+            {daysLabel}
+          </template>
+        </p>
+        <template if:true={reason}>
+          <p class="text-muted fs-12 mb-0 fst-italic">"{reason}"</p>
+        </template>
+      </div>
+    </div>
+
+    <!-- Right: Meta + Actions -->
+    <div class="flex-shrink-0 text-end">
+      <template if:true={appliedDate}>
+        <p class="text-muted fs-12 mb-2">Applied: {appliedDate}</p>
+      </template>
+      <div class="d-flex gap-1 justify-content-end">
+        <template if:true={showApproveReject}>
+          <button type="button" class="btn btn-sm btn-success" onclick={handleApprove} title="Approve">
+            <i class="fa-solid fa-check"></i>
+          </button>
+          <button type="button" class="btn btn-sm btn-danger" onclick={handleReject} title="Reject">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </template>
+        <button type="button" class="btn btn-sm btn-white" onclick={handleView} title="View">
+          <i class="fa-solid fa-eye"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</template>

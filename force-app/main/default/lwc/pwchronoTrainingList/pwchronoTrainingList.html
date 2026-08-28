@@ -1,0 +1,179 @@
+<template>
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <div class="page-header">
+        <div class="row align-items-center justify-content-between">
+          <div class="col">
+            <h3 class="page-title">{pageTitle}</h3>
+            <ul class="breadcrumb">
+              <li class="breadcrumb-item">
+                <a href="javascript:void(0);">{breadcrumbParent}</a>
+              </li>
+              <li class="breadcrumb-item active">{breadcrumbActive}</li>
+            </ul>
+          </div>
+          <div class="mb-2">
+            <button
+              class="btn btn-primary d-flex align-items-center"
+              data-action="openAdd"
+              onclick={handleActionClick}
+            >
+              <i class="ti ti-circle-plus me-2"></i> {addBtnLabel}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+        >
+          <h4 class="card-title mb-0">{listTitle}</h4>
+          <div class="dropdown">
+            <button class="btn btn-white dropdown-toggle">{sortByLabel}</button>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-striped custom-table mb-0 datatable">
+              <thead>
+                <tr>
+                  <th style="width: 30px"><input type="checkbox" /></th>
+                  <th>Training Type</th>
+                  <th>Trainer</th>
+                  <th>Employee</th>
+                  <th>Time Duration</th>
+                  <th>Cost</th>
+                  <th>Status</th>
+                  <th class="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template for:each={trainingData} for:item="row">
+                  <tr key={row.id}>
+                    <td><input type="checkbox" /></td>
+                    <td>{row.type}</td>
+                    <td>{row.trainerName}</td>
+                    <td>
+                      <div class="avatar-list-stacked avatar-group-sm">
+                        <template for:each={row.employees} for:item="emp">
+                          <span key={emp.id} class="avatar border-0"
+                            ><img src={emp.img} alt=""
+                          /></span>
+                        </template>
+                        <span
+                          class="avatar group-counts bg-primary rounded-circle border-0 fs-10"
+                          >{row.extraCount}</span
+                        >
+                      </div>
+                    </td>
+                    <td>{row.duration}</td>
+                    <td>{row.cost}</td>
+                    <td><span class={row.statusClass}>{row.status}</span></td>
+                    <td class="text-end">
+                      <button
+                        class="btn btn-link p-0 me-2"
+                        data-id={row.id}
+                        data-action="edit"
+                        onclick={handleActionClick}
+                      >
+                        <i class="ti ti-edit text-primary"></i>
+                      </button>
+                      <button
+                        class="btn btn-link p-0 text-danger"
+                        data-id={row.id}
+                        data-action="delete"
+                        onclick={handleActionClick}
+                      >
+                        <i class="ti ti-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <template lwc:if={isModalOpen}>
+    <div
+      class="modal custom-modal fade show d-block"
+      style="background: rgba(0, 0, 0, 0.6); z-index: 9999"
+    >
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{addBtnLabel}</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-action="closeModal"
+              onclick={handleActionClick}
+            ></button>
+          </div>
+          <div class="modal-body pb-0">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Training Type</label>
+                <input
+                  class="form-control"
+                  name="type"
+                  value={selectedTraining.type}
+                  onchange={handleInputChange}
+                />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Trainer</label>
+                <input
+                  class="form-control"
+                  name="trainerName"
+                  value={selectedTraining.trainerName}
+                  onchange={handleInputChange}
+                />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Training Cost</label>
+                <input
+                  class="form-control"
+                  name="cost"
+                  value={selectedTraining.cost}
+                  onchange={handleInputChange}
+                />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Status</label>
+                <select
+                  class="form-select"
+                  name="status"
+                  onchange={handleInputChange}
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              class="btn btn-light"
+              data-action="closeModal"
+              onclick={handleActionClick}
+            >
+              Cancel
+            </button>
+            <button
+              class="btn btn-primary"
+              data-action="save"
+              onclick={handleActionClick}
+            >
+              Save Training
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+</template>

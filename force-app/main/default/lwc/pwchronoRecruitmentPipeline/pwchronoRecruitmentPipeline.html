@@ -1,0 +1,133 @@
+<template>
+  <div class="page-wrapper">
+    <div class="content container-fluid">
+
+      <!-- Page Header -->
+      <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
+        <div class="my-auto mb-2">
+          <h2 class="mb-1">Recruitment Pipeline</h2>
+          <nav>
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item">
+                <a href="javascript:void(0);"><i class="ti ti-smart-home"></i></a>
+              </li>
+              <li class="breadcrumb-item">Recruitment</li>
+              <li class="breadcrumb-item active">Pipeline</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="d-flex my-xl-auto right-content align-items-center">
+          <button class="btn btn-outline-primary d-flex align-items-center gap-2" onclick={handleRefresh}>
+            <i class="ti ti-refresh"></i>Refresh
+          </button>
+        </div>
+      </div>
+
+      <!-- Access Denied -->
+      <template if:false={hasAccess}>
+        <div class="d-flex align-items-center justify-content-center" style="min-height: 60vh;">
+          <div class="card text-center" style="max-width: 420px; width: 100%;">
+            <div class="card-body p-5">
+              <div class="avatar avatar-xl bg-soft-danger mx-auto mb-3">
+                <i class="ti ti-lock fs-1 text-danger"></i>
+              </div>
+              <h4 class="mb-2">Access Denied</h4>
+              <p class="text-muted mb-0">
+                You do not have permission to view the Recruitment Pipeline.
+              </p>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template if:true={hasAccess}>
+        <div class="card">
+          <div class="card-body">
+
+            <!-- Loading -->
+            <template if:true={isLoading}>
+              <div class="d-flex align-items-center justify-content-center p-5">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            </template>
+
+            <!-- Error -->
+            <template if:true={error}>
+              <div class="alert alert-danger d-flex align-items-center gap-3" role="alert">
+                <i class="ti ti-alert-circle fs-4 flex-shrink-0"></i>
+                <div>
+                  <strong>Error loading recruitment pipeline</strong>
+                  <p class="mb-0 small">{error}</p>
+                </div>
+              </div>
+            </template>
+
+            <!-- Kanban Board -->
+            <template if:false={isLoading}>
+              <div class="kanban-wrapper">
+                <template for:each={columns} for:item="column">
+                  <div key={column.value} class="kanban-column-wrap">
+                    <!-- Column Header -->
+                    <div class="kanban-col-header d-flex align-items-center justify-content-between mb-2 px-1">
+                      <span class="fw-semibold text-dark">{column.label}</span>
+                      <span class="badge bg-primary rounded-pill">{column.count}</span>
+                    </div>
+                    <!-- Column Cards -->
+                    <ul
+                      class="kanban-col-body list-unstyled m-0 p-0"
+                      data-status={column.value}
+                      aria-label={column.label}
+                    >
+                      <template for:each={column.applicants} for:item="applicant">
+                        <li key={applicant.Id} class="kanban-card-item">
+                          <button
+                            type="button"
+                            class="kanban-card w-100 text-start"
+                            draggable="true"
+                            data-id={applicant.Id}
+                            data-status={column.value}
+                            ondragstart={handleDragStart}
+                            ondragend={handleDragEnd}
+                            ondragover={handleDragOver}
+                            ondragleave={handleDragLeave}
+                            ondrop={handleDrop}
+                          >
+                            <h6 class="mb-1">{applicant.Applicant_Name__c}</h6>
+                            <p class="mb-1 text-muted small">{applicant.jobTitle}</p>
+                            <p class="mb-2 text-muted small">
+                              <i class="ti ti-calendar me-1"></i>{applicant.formattedDate}
+                            </p>
+                            <div class="d-flex align-items-center justify-content-between">
+                              <span class="badge bg-soft-info text-info">{applicant.Source__c}</span>
+                            </div>
+                          </button>
+                        </li>
+                      </template>
+                      <!-- Drop target for empty columns -->
+                      <li>
+                        <button
+                          type="button"
+                          class="kanban-drop-target w-100 bg-transparent border-0 p-2"
+                          data-status={column.value}
+                          ondragover={handleDragOver}
+                          ondragleave={handleDragLeave}
+                          ondrop={handleDrop}
+                        >
+                          <span class="visually-hidden">Drop here</span>
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                </template>
+              </div>
+            </template>
+
+          </div>
+        </div>
+      </template>
+
+    </div>
+  </div>
+</template>

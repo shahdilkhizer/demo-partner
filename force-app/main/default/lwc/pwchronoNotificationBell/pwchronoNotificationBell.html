@@ -1,0 +1,83 @@
+<template>
+  <button
+    type="button"
+    class="notification-bell"
+    onclick={togglePanel}
+    style="background: none; border: none; padding: 0; cursor: pointer"
+    aria-label="Notifications"
+  >
+    <lightning-icon
+      icon-name="utility:notifications"
+      size="medium"
+      alternative-text="Notifications"
+    ></lightning-icon>
+    <template if:true={unreadCount}>
+      <span class="notification-badge">{unreadCount}</span>
+    </template>
+  </button>
+
+  <template if:true={isPanelOpen}>
+    <dialog
+      class="notification-panel"
+      open
+      aria-labelledby="notification-heading"
+      style="border: none; padding: 0; background: transparent"
+    >
+      <header class="panel-header">
+        <h2 id="notification-heading" class="panel-title">Notifications</h2>
+        <lightning-button-icon
+          icon-name="utility:close"
+          size="small"
+          alternative-text="Close"
+          onclick={togglePanel}
+        ></lightning-button-icon>
+      </header>
+      <div class="panel-body">
+        <template if:true={notifications.length}>
+          <template for:each={notifications} for:item="notification">
+            <button
+              type="button"
+              key={notification.Id}
+              class={notification.itemClass}
+              onclick={handleNotificationClick}
+              data-id={notification.Id}
+              data-url={notification.TargetURL}
+              style="
+                width: 100%;
+                text-align: left;
+                background: none;
+                border: none;
+                cursor: pointer;
+                padding: 10px;
+                display: flex;
+              "
+            >
+              <div class="notification-icon">
+                <lightning-icon
+                  icon-name={notification.iconName}
+                  size="small"
+                ></lightning-icon>
+              </div>
+              <div class="notification-content">
+                <p class="notification-message">{notification.Message}</p>
+                <p class="notification-time">{notification.timeAgo}</p>
+              </div>
+            </button>
+          </template>
+        </template>
+        <template if:false={notifications.length}>
+          <div class="empty-state">
+            <img src="/_slds/images/empty-states/no-results.svg" alt="" />
+            <p>No new notifications</p>
+          </div>
+        </template>
+      </div>
+      <footer class="panel-footer">
+        <lightning-button
+          label="Mark all as read"
+          onclick={handleMarkAllRead}
+        ></lightning-button>
+      </footer>
+    </dialog>
+  </template>
+</template>

@@ -1,0 +1,19 @@
+/* Overriding External DXP Styles and ensuring no margin */
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.page-wrapper {
+  /* Ensuring generic reset */
+}
+
+/* 
+   Targeting the specific generated class provided by the user. 
+   Note: Generated IDs like '62a60304...' may change if the site is republished or the theme changes.
+   The :host selector above is the more robust long-term fix.
+*/
+.dxpStyle_62a60304-0280-4a7e-95d6-c692e4b27b64 {
+  --dxp-style-c-margin-left: 0;
+}

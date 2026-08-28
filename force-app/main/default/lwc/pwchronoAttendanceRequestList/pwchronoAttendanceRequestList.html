@@ -1,0 +1,79 @@
+<template>
+  <div class="attendance-request-list">
+
+    <!-- Filters -->
+    <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+      <div class="d-flex align-items-center gap-2 me-auto">
+        <select class="form-select form-select-sm" style="width:auto;" onchange={handleStatusFilter}>
+          <template for:each={statusOptions} for:item="opt">
+            <option key={opt.value} value={opt.value} selected={opt.selected}>{opt.label}</option>
+          </template>
+        </select>
+        <input type="month" class="form-control form-control-sm" style="width:auto;"
+               value={selectedMonth} onchange={handleMonthFilter} />
+      </div>
+      <button class="btn btn-sm btn-primary" onclick={handleNewRequest}>
+        + New Correction
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <template if:true={isLoading}>
+      <div class="text-center text-muted py-5 small">Loading requests...</div>
+    </template>
+
+    <!-- Error -->
+    <template if:true={error}>
+      <div class="alert alert-danger small">{error}</div>
+    </template>
+
+    <!-- List -->
+    <template if:false={isLoading}>
+      <template if:true={hasRequests}>
+        <div class="list-group list-group-flush mb-3">
+          <template for:each={paginatedRequests} for:item="req">
+            <div key={req.Id}
+                 class="list-group-item list-group-item-action px-0 py-2"
+                 data-id={req.Id}
+                 onclick={handleRowClick}
+                 style="cursor:pointer;">
+              <c-pwchrono-request-list-row
+                record-id={req.Id}
+                employee-name={req.Employees__r.Name}
+                request-type={req.Correction_Type__c}
+                date-range={req.Attendance_Date__c}
+                days-label=""
+                reason={req.Reason__c}
+                status={req.Status__c}
+                applied-date={req.Applied_Date__c}
+                show-approve-reject="false"
+                onrowaction={handleRowAction}>
+              </c-pwchrono-request-list-row>
+            </div>
+          </template>
+        </div>
+
+        <!-- Pagination -->
+        <template if:true={showPagination}>
+          <div class="d-flex align-items-center justify-content-between">
+            <p class="text-muted small mb-0">{paginationLabel}</p>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-secondary" onclick={handlePrevPage} disabled={isFirstPage}>&laquo; Prev</button>
+              <button class="btn btn-sm btn-outline-secondary" onclick={handleNextPage} disabled={isLastPage}>Next &raquo;</button>
+            </div>
+          </div>
+        </template>
+      </template>
+
+      <template if:false={hasRequests}>
+        <div class="text-center text-muted py-5">
+          <p class="mb-1">No correction requests found.</p>
+          <button class="btn btn-sm btn-outline-primary" onclick={handleNewRequest}>
+            Submit a correction
+          </button>
+        </div>
+      </template>
+    </template>
+
+  </div>
+</template>

@@ -1,0 +1,185 @@
+<template>
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <!-- PwChrono Standard Header -->
+      <div
+        class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3"
+      >
+        <div class="my-auto mb-2">
+          <h2 class="mb-1 text-2xl font-bold text-gray-900">
+            Offer Letter Generator
+          </h2>
+          <p class="text-muted text-sm text-gray-500">
+            Create and send offer letters to candidates
+          </p>
+        </div>
+        <div class="d-flex my-xl-auto right-content"></div>
+      </div>
+
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+      >
+        <div class="p-4 md:p-6">
+          <div if:true={isLoading} class="relative">
+            <div class="flex justify-center items-center p-8">
+              <div
+                class="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-500"
+              ></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Input Form -->
+            <div class="lg:col-span-1">
+              <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                  Offer Details
+                </h3>
+
+                <div class="space-y-4">
+                  <lightning-combobox
+                    name="Job_Applicant__c"
+                    label="Select Applicant"
+                    value={selectedApplicantId}
+                    placeholder="Search applicant..."
+                    options={applicantOptions}
+                    onchange={handleApplicantChange}
+                    required
+                    class="offer-input"
+                  >
+                  </lightning-combobox>
+
+                  <lightning-combobox
+                    name="Designation__c"
+                    label="Designation"
+                    value={offerDetails.Designation__c}
+                    options={designationOptions}
+                    onchange={handleInputChange}
+                    required
+                    class="offer-input"
+                  >
+                  </lightning-combobox>
+
+                  <lightning-input
+                    type="number"
+                    label="Offered CTC (Annual)"
+                    name="Offered_CTC__c"
+                    value={offerDetails.Offered_CTC__c}
+                    formatter="currency"
+                    step="0.01"
+                    onchange={handleInputChange}
+                    required
+                    class="offer-input"
+                  >
+                  </lightning-input>
+
+                  <lightning-input
+                    type="date"
+                    label="Joining Date"
+                    name="Joining_Date__c"
+                    value={offerDetails.Joining_Date__c}
+                    onchange={handleInputChange}
+                    required
+                    class="offer-input"
+                  >
+                  </lightning-input>
+
+                  <lightning-input
+                    type="date"
+                    label="Offer Expiry Date"
+                    name="Expiry_Date__c"
+                    value={offerDetails.Expiry_Date__c}
+                    onchange={handleInputChange}
+                    required
+                    class="offer-input"
+                  >
+                  </lightning-input>
+
+                  <div class="pt-4">
+                    <lightning-button
+                      label="Generate & Send Offer"
+                      variant="brand"
+                      class="w-full"
+                      onclick={handleGenerateOffer}
+                      disabled={isGenerateDisabled}
+                    >
+                    </lightning-button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Preview Section -->
+            <div class="lg:col-span-2">
+              <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                  Preview
+                </h3>
+
+                <div class="preview-container">
+                  <div class="preview-header">
+                    <div class="company-name">{companyName}</div>
+                    <div>123 Innovation Drive, Tech City</div>
+                  </div>
+
+                  <div class="preview-body">
+                    <p><strong>Date:</strong> {todayDate}</p>
+                    <br />
+                    <p><strong>To,</strong></p>
+                    <p>{selectedApplicantName}</p>
+                    <br />
+                    <p><strong>Subject: Offer of Employment</strong></p>
+                    <br />
+                    <p>Dear {selectedApplicantName},</p>
+                    <br />
+                    <p>
+                      We are pleased to offer you the position of
+                      <strong>{selectedDesignationName}</strong> at
+                      {companyName}.
+                    </p>
+                    <p>
+                      Your annual Cost to Company (CTC) will be
+                      <strong
+                        ><lightning-formatted-number
+                          value={offerDetails.Offered_CTC__c}
+                          format-style="currency"
+                          currency-code={currencyCode}
+                        ></lightning-formatted-number></strong
+                      >.
+                    </p>
+                    <p>
+                      We would like you to join us on
+                      <strong
+                        ><lightning-formatted-date-time
+                          value={offerDetails.Joining_Date__c}
+                        ></lightning-formatted-date-time></strong
+                      >.
+                    </p>
+                    <br />
+                    <p>
+                      This offer is valid until
+                      <strong
+                        ><lightning-formatted-date-time
+                          value={offerDetails.Expiry_Date__c}
+                        ></lightning-formatted-date-time></strong
+                      >.
+                    </p>
+                    <p>We look forward to welcoming you to our team.</p>
+                  </div>
+
+                  <div class="preview-footer">
+                    <p>Sincerely,</p>
+                    <div class="signature-line">
+                      <p>HR Manager</p>
+                      <p>{companyName}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

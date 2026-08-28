@@ -1,0 +1,135 @@
+<template>
+  <div class="attendance-dashboard">
+
+    <!-- Page Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <div>
+        <h4 class="mb-0 fw-semibold">Attendance</h4>
+        <p class="text-muted small mb-0">{monthLabel}</p>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-sm btn-outline-secondary" onclick={handlePrevMonth}>&#8249;</button>
+        <span class="small fw-medium px-1">{monthLabel}</span>
+        <button class="btn btn-sm btn-outline-secondary" onclick={handleNextMonth}>&#8250;</button>
+        <button class="btn btn-sm btn-primary ms-2" onclick={handleNewRequest}>
+          + New Correction
+        </button>
+      </div>
+    </div>
+
+    <!-- Tracker Metric Cards -->
+    <template if:true={isLoading}>
+      <div class="row g-3 mb-4">
+        <template for:each={placeholderCards} for:item="i">
+          <div key={i} class="col-6 col-md-3">
+            <div class="card border-0 bg-light h-100" style="min-height:90px;">
+              <div class="card-body placeholder-glow">
+                <span class="placeholder col-4 mb-2 d-block"></span>
+                <span class="placeholder col-6 col-lg-8 placeholder-lg d-block"></span>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </template>
+
+    <template if:false={isLoading}>
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+          <div class="card border-0 h-100" style="background:#e8f5e9;">
+            <div class="card-body">
+              <p class="text-muted small mb-1">Present</p>
+              <h3 class="fw-bold mb-0" style="color:#2e7d32;">{stats.present}</h3>
+              <p class="text-muted small mb-0">days</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 h-100" style="background:#fce4ec;">
+            <div class="card-body">
+              <p class="text-muted small mb-1">Absent</p>
+              <h3 class="fw-bold mb-0" style="color:#c62828;">{stats.absent}</h3>
+              <p class="text-muted small mb-0">days</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 h-100" style="background:#fff8e1;">
+            <div class="card-body">
+              <p class="text-muted small mb-1">Late</p>
+              <h3 class="fw-bold mb-0" style="color:#e65100;">{stats.late}</h3>
+              <p class="text-muted small mb-0">days</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 h-100" style="background:#e3f2fd;">
+            <div class="card-body">
+              <p class="text-muted small mb-1">On Leave</p>
+              <h3 class="fw-bold mb-0" style="color:#1565c0;">{stats.onLeave}</h3>
+              <p class="text-muted small mb-0">days</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Recent Correction Requests -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+        <h6 class="mb-0 fw-semibold">Recent Correction Requests</h6>
+        <button class="btn btn-sm btn-link p-0 text-decoration-none" onclick={handleViewAll}>
+          View all &rsaquo;
+        </button>
+      </div>
+      <div class="card-body p-0">
+        <template if:true={isLoading}>
+          <div class="p-4 text-center text-muted small">Loading...</div>
+        </template>
+        <template if:false={isLoading}>
+          <template if:true={hasRecentRequests}>
+            <ul class="list-group list-group-flush">
+              <template for:each={recentRequests} for:item="req">
+                <li key={req.Id}
+                    class="list-group-item list-group-item-action px-4 py-3"
+                    data-id={req.Id}
+                    onclick={handleRowClick}
+                    style="cursor:pointer;">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                      <span class="fw-medium small">{req.Name}</span>
+                      <span class="text-muted small ms-2">&bull;</span>
+                      <span class="text-muted small ms-2">{req.Attendance_Date__c}</span>
+                      <template if:true={req.Correction_Type__c}>
+                        <span class="text-muted small ms-2">&bull;</span>
+                        <span class="text-muted small ms-2">{req.Correction_Type__c}</span>
+                      </template>
+                    </div>
+                    <c-pwchrono-request-status-badge status={req.Status__c} size="sm"></c-pwchrono-request-status-badge>
+                  </div>
+                  <template if:true={req.Reason__c}>
+                    <p class="text-muted small mb-0 mt-1 text-truncate" style="max-width:400px;">{req.Reason__c}</p>
+                  </template>
+                </li>
+              </template>
+            </ul>
+          </template>
+          <template if:false={hasRecentRequests}>
+            <div class="p-4 text-center text-muted">
+              <p class="mb-1">No correction requests this month.</p>
+              <button class="btn btn-sm btn-outline-primary mt-1" onclick={handleNewRequest}>
+                Submit your first correction
+              </button>
+            </div>
+          </template>
+        </template>
+      </div>
+    </div>
+
+    <!-- Error state -->
+    <template if:true={error}>
+      <div class="alert alert-danger mt-3 small">{error}</div>
+    </template>
+
+  </div>
+</template>

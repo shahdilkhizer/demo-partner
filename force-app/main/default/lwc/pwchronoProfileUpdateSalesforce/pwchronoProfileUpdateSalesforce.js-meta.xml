@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+	<apiVersion>64.0</apiVersion>
+	<isExposed>true</isExposed>
+	<masterLabel>PWChrono Profile Update (Salesforce)</masterLabel>
+	<description>
+		Salesforce internal wrapper around pwchronoProfileUpdate that loads Bootstrap CSS from Static Resources
+		so the portal-styled UI renders properly in Lightning.
+	</description>
+	<targets>
+		<target>lightning__RecordPage</target>
+		<target>lightning__AppPage</target>
+		<target>lightning__HomePage</target>
+	</targets>
+	<targetConfigs>
+		<targetConfig targets="lightning__RecordPage">
+			<property
+        name="employeeId"
+        type="String"
+        label="Employee ID Override"
+        description="Optional (Portal_Users__c Id). If blank and used on a Portal_Users__c record page, recordId is used; otherwise the component falls back to the session employee id."
+      />
+		</targetConfig>
+		<targetConfig targets="lightning__AppPage,lightning__HomePage">
+			<property
+        name="employeeId"
+        type="String"
+        label="Employee ID"
+        description="Optional (Portal_Users__c Id). If blank, the component falls back to the session employee id."
+      />
+		</targetConfig>
+	</targetConfigs>
+</LightningComponentBundle>

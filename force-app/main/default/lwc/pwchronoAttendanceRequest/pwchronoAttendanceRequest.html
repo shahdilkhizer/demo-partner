@@ -1,0 +1,136 @@
+<template>
+  <div class="mb-4">
+    <div class="card overflow-hidden mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">Attendance Regularization</h5>
+        <p class="mb-0 small opacity-75 mt-1">Submit a request to regularize your attendance</p>
+      </div>
+
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <lightning-input
+              type="date"
+              label="Attendance Date"
+              value={attendanceDate}
+              onchange={handleDateChange}
+              required
+              disabled={isDateDisabled}
+            ></lightning-input>
+          </div>
+          <div class="col-12 col-md-6 d-none d-md-block"></div>
+
+          <div class="col-12 col-md-6">
+            <lightning-input
+              type="time"
+              label="Check-In Time"
+              value={checkInTime}
+              onchange={handleCheckInChange}
+              disabled={isCheckInDisabled}
+            ></lightning-input>
+          </div>
+          <div class="col-12 col-md-6">
+            <lightning-input
+              type="time"
+              label="Check-Out Time"
+              value={checkOutTime}
+              onchange={handleCheckOutChange}
+              disabled={isCheckOutDisabled}
+            ></lightning-input>
+          </div>
+
+          <div class="col-12">
+            <lightning-textarea
+              label="Reason"
+              value={reason}
+              onchange={handleReasonChange}
+              required
+              placeholder="Please explain the reason for regularization..."
+              disabled={isReasonDisabled}
+            ></lightning-textarea>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end mt-4">
+          <lightning-button
+            variant="brand"
+            label="Submit Request"
+            onclick={handleSubmit}
+            disabled={isSubmitDisabled}
+          ></lightning-button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0 fw-semibold">My Requests</h6>
+        <span class="badge bg-secondary">{allRequests.length} total</span>
+      </div>
+
+      <div class="card-body">
+        <template if:true={isLoading}>
+          <div class="d-flex align-items-center justify-content-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <span class="ms-3 text-muted">Loading requests...</span>
+          </div>
+        </template>
+
+        <template if:false={isLoading}>
+          <template if:true={hasRequests}>
+            <div class="table-responsive">
+              <lightning-datatable
+                key-field="Id"
+                data={requests}
+                columns={columns}
+                hide-checkbox-column
+              ></lightning-datatable>
+            </div>
+            <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between p-3 bg-light border-top mt-3 rounded gap-3">
+              <div class="d-flex align-items-center gap-2">
+                <lightning-combobox
+                  value={pageSize}
+                  options={pageSizeOptions}
+                  onchange={handlePageSizeChange}
+                  variant="label-hidden"
+                ></lightning-combobox>
+              </div>
+              <div class="d-flex align-items-center gap-3">
+                <span class="text-muted small">{pageInfo}</span>
+                <div class="d-flex gap-1">
+                  <button
+                    class="btn btn-sm btn-outline-secondary"
+                    onclick={handlePrevPage}
+                    disabled={isPrevDisabled}
+                  >&larr; Prev</button>
+                  <button
+                    class="btn btn-sm btn-outline-secondary"
+                    onclick={handleNextPage}
+                    disabled={isNextDisabled}
+                  >Next &rarr;</button>
+                </div>
+              </div>
+            </div>
+          </template>
+          <template if:false={hasRequests}>
+            <div class="text-center py-5">
+              <span class="avatar avatar-xl bg-soft-secondary mx-auto mb-3 d-flex align-items-center justify-content-center">
+                <i class="ti ti-clock fs-2 text-muted"></i>
+              </span>
+              <p class="text-muted mb-0">No attendance requests found.</p>
+            </div>
+          </template>
+        </template>
+
+        <template if:true={error}>
+          <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+            <i class="ti ti-alert-circle flex-shrink-0"></i>
+            <span>{error}</span>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+</template>

@@ -1,0 +1,825 @@
+<template>
+  <div class="page-wrapper">
+    <!-- START: Extracted from HR Dashboard.html (content area) -->
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <!-- Breadcrumb -->
+      <div
+        class="d-flex align-items-center justify-content-between flex-wrap mb-3"
+      >
+        <div class="my-auto mb-2">
+          <h2 class="mb-1">HR Dashboard</h2>
+          <nav>
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item">
+                <a href="javascript:void(0);"
+                  ><i class="ti ti-smart-home"></i
+                ></a>
+              </li>
+              <li class="breadcrumb-item">Dashboard</li>
+              <li aria-current="page" class="breadcrumb-item active">
+                HR Dashboard
+              </li>
+            </ol>
+          </nav>
+        </div>
+
+        <div
+          class="d-flex my-xl-auto right-content align-items-center flex-wrap gap-3 mb-2"
+        >
+          <div class="avatar-list-stacked avatar-group-md">
+            <a class="avatar avatar-rounded" href="javascript:void(0);">
+              <img
+                alt="user"
+                class="border border-white"
+                src="/resource/smarthr_assets/assets/img/users/user-31.jpg"
+              />
+            </a>
+            <a class="avatar avatar-rounded" href="javascript:void(0);">
+              <img
+                alt="user"
+                class="border border-white"
+                src="/resource/smarthr_assets/assets/img/users/user-32.jpg"
+              />
+            </a>
+            <a class="avatar avatar-rounded" href="javascript:void(0);">
+              <img
+                alt="user"
+                class="border border-white"
+                src="/resource/smarthr_assets/assets/img/users/user-29.jpg"
+              />
+            </a>
+            <a class="avatar avatar-rounded" href="javascript:void(0);">
+              <img
+                alt="user"
+                class="border border-white"
+                src="/resource/smarthr_assets/assets/img/users/user-56.jpg"
+              />
+            </a>
+            <a
+              class="avatar bg-dark avatar-rounded fs-20 text-fixed-white"
+              href="javascript:void(0);"
+              >+</a
+            >
+          </div>
+
+          <div class="input-icon position-relative">
+            <span class="input-icon-addon">
+              <i class="ti ti-calendar text-gray-9"></i>
+            </span>
+            <input
+              class="form-control date-range bookingrange"
+              placeholder="dd/mm/yyyy - dd/mm/yyyy"
+              type="text"
+            />
+          </div>
+
+          <div class="dropdown">
+            <a
+              class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
+              data-bs-toggle="dropdown"
+              href="javascript:void(0);"
+            >
+              <i class="ti ti-file-export me-1"></i>Yearly Report
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end p-3">
+              <li>
+                <a class="dropdown-item rounded-1" href="javascript:void(0);"
+                  >Monthly Report</a
+                >
+              </li>
+              <li>
+                <a class="dropdown-item rounded-1" href="javascript:void(0);"
+                  >Yearly Report</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div class="dropdown">
+            <a
+              class="dropdown-toggle btn btn-primary d-inline-flex align-items-center"
+              data-bs-toggle="dropdown"
+              href="javascript:void(0);"
+            >
+              <i class="ti ti-calendar-due me-1"></i>Add New
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end p-3">
+              <li>
+                <a class="dropdown-item rounded-1" href="javascript:void(0);"
+                  >Add Employee</a
+                >
+              </li>
+              <li>
+                <a class="dropdown-item rounded-1" href="javascript:void(0);"
+                  >Add Leave</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div class="dropdown">
+            <a
+              class="btn btn-white d-inline-flex align-items-center"
+              href="javascript:void(0);"
+            >
+              <i class="ti ti-adjustments-horizontal me-1"></i>Modify
+            </a>
+          </div>
+        </div>
+      </div>
+      <!-- /Breadcrumb -->
+
+      <div class="row">
+        <!-- Employee Status & Type -->
+        <div class="col-xl-6 d-flex">
+          <div class="card flex-fill">
+            <div
+              class="card-header pb-0 d-flex align-items-center justify-content-between flex-wrap"
+            >
+              <h5 class="mb-2">Employee Status &amp; Type</h5>
+              <a
+                href="javascript:void(0);"
+                class="btn btn-outline-light btn-sm mb-2"
+                >View All</a
+              >
+            </div>
+            <div class="card-body">
+              <!-- Template had Apex container #status-chart. We use Chart.js canvas but keep position -->
+              <div class="chart-set mb-3">
+                <canvas id="statusChart"></canvas>
+              </div>
+
+              <div class="row text-center">
+                <div class="col-md-4 mb-2">
+                  <h4 class="mb-1">{fullTimeEmployees}</h4>
+                  <p class="mb-0 text-gray-7">Full-Time</p>
+                </div>
+                <div class="col-md-4 mb-2">
+                  <h4 class="mb-1">{contractEmployees}</h4>
+                  <p class="mb-0 text-gray-7">Contract</p>
+                </div>
+                <div class="col-md-4 mb-2">
+                  <h4 class="mb-1">{probationEmployees}</h4>
+                  <p class="mb-0 text-gray-7">Probation</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overview Statistics -->
+        <div class="col-xl-6 d-flex">
+          <div class="card flex-fill">
+            <div class="card-header pb-0">
+              <h5 class="mb-2">Overview Statistics</h5>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div
+                    class="d-flex align-items-center justify-content-between border rounded p-3"
+                  >
+                    <div class="d-flex align-items-center">
+                      <span
+                        class="avatar avatar-rounded bg-primary-transparent me-2"
+                      >
+                        <i class="ti ti-users text-primary"></i>
+                      </span>
+                      <div>
+                        <p class="mb-1 text-gray-7">Total Employees</p>
+                        <h4 class="mb-0">{totalEmployees}</h4>
+                        <small class="text-gray-7">Headcount Overview</small>
+                      </div>
+                    </div>
+                    <div class="text-end">
+                      <span class="badge badge-soft-success">+18%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div
+                    class="d-flex align-items-center justify-content-between border rounded p-3"
+                  >
+                    <div class="d-flex align-items-center">
+                      <span
+                        class="avatar avatar-rounded bg-info-transparent me-2"
+                      >
+                        <i class="ti ti-user-plus text-info"></i>
+                      </span>
+                      <div>
+                        <p class="mb-1 text-gray-7">New Joiners</p>
+                        <h4 class="mb-0">{newJoiners}</h4>
+                        <small class="text-gray-7">All Department</small>
+                      </div>
+                    </div>
+                    <div class="text-end">
+                      <span class="badge badge-soft-success">+22%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div
+                    class="d-flex align-items-center justify-content-between border rounded p-3"
+                  >
+                    <div class="d-flex align-items-center">
+                      <span
+                        class="avatar avatar-rounded bg-dark-transparent me-2"
+                      >
+                        <i class="ti ti-clock text-dark"></i>
+                      </span>
+                      <div>
+                        <p class="mb-1 text-gray-7">Late Arrivals Today</p>
+                        <h4 class="mb-0">{lateArrivalsToday}</h4>
+                        <small class="text-gray-7">Delayed Logging Today</small>
+                      </div>
+                    </div>
+                    <div class="text-end">
+                      <span class="badge badge-soft-danger">-16%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div
+                    class="d-flex align-items-center justify-content-between border rounded p-3"
+                  >
+                    <div class="d-flex align-items-center">
+                      <span
+                        class="avatar avatar-rounded bg-purple-transparent me-2"
+                      >
+                        <i class="ti ti-currency-dollar text-purple"></i>
+                      </span>
+                      <div>
+                        <p class="mb-1 text-gray-7">Total Payroll Cost</p>
+                        <h4 class="mb-0">{totalPayrollCostFormatted}</h4>
+                        <small class="text-gray-7">Payroll Outflow</small>
+                      </div>
+                    </div>
+                    <div class="text-end">
+                      <span class="badge badge-soft-success">+16%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Leave Type Distribution -->
+        <div class="col-xl-4 d-flex">
+          <div class="card flex-fill">
+            <div
+              class="card-header pb-0 d-flex align-items-center justify-content-between flex-wrap"
+            >
+              <h5 class="mb-2">Leave Type Distribution</h5>
+              <a class="btn btn-white btn-sm mb-2" href="javascript:void(0);">
+                <i class="ti ti-calendar me-1"></i>Monthly
+              </a>
+            </div>
+            <div class="card-body">
+              <div
+                class="d-flex align-items-center justify-content-center mb-3"
+              >
+                <div style="max-width: 260px; width: 100%">
+                  <canvas id="leaveChart"></canvas>
+                </div>
+              </div>
+
+              <div
+                class="d-flex align-items-center justify-content-between mb-2"
+              >
+                <span class="d-inline-flex align-items-center">
+                  <span
+                    class="legend-indicator me-2"
+                    style="background: #ff6b6b"
+                  ></span
+                  >Sick Leave
+                </span>
+                <span>{sickLeaveCount}</span>
+              </div>
+              <div
+                class="d-flex align-items-center justify-content-between mb-2"
+              >
+                <span class="d-inline-flex align-items-center">
+                  <span
+                    class="legend-indicator me-2"
+                    style="background: #ffa94d"
+                  ></span
+                  >Casual Leave
+                </span>
+                <span>{casualLeaveCount}</span>
+              </div>
+              <div class="d-flex align-items-center justify-content-between">
+                <span class="d-inline-flex align-items-center">
+                  <span
+                    class="legend-indicator me-2"
+                    style="background: #51cf66"
+                  ></span
+                  >Unpaid
+                </span>
+                <span>{unpaidLeaveCount}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attendance Trend -->
+        <div class="col-xl-8 d-flex">
+          <div class="card flex-fill">
+            <div
+              class="card-header pb-0 d-flex align-items-center justify-content-between flex-wrap"
+            >
+              <div>
+                <h5 class="mb-1">Attendance Trend</h5>
+                <div class="d-flex align-items-center flex-wrap gap-3">
+                  <span class="text-gray-7"
+                    ><strong class="text-dark">{onTimeTotal}</strong>
+                    On-Time</span
+                  >
+                  <span class="text-gray-7"
+                    ><strong class="text-dark">{lateTotal}</strong> Late</span
+                  >
+                  <span class="text-gray-7"
+                    ><strong class="text-dark">{absentTotal}</strong>
+                    Absent</span
+                  >
+                </div>
+              </div>
+              <a class="btn btn-white btn-sm mb-2" href="javascript:void(0);">
+                <i class="ti ti-calendar me-1"></i>Weekly
+              </a>
+            </div>
+
+            <div class="card-body">
+              <div class="row">
+                <div class="col-xl-9">
+                  <canvas id="attendanceChart"></canvas>
+                </div>
+
+                <div class="col-xl-3">
+                  <div class="border rounded p-3 mb-3">
+                    <p class="mb-1 text-gray-7">Max Working Hours</p>
+                    <h4 class="mb-0">8.4 hrs</h4>
+                  </div>
+                  <div class="border rounded p-3 mb-3">
+                    <p class="mb-1 text-gray-7">Missed Punches</p>
+                    <h4 class="mb-0">12</h4>
+                  </div>
+                  <div class="border rounded p-3">
+                    <p class="mb-1 text-gray-7">Weekly Avg</p>
+                    <h4 class="mb-0">97.2%</h4>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Employee Distribution -->
+        <div class="col-xl-6 d-flex">
+          <div class="card flex-fill">
+            <div
+              class="card-header pb-0 d-flex align-items-center justify-content-between flex-wrap"
+            >
+              <h5 class="mb-2">Top Employee Distribution</h5>
+              <a
+                href="javascript:void(0);"
+                class="btn btn-outline-light btn-sm mb-2"
+                >View All</a
+              >
+            </div>
+
+            <div class="card-body">
+              <ul class="nav nav-tabs nav-tabs-bordered mb-3">
+                <li class="nav-item">
+                  <button
+                    class="nav-link active"
+                    data-bs-toggle="tab"
+                    data-bs-target="#today"
+                    type="button"
+                    role="tab"
+                  >
+                    Today
+                  </button>
+                </li>
+                <li class="nav-item">
+                  <button
+                    class="nav-link"
+                    data-bs-toggle="tab"
+                    data-bs-target="#week"
+                    type="button"
+                    role="tab"
+                  >
+                    Week
+                  </button>
+                </li>
+                <li class="nav-item">
+                  <button
+                    class="nav-link"
+                    data-bs-toggle="tab"
+                    data-bs-target="#month"
+                    type="button"
+                    role="tab"
+                  >
+                    Month
+                  </button>
+                </li>
+                <li class="nav-item">
+                  <button
+                    class="nav-link"
+                    data-bs-toggle="tab"
+                    data-bs-target="#quarter"
+                    type="button"
+                    role="tab"
+                  >
+                    Quarter
+                  </button>
+                </li>
+                <li class="nav-item">
+                  <button
+                    class="nav-link"
+                    data-bs-toggle="tab"
+                    data-bs-target="#year"
+                    type="button"
+                    role="tab"
+                  >
+                    Year
+                  </button>
+                </li>
+              </ul>
+
+              <div class="tab-content">
+                <div
+                  class="tab-pane fade show active"
+                  id="today"
+                  role="tabpanel"
+                >
+                  <div class="chart-container">
+                    <canvas id="imageChart"></canvas>
+                  </div>
+                </div>
+                <div class="tab-pane fade" id="week" role="tabpanel">
+                  <div class="chart-container">
+                    <canvas id="imageChartWeek"></canvas>
+                  </div>
+                </div>
+                <div class="tab-pane fade" id="month" role="tabpanel">
+                  <div class="chart-container">
+                    <canvas id="imageChartMonth"></canvas>
+                  </div>
+                </div>
+                <div class="tab-pane fade" id="quarter" role="tabpanel">
+                  <div class="chart-container">
+                    <canvas id="imageChartQuarter"></canvas>
+                  </div>
+                </div>
+                <div class="tab-pane fade" id="year" role="tabpanel">
+                  <div class="chart-container">
+                    <canvas id="imageChartYear"></canvas>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row text-center mt-3">
+                <div class="col-3">
+                  <div class="py-2 rounded bg-light">
+                    40%
+                    <div class="text-gray-7">Sales</div>
+                  </div>
+                </div>
+                <div class="col-3">
+                  <div class="py-2 rounded bg-light">
+                    25%
+                    <div class="text-gray-7">Front End</div>
+                  </div>
+                </div>
+                <div class="col-3">
+                  <div class="py-2 rounded bg-light">
+                    36%
+                    <div class="text-gray-7">React</div>
+                  </div>
+                </div>
+                <div class="col-3">
+                  <div class="py-2 rounded bg-light">
+                    19%
+                    <div class="text-gray-7">UI</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Late Arrivals Today -->
+        <div class="col-xl-6 d-flex">
+          <div class="card flex-fill">
+            <div
+              class="card-header pb-0 d-flex align-items-center justify-content-between flex-wrap"
+            >
+              <h5 class="mb-2">Late Arrivals Today</h5>
+              <a class="btn btn-white btn-sm mb-2" href="javascript:void(0);">
+                <i class="ti ti-calendar me-1"></i>Today
+              </a>
+            </div>
+
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <thead class="visually-hidden">
+                    <tr>
+                      <th scope="col">Employee</th>
+                      <th scope="col" class="text-end">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template for:each={lateArrivalRows} for:item="row">
+                      <tr key={row.key}>
+                        <td class="d-flex align-items-center">
+                          <img
+                            class="avatar avatar-sm avatar-rounded me-2"
+                            src={row.avatar}
+                            alt="img"
+                          />
+                          <div>
+                            <div class="fw-semibold">{row.employeeName}</div>
+                            <div class="text-gray-7">{row.department}</div>
+                          </div>
+                        </td>
+                        <td class="text-end">
+                          <div>{row.arrivalTime}</div>
+                          <div class="text-danger small">{row.lateBy}</div>
+                        </td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recruitment Statistics -->
+        <div class="col-xl-8 d-flex">
+          <div class="card flex-fill">
+            <div
+              class="card-header pb-0 d-flex align-items-center justify-content-between flex-wrap"
+            >
+              <h5 class="mb-2">Recruitment Statistics</h5>
+              <a class="btn btn-white btn-sm mb-2" href="javascript:void(0);">
+                <i class="ti ti-calendar me-1"></i>Weekly
+              </a>
+            </div>
+
+            <div class="card-body">
+              <div class="row text-center mb-3">
+                <div class="col-md-4 mb-2">
+                  <p class="mb-1 text-gray-7">Applicants</p>
+                  <h4 class="mb-0">{recruitmentApplicants}</h4>
+                </div>
+                <div class="col-md-4 mb-2">
+                  <p class="mb-1 text-gray-7">Hired</p>
+                  <h4 class="mb-0">{recruitmentHired}</h4>
+                </div>
+                <div class="col-md-4 mb-2">
+                  <p class="mb-1 text-gray-7">Avg Time</p>
+                  <h4 class="mb-0">{recruitmentAvgTimeDays} days</h4>
+                </div>
+              </div>
+
+              <div class="progress mb-3" style="height: 12px">
+                <div class="progress-bar" style="width: 55%"></div>
+                <div class="progress-bar bg-dark" style="width: 20%"></div>
+                <div class="progress-bar bg-purple" style="width: 25%"></div>
+              </div>
+
+              <div
+                class="d-flex align-items-center justify-content-between flex-wrap gap-3"
+              >
+                <div>
+                  <div class="d-flex align-items-center gap-2">
+                    <span
+                      class="legend-indicator"
+                      style="background: #ff6b00"
+                    ></span>
+                    <span class="text-gray-7">Applicants</span>
+                  </div>
+                  <div class="small text-gray-7">
+                    {recruitmentApplicantsPercent}% :
+                    {recruitmentApplicantsEmployees} Employees
+                  </div>
+                </div>
+                <div>
+                  <div class="d-flex align-items-center gap-2">
+                    <span
+                      class="legend-indicator"
+                      style="background: #212529"
+                    ></span>
+                    <span class="text-gray-7">Screening</span>
+                  </div>
+                  <div class="small text-gray-7">
+                    {recruitmentScreeningPercent}% :
+                    {recruitmentScreeningEmployees} Employees
+                  </div>
+                </div>
+                <div>
+                  <div class="d-flex align-items-center gap-2">
+                    <span
+                      class="legend-indicator"
+                      style="background: #a855f7"
+                    ></span>
+                    <span class="text-gray-7">Hired</span>
+                  </div>
+                  <div class="small text-gray-7">
+                    {recruitmentHiredPercent}% : {recruitmentHiredEmployees}
+                    Employees
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="bg-dark rounded p-3 mt-3 text-white d-flex align-items-center justify-content-between"
+              >
+                <div>
+                  <div class="text-gray-3">Employees in Training</div>
+                  <h4 class="mb-0 text-white">{trainingInProgress}</h4>
+                </div>
+                <div style="width: 110px">
+                  <canvas id="training-chart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upcoming Interview -->
+        <div class="col-xl-4 d-flex">
+          <div class="card flex-fill">
+            <div
+              class="card-header pb-0 d-flex align-items-center justify-content-between flex-wrap"
+            >
+              <h5 class="mb-2">Upcoming Interview</h5>
+              <a class="btn btn-white btn-sm mb-2" href="javascript:void(0);">
+                <i class="ti ti-calendar me-1"></i>Today
+              </a>
+            </div>
+
+            <div class="card-body">
+              <template for:each={upcomingInterviewRows} for:item="row">
+                <div key={row.key} class="border rounded p-3 mb-3">
+                  <div class="fw-semibold mb-1">{row.title}</div>
+                  <div class="text-gray-7 small mb-2">{row.timeRange}</div>
+                  <div
+                    class="d-flex align-items-center justify-content-between"
+                  >
+                    <a
+                      href="javascript:void(0);"
+                      class="btn btn-outline-light btn-sm"
+                      >Add to Calendar</a
+                    >
+                    <a href="javascript:void(0);" class="btn btn-primary btn-sm"
+                      >Join Now</a
+                    >
+                  </div>
+                </div>
+              </template>
+
+              <div class="text-center mt-3">
+                <a
+                  href="javascript:void(0);"
+                  class="btn btn-outline-light btn-sm"
+                  >View All</a
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Benefit Deductions + Total Payroll -->
+        <div class="col-xl-8">
+          <div class="row">
+            <div class="col-md-6 d-flex">
+              <div class="card flex-fill">
+                <div class="card-body">
+                  <div
+                    class="d-flex align-items-center justify-content-between"
+                  >
+                    <div>
+                      <p class="mb-1 text-gray-7">Benefit Deductions</p>
+                      <h4 class="mb-0">{benefitDeductionsFormatted}</h4>
+                      <div class="small text-gray-7">Increase + 4.10%</div>
+                    </div>
+                    <div style="width: 160px">
+                      <canvas id="deductionChart"></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6 d-flex">
+              <div class="card flex-fill">
+                <div class="card-body">
+                  <div
+                    class="d-flex align-items-center justify-content-between"
+                  >
+                    <div>
+                      <p class="mb-1 text-gray-7">Total Payroll</p>
+                      <h4 class="mb-0">{totalPayrollCostFormatted}</h4>
+                      <div class="small text-success">+ 8.11% Increased</div>
+                    </div>
+                    <div style="width: 160px">
+                      <canvas id="payrollChart"></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Top Employees -->
+            <div class="col-12 d-flex">
+              <div class="card flex-fill">
+                <div class="card-header pb-0">
+                  <h5 class="mb-2">Top Employees</h5>
+                </div>
+                <div class="card-body">
+                  <div
+                    class="d-flex align-items-center justify-content-between flex-wrap gap-2"
+                  >
+                    <template for:each={topEmployeeRows} for:item="row">
+                      <div
+                        key={row.key}
+                        class="text-center"
+                        title={row.employeeName}
+                      >
+                        <img
+                          class="avatar avatar-sm avatar-rounded"
+                          src={row.avatar}
+                          alt={row.employeeName}
+                        />
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pending Approvals -->
+            <div class="col-12 d-flex">
+              <div class="card flex-fill">
+                <div
+                  class="card-header pb-0 d-flex align-items-center justify-content-between flex-wrap"
+                >
+                  <h5 class="mb-2">Pending Approvals</h5>
+                  <a
+                    href="javascript:void(0);"
+                    class="btn btn-outline-light btn-sm mb-2"
+                    >View All</a
+                  >
+                </div>
+
+                <div class="card-body">
+                  <template for:each={pendingApprovalRows} for:item="row">
+                    <div
+                      key={row.key}
+                      class="border rounded p-3 mb-3 d-flex align-items-center justify-content-between"
+                    >
+                      <div class="d-flex align-items-center">
+                        <img
+                          class="avatar avatar-sm avatar-rounded me-2"
+                          src={row.avatar}
+                          alt="img"
+                        />
+                        <div>
+                          <div class="fw-semibold">{row.employeeName}</div>
+                          <div class="text-gray-7 small">{row.dateAndDays}</div>
+                          <div class="text-gray-7 small">
+                            Reason: {row.reason}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="d-flex gap-2">
+                        <a
+                          class="btn btn-primary btn-sm"
+                          href="javascript:void(0);"
+                          >Approve</a
+                        >
+                        <a
+                          class="btn btn-outline-light btn-sm"
+                          href="javascript:void(0);"
+                          >Decline</a
+                        >
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- END: Extracted content -->
+  </div>
+</template>

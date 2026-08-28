@@ -1,0 +1,173 @@
+<!--
+  @description       : 
+  @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+  @group             : 
+  @last modified on  : 01-17-2026
+  @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+-->
+<template>
+  <template if:true={isOpen}>
+    <dialog
+      class="modal fade show attendance-modal"
+      open
+      aria-modal="true"
+      aria-labelledby="attendance-modal-title"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title" id="attendance-modal-title">
+              {modalTitle}
+            </h4>
+            <button
+              type="button"
+              class="btn-close custom-btn-close"
+              onclick={closeModal}
+              aria-label="Close"
+            >
+              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="modal-body pb-0">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="mb-3">
+                  <label class="form-label w-100"
+                    >Date
+                    <div class="input-icon position-relative w-100 me-2 mt-1">
+                      <input
+                        type="date"
+                        class="form-control ps-3"
+                        value={attendanceDate}
+                        onchange={handleDateChange}
+                      />
+                      <span class="input-icon-addon">
+                        <i
+                          class="fa-solid fa-calendar-days"
+                          aria-hidden="true"
+                        ></i>
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label w-100"
+                    >Check In
+                    <div class="input-icon position-relative w-100 mt-1">
+                      <input
+                        type="time"
+                        class="form-control ps-3"
+                        value={fromTime}
+                        onchange={handleFromTimeChange}
+                      />
+                      <span class="input-icon-addon">
+                        <i class="fa-solid fa-clock" aria-hidden="true"></i>
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label w-100"
+                    >Check Out
+                    <div class="input-icon position-relative w-100 mt-1">
+                      <input
+                        type="time"
+                        class="form-control ps-3"
+                        value={toTime}
+                        onchange={handleToTimeChange}
+                      />
+                      <span class="input-icon-addon">
+                        <i class="fa-solid fa-clock" aria-hidden="true"></i>
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label w-100"
+                    >Break (Mins)
+                    <input
+                      type="number"
+                      class="form-control mt-1"
+                      value="60"
+                      disabled
+                    />
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label w-100"
+                    >Overtime
+                    <input
+                      type="text"
+                      class="form-control mt-1"
+                      value="0h"
+                      disabled
+                    />
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-12">
+                <div class="mb-3">
+                  <label class="form-label w-100"
+                    >Production Hours
+                    <div class="input-icon position-relative w-100 mt-1">
+                      <input
+                        type="text"
+                        class="form-control ps-3"
+                        value={productionHours}
+                        disabled
+                      />
+                      <span class="input-icon-addon">
+                        <i class="fa-solid fa-clock" aria-hidden="true"></i>
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-12">
+                <div class="mb-3">
+                  <label class="form-label w-100"
+                    >Status
+                    <select
+                      class="form-select mt-1"
+                      onchange={handleStatusChange}
+                    >
+                      <option value="Present" selected={isPresent}>
+                        Present
+                      </option>
+                      <option value="Absent" selected={isAbsent}>Absent</option>
+                      <option value="Late" selected={isLate}>Late</option>
+                      <option value="On Leave" selected={isOnLeave}>
+                        On Leave
+                      </option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-light me-2"
+              onclick={closeModal}
+            >
+              Cancel
+            </button>
+            <button type="button" class="btn btn-primary" onclick={handleSave}>
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+    <div class="modal-backdrop fade show"></div>
+  </template>
+</template>

@@ -1,0 +1,18 @@
+/* Fallback when brand images (logo SVGs) cannot be loaded */
+.logo-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  line-height: 1;
+  border-radius: 6px;
+  padding: 6px 10px;
+  background: var(--bs-primary, #0d6efd);
+  color: #fff;
+}
+
+.logo-small-fallback {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}

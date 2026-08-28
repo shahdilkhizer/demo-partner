@@ -1,0 +1,88 @@
+<template lwc:render-mode="light">
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="content-page-header">
+          <h5>Project Details</h5>
+          <div class="list-btn">
+            <ul class="filter-list">
+              <li>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  onclick={handleBack}
+                >
+                  <i class="fa-solid fa-arrow-left me-2"></i>Back
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <!-- /Page Header -->
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card shadow-sm">
+            <div class="card-header">
+              <h4 class="card-title">Project Details</h4>
+            </div>
+            <div class="card-body">
+              <div class="slds-p-around_medium">
+                <template if:true={project.data}>
+                  <lightning-record-view-form
+                    record-id={recordId}
+                    object-api-name="Opportunity"
+                  >
+                    <div class="slds-grid">
+                      <div class="slds-col slds-size_1-of-2">
+                        <lightning-output-field
+                          field-name="Name"
+                        ></lightning-output-field>
+                        <lightning-output-field
+                          field-name="CloseDate"
+                        ></lightning-output-field>
+                      </div>
+                      <div class="slds-col slds-size_1-of-2">
+                        <lightning-output-field
+                          field-name="Amount"
+                        ></lightning-output-field>
+                        <lightning-output-field
+                          field-name="OwnerId"
+                        ></lightning-output-field>
+                      </div>
+                    </div>
+                  </lightning-record-view-form>
+                </template>
+                <template if:true={project.error}>
+                  <p>Error loading project: {projectErrorMessage}</p>
+                </template>
+              </div>
+
+              <div class="slds-p-around_medium">
+                <h3 class="slds-text-heading_medium slds-m-bottom_medium">
+                  Tasks
+                </h3>
+                <template if:true={hasTasks}>
+                  <template for:each={tasksList} for:item="task">
+                    <c-pw-chrono-task-item
+                      key={task.Id}
+                      task={task}
+                    ></c-pw-chrono-task-item>
+                  </template>
+                </template>
+                <template if:false={hasTasks}>
+                  <p class="slds-text-color_weak">No tasks found.</p>
+                </template>
+                <template if:true={tasks.error}>
+                  <p>Error loading tasks: {tasksErrorMessage}</p>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

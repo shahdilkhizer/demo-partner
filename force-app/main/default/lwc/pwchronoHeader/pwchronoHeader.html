@@ -1,0 +1,443 @@
+<template lwc:render-mode="light">
+  <template if:false={isLightningExperience}>
+    <div class="header" data-region="header">
+      <div class="main-header">
+        <div class="header-left">
+          <a href={communityHomeHref} class="logo">
+            <template if:false={logoLightErrored}>
+              <img
+                src={logoLightUrl}
+                alt={logoAltText}
+                data-variant="light"
+                onerror={handleLogoError}
+              />
+            </template>
+            <template if:true={logoLightErrored}>
+              <span class="logo-fallback" aria-label={logoAltText}
+                >{brandInitials}</span
+              >
+            </template>
+            <span class="status-indicator">Pulse Work Chrono</span>
+          </a>
+          <a href={communityHomeHref} class="dark-logo">
+            <template if:false={logoDarkErrored}>
+              <img
+                src={logoDarkUrl}
+                alt={logoAltText}
+                data-variant="dark"
+                onerror={handleLogoError}
+              />
+            </template>
+            <template if:true={logoDarkErrored}>
+              <span class="logo-fallback" aria-label={logoAltText}
+                >{brandInitials}</span
+              >
+            </template>
+            <span class="status-indicator">Pulse Work Chrono</span>
+          </a>
+        </div>
+
+        <button
+          type="button"
+          id="mobile_btn"
+          class="mobile_btn"
+          data-action="toggleSidebarMobile"
+          onclick={handleActionClick}
+        >
+          <span class="bar-icon" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </span>
+          <span class="visually-hidden">{toggleSidebarLabel}</span>
+        </button>
+
+        <div class="header-user">
+          <div class="nav user-menu nav-list">
+            <div class="me-auto d-flex align-items-center" id="header-search">
+              <button
+                type="button"
+                id="toggle_btn"
+                class="btn btn-menubar me-1"
+                data-action="toggleSidebar"
+                onclick={handleActionClick}
+              >
+                <i class="fa-solid fa-bars-staggered" aria-hidden="true"></i>
+                <span class="visually-hidden">{toggleSidebarLabel}</span>
+              </button>
+
+              <div
+                class="input-group input-group-flat d-inline-flex me-1"
+                data-region="search"
+              >
+                <span class="input-icon-addon" aria-hidden="true">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                </span>
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder={searchPlaceholder}
+                  aria-label={searchAriaLabel}
+                  onkeyup={handleSearch}
+                />
+                <span class="input-group-text" aria-hidden="true">
+                  <kbd>{searchShortcutText}</kbd>
+                </span>
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center" data-region="headerActions">
+              <button
+                type="button"
+                class="btn btn-menubar position-relative me-1"
+                data-action="chat"
+                onclick={handleActionClick}
+              >
+                <i class="fa-solid fa-comments" aria-hidden="true"></i>
+                <span
+                  class="badge bg-info rounded-pill d-flex align-items-center justify-content-center header-badge"
+                  data-bind="chatCount"
+                  >{chatCount}</span
+                >
+                <span class="visually-hidden">{chatLabel}</span>
+              </button>
+
+              <div
+                class="dropdown me-1 notification_item"
+                data-region="notifications"
+              >
+                <template if:true={showNotifications}>
+                  <button
+                    type="button"
+                    class="btn btn-menubar position-relative me-1"
+                    data-action="toggleNotifications"
+                    onclick={handleActionClick}
+                    aria-expanded="true"
+                  >
+                    <i class="fa-solid fa-bell" aria-hidden="true"></i>
+                    <span
+                      class="notification-status-dot"
+                      aria-hidden="true"
+                    ></span>
+                    <span class="visually-hidden">{notificationsLabel}</span>
+                  </button>
+                </template>
+                <template if:false={showNotifications}>
+                  <button
+                    type="button"
+                    class="btn btn-menubar position-relative me-1"
+                    data-action="toggleNotifications"
+                    onclick={handleActionClick}
+                    aria-expanded="false"
+                  >
+                    <i class="fa-solid fa-bell" aria-hidden="true"></i>
+                    <span
+                      class="notification-status-dot"
+                      aria-hidden="true"
+                    ></span>
+                    <span class="visually-hidden">{notificationsLabel}</span>
+                  </button>
+                </template>
+
+                <template if:true={showNotifications}>
+                  <div
+                    class="dropdown-menu dropdown-menu-end notification-dropdown p-4 show"
+                  >
+                    <div
+                      class="d-flex align-items-center justify-content-between border-bottom p-0 pb-3 mb-3"
+                    >
+                      <h4 class="notification-title">{notificationsTitle}</h4>
+                      <div class="d-flex align-items-center">
+                        <button
+                          type="button"
+                          class="text-primary fs-15 me-3 lh-1 bg-transparent border-0 p-0"
+                          data-action="markAllRead"
+                          onclick={handleActionClick}
+                        >
+                          {markAllReadLabel}
+                        </button>
+                        <div class="dropdown">
+                          <template if:true={showNotificationFilter}>
+                            <button
+                              type="button"
+                              class="bg-white dropdown-toggle border-0"
+                              data-action="toggleNotificationFilter"
+                              onclick={handleActionClick}
+                              aria-expanded="true"
+                            >
+                              <i
+                                class="fa-solid fa-calendar-check me-1"
+                                aria-hidden="true"
+                              ></i
+                              >{notificationFilterLabel}
+                            </button>
+                          </template>
+                          <template if:false={showNotificationFilter}>
+                            <button
+                              type="button"
+                              class="bg-white dropdown-toggle border-0"
+                              data-action="toggleNotificationFilter"
+                              onclick={handleActionClick}
+                              aria-expanded="false"
+                            >
+                              <i
+                                class="fa-solid fa-calendar-check me-1"
+                                aria-hidden="true"
+                              ></i
+                              >{notificationFilterLabel}
+                            </button>
+                          </template>
+                          <template if:true={showNotificationFilter}>
+                            <ul
+                              class="dropdown-menu mt-2 p-3 show"
+                              data-list="notificationFilters"
+                            >
+                              <template
+                                for:each={notificationFilters}
+                                for:item="f"
+                              >
+                                <li
+                                  key={f.key}
+                                  data-repeat="notificationFilter"
+                                >
+                                  <button
+                                    type="button"
+                                    class="dropdown-item rounded-1"
+                                    data-action={f.action}
+                                    onclick={handleActionClick}
+                                  >
+                                    {f.label}
+                                  </button>
+                                </li>
+                              </template>
+                            </ul>
+                          </template>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="noti-content" data-list="notificationsList">
+                      <template for:each={notifications} for:item="n">
+                        <div
+                          key={n.key}
+                          class="border-bottom mb-3 pb-3"
+                          data-repeat="notificationItem"
+                        >
+                          <button
+                            type="button"
+                            class="btn-reset d-block w-100 text-start bg-transparent border-0 p-0"
+                            data-action={n.action}
+                            onclick={handleActionClick}
+                          >
+                            <div class="d-flex">
+                              <c-pwchrono-avatar
+                                container-class="avatar avatar-lg me-2 flex-shrink-0"
+                                image-url={n.avatarUrl}
+                                name={n.avatarAlt}
+                                initials={n.initials}
+                                title-class="avatar-title rounded-circle"
+                              ></c-pwchrono-avatar>
+                              <div class="flex-grow-1">
+                                <p class="mb-1">{n.text}</p>
+                                <span>{n.time}</span>
+                              </div>
+                            </div>
+                          </button>
+                        </div>
+                      </template>
+                    </div>
+
+                    <div class="d-flex p-0">
+                      <button
+                        type="button"
+                        class="btn btn-light w-100 me-2"
+                        data-action="closeNotifications"
+                        onclick={handleActionClick}
+                      >
+                        {cancelLabel}
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-primary w-100"
+                        data-action="viewAllNotifications"
+                        onclick={handleActionClick}
+                      >
+                        {viewAllLabel}
+                      </button>
+                    </div>
+                  </div>
+                </template>
+              </div>
+
+              <div class="dropdown profile-dropdown" data-region="profile">
+                <template if:true={showProfileMenu}>
+                  <a
+                    href="#"
+                    class="dropdown-toggle d-flex align-items-center show"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="true"
+                    data-action="toggleProfileMenu"
+                    onclick={handleActionClick}
+                  >
+                    <c-pwchrono-avatar
+                      container-class="avatar avatar-sm online avatar-rounded"
+                      image-url={userAvatarUrl}
+                      name={userName}
+                      initials={userInitials}
+                      alt-text={userAvatarAlt}
+                      image-class="img-fluid rounded-circle"
+                      title-class="initial-wrap"
+                      fallback-bg-class="bg-primary"
+                    ></c-pwchrono-avatar>
+                  </a>
+                </template>
+
+                <template if:false={showProfileMenu}>
+                  <a
+                    href="#"
+                    class="dropdown-toggle d-flex align-items-center"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    data-action="toggleProfileMenu"
+                    onclick={handleActionClick}
+                  >
+                    <c-pwchrono-avatar
+                      container-class="avatar avatar-sm online avatar-rounded"
+                      image-url={userAvatarUrl}
+                      name={userName}
+                      initials={userInitials}
+                      alt-text={userAvatarAlt}
+                      image-class="img-fluid rounded-circle"
+                      title-class="initial-wrap"
+                      fallback-bg-class="bg-primary"
+                    ></c-pwchrono-avatar>
+                  </a>
+                </template>
+
+                <template if:true={showProfileMenu}>
+                  <div
+                    class="dropdown-menu shadow-none show"
+                    style="
+                      position: absolute;
+                      inset: 0px 0px auto auto;
+                      margin: 0px;
+                      transform: translate(0px, 26px);
+                    "
+                    data-popper-placement="bottom-end"
+                  >
+                    <div class="card mb-0">
+                      <div class="card-header">
+                        <div class="d-flex align-items-center">
+                          <c-pwchrono-avatar
+                            container-class="avatar avatar-lg me-2 avatar-rounded"
+                            image-url={userAvatarUrl}
+                            name={userName}
+                            initials={userInitials}
+                            alt-text={userAvatarAlt}
+                            image-class="img-fluid rounded-circle"
+                            title-class="initial-wrap"
+                            fallback-bg-class="bg-primary"
+                          ></c-pwchrono-avatar>
+                          <div>
+                            <h5 class="mb-0">{userName}</h5>
+                            <p class="fs-12 fw-medium mb-0">{userSubTitle}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="card-body" data-list="profileActions">
+                        <template for:each={profileActions} for:item="a">
+                          <a
+                            key={a.key}
+                            class="dropdown-item d-inline-flex align-items-center p-0 py-2"
+                            href="#"
+                            data-repeat="profileAction"
+                            data-action={a.action}
+                            onclick={handleActionClick}
+                          >
+                            <i class={a.iconClass} aria-hidden="true"></i>
+                            {a.label}
+                          </a>
+                        </template>
+                      </div>
+
+                      <div class="card-footer">
+                        <a
+                          class="dropdown-item d-inline-flex align-items-center p-0 py-2"
+                          href="#"
+                          data-action="my_profile"
+                          onclick={handleActionClick}
+                        >
+                          <i
+                            class="fa-solid fa-user me-2"
+                            aria-hidden="true"
+                          ></i>
+                          My Profile
+                        </a>
+                        <a
+                          class="dropdown-item d-inline-flex align-items-center p-0 py-2"
+                          href="#"
+                          data-action="logout"
+                          onclick={handleActionClick}
+                          ><i
+                            class="fa-solid fa-right-from-bracket me-2"
+                            aria-hidden="true"
+                          ></i
+                          >{logoutLabel}</a
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dropdown mobile-user-menu" data-region="mobileMenu">
+          <template if:true={showMobileMenu}>
+            <button
+              type="button"
+              class="nav-link dropdown-toggle btn-reset border-0 bg-transparent"
+              data-action="toggleMobileMenu"
+              onclick={handleActionClick}
+              aria-expanded="true"
+            >
+              <i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i>
+              <span class="visually-hidden">{mobileMenuLabel}</span>
+            </button>
+          </template>
+          <template if:false={showMobileMenu}>
+            <button
+              type="button"
+              class="nav-link dropdown-toggle btn-reset border-0 bg-transparent"
+              data-action="toggleMobileMenu"
+              onclick={handleActionClick}
+              aria-expanded="false"
+            >
+              <i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i>
+              <span class="visually-hidden">{mobileMenuLabel}</span>
+            </button>
+          </template>
+          <template if:true={showMobileMenu}>
+            <div
+              class="dropdown-menu dropdown-menu-end show"
+              data-list="mobileMenuItems"
+            >
+              <template for:each={mobileMenuItems} for:item="m">
+                <button
+                  type="button"
+                  key={m.key}
+                  class="dropdown-item"
+                  data-repeat="mobileMenuItem"
+                  data-action={m.action}
+                  onclick={handleActionClick}
+                >
+                  {m.label}
+                </button>
+              </template>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </template>
+</template>

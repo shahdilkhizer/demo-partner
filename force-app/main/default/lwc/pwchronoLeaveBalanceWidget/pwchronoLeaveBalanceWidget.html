@@ -1,0 +1,90 @@
+<template>
+  <div
+    class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+  >
+    <!-- Header -->
+    <div
+      class="bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-5 text-white"
+    >
+      <h1 class="text-xl font-bold">My Leave Balance</h1>
+      <p class="text-sm text-white/80 mt-1">View your available leave days</p>
+    </div>
+
+    <div class="p-4 md:p-6">
+      <template if:true={isLoading}>
+        <div class="flex justify-center items-center p-8">
+          <div
+            class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"
+          ></div>
+        </div>
+      </template>
+
+      <template if:true={loadError}>
+        <div class="p-4 bg-red-50 border border-red-200 rounded-xl">
+          <div class="flex items-center gap-3">
+            <lightning-icon
+              icon-name="utility:error"
+              alternative-text="Error"
+              variant="error"
+            ></lightning-icon>
+            <div>
+              <p class="font-semibold text-red-800">
+                Error loading leave balances
+              </p>
+              <p class="text-sm text-red-600">{loadError}</p>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template if:false={isLoading}>
+        <template if:false={loadError}>
+          <template if:true={hasBalances}>
+            <div
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+            >
+              <template for:each={balances} for:item="balance">
+                <div
+                  key={balance.leaveType}
+                  class="balance-card p-4 bg-gray-50 rounded-xl border border-gray-200"
+                >
+                  <div
+                    class="text-sm font-medium text-gray-600 truncate mb-1"
+                    title={balance.leaveType}
+                  >
+                    {balance.leaveType}
+                  </div>
+                  <div class="text-3xl font-bold text-emerald-600">
+                    {balance.remaining}
+                  </div>
+                  <div
+                    class="flex items-center justify-between text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200"
+                  >
+                    <span>Allocated: {balance.allocated}</span>
+                    <span>Used: {balance.used}</span>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+          <template if:false={hasBalances}>
+            <div
+              class="flex flex-col items-center justify-center py-12 text-center"
+            >
+              <div
+                class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"
+              >
+                <lightning-icon
+                  icon-name="utility:date_time"
+                  size="medium"
+                  class="text-gray-400"
+                ></lightning-icon>
+              </div>
+              <p class="text-gray-500">No leave allocations found.</p>
+            </div>
+          </template>
+        </template>
+      </template>
+    </div>
+  </div>
+</template>

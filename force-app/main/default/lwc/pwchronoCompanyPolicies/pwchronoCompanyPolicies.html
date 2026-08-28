@@ -1,0 +1,86 @@
+<template lwc:render-mode="light">
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
+        <div class="my-auto mb-2">
+          <h2 class="mb-1">Company Policies</h2>
+          <p class="text-muted mb-0">Review organizational policies and guidelines</p>
+        </div>
+        <div class="d-flex my-xl-auto right-content"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="col-12 col-md-4 mb-4">
+            <lightning-combobox
+              name="category"
+              label="Filter by Category"
+              value={selectedCategory}
+              placeholder="Select Category"
+              options={categoryOptions}
+              onchange={handleCategoryChange}
+            ></lightning-combobox>
+          </div>
+
+          <template if:true={isLoading}>
+            <div class="d-flex align-items-center justify-content-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <span class="ms-3 text-muted">Loading policies...</span>
+            </div>
+          </template>
+
+          <template if:false={isLoading}>
+            <template if:true={policies}>
+              <template if:true={hasPolicies}>
+                <lightning-accordion allow-multiple-sections-open>
+                  <template for:each={policies} for:item="policy">
+                    <lightning-accordion-section
+                      key={policy.Id}
+                      name={policy.Id}
+                      label={policy.Name}
+                    >
+                      <div class="p-3">
+                        <div class="row g-3 mb-3">
+                          <div class="col-12 col-sm-6">
+                            <p class="small text-muted text-uppercase fw-medium mb-1">Category</p>
+                            <p class="mb-0">{policy.Category__c}</p>
+                          </div>
+                          <div class="col-12 col-sm-6">
+                            <p class="small text-muted text-uppercase fw-medium mb-1">Effective Date</p>
+                            <p class="mb-0">
+                              <lightning-formatted-date-time
+                                value={policy.Effective_Date__c}
+                              ></lightning-formatted-date-time>
+                            </p>
+                          </div>
+                        </div>
+                        <lightning-formatted-rich-text
+                          value={policy.Description__c}
+                        ></lightning-formatted-rich-text>
+                      </div>
+                    </lightning-accordion-section>
+                  </template>
+                </lightning-accordion>
+              </template>
+              <template if:false={hasPolicies}>
+                <div class="text-center py-5">
+                  <i class="ti ti-file-off fs-1 text-muted d-block mb-2"></i>
+                  <p class="text-muted mb-0">No policies found for this category.</p>
+                </div>
+              </template>
+            </template>
+          </template>
+
+          <template if:true={error}>
+            <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+              <i class="ti ti-alert-circle flex-shrink-0"></i>
+              <span>{error}</span>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

@@ -1,0 +1,923 @@
+<!--
+  @description       : 
+  @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+  @group             : 
+  @last modified on  : 01-17-2026
+  @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+-->
+<template>
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <!-- Page Header -->
+      <div
+        class="d-md-flex d-block align-items-center justify-content-between mb-3"
+      >
+        <div class="my-auto mb-2">
+          <h2 class="mb-1">Admin Dashboard</h2>
+          <nav aria-label="Breadcrumb">
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item">
+                <a href="javascript:void(0);" aria-label="Home"
+                  ><i class="fa-solid fa-house" aria-hidden="true"></i
+                ></a>
+              </li>
+              <li class="breadcrumb-item">Dashboard</li>
+              <li class="breadcrumb-item active" aria-current="page">
+                Admin Dashboard
+              </li>
+            </ol>
+          </nav>
+        </div>
+        <div
+          class="d-flex my-xl-auto right-content align-items-center flex-wrap"
+        >
+          <div class="me-2 mb-2">
+            <div class="dropdown">
+              <button
+                type="button"
+                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+              >
+                <i class="fa-solid fa-file-export me-1" aria-hidden="true"></i
+                >Export
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end p-3">
+                <li>
+                  <a href="javascript:void(0);" class="dropdown-item rounded-1"
+                    ><i class="fa-solid fa-file-pdf me-1" aria-hidden="true"></i
+                    >Export as PDF</a
+                  >
+                </li>
+                <li>
+                  <a href="javascript:void(0);" class="dropdown-item rounded-1"
+                    ><i
+                      class="fa-solid fa-file-excel me-1"
+                      aria-hidden="true"
+                    ></i
+                    >Export as Excel
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="mb-2">
+            <div class="input-icon w-100 position-relative">
+              <span class="input-icon-addon">
+                <i
+                  class="fa-solid fa-calendar-days text-gray-9"
+                  aria-hidden="true"
+                ></i>
+              </span>
+              <input type="text" class="form-control yearpicker" value="2025" />
+            </div>
+          </div>
+          <div class="ms-2 head-icons">
+            <a
+              href="javascript:void(0);"
+              class=""
+              data-bs-toggle="tooltip"
+              data-bs-placement="top"
+              data-bs-original-title="Collapse"
+              id="collapse-header"
+              aria-label="Collapse Header"
+            >
+              <i class="fa-solid fa-chevron-up" aria-hidden="true"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      <!-- /Page Header -->
+
+      <template if:true={isLoading}>
+        <div class="d-flex justify-content-center p-5">
+          <div class="spinner-border text-primary">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </template>
+
+      <template if:false={isLoading}>
+        <!-- Welcome Wrap -->
+        <div class="card border-0">
+          <div
+            class="card-body d-flex align-items-center justify-content-between flex-wrap pb-1"
+          >
+            <div class="d-flex align-items-center mb-3">
+              <c-pwchrono-avatar
+                container-class="avatar avatar-xl flex-shrink-0 avatar-rounded"
+                image-url={avatar31Url}
+                name="Admin"
+                alt-text="Admin"
+                image-class="rounded-circle"
+                title-class="initial-wrap"
+                fallback-bg-class="bg-secondary"
+              ></c-pwchrono-avatar>
+              <div class="ms-3">
+                <h3 class="mb-2">
+                  Welcome Back, Admin
+                  <a
+                    href="javascript:void(0);"
+                    class="edit-icon"
+                    aria-label="Edit Profile"
+                    ><i
+                      class="fa-solid fa-pen-to-square fs-14"
+                      aria-hidden="true"
+                    ></i
+                  ></a>
+                </h3>
+                <p>
+                  You have
+                  <span class="text-primary text-decoration-underline">21</span>
+                  Pending Approvals &amp;
+                  <span class="text-primary text-decoration-underline">14</span>
+                  Leave Requests
+                </p>
+              </div>
+            </div>
+            <div class="d-flex align-items-center flex-wrap mb-1">
+              <a
+                href="javascript:void(0);"
+                class="btn btn-secondary btn-md me-2 mb-2"
+                data-bs-toggle="modal"
+                data-bs-target="#add_project"
+                ><i class="fa-solid fa-square-plus me-1" aria-hidden="true"></i
+                >Add Project</a
+              >
+              <a
+                href="javascript:void(0);"
+                class="btn btn-primary btn-md mb-2"
+                data-bs-toggle="modal"
+                data-bs-target="#add_leaves"
+                ><i class="fa-solid fa-square-plus me-1" aria-hidden="true"></i
+                >Add Requests</a
+              >
+            </div>
+          </div>
+        </div>
+        <!-- /Welcome Wrap -->
+
+        <div class="row">
+          <!-- Widget Info -->
+          <div class="col-xxl-8 d-flex">
+            <div class="row flex-fill">
+              <div class="col-md-3 d-flex">
+                <div class="card flex-fill">
+                  <div class="card-body">
+                    <span class="avatar rounded-circle bg-primary mb-2">
+                      <i
+                        class="fa-solid fa-calendar-check fs-16"
+                        aria-hidden="true"
+                      ></i>
+                    </span>
+                    <h6 class="fs-13 fw-medium text-default mb-1">
+                      Attendance Overview
+                    </h6>
+                    <h3 class="mb-3">
+                      120/154
+                      <span class="fs-12 fw-medium text-success"
+                        ><i class="fa-solid fa-caret-up me-1"></i>+2.1%</span
+                      >
+                    </h3>
+                    <button
+                      class="link-default btn-link border-0 bg-transparent p-0"
+                      onclick={navigateToAttendance}
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card flex-fill">
+                  <div class="card-body">
+                    <span class="avatar rounded-circle bg-secondary mb-2">
+                      <i
+                        class="fa-brands fa-chrome fs-16"
+                        aria-hidden="true"
+                      ></i>
+                    </span>
+                    <h6 class="fs-13 fw-medium text-default mb-1">
+                      Total No of Projects
+                    </h6>
+                    <h3 class="mb-3">
+                      90/125
+                      <span class="fs-12 fw-medium text-danger"
+                        ><i class="fa-solid fa-caret-down me-1"></i>-2.1%</span
+                      >
+                    </h3>
+                    <button
+                      class="link-default btn-link border-0 bg-transparent p-0"
+                      onclick={navigateToProjects}
+                    >
+                      View All
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card flex-fill">
+                  <div class="card-body">
+                    <span class="avatar rounded-circle bg-info mb-2">
+                      <i class="fa-solid fa-users fs-16" aria-hidden="true"></i>
+                    </span>
+                    <h6 class="fs-13 fw-medium text-default mb-1">
+                      Total No of Clients
+                    </h6>
+                    <h3 class="mb-3">
+                      69/86
+                      <span class="fs-12 fw-medium text-danger"
+                        ><i class="fa-solid fa-caret-down me-1"></i>-11.2%</span
+                      >
+                    </h3>
+                    <a href="javascript:void(0);" class="link-default"
+                      >View All</a
+                    >
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card flex-fill">
+                  <div class="card-body">
+                    <span class="avatar rounded-circle bg-pink mb-2">
+                      <i
+                        class="fa-solid fa-list-check fs-16"
+                        aria-hidden="true"
+                      ></i>
+                    </span>
+                    <h6 class="fs-13 fw-medium text-default mb-1">
+                      Total No of Tasks
+                    </h6>
+                    <h3 class="mb-3">
+                      225/28
+                      <span class="fs-12 fw-medium text-success"
+                        ><i class="fa-solid fa-caret-down me-1"></i>+11.2%</span
+                      >
+                    </h3>
+                    <a href="javascript:void(0);" class="link-default"
+                      >View All</a
+                    >
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card flex-fill">
+                  <div class="card-body">
+                    <span class="avatar rounded-circle bg-purple mb-2">
+                      <i
+                        class="fa-solid fa-sack-dollar fs-16"
+                        aria-hidden="true"
+                      ></i>
+                    </span>
+                    <h6 class="fs-13 fw-medium text-default mb-1">Earnings</h6>
+                    <h3 class="mb-3">
+                      $21445
+                      <span class="fs-12 fw-medium text-success"
+                        ><i class="fa-solid fa-caret-up me-1"></i>+10.2%</span
+                      >
+                    </h3>
+                    <button
+                      class="link-default btn-link border-0 bg-transparent p-0"
+                      onclick={navigateToPayroll}
+                    >
+                      View All
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card flex-fill">
+                  <div class="card-body">
+                    <span class="avatar rounded-circle bg-danger mb-2">
+                      <i
+                        class="fa-brands fa-chrome fs-16"
+                        aria-hidden="true"
+                      ></i>
+                    </span>
+                    <h6 class="fs-13 fw-medium text-default mb-1">
+                      Profit This Week
+                    </h6>
+                    <h3 class="mb-3">
+                      $5,544
+                      <span class="fs-12 fw-medium text-success"
+                        ><i class="fa-solid fa-caret-up me-1"></i>+2.1%</span
+                      >
+                    </h3>
+                    <a href="javascript:void(0);" class="link-default"
+                      >View All</a
+                    >
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card flex-fill">
+                  <div class="card-body">
+                    <span class="avatar rounded-circle bg-success mb-2">
+                      <i class="fa-solid fa-users fs-16" aria-hidden="true"></i>
+                    </span>
+                    <h6 class="fs-13 fw-medium text-default mb-1">
+                      Job Applicants
+                    </h6>
+                    <h3 class="mb-3">
+                      98
+                      <span class="fs-12 fw-medium text-success"
+                        ><i class="fa-solid fa-caret-up me-1"></i>+2.1%</span
+                      >
+                    </h3>
+                    <button
+                      class="link-default btn-link border-0 bg-transparent p-0"
+                      onclick={navigateToRecruitment}
+                    >
+                      View All
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card flex-fill">
+                  <div class="card-body">
+                    <span class="avatar rounded-circle bg-dark mb-2">
+                      <i
+                        class="fa-solid fa-user-plus fs-16"
+                        aria-hidden="true"
+                      ></i>
+                    </span>
+                    <h6 class="fs-13 fw-medium text-default mb-1">New Hire</h6>
+                    <h3 class="mb-3">
+                      45/48
+                      <span class="fs-12 fw-medium text-danger"
+                        ><i class="fa-solid fa-caret-down me-1"></i>-11.2%</span
+                      >
+                    </h3>
+                    <button
+                      class="link-default btn-link border-0 bg-transparent p-0"
+                      onclick={navigateToEmployees}
+                    >
+                      View All
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /Widget Info -->
+
+          <!-- Employees By Department -->
+          <div class="col-xxl-4 d-flex">
+            <div class="card flex-fill">
+              <div
+                class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
+              >
+                <h5 class="mb-2">Employees By Department</h5>
+                <div class="dropdown mb-2">
+                  <a
+                    href="javascript:void(0);"
+                    class="btn btn-white border btn-sm d-inline-flex align-items-center"
+                    data-bs-toggle="dropdown"
+                  >
+                    <i
+                      class="fa-solid fa-calendar-days me-1"
+                      aria-hidden="true"
+                    ></i
+                    >This Week
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end p-3">
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >This Month</a
+                      >
+                    </li>
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >This Week</a
+                      >
+                    </li>
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >Last Week</a
+                      >
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div class="card-body">
+                <div id="emp-department" style="min-height: 235px">
+                  <canvas data-chart="emp-department"></canvas>
+                </div>
+                <p class="fs-13">
+                  <i
+                    class="fa-solid fa-circle me-2 fs-8 text-primary"
+                    aria-hidden="true"
+                  ></i
+                  >No of Employees increased by
+                  <span class="text-success fw-bold">+20%</span> from last Week
+                </p>
+              </div>
+            </div>
+          </div>
+          <!-- /Employees By Department -->
+        </div>
+
+        <div class="row">
+          <!-- Total Employee -->
+          <div class="col-xxl-4 d-flex">
+            <div class="card flex-fill">
+              <div
+                class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
+              >
+                <h5 class="mb-2">Employee Status</h5>
+                <div class="dropdown mb-2">
+                  <a
+                    href="javascript:void(0);"
+                    class="btn btn-white border btn-sm d-inline-flex align-items-center"
+                    data-bs-toggle="dropdown"
+                  >
+                    <i
+                      class="fa-solid fa-calendar-days me-1"
+                      aria-hidden="true"
+                    ></i
+                    >This Week
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end p-3">
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >This Month</a
+                      >
+                    </li>
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >This Week</a
+                      >
+                    </li>
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >Today</a
+                      >
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div class="card-body">
+                <div
+                  class="d-flex align-items-center justify-content-between mb-1"
+                >
+                  <p class="fs-13 mb-3">Total Employee</p>
+                  <h3 class="mb-3">154</h3>
+                </div>
+                <div class="progress-stacked emp-stack mb-3">
+                  <div class="progress" style="width: 40%">
+                    <div class="progress-bar bg-warning"></div>
+                  </div>
+                  <div class="progress" style="width: 20%">
+                    <div class="progress-bar bg-secondary"></div>
+                  </div>
+                  <div class="progress" style="width: 10%">
+                    <div class="progress-bar bg-danger"></div>
+                  </div>
+                  <div class="progress" style="width: 30%">
+                    <div class="progress-bar bg-pink"></div>
+                  </div>
+                </div>
+                <div class="border mb-3">
+                  <div class="row gx-0">
+                    <div class="col-6">
+                      <div class="p-2 flex-fill border-end border-bottom">
+                        <p class="fs-13 mb-2">
+                          <i
+                            class="fa-solid fa-square text-primary fs-12 me-2"
+                          ></i
+                          >Fulltime <span class="text-gray-9">(48%)</span>
+                        </p>
+                        <h2 class="display-1">112</h2>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="p-2 flex-fill border-bottom text-end">
+                        <p class="fs-13 mb-2">
+                          <i
+                            class="fa-solid fa-square me-2 text-secondary fs-12"
+                          ></i
+                          >Contract <span class="text-gray-9">(20%)</span>
+                        </p>
+                        <h2 class="display-1">112</h2>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="p-2 flex-fill border-end">
+                        <p class="fs-13 mb-2">
+                          <i
+                            class="fa-solid fa-square me-2 text-danger fs-12"
+                          ></i
+                          >Probation <span class="text-gray-9">(22%)</span>
+                        </p>
+                        <h2 class="display-1">12</h2>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="p-2 flex-fill text-end">
+                        <p class="fs-13 mb-2">
+                          <i class="fa-solid fa-square text-pink me-2 fs-12"></i
+                          >WFH <span class="text-gray-9">(20%)</span>
+                        </p>
+                        <h2 class="display-1">04</h2>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <h6 class="mb-2">Top Performer</h6>
+                <div
+                  class="p-2 d-flex align-items-center justify-content-between border border-primary bg-primary-100 br-5 mb-4"
+                >
+                  <div class="d-flex align-items-center overflow-hidden">
+                    <span class="me-2">
+                      <i
+                        class="fa-solid fa-award text-primary fs-24"
+                        aria-hidden="true"
+                      ></i>
+                    </span>
+                    <a href="javascript:void(0);" class="avatar avatar-md me-2">
+                      <c-pwchrono-avatar
+                        container-class="avatar avatar-md avatar-rounded"
+                        image-url={avatar24Url}
+                        name="Daniel Esbella"
+                        alt-text="Daniel Esbella"
+                        image-class="rounded-circle border border-white"
+                        title-class="initial-wrap"
+                        fallback-bg-class="bg-secondary"
+                      ></c-pwchrono-avatar>
+                    </a>
+                    <div>
+                      <h6 class="text-truncate mb-1 fs-14 fw-medium">
+                        <a href="javascript:void(0);">Daniel Esbella</a>
+                      </h6>
+                      <p class="fs-13">IOS Developer</p>
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <p class="fs-13 mb-1">Performance</p>
+                    <h5 class="text-primary">99%</h5>
+                  </div>
+                </div>
+                <a href="javascript:void(0);" class="btn btn-light btn-md w-100"
+                  >View All Employees</a
+                >
+              </div>
+            </div>
+          </div>
+          <!-- /Total Employee -->
+
+          <!-- Attendance Overview -->
+          <div class="col-xxl-4 col-xl-6 d-flex">
+            <div class="card flex-fill">
+              <div
+                class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
+              >
+                <h5 class="mb-2">Attendance Overview</h5>
+                <div class="dropdown mb-2">
+                  <a
+                    href="javascript:void(0);"
+                    class="btn btn-white border btn-sm d-inline-flex align-items-center"
+                    data-bs-toggle="dropdown"
+                  >
+                    <i
+                      class="fa-solid fa-calendar-days me-1"
+                      aria-hidden="true"
+                    ></i
+                    >Today
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end p-3">
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >This Month</a
+                      >
+                    </li>
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >This Week</a
+                      >
+                    </li>
+                    <li>
+                      <a
+                        href="javascript:void(0);"
+                        class="dropdown-item rounded-1"
+                        >Today</a
+                      >
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="chartjs-wrapper-demo position-relative mb-4">
+                  <div id="attendance" style="min-height: 200px">
+                    <canvas data-chart="attendance"></canvas>
+                  </div>
+                  <div
+                    class="position-absolute text-center attendance-canvas"
+                    style="
+                      top: 50%;
+                      left: 50%;
+                      transform: translate(-50%, -50%);
+                    "
+                  >
+                    <p class="fs-13 mb-1">Total Attendance</p>
+                    <h3>120</h3>
+                  </div>
+                </div>
+                <h6 class="mb-3">Status</h6>
+                <div class="d-flex align-items-center justify-content-between">
+                  <p class="f-13 mb-2">
+                    <i
+                      class="fa-solid fa-circle text-success me-1"
+                      aria-hidden="true"
+                    ></i
+                    >Present
+                  </p>
+                  <p class="f-13 fw-medium text-gray-9 mb-2">59%</p>
+                </div>
+                <div class="d-flex align-items-center justify-content-between">
+                  <p class="f-13 mb-2">
+                    <i
+                      class="fa-solid fa-circle text-secondary me-1"
+                      aria-hidden="true"
+                    ></i
+                    >Late
+                  </p>
+                  <p class="f-13 fw-medium text-gray-9 mb-2">21%</p>
+                </div>
+                <div class="d-flex align-items-center justify-content-between">
+                  <p class="f-13 mb-2">
+                    <i class="fa-solid fa-circle text-warning me-1"></i
+                    >Permission
+                  </p>
+                  <p class="f-13 fw-medium text-gray-9 mb-2">2%</p>
+                </div>
+                <div
+                  class="d-flex align-items-center justify-content-between mb-2"
+                >
+                  <p class="f-13 mb-2">
+                    <i
+                      class="fa-solid fa-circle text-danger me-1"
+                      aria-hidden="true"
+                    ></i
+                    >Absent
+                  </p>
+                  <p class="f-13 fw-medium text-gray-9 mb-2">15%</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /Attendance Overview -->
+
+          <!-- Clock-In/Out -->
+          <div class="col-xxl-4 col-xl-6 d-flex">
+            <div class="card flex-fill">
+              <div
+                class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
+              >
+                <h5 class="mb-2">Clock-In/Out</h5>
+                <div class="d-flex align-items-center">
+                  <div class="dropdown mb-2">
+                    <a
+                      href="javascript:void(0);"
+                      class="dropdown-toggle btn btn-white btn-sm d-inline-flex align-items-center border-0 fs-13 me-2"
+                      data-bs-toggle="dropdown"
+                    >
+                      All Departments
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end p-3">
+                      <li>
+                        <a
+                          href="javascript:void(0);"
+                          class="dropdown-item rounded-1"
+                          >Finance</a
+                        >
+                      </li>
+                      <li>
+                        <a
+                          href="javascript:void(0);"
+                          class="dropdown-item rounded-1"
+                          >Development</a
+                        >
+                      </li>
+                      <li>
+                        <a
+                          href="javascript:void(0);"
+                          class="dropdown-item rounded-1"
+                          >Marketing</a
+                        >
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="dropdown mb-2">
+                    <a
+                      href="javascript:void(0);"
+                      class="btn btn-white border btn-sm d-inline-flex align-items-center"
+                      data-bs-toggle="dropdown"
+                    >
+                      <i
+                        class="fa-solid fa-calendar-days me-1"
+                        aria-hidden="true"
+                      ></i
+                      >Today
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end p-3">
+                      <li>
+                        <a
+                          href="javascript:void(0);"
+                          class="dropdown-item rounded-1"
+                          >This Month</a
+                        >
+                      </li>
+                      <li>
+                        <a
+                          href="javascript:void(0);"
+                          class="dropdown-item rounded-1"
+                          >This Week</a
+                        >
+                      </li>
+                      <li>
+                        <a
+                          href="javascript:void(0);"
+                          class="dropdown-item rounded-1"
+                          >Today</a
+                        >
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div>
+                  <div
+                    class="d-flex align-items-center justify-content-between mb-3 p-2 border border-dashed br-5"
+                  >
+                    <div class="d-flex align-items-center">
+                      <a
+                        href="javascript:void(0);"
+                        class="avatar flex-shrink-0"
+                      >
+                        <c-pwchrono-avatar
+                          container-class="avatar avatar-rounded"
+                          image-url={avatar24Url}
+                          name="Daniel Esbella"
+                          alt-text="Daniel Esbella"
+                          image-class="rounded-circle border border-2"
+                          title-class="initial-wrap"
+                          fallback-bg-class="bg-secondary"
+                        ></c-pwchrono-avatar>
+                      </a>
+                      <div class="ms-2">
+                        <h6 class="fs-14 fw-medium text-truncate">
+                          Daniel Esbella
+                        </h6>
+                        <p class="fs-13">UI/UX Designer</p>
+                      </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                      <a
+                        href="javascript:void(0);"
+                        class="fs-12 fw-medium text-secondary me-1"
+                      >
+                        <i class="fa-solid fa-clock me-1" aria-hidden="true"></i
+                        >Clock In
+                      </a>
+                      <span class="fs-12 text-gray-9">10:30 AM</span>
+                    </div>
+                  </div>
+                  <div
+                    class="d-flex align-items-center justify-content-between mb-3 p-2 border border-dashed br-5"
+                  >
+                    <div class="d-flex align-items-center">
+                      <a
+                        href="javascript:void(0);"
+                        class="avatar flex-shrink-0"
+                      >
+                        <c-pwchrono-avatar
+                          container-class="avatar avatar-rounded"
+                          image-url={avatar23Url}
+                          name="Doglas Martini"
+                          alt-text="Doglas Martini"
+                          image-class="rounded-circle border border-2"
+                          title-class="initial-wrap"
+                          fallback-bg-class="bg-secondary"
+                        ></c-pwchrono-avatar>
+                      </a>
+                      <div class="ms-2">
+                        <h6 class="fs-14 fw-medium text-truncate">
+                          Doglas Martini
+                        </h6>
+                        <p class="fs-13">Project Manager</p>
+                      </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                      <a
+                        href="javascript:void(0);"
+                        class="fs-12 fw-medium text-secondary me-1"
+                      >
+                        <i class="fa-solid fa-clock me-1" aria-hidden="true"></i
+                        >Clock In
+                      </a>
+                      <span class="fs-12 text-gray-9">11:15 AM</span>
+                    </div>
+                  </div>
+                  <div
+                    class="d-flex align-items-center justify-content-between mb-3 p-2 border border-dashed br-5"
+                  >
+                    <div class="d-flex align-items-center">
+                      <a
+                        href="javascript:void(0);"
+                        class="avatar flex-shrink-0"
+                      >
+                        <c-pwchrono-avatar
+                          container-class="avatar avatar-rounded"
+                          image-url={avatar25Url}
+                          name="Brian Villalobos"
+                          alt-text="Brian Villalobos"
+                          image-class="rounded-circle border border-2"
+                          title-class="initial-wrap"
+                          fallback-bg-class="bg-secondary"
+                        ></c-pwchrono-avatar>
+                      </a>
+                      <div class="ms-2">
+                        <h6 class="fs-14 fw-medium text-truncate">
+                          Brian Villalobos
+                        </h6>
+                        <p class="fs-13">PHP Developer</p>
+                      </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                      <a
+                        href="javascript:void(0);"
+                        class="fs-12 fw-medium text-secondary me-1"
+                      >
+                        <i class="fa-solid fa-clock me-1" aria-hidden="true"></i
+                        >Clock In
+                      </a>
+                      <span class="fs-12 text-gray-9">11:45 AM</span>
+                    </div>
+                  </div>
+                  <div
+                    class="d-flex align-items-center justify-content-between mb-0 p-2 border border-dashed br-5"
+                  >
+                    <div class="d-flex align-items-center">
+                      <a
+                        href="javascript:void(0);"
+                        class="avatar flex-shrink-0"
+                      >
+                        <c-pwchrono-avatar
+                          container-class="avatar avatar-rounded"
+                          image-url={avatar26Url}
+                          name="Stephan Peralt"
+                          alt-text="Stephan Peralt"
+                          image-class="rounded-circle border border-2"
+                          title-class="initial-wrap"
+                          fallback-bg-class="bg-secondary"
+                        ></c-pwchrono-avatar>
+                      </a>
+                      <div class="ms-2">
+                        <h6 class="fs-14 fw-medium text-truncate">
+                          Stephan Peralt
+                        </h6>
+                        <p class="fs-13">Android Developer</p>
+                      </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                      <a
+                        href="javascript:void(0);"
+                        class="fs-12 fw-medium text-secondary me-1"
+                      >
+                        <i
+                          class="fa-solid fa-clock me-1"
+                          aria-hidden="true"
+                        ></i>
+                        >Clock In
+                      </a>
+                      <span class="fs-12 text-gray-9">12:15 PM</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /Clock-In/Out -->
+        </div>
+      </template>
+    </div>
+  </div>
+</template>

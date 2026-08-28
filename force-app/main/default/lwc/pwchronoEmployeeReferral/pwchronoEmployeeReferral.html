@@ -1,0 +1,438 @@
+<template lwc:render-mode="light">
+  <div class="pwchrono-employee-referral">
+    <!-- Header -->
+    <div class="page-header mb-4">
+      <div
+        class="d-flex align-items-center justify-content-between flex-wrap gap-2"
+      >
+        <div>
+          <h4 class="mb-1 fw-semibold">
+            <i class="fa-solid fa-users fa-fw me-2 text-primary"></i>Employee
+            Referral
+          </h4>
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0 small">
+              <li class="breadcrumb-item">Recruitment</li>
+              <li class="breadcrumb-item active">Employee Referral</li>
+            </ol>
+          </nav>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick={handleNew}>
+          <i class="fa-solid fa-plus fa-fw me-1"></i>New Referral
+        </button>
+      </div>
+    </div>
+
+    <!-- Metric Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body py-3">
+            <div class="d-flex align-items-center gap-3">
+              <div class="rounded-circle bg-primary bg-opacity-10 p-2">
+                <i class="fa-solid fa-list-check fa-fw text-primary"></i>
+              </div>
+              <div>
+                <div class="fs-4 fw-bold">{totalCount}</div>
+                <div class="text-muted small">Total</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body py-3">
+            <div class="d-flex align-items-center gap-3">
+              <div class="rounded-circle bg-warning bg-opacity-10 p-2">
+                <i class="fa-solid fa-clock fa-fw text-warning"></i>
+              </div>
+              <div>
+                <div class="fs-4 fw-bold">{pendingCount}</div>
+                <div class="text-muted small">Pending</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body py-3">
+            <div class="d-flex align-items-center gap-3">
+              <div class="rounded-circle bg-success bg-opacity-10 p-2">
+                <i class="fa-solid fa-circle-check fa-fw text-success"></i>
+              </div>
+              <div>
+                <div class="fs-4 fw-bold">{selectedCount}</div>
+                <div class="text-muted small">Selected</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body py-3">
+            <div class="d-flex align-items-center gap-3">
+              <div class="rounded-circle bg-danger bg-opacity-10 p-2">
+                <i class="fa-solid fa-circle-xmark fa-fw text-danger"></i>
+              </div>
+              <div>
+                <div class="fs-4 fw-bold">{rejectedCount}</div>
+                <div class="text-muted small">Rejected</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter + Table Card -->
+    <div class="card border-0 shadow-sm">
+      <div
+        class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-2 px-3"
+      >
+        <h6 class="mb-0 fw-semibold">Referrals</h6>
+        <select
+          class="form-select form-select-sm w-auto"
+          data-status-filter
+          onchange={handleStatusFilter}
+        >
+          <option value="All">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="In Process">In Process</option>
+          <option value="Selected">Selected</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
+      <div class="card-body p-0">
+        <!-- Loading -->
+        <template if:true={isLoading}>
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        </template>
+
+        <template if:false={isLoading}>
+          <!-- Empty state -->
+          <template if:true={isEmpty}>
+            <div class="text-center py-5">
+              <i class="fa-solid fa-user-group fa-3x text-muted mb-3"></i>
+              <h6 class="text-muted">No referrals found</h6>
+              <p class="text-muted small mb-3">
+                Submit a referral to get started.
+              </p>
+              <button class="btn btn-primary btn-sm" onclick={handleNew}>
+                <i class="fa-solid fa-plus fa-fw me-1"></i>New Referral
+              </button>
+            </div>
+          </template>
+
+          <!-- Table -->
+          <template if:false={isEmpty}>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0 small">
+                <thead class="table-light">
+                  <tr>
+                    <th>Referral Name</th>
+                    <th>Candidate</th>
+                    <th>Email</th>
+                    <th>Designation</th>
+                    <th>Referred By</th>
+                    <th>Status</th>
+                    <th>Bonus Eligible</th>
+                    <th>Bonus Status</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template for:each={records} for:item="r">
+                    <tr key={r.Id}>
+                      <td class="fw-semibold">{r.Name}</td>
+                      <td>{r.Full_Name__c}</td>
+                      <td>{r.Email__c}</td>
+                      <td>{r.designationName}</td>
+                      <td>{r.employeeName}</td>
+                      <td>
+                        <span class={r.statusBadgeClass}>{r.Status__c}</span>
+                      </td>
+                      <td>
+                        <template
+                          if:true={r.Is_Applicable_for_Referral_Bonus__c}
+                        >
+                          <span class="badge bg-success-subtle text-success"
+                            >Yes</span
+                          >
+                        </template>
+                        <template
+                          if:false={r.Is_Applicable_for_Referral_Bonus__c}
+                        >
+                          <span class="badge bg-secondary-subtle text-secondary"
+                            >No</span
+                          >
+                        </template>
+                      </td>
+                      <td>{r.Referral_Bonus_Payment_Status__c}</td>
+                      <td class="text-end">
+                        <button
+                          class="btn btn-sm btn-outline-secondary me-1"
+                          data-id={r.Id}
+                          onclick={handleEdit}
+                          title="Edit"
+                        >
+                          <i class="fa-solid fa-pen fa-fw"></i>
+                        </button>
+                        <template if:true={isHrAdmin}>
+                          <button
+                            class="btn btn-sm btn-outline-danger"
+                            data-id={r.Id}
+                            onclick={handleDelete}
+                            title="Delete"
+                          >
+                            <i class="fa-solid fa-trash fa-fw"></i>
+                          </button>
+                        </template>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </template>
+        </template>
+      </div>
+    </div>
+
+    <!-- Create / Edit Modal -->
+    <template if:true={isModalOpen}>
+      <div
+        class="modal fade show d-block"
+        tabindex="-1"
+        role="dialog"
+        style="background: rgba(0, 0, 0, 0.5)"
+      >
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+          <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+              <h5 class="modal-title fw-semibold">
+                <i class="fa-solid fa-users fa-fw me-2 text-primary"></i
+                >{modalTitle}
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                onclick={handleCloseModal}
+              ></button>
+            </div>
+            <div class="modal-body">
+              <div class="row g-3">
+                <!-- Referral Name -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label small fw-semibold"
+                    >Referral Name <span class="text-danger">*</span></label
+                  >
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    value={editRecord.Name}
+                    data-field="Name"
+                    onchange={handleFieldChange}
+                    placeholder="e.g. REF-2024-001"
+                  />
+                </div>
+                <!-- Full Name -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label small fw-semibold"
+                    >Full Name <span class="text-danger">*</span></label
+                  >
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    value={editRecord.Full_Name__c}
+                    data-field="Full_Name__c"
+                    onchange={handleFieldChange}
+                    placeholder="Candidate full name"
+                  />
+                </div>
+                <!-- Email -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label small fw-semibold"
+                    >Email <span class="text-danger">*</span></label
+                  >
+                  <input
+                    type="email"
+                    class="form-control form-control-sm"
+                    value={editRecord.Email__c}
+                    data-field="Email__c"
+                    onchange={handleFieldChange}
+                    placeholder="candidate@email.com"
+                  />
+                </div>
+                <!-- Mobile -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label small fw-semibold"
+                    >Mobile Number</label
+                  >
+                  <input
+                    type="tel"
+                    class="form-control form-control-sm"
+                    value={editRecord.Mobile_Number__c}
+                    data-field="Mobile_Number__c"
+                    onchange={handleFieldChange}
+                    placeholder="+1-555-0100"
+                  />
+                </div>
+                <!-- For Designation -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label small fw-semibold"
+                    >For Designation</label
+                  >
+                  <select
+                    class="form-select form-select-sm"
+                    data-field="For_Designation__c"
+                    onchange={handleFieldChange}
+                  >
+                    <option value="">-- Select Designation --</option>
+                    <template for:each={designationOptions} for:item="d">
+                      <option key={d.value} value={d.value}>{d.label}</option>
+                    </template>
+                  </select>
+                </div>
+                <!-- Status (HR only) -->
+                <template if:true={isHrAdmin}>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold">Status</label>
+                    <select
+                      class="form-select form-select-sm"
+                      data-field="Status__c"
+                      onchange={handleFieldChange}
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="In Process">In Process</option>
+                      <option value="Selected">Selected</option>
+                      <option value="Rejected">Rejected</option>
+                    </select>
+                  </div>
+                </template>
+                <!-- Job Applicant -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label small fw-semibold"
+                    >Job Applicant</label
+                  >
+                  <select
+                    class="form-select form-select-sm"
+                    data-field="Job_Applicant__c"
+                    onchange={handleFieldChange}
+                  >
+                    <option value="">-- None --</option>
+                    <template for:each={applicantOptions} for:item="a">
+                      <option key={a.value} value={a.value}>{a.label}</option>
+                    </template>
+                  </select>
+                </div>
+                <!-- Bonus Amount (HR only) -->
+                <template if:true={isHrAdmin}>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold"
+                      >Referral Bonus Amount</label
+                    >
+                    <input
+                      type="number"
+                      class="form-control form-control-sm"
+                      value={editRecord.Referral_Bonus_Amount__c}
+                      data-field="Referral_Bonus_Amount__c"
+                      onchange={handleFieldChange}
+                      min="0"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold"
+                      >Bonus Payment Status</label
+                    >
+                    <select
+                      class="form-select form-select-sm"
+                      data-field="Referral_Bonus_Payment_Status__c"
+                      onchange={handleFieldChange}
+                    >
+                      <option value="Not Applicable">Not Applicable</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Paid">Paid</option>
+                      <option value="On Hold">On Hold</option>
+                    </select>
+                  </div>
+                </template>
+                <!-- Is Applicable for Bonus -->
+                <div class="col-12 col-md-6">
+                  <div class="form-check mt-4">
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      id="bonusCheckbox"
+                      checked={editRecord.Is_Applicable_for_Referral_Bonus__c}
+                      data-field="Is_Applicable_for_Referral_Bonus__c"
+                      onchange={handleCheckboxChange}
+                    />
+                    <label class="form-check-label small" for="bonusCheckbox">
+                      Is Applicable for Referral Bonus
+                    </label>
+                  </div>
+                </div>
+                <!-- Additional Info -->
+                <div class="col-12">
+                  <label class="form-label small fw-semibold"
+                    >Additional Information</label
+                  >
+                  <textarea
+                    class="form-control form-control-sm"
+                    rows="4"
+                    data-field="Additional_Information__c"
+                    onchange={handleFieldChange}
+                    placeholder="Any extra notes about the referral..."
+                  ></textarea>
+                </div>
+              </div>
+
+              <!-- Error -->
+              <template if:true={modalError}>
+                <div class="alert alert-danger mt-3 py-2 small" role="alert">
+                  <i class="fa-solid fa-circle-exclamation fa-fw me-1"></i
+                  >{modalError}
+                </div>
+              </template>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm"
+                onclick={handleCloseModal}
+                disabled={isSaving}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary btn-sm"
+                onclick={handleSave}
+                disabled={isSaving}
+              >
+                <template if:true={isSaving}>
+                  <span
+                    class="spinner-border spinner-border-sm me-1"
+                    role="status"
+                  ></span>
+                  Saving...
+                </template>
+                <template if:false={isSaving}>
+                  <i class="fa-solid fa-floppy-disk fa-fw me-1"></i>Save
+                </template>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+</template>

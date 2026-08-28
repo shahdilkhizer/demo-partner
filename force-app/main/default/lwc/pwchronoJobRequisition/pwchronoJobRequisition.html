@@ -1,0 +1,366 @@
+<!--
+  @description Job Requisition — list view and create/edit modal
+  @author      PWChrono Team
+-->
+<template lwc:render-mode="light">
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+
+      <!-- Page Header -->
+      <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
+        <div class="my-auto mb-2">
+          <h2 class="mb-1">Job Requisitions</h2>
+          <nav>
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item">
+                <button type="button" class="btn btn-link p-0 text-decoration-none" onclick={handleNoop}>
+                  <i class="fa-solid fa-house"></i>
+                </button>
+              </li>
+              <li class="breadcrumb-item">Recruitment</li>
+              <li class="breadcrumb-item active" aria-current="page">Job Requisitions</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+          <div class="me-2 mb-2">
+            <select class="form-select form-select-sm" aria-label="Filter by status" onchange={handleStatusFilter}>
+              <option value="All">All Status</option>
+              <option value="Pending">Pending</option>
+              <option value="Open &amp; Approved">Open &amp; Approved</option>
+              <option value="Filled">Filled</option>
+              <option value="Rejected">Rejected</option>
+              <option value="Closed">Closed</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <button type="button" class="btn btn-primary d-flex align-items-center" onclick={handleNew}>
+              <i class="fa-solid fa-circle-plus me-2"></i>New Requisition
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- /Page Header -->
+
+      <!-- Metric Cards -->
+      <div class="row g-3 mb-3">
+        <div class="col-6 col-xl-3">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body d-flex align-items-center gap-3">
+              <span class="avatar avatar-lg bg-primary-subtle rounded-circle flex-shrink-0">
+                <i class="fa-solid fa-briefcase fa-lg text-primary"></i>
+              </span>
+              <div>
+                <p class="text-muted small mb-0">Total</p>
+                <h4 class="mb-0">{totalCount}</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-xl-3">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body d-flex align-items-center gap-3">
+              <span class="avatar avatar-lg bg-warning-subtle rounded-circle flex-shrink-0">
+                <i class="fa-solid fa-hourglass-half fa-lg text-warning"></i>
+              </span>
+              <div>
+                <p class="text-muted small mb-0">Pending</p>
+                <h4 class="mb-0">{pendingCount}</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-xl-3">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body d-flex align-items-center gap-3">
+              <span class="avatar avatar-lg bg-success-subtle rounded-circle flex-shrink-0">
+                <i class="fa-solid fa-circle-check fa-lg text-success"></i>
+              </span>
+              <div>
+                <p class="text-muted small mb-0">Approved / Filled</p>
+                <h4 class="mb-0">{approvedCount}</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-xl-3">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body d-flex align-items-center gap-3">
+              <span class="avatar avatar-lg bg-danger-subtle rounded-circle flex-shrink-0">
+                <i class="fa-solid fa-ban fa-lg text-danger"></i>
+              </span>
+              <div>
+                <p class="text-muted small mb-0">Rejected / Closed</p>
+                <h4 class="mb-0">{rejectedCount}</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- /Metric Cards -->
+
+      <!-- Loading -->
+      <template if:true={isLoading}>
+        <div class="d-flex justify-content-center p-5">
+          <div class="spinner-border text-primary" aria-label="Loading">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </template>
+
+      <!-- Requisitions Table -->
+      <template if:false={isLoading}>
+        <div class="card border-0 shadow-sm">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Requisition Title</th>
+                    <th>Designation</th>
+                    <th>Department</th>
+                    <th>Positions</th>
+                    <th>Status</th>
+                    <th>Expected By</th>
+                    <th>Staffing Plan</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template if:true={hasRecords}>
+                    <template for:each={records} for:item="rec">
+                      <tr key={rec.Id}>
+                        <td>
+                          <button type="button" class="fw-semibold text-dark btn btn-link p-0 text-decoration-none"
+                            data-id={rec.Id} onclick={handleEdit}>
+                            {rec.Name}
+                          </button>
+                        </td>
+                        <td>{rec.designationName}</td>
+                        <td>{rec.departmentName}</td>
+                        <td>{rec.No_of_Positions__c}</td>
+                        <td>
+                          <span class={rec.statusBadgeClass}>{rec.Status__c}</span>
+                        </td>
+                        <td>{rec.formattedExpectedBy}</td>
+                        <td>{rec.staffingPlanName}</td>
+                        <td class="text-end">
+                          <div class="d-flex justify-content-end gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-primary"
+                              data-id={rec.Id} onclick={handleEdit} title="Edit">
+                              <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-success"
+                              data-id={rec.Id} data-status="Open &amp; Approved"
+                              onclick={handleStatusChange} title="Approve"
+                              disabled={rec.cannotApprove}>
+                              <i class="fa-solid fa-check"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger"
+                              data-id={rec.Id} onclick={handleDelete} title="Delete">
+                              <i class="fa-solid fa-trash"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    </template>
+                  </template>
+                  <template if:false={hasRecords}>
+                    <tr>
+                      <td colspan="8" class="text-center text-muted py-5">
+                        <i class="fa-solid fa-folder-open fa-2x mb-2 d-block"></i>
+                        No job requisitions found. Click <strong>New Requisition</strong> to create one.
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </template>
+      <!-- /Requisitions Table -->
+
+    </div>
+  </div>
+
+  <!-- ===== Create / Edit Modal ===== -->
+  <template if:true={isModalOpen}>
+    <div class="modal fade show d-block" tabindex="-1" aria-modal="true"
+         aria-labelledby="jrModalTitle">
+      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <h5 class="modal-title" id="jrModalTitle">{modalTitle}</h5>
+            <button type="button" class="btn-close" onclick={handleCloseModal} aria-label="Close"></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="row g-3">
+
+              <!-- Requisition Title -->
+              <div class="col-md-8">
+                <label class="form-label fw-semibold" for="jrTitle">
+                  Requisition Title <span class="text-danger">*</span>
+                </label>
+                <input type="text" id="jrTitle" class="form-control" name="Name"
+                  value={editRecord.Name} onchange={handleFieldChange}
+                  placeholder="e.g. Senior Product Manager – Q4 2026" />
+              </div>
+
+              <!-- Company -->
+              <div class="col-md-4">
+                <label class="form-label fw-semibold" for="jrCompany">Company</label>
+                <input type="text" id="jrCompany" class="form-control" name="Company__c"
+                  value={editRecord.Company__c} onchange={handleFieldChange}
+                  placeholder="Company name" />
+              </div>
+
+              <!-- Department -->
+              <div class="col-md-4">
+                <label class="form-label fw-semibold" for="jrDept">Department</label>
+                <select id="jrDept" class="form-select" name="Department__c" onchange={handleFieldChange}>
+                  <option value="">-- Select Department --</option>
+                  <template for:each={departmentOptions} for:item="opt">
+                    <option key={opt.value} value={opt.value} selected={opt.selected}>{opt.label}</option>
+                  </template>
+                </select>
+              </div>
+
+              <!-- Designation -->
+              <div class="col-md-4">
+                <label class="form-label fw-semibold" for="jrDesig">Designation</label>
+                <select id="jrDesig" class="form-select" name="Designation__c" onchange={handleFieldChange}>
+                  <option value="">-- Select Designation --</option>
+                  <template for:each={designationOptions} for:item="opt">
+                    <option key={opt.value} value={opt.value} selected={opt.selected}>{opt.label}</option>
+                  </template>
+                </select>
+              </div>
+
+              <!-- Requested By Department -->
+              <div class="col-md-4">
+                <label class="form-label fw-semibold" for="jrReqByDept">Requested By Department</label>
+                <input type="text" id="jrReqByDept" class="form-control" name="Requested_By_Department__c"
+                  value={editRecord.Requested_By_Department__c} onchange={handleFieldChange}
+                  placeholder="Requesting department name" />
+              </div>
+
+              <!-- Number of Positions -->
+              <div class="col-md-3">
+                <label class="form-label fw-semibold" for="jrPositions">
+                  No. of Positions <span class="text-danger">*</span>
+                </label>
+                <input type="number" id="jrPositions" class="form-control" min="1"
+                  name="No_of_Positions__c" value={editRecord.No_of_Positions__c}
+                  onchange={handleFieldChange} />
+              </div>
+
+              <!-- Expected Compensation -->
+              <div class="col-md-3">
+                <label class="form-label fw-semibold" for="jrComp">Expected Compensation</label>
+                <input type="number" id="jrComp" class="form-control" min="0"
+                  name="Expected_Compensation__c" value={editRecord.Expected_Compensation__c}
+                  onchange={handleFieldChange} placeholder="0.00" />
+              </div>
+
+              <!-- Status -->
+              <div class="col-md-3">
+                <label class="form-label fw-semibold" for="jrStatus">Status</label>
+                <select id="jrStatus" class="form-select" name="Status__c" onchange={handleFieldChange}>
+                  <option value="Pending" selected={isPending}>Pending</option>
+                  <option value="Open &amp; Approved" selected={isApproved}>Open &amp; Approved</option>
+                  <option value="Filled" selected={isFilled}>Filled</option>
+                  <option value="Rejected" selected={isRejected}>Rejected</option>
+                  <option value="Closed" selected={isClosed}>Closed</option>
+                </select>
+              </div>
+
+              <!-- Reason for Hiring -->
+              <div class="col-md-3">
+                <label class="form-label fw-semibold" for="jrReason">Reason for Hiring</label>
+                <select id="jrReason" class="form-select" name="Reason_for_Hiring__c"
+                  onchange={handleFieldChange}>
+                  <option value="">-- Select --</option>
+                  <option value="New Position" selected={isNewPosition}>New Position</option>
+                  <option value="Replacement" selected={isReplacement}>Replacement</option>
+                  <option value="Expansion" selected={isExpansion}>Expansion</option>
+                  <option value="Temporary" selected={isTemporary}>Temporary</option>
+                </select>
+              </div>
+
+              <!-- Expected By Date -->
+              <div class="col-md-3">
+                <label class="form-label fw-semibold" for="jrExpBy">Expected By Date</label>
+                <input type="date" id="jrExpBy" class="form-control" name="Expected_By_Date__c"
+                  value={editRecord.Expected_By_Date__c} onchange={handleFieldChange} />
+              </div>
+
+              <!-- Posting Date -->
+              <div class="col-md-3">
+                <label class="form-label fw-semibold" for="jrPost">Posting Date</label>
+                <input type="date" id="jrPost" class="form-control" name="Posting_Date__c"
+                  value={editRecord.Posting_Date__c} onchange={handleFieldChange} />
+              </div>
+
+              <!-- Completed On -->
+              <div class="col-md-3">
+                <label class="form-label fw-semibold" for="jrCompleted">Completed On</label>
+                <input type="date" id="jrCompleted" class="form-control" name="Completed_On__c"
+                  value={editRecord.Completed_On__c} onchange={handleFieldChange} />
+              </div>
+
+              <!-- Time to Fill -->
+              <div class="col-md-3">
+                <label class="form-label fw-semibold" for="jrTTF">Time to Fill (Days)</label>
+                <input type="number" id="jrTTF" class="form-control" min="0"
+                  name="Time_to_Fill__c" value={editRecord.Time_to_Fill__c}
+                  onchange={handleFieldChange} />
+              </div>
+
+              <!-- Staffing Plan -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="jrPlan">Staffing Plan</label>
+                <select id="jrPlan" class="form-select" name="Staffing_Plan__c" onchange={handleFieldChange}>
+                  <option value="">-- Link to Staffing Plan --</option>
+                  <template for:each={staffingPlanOptions} for:item="opt">
+                    <option key={opt.value} value={opt.value} selected={opt.selected}>{opt.label}</option>
+                  </template>
+                </select>
+              </div>
+
+              <!-- Job Description -->
+              <div class="col-12">
+                <label class="form-label fw-semibold" for="jrDesc">Job Description</label>
+                <textarea id="jrDesc" class="form-control" name="Job_Description__c" rows="4"
+                  onchange={handleFieldChange}
+                  placeholder="Describe responsibilities, requirements, and qualifications...">{editRecord.Job_Description__c}</textarea>
+              </div>
+
+            </div>
+          </div><!-- /modal-body -->
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" onclick={handleCloseModal}>
+              Cancel
+            </button>
+            <button type="button" class="btn btn-primary" onclick={handleSave} disabled={isSaving}>
+              <template if:true={isSaving}>
+                <span class="spinner-border spinner-border-sm me-1" aria-label="Loading"></span>
+              </template>
+              <template if:false={isSaving}>
+                <i class="fa-solid fa-floppy-disk me-1"></i>
+              </template>
+              Save
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+  </template>
+  <!-- ===== /Modal ===== -->
+
+</template>

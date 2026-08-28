@@ -1,0 +1,580 @@
+<template>
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <!-- Breadcrumb -->
+      <div
+        class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3"
+      >
+        <div class="my-auto mb-2">
+          <h2 class="mb-1">Attendance Admin</h2>
+          <nav>
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item">
+                <a href="javascript:void(0);"
+                  ><i class="ti ti-home"></i
+                ></a>
+              </li>
+              <li class="breadcrumb-item">Attendance</li>
+              <li class="breadcrumb-item active" aria-current="page">
+                Daily Attendance
+              </li>
+            </ol>
+          </nav>
+        </div>
+        <div
+          class="d-flex my-xl-auto right-content align-items-center flex-wrap"
+        >
+          <div class="me-2 mb-2">
+            <div
+              class="d-flex align-items-center border bg-white rounded p-1 me-2 icon-list"
+            >
+              <a href="javascript:void(0);" class="btn btn-icon btn-sm me-1"
+                ><i class="ti ti-list-numbers"></i
+              ></a>
+              <a
+                href="javascript:void(0);"
+                class="btn btn-icon btn-sm active bg-primary text-white"
+                ><i class="ti ti-calendar-stats"></i
+              ></a>
+            </div>
+          </div>
+          <div class="me-2 mb-2">
+            <div class="dropdown">
+              <a
+                href="javascript:void(0);"
+                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
+                onclick={toggleExportDropdown}
+              >
+                <i class="ti ti-file-export me-1"></i>Export
+              </a>
+              <ul class={exportDropdownClass}>
+                <li>
+                  <a href="javascript:void(0);" class="dropdown-item rounded-1"
+                    ><i class="ti ti-file-type-pdf me-1"></i>PDF</a
+                  >
+                </li>
+                <li>
+                  <a href="javascript:void(0);" class="dropdown-item rounded-1"
+                    ><i class="ti ti-file-type-xls me-1"></i>Excel</a
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="mb-2">
+            <a
+              href="javascript:void(0);"
+              class="btn btn-primary d-flex align-items-center"
+              data-bs-toggle="modal"
+              data-bs-target="#attendance_report"
+              onclick={handleReportModal}
+              ><i class="ti ti-file-analytics me-2"></i>Attendance Report</a
+            >
+          </div>
+          <div class="ms-2 head-icons">
+            <a
+              href="javascript:void(0);"
+              class=""
+              data-bs-toggle="tooltip"
+              data-bs-placement="top"
+              data-bs-original-title="Collapse"
+              id="collapse-header"
+            >
+              <i class="ti ti-chevron-up"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      <!-- /Breadcrumb -->
+
+      <div class="card border-0">
+        <div class="card-body">
+          <div class="row align-items-center mb-4">
+            <div class="col-md-5">
+              <div class="mb-3 mb-md-0">
+                <h4 class="mb-1">Attendance Overview</h4>
+                <p>Track daily employee attendance and metrics.</p>
+              </div>
+            </div>
+            <div class="col-md-7">
+              <div class="d-flex align-items-center justify-content-md-end">
+                <h6>Total Employees</h6>
+                <div class="avatar-list-stacked avatar-group-sm ms-4">
+                  <span class="avatar avatar-rounded">
+                    <i class="ti ti-user"></i>
+                  </span>
+                  <span class="avatar avatar-rounded">
+                    <i class="ti ti-user"></i>
+                  </span>
+                  <span class="avatar avatar-rounded">
+                    <i class="ti ti-user"></i>
+                  </span>
+                  <a
+                    class="avatar bg-primary avatar-rounded text-fixed-white fs-12"
+                    href="javascript:void(0);"
+                  >
+                    {metrics.totalEmployees}
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="border rounded">
+            <div class="row gx-0">
+              <div class="col-md col-sm-4 border-end">
+                <div class="p-3">
+                  <span class="fw-medium mb-1 d-block">Present</span>
+                  <div
+                    class="d-flex align-items-center justify-content-between"
+                  >
+                    <h5>{metrics.present}</h5>
+                    <span
+                      class="badge badge-success d-inline-flex align-items-center"
+                    >
+                      <i class="ti ti-trending-down me-1"></i>
+                      +2.5%
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md col-sm-4 border-end">
+                <div class="p-3">
+                  <span class="fw-medium mb-1 d-block">Late</span>
+                  <div
+                    class="d-flex align-items-center justify-content-between"
+                  >
+                    <h5>{metrics.late}</h5>
+                    <span
+                      class="badge badge-danger d-inline-flex align-items-center"
+                    >
+                      <i class="ti ti-trending-down me-1"></i>
+                      +0.5%
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md col-sm-4 border-end">
+                <div class="p-3">
+                  <span class="fw-medium mb-1 d-block">Absent</span>
+                  <div
+                    class="d-flex align-items-center justify-content-between"
+                  >
+                    <h5>{metrics.absent}</h5>
+                    <span
+                      class="badge badge-danger d-inline-flex align-items-center"
+                    >
+                      <i class="ti ti-trending-down me-1"></i>
+                      +1.2%
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md col-sm-4 border-end">
+                <div class="p-3">
+                  <span class="fw-medium mb-1 d-block">On Leave</span>
+                  <div
+                    class="d-flex align-items-center justify-content-between"
+                  >
+                    <h5>{metrics.onLeave}</h5>
+                    <span
+                      class="badge badge-success d-inline-flex align-items-center"
+                    >
+                      <i class="ti ti-trending-down me-1"></i>
+                      -0.5%
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md col-sm-4">
+                <div class="p-3">
+                  <span class="fw-medium mb-1 d-block">Holiday</span>
+                  <div
+                    class="d-flex align-items-center justify-content-between"
+                  >
+                    <h5>{metrics.holiday}</h5>
+                    <span
+                      class="badge badge-danger d-inline-flex align-items-center"
+                    >
+                      <i class="ti ti-trending-down me-1"></i>
+                      0%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div
+          class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3"
+        >
+          <h5>Attendance Logs</h5>
+          <div
+            class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3"
+          >
+            <div class="me-3">
+              <div class="input-icon-end position-relative">
+                <input
+                  type="date"
+                  class="form-control"
+                  onchange={handleDateFilter}
+                />
+                <span class="input-icon-addon">
+                  <i class="ti ti-chevron-down"></i>
+                </span>
+              </div>
+            </div>
+            <div class="dropdown me-3">
+              <a
+                href="javascript:void(0);"
+                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
+                onclick={toggleStatusDropdown}
+              >
+                Status
+              </a>
+              <ul class={statusDropdownClass}>
+                <li>
+                  <a
+                    href="javascript:void(0);"
+                    class="dropdown-item rounded-1"
+                    data-value="All"
+                    onclick={handleStatusFilter}
+                    >All</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="javascript:void(0);"
+                    class="dropdown-item rounded-1"
+                    data-value="Present"
+                    onclick={handleStatusFilter}
+                    >Present</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="javascript:void(0);"
+                    class="dropdown-item rounded-1"
+                    data-value="Absent"
+                    onclick={handleStatusFilter}
+                    >Absent</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="javascript:void(0);"
+                    class="dropdown-item rounded-1"
+                    data-value="Late"
+                    onclick={handleStatusFilter}
+                    >Late</a
+                  >
+                </li>
+              </ul>
+            </div>
+            <div class="dropdown me-3">
+              <a
+                href="javascript:void(0);"
+                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
+                onclick={toggleDeptDropdown}
+              >
+                Department
+              </a>
+              <ul class={deptDropdownClass}>
+                <li>
+                  <a href="javascript:void(0);" class="dropdown-item rounded-1"
+                    >All Departments</a
+                  >
+                </li>
+              </ul>
+            </div>
+            <div class="mb-2 ms-2">
+              <a
+                href="javascript:void(0);"
+                class="btn btn-primary d-flex align-items-center"
+                onclick={handleNewAttendance}
+                ><i class="ti ti-plus me-2"></i>Add Attendance</a
+              >
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="custom-datatable-filter table-responsive">
+            <table class="table datatable">
+              <thead class="thead-light">
+                <tr>
+                  <th class="no-sort">
+                    <div class="form-check form-check-md">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="select-all"
+                      />
+                    </div>
+                  </th>
+                  <th>Employee</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th>Check In</th>
+                  <th>Check Out</th>
+                  <th>Production</th>
+                  <th>Overtime</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <template for:each={attendanceData} for:item="record">
+                  <tr key={record.Id}>
+                    <td>
+                      <div class="form-check form-check-md">
+                        <input class="form-check-input" type="checkbox" />
+                      </div>
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center file-name-icon">
+                        <a
+                          href="javascript:void(0);"
+                          class="avatar avatar-md border avatar-rounded"
+                        >
+                          <i class="ti ti-user"></i>
+                        </a>
+                        <div class="ms-2">
+                          <h6 class="fw-medium">
+                            <a href="javascript:void(0);"
+                              >{record.employeeName}</a
+                            >
+                          </h6>
+                          <span class="fs-12 fw-normal">{record.role}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class={record.statusClass}>
+                        <i class="ti ti-circle-filled me-1"></i
+                        >{record.Status__c}
+                      </span>
+                    </td>
+                    <td>{record.Attendance_Date__c}</td>
+                    <td>{record.From_Time__c}</td>
+                    <td>{record.To_Time__c}</td>
+                    <td>{record.productionHours}</td>
+                    <td>
+                      <span
+                        class="badge badge-success d-inline-flex align-items-center"
+                      >
+                        <i class="ti ti-clock me-1"></i>{record.overtime}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="action-icon d-inline-flex">
+                        <a
+                          href="javascript:void(0);"
+                          class="me-2"
+                          data-id={record.Id}
+                          onclick={handleEdit}
+                          ><i class="ti ti-edit"></i
+                        ></a>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <c-pwchrono-attendance-modal
+        is-open={showModal}
+        record-id={selectedRecordId}
+        record={selectedRecord}
+        onclose={handleCloseModal}
+        onsave={handleSaveSuccess}
+      >
+      </c-pwchrono-attendance-modal>
+
+      <div class="modal fade" id="attendance_report">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title">Attendance</h4>
+              <button
+                type="button"
+                class="btn-close custom-btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              >
+                <i class="ti ti-x"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <template if:true={reportData}>
+                <div class="card shadow-none bg-transparent-light">
+                  <div class="card-body pb-1">
+                    <div class="row">
+                      <div class="col-sm-3">
+                        <div class="mb-3">
+                          <span>Date</span>
+                          <p class="text-gray-9 fw-medium">
+                            {reportData.dateLabel}
+                          </p>
+                        </div>
+                      </div>
+                      <div class="col-sm-3">
+                        <div class="mb-3">
+                          <span>Punch in at</span>
+                          <p class="text-gray-9 fw-medium">
+                            {reportData.punchIn}
+                          </p>
+                        </div>
+                      </div>
+                      <div class="col-sm-3">
+                        <div class="mb-3">
+                          <span>Punch out at</span>
+                          <p class="text-gray-9 fw-medium">
+                            {reportData.punchOut}
+                          </p>
+                        </div>
+                      </div>
+                      <div class="col-sm-3">
+                        <div class="mb-3">
+                          <span>Status</span>
+                          <p class="text-gray-9 fw-medium">
+                            {reportData.status}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="card shadow-none border mb-0">
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-xl-3">
+                        <div class="mb-4">
+                          <p class="d-flex align-items-center mb-1">
+                            <i
+                              class="ti ti-point-filled text-dark-transparent me-1"
+                            ></i
+                            >Total Working hours
+                          </p>
+                          <h3>{reportData.totalWorking}</h3>
+                        </div>
+                      </div>
+                      <div class="col-xl-3">
+                        <div class="mb-4">
+                          <p class="d-flex align-items-center mb-1">
+                            <i class="ti ti-point-filled text-success me-1"></i
+                            >Productive Hours
+                          </p>
+                          <h3>{reportData.productive}</h3>
+                        </div>
+                      </div>
+                      <div class="col-xl-3">
+                        <div class="mb-4">
+                          <p class="d-flex align-items-center mb-1">
+                            <i class="ti ti-point-filled text-warning me-1"></i
+                            >Break hours
+                          </p>
+                          <h3>{reportData.breakHours}</h3>
+                        </div>
+                      </div>
+                      <div class="col-xl-3">
+                        <div class="mb-4">
+                          <p class="d-flex align-items-center mb-1">
+                            <i class="ti ti-point-filled text-info me-1"></i
+                            >Overtime
+                          </p>
+                          <h3>{reportData.overtime}</h3>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-8 mx-auto">
+                        <div
+                          class="progress bg-transparent-dark mb-3"
+                          style="height: 24px"
+                        >
+                          <div
+                            class="progress-bar bg-success rounded me-2"
+                            role="progressbar"
+                            style="width: 18%"
+                          ></div>
+                          <div
+                            class="progress-bar bg-warning rounded me-2"
+                            role="progressbar"
+                            style="width: 5%"
+                          ></div>
+                          <div
+                            class="progress-bar bg-success rounded me-2"
+                            role="progressbar"
+                            style="width: 28%"
+                          ></div>
+                          <div
+                            class="progress-bar bg-warning rounded me-2"
+                            role="progressbar"
+                            style="width: 17%"
+                          ></div>
+                          <div
+                            class="progress-bar bg-success rounded me-2"
+                            role="progressbar"
+                            style="width: 22%"
+                          ></div>
+                          <div
+                            class="progress-bar bg-warning rounded me-2"
+                            role="progressbar"
+                            style="width: 5%"
+                          ></div>
+                          <div
+                            class="progress-bar bg-info rounded me-2"
+                            role="progressbar"
+                            style="width: 3%"
+                          ></div>
+                          <div
+                            class="progress-bar bg-info rounded"
+                            role="progressbar"
+                            style="width: 2%"
+                          ></div>
+                        </div>
+                      </div>
+                      <div class="co-md-12">
+                        <div
+                          class="d-flex align-items-center justify-content-between"
+                        >
+                          <span class="fs-10">06:00</span>
+                          <span class="fs-10">07:00</span>
+                          <span class="fs-10">08:00</span>
+                          <span class="fs-10">09:00</span>
+                          <span class="fs-10">10:00</span>
+                          <span class="fs-10">11:00</span>
+                          <span class="fs-10">12:00</span>
+                          <span class="fs-10">01:00</span>
+                          <span class="fs-10">02:00</span>
+                          <span class="fs-10">03:00</span>
+                          <span class="fs-10">04:00</span>
+                          <span class="fs-10">05:00</span>
+                          <span class="fs-10">06:00</span>
+                          <span class="fs-10">07:00</span>
+                          <span class="fs-10">08:00</span>
+                          <span class="fs-10">09:00</span>
+                          <span class="fs-10">10:00</span>
+                          <span class="fs-10">11:00</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+              <template if:false={reportData}>
+                <div class="alert alert-info mb-0" role="status">
+                  No attendance data available for the report.
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

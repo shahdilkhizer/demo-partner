@@ -1,0 +1,303 @@
+<template>
+  <div class="page-wrapper">
+    <div class="content container-fluid">
+
+      <!-- Access Check Loading -->
+      <template if:false={accessLoaded}>
+        <div class="d-flex align-items-center justify-content-center" style="min-height: 60vh;">
+          <div class="text-center">
+            <div class="spinner-border text-primary mb-3" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted">Loading your dashboard...</p>
+          </div>
+        </div>
+      </template>
+
+      <template if:true={accessLoaded}>
+
+        <!-- Access Denied -->
+        <template if:false={hasAccess}>
+          <div class="d-flex align-items-center justify-content-center" style="min-height: 60vh;">
+            <div class="card text-center" style="max-width: 420px; width: 100%;">
+              <div class="card-body p-5">
+                <div class="avatar avatar-xl bg-soft-danger mx-auto mb-3">
+                  <i class="ti ti-lock fs-1 text-danger"></i>
+                </div>
+                <h4 class="mb-2">Access Denied</h4>
+                <p class="text-muted mb-4">
+                  You do not have permission to view the Dashboard. Please contact your administrator.
+                </p>
+                <button class="btn btn-primary" onclick={handleGoBack}>
+                  <i class="ti ti-arrow-left me-1"></i>Go Back
+                </button>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Main Dashboard -->
+        <template if:true={hasAccess}>
+
+          <!-- Page Header -->
+          <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
+            <div class="my-auto mb-2">
+              <h2 class="mb-1">My Dashboard</h2>
+              <nav>
+                <ol class="breadcrumb mb-0">
+                  <li class="breadcrumb-item">
+                    <a href="javascript:void(0);"><i class="ti ti-smart-home"></i></a>
+                  </li>
+                  <li class="breadcrumb-item active">Dashboard</li>
+                </ol>
+              </nav>
+            </div>
+            <div class="d-flex my-xl-auto right-content align-items-center">
+              <span class="badge bg-light text-dark border fs-13">
+                <i class="ti ti-calendar me-1"></i>{todayDate}
+              </span>
+            </div>
+          </div>
+
+          <!-- Loading Skeleton -->
+          <template if:true={isLoading}>
+            <div class="row">
+              <template for:each={skeletonCards} for:item="skeleton">
+                <div key={skeleton} class="col-xxl-3 col-sm-6 d-flex">
+                  <div class="card flex-fill">
+                    <div class="card-body">
+                      <div class="placeholder-glow">
+                        <span class="placeholder col-6 mb-2 d-block"></span>
+                        <span class="placeholder col-4 mb-2 d-block"></span>
+                        <span class="placeholder col-8 d-block"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+
+          <template if:false={isLoading}>
+
+            <!-- Leave Balance Row -->
+            <div class="row">
+              <template for:each={dashboardData.leaveBalance} for:item="leave">
+                <div key={leave.leaveType} class="col-xxl-3 col-sm-6 d-flex">
+                  <div class="card flex-fill">
+                    <div class="card-body">
+                      <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="avatar avatar-md bg-soft-primary flex-shrink-0">
+                          <i class="ti ti-calendar-time fs-5 text-primary"></i>
+                        </span>
+                        <span class="badge bg-soft-primary">{leave.leaveType}</span>
+                      </div>
+                      <h4 class="mb-1">
+                        {leave.allocated}
+                        <small class="text-muted fw-normal fs-14">&nbsp;days allocated</small>
+                      </h4>
+                      <div class="progress progress-sm mb-2 mt-2">
+                        <div class="progress-bar bg-primary" style={leave.progressStyle}></div>
+                      </div>
+                      <div class="d-flex justify-content-between">
+                        <small class="text-muted">Used: <strong>{leave.used}</strong></small>
+                        <small class="text-success">Available: <strong>{leave.available}</strong></small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <!-- Content Row -->
+            <div class="row">
+
+              <!-- Left: Upcoming Shifts + Recent Payslips -->
+              <div class="col-xxl-8">
+
+                <!-- Upcoming Shifts -->
+                <div class="card mb-4">
+                  <div class="card-header d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0">
+                      <i class="ti ti-clock me-2 text-primary"></i>Upcoming Shifts
+                    </h5>
+                    <button class="btn btn-sm btn-outline-primary" onclick={navigateToShifts}>
+                      View All <i class="ti ti-arrow-right ms-1"></i>
+                    </button>
+                  </div>
+                  <div class="card-body p-0">
+                    <template if:true={hasShifts}>
+                      <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                          <tbody>
+                            <template for:each={dashboardData.upcomingShifts} for:item="shift">
+                              <tr key={shift.Id}>
+                                <td style="width: 60px;">
+                                  <span class="avatar avatar-sm bg-primary text-white fw-semibold">
+                                    {shift.dateFormatted}
+                                  </span>
+                                </td>
+                                <td>
+                                  <h6 class="mb-0">{shift.shiftName}</h6>
+                                  <small class="text-muted">
+                                    <i class="ti ti-clock me-1"></i>{shift.timeRange}
+                                  </small>
+                                </td>
+                                <td class="text-muted text-end">
+                                  <span class="badge bg-soft-primary text-primary">{shift.dayOfWeek}</span>
+                                </td>
+                              </tr>
+                            </template>
+                          </tbody>
+                        </table>
+                      </div>
+                    </template>
+                    <template if:false={hasShifts}>
+                      <div class="text-center py-5">
+                        <i class="ti ti-calendar-off fs-1 text-muted d-block mb-2"></i>
+                        <h6 class="text-muted mb-1">No upcoming shifts</h6>
+                        <p class="text-muted small mb-0">Your shift schedule is clear</p>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+
+                <!-- Recent Payslips -->
+                <div class="card">
+                  <div class="card-header d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0">
+                      <i class="ti ti-receipt me-2 text-success"></i>Recent Payslips
+                    </h5>
+                    <button class="btn btn-sm btn-outline-success" onclick={navigateToPayroll}>
+                      View All <i class="ti ti-arrow-right ms-1"></i>
+                    </button>
+                  </div>
+                  <div class="card-body p-0">
+                    <template if:true={hasPayslips}>
+                      <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                          <tbody>
+                            <template for:each={dashboardData.recentSalarySlips} for:item="slip">
+                              <tr key={slip.Id}>
+                                <td>
+                                  <h6 class="mb-0">{slip.payPeriodLabel}</h6>
+                                  <small class="text-muted">{slip.Payment_Date__c}</small>
+                                </td>
+                                <td class="text-end">
+                                  <h6 class="mb-1 text-success">${slip.Net_Pay__c}</h6>
+                                  <span class="badge bg-soft-success text-success">{slip.Status__c}</span>
+                                </td>
+                              </tr>
+                            </template>
+                          </tbody>
+                        </table>
+                      </div>
+                    </template>
+                    <template if:false={hasPayslips}>
+                      <div class="text-center py-5">
+                        <i class="ti ti-receipt-off fs-1 text-muted d-block mb-2"></i>
+                        <h6 class="text-muted mb-1">No payslips yet</h6>
+                        <p class="text-muted small mb-0">Your payslips will appear here</p>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Right: Quick Actions -->
+              <div class="col-xxl-4">
+                <div class="card h-100">
+                  <div class="card-header">
+                    <h5 class="card-title mb-0">
+                      <i class="ti ti-layout-dashboard me-2 text-warning"></i>Quick Actions
+                    </h5>
+                  </div>
+                  <div class="card-body p-0">
+
+                    <!-- Pending Approvals -->
+                    <div
+                      class="d-flex align-items-center justify-content-between p-3 border-bottom"
+                      style="cursor: pointer;"
+                      onclick={navigateToPendingApprovals}
+                    >
+                      <div class="d-flex align-items-center gap-3">
+                        <span class="avatar avatar-sm bg-soft-warning">
+                          <i class="ti ti-checks text-warning"></i>
+                        </span>
+                        <div>
+                          <h6 class="mb-0 fs-14">Pending Approvals</h6>
+                          <small class="text-muted">Requires your action</small>
+                        </div>
+                      </div>
+                      <template if:true={dashboardData.pendingApprovals}>
+                        <span class="badge bg-warning text-white">
+                          {dashboardData.pendingApprovals.total}
+                        </span>
+                      </template>
+                    </div>
+
+                    <!-- Active Goals -->
+                    <div
+                      class="d-flex align-items-center justify-content-between p-3 border-bottom"
+                      style="cursor: pointer;"
+                      onclick={navigateToGoals}
+                    >
+                      <div class="d-flex align-items-center gap-3">
+                        <span class="avatar avatar-sm bg-soft-success">
+                          <i class="ti ti-target text-success"></i>
+                        </span>
+                        <div>
+                          <h6 class="mb-0 fs-14">Active Goals</h6>
+                          <small class="text-muted">Currently in progress</small>
+                        </div>
+                      </div>
+                      <span class="badge bg-success">{dashboardData.activeGoalsCount}</span>
+                    </div>
+
+                    <!-- Appraisals -->
+                    <div
+                      class="d-flex align-items-center justify-content-between p-3 border-bottom"
+                      style="cursor: pointer;"
+                      onclick={navigateToAppraisals}
+                    >
+                      <div class="d-flex align-items-center gap-3">
+                        <span class="avatar avatar-sm bg-soft-info">
+                          <i class="ti ti-trending-up text-info"></i>
+                        </span>
+                        <div>
+                          <h6 class="mb-0 fs-14">Appraisals</h6>
+                          <small class="text-muted">Review pending</small>
+                        </div>
+                      </div>
+                      <span class="badge bg-info">{dashboardData.pendingAppraisalsCount}</span>
+                    </div>
+
+                    <!-- Quick Link Buttons -->
+                    <div class="p-3">
+                      <div class="row g-2">
+                        <div class="col-6">
+                          <button class="btn btn-primary w-100" onclick={navigateToLeave}>
+                            <i class="ti ti-calendar-plus me-1"></i>Request Leave
+                          </button>
+                        </div>
+                        <div class="col-6">
+                          <button class="btn btn-success w-100" onclick={navigateToAttendance}>
+                            <i class="ti ti-clock me-1"></i>Clock In/Out
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </template>
+        </template>
+      </template>
+
+    </div>
+  </div>
+</template>

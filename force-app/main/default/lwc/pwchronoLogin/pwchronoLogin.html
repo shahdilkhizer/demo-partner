@@ -1,0 +1,211 @@
+<template lwc:render-mode="light">
+  <c-pwchrono-ui-assets
+    onassetsready={handleAssetsReady}
+  ></c-pwchrono-ui-assets>
+
+  <div class="bg-white">
+    <div id="global-loader" style={globalLoaderStyle} aria-live="polite">
+      <div class="page-loader" aria-hidden="true"></div>
+    </div>
+
+    <div class="main-wrapper" style={appShellStyle}>
+      <div class="container-fuild">
+        <div
+          class="w-100 overflow-hidden position-relative flex-wrap d-block vh-100"
+        >
+          <div class="row">
+            <div class="col-lg-5">
+              <div
+                class="login-background position-relative d-lg-flex align-items-center justify-content-center d-none flex-wrap vh-100"
+              >
+                <div class="bg-overlay-img">
+                  <img src={bg01Url} class="bg-1" alt="" />
+                  <img src={bg02Url} class="bg-2" alt="" />
+                  <img src={bg03Url} class="bg-3" alt="" />
+                </div>
+                <div class="authentication-card w-100">
+                  <div class="authen-overlay-item border w-100">
+                    <h1 class="text-white display-1 mb-0">
+                      Empowering people <br />
+                      through seamless HR <br />
+                      management.
+                    </h1>
+                    <div class="my-4 mx-auto authen-overlay-img">
+                      <div class="row g-0 align-items-end">
+                        <div class="col">
+                          <img src={authBg01Url} alt="" />
+                        </div>
+                        <div class="col-auto d-flex justify-content-end">
+                          <img
+                            src={tlgSantaLogoUrl}
+                            class="img-fluid w-75"
+                            alt="TLG Santa"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <p class="text-white fs-20 fw-semibold text-center">
+                        Efficiently manage your workforce, streamline <br />
+                        operations effortlessly.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-7 col-md-12 col-sm-12">
+              <div
+                class="row justify-content-center align-items-center vh-100 overflow-auto flex-wrap"
+              >
+                <div class="col-md-7 mx-auto">
+                  <form
+                    action="login.html"
+                    class="digit-group"
+                    onsubmit={handleFormSubmit}
+                  >
+                    <div class="d-flex flex-column min-vh-100 p-4 pb-0">
+                      <div
+                        class="flex-grow-1 d-flex flex-column justify-content-center"
+                      >
+                        <!-- Email Screen -->
+                        <template if:false={showOtpScreen}>
+                          <div class="text-center mb-3">
+                            <h2 class="mb-2">Sign In</h2>
+                            <p class="mb-0">
+                              Please enter your email to receive a 6-digit code
+                            </p>
+                          </div>
+                          <div class="mb-3">
+                            <label class="form-label" for="email"
+                              >Email Address</label
+                            >
+                            <div class="input-group">
+                              <input
+                                id="email"
+                                name="email"
+                                type="email"
+                                value={email}
+                                class="form-control border-end-0"
+                                oninput={handleEmailChange}
+                                autocomplete="email"
+                                required
+                              />
+                              <span class="input-group-text border-start-0">
+                                <i
+                                  class="fa-solid fa-envelope"
+                                  aria-hidden="true"
+                                ></i>
+                              </span>
+                            </div>
+                          </div>
+                          <template if:true={errorMessage}>
+                            <div class="alert alert-danger" role="alert">
+                              {errorMessage}
+                            </div>
+                          </template>
+                          <div class="mb-3">
+                            <button
+                              type="submit"
+                              class="btn btn-primary w-100"
+                              disabled={isLoading}
+                            >
+                              Send Verification Code
+                            </button>
+                          </div>
+                        </template>
+
+                        <!-- OTP Screen -->
+                        <template if:true={showOtpScreen}>
+                          <div class="text-center mb-3">
+                            <h2 class="mb-2">2 Step Verification</h2>
+                            <p class="mb-0">
+                              Please enter the OTP received to confirm your
+                              account ownership. A code has been sent to
+                              {maskedEmail}
+                            </p>
+                          </div>
+                          <div class="text-center otp-input">
+                            <div class="d-flex align-items-center mb-3">
+                              <template for:each={otpDigits} for:item="digit">
+                                <input
+                                  key={digit.id}
+                                  id={digit.id}
+                                  name={digit.name}
+                                  type="text"
+                                  class={digit.inputClass}
+                                  data-next={digit.next}
+                                  data-previous={digit.previous}
+                                  maxlength="1"
+                                  data-index={digit.index}
+                                  value={digit.value}
+                                  oninput={handleOtpInput}
+                                  onkeydown={handleOtpKeydown}
+                                  onpaste={handleOtpPaste}
+                                  onfocus={handleOtpFocus}
+                                  onblur={handleOtpBlur}
+                                  inputmode="numeric"
+                                  pattern="[0-9]*"
+                                />
+                              </template>
+                            </div>
+                            <div>
+                              <div class="badge bg-danger-transparent mb-3">
+                                <p class="d-flex align-items-center">
+                                  <i
+                                    class="fa-solid fa-clock me-1"
+                                    aria-hidden="true"
+                                  ></i>
+                                  {formattedCountdown}
+                                </p>
+                              </div>
+                              <div class="mb-3 d-flex justify-content-center">
+                                <p class="text-gray-9">
+                                  Didn't get the OTP?
+                                  <button
+                                    type="button"
+                                    class={resendButtonClass}
+                                    onclick={handleResendOtp}
+                                    disabled={resendDisabled}
+                                  >
+                                    Resend OTP
+                                  </button>
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <template if:true={errorMessage}>
+                            <div class="alert alert-danger" role="alert">
+                              {errorMessage}
+                            </div>
+                          </template>
+                          <div class="mb-3">
+                            <button
+                              type="submit"
+                              class="btn btn-primary w-100"
+                              disabled={isLoading}
+                            >
+                              Verify &amp; Proceed
+                            </button>
+                          </div>
+                        </template>
+                      </div>
+                      <div class="pb-4 text-center">
+                        <p class="mb-0 text-gray-9">
+                          Copyright © 2024 - Pulse Work Chrono
+                        </p>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-overlay"></div>
+  </div>
+</template>

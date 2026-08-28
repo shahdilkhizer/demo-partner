@@ -1,0 +1,146 @@
+<template lwc:render-mode="light">
+  <div class="expense-claim-admin">
+
+    <!-- View toggle tabs -->
+    <ul class="nav nav-tabs mb-3">
+      <li class="nav-item">
+        <button class={pendingTabClass} onclick={handleViewPending}>
+          Pending Approval
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class={allTabClass} onclick={handleViewAll}>
+          All Team Claims
+        </button>
+      </li>
+    </ul>
+
+    <!-- Filter bar (All view only) -->
+    <template if:true={isAllView}>
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body py-2">
+          <div class="row g-2 align-items-end">
+            <div class="col-md-4 col-lg-3">
+              <label class="form-label mb-1" style="font-size:0.75rem;font-weight:500">Status</label>
+              <lightning-combobox
+                variant="label-hidden"
+                value={statusFilter}
+                options={statusOptions}
+                onchange={handleStatusFilter}
+                placeholder="All Statuses"
+              ></lightning-combobox>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Loading -->
+    <template if:true={isLoading}>
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    </template>
+
+    <!-- Error -->
+    <template if:true={error}>
+      <div class="alert alert-danger">{error}</div>
+    </template>
+
+    <!-- Claims table -->
+    <template if:true={hasClaims}>
+      <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th style="font-size:0.8rem">Employee</th>
+                <th style="font-size:0.8rem">Claim #</th>
+                <th style="font-size:0.8rem">Description</th>
+                <th style="font-size:0.8rem">Claim Date</th>
+                <th style="font-size:0.8rem">Applied Date</th>
+                <th class="text-end" style="font-size:0.8rem">Total (MYR)</th>
+                <th style="font-size:0.8rem">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template for:each={claims} for:item="claim">
+                <tr
+                  key={claim.Id}
+                  style="cursor:pointer"
+                  data-id={claim.Id}
+                  onclick={handleRowClick}
+                >
+                  <td style="font-size:0.875rem">
+                    <span class="fw-medium">{claim.Employees__r.Name}</span>
+                  </td>
+                  <td>
+                    <span class="fw-medium text-primary" style="font-size:0.875rem">{claim.Name}</span>
+                  </td>
+                  <td style="font-size:0.875rem">{claim.Description__c}</td>
+                  <td style="font-size:0.875rem">{claim.Claim_Date__c}</td>
+                  <td class="text-muted" style="font-size:0.8rem">{claim.Applied_Date__c}</td>
+                  <td class="text-end fw-semibold" style="font-size:0.875rem">
+                    <lightning-formatted-number
+                      value={claim.Total_Amount__c}
+                      format-style="currency"
+                      currency-code="MYR"
+                      minimum-fraction-digits="2"
+                    ></lightning-formatted-number>
+                  </td>
+                  <td>
+                    <c-pwchrono-request-status-badge status={claim.Status__c}></c-pwchrono-request-status-badge>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="card-footer bg-white d-flex align-items-center justify-content-between py-2 px-3">
+          <span class="text-muted" style="font-size:0.8rem">{paginationInfo}</span>
+          <div class="d-flex align-items-center gap-2">
+            <lightning-button-icon
+              icon-name="utility:chevronleft"
+              alternative-text="Previous"
+              onclick={handlePrevPage}
+              disabled={isPrevDisabled}
+              variant="border-filled"
+              size="small"
+            ></lightning-button-icon>
+            <span class="text-muted" style="font-size:0.8rem">Page {currentPage} of {totalPages}</span>
+            <lightning-button-icon
+              icon-name="utility:chevronright"
+              alternative-text="Next"
+              onclick={handleNextPage}
+              disabled={isNextDisabled}
+              variant="border-filled"
+              size="small"
+            ></lightning-button-icon>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Empty state -->
+    <template if:true={hasNoClaims}>
+      <div class="card shadow-sm border-0 text-center py-5">
+        <div class="card-body">
+          <i class="fa-solid fa-inbox text-muted mb-3" style="font-size:2.5rem"></i>
+          <p class="text-muted fw-medium mb-1">
+            <template if:true={isPendingView}>No claims pending your approval</template>
+            <template if:true={isAllView}>No team claims found</template>
+          </p>
+          <p class="text-muted mb-0" style="font-size:0.85rem">
+            <template if:true={isPendingView}>Your team has no expense claims awaiting approval.</template>
+            <template if:true={isAllView}>Try adjusting your filters.</template>
+          </p>
+        </div>
+      </div>
+    </template>
+
+  </div>
+</template>

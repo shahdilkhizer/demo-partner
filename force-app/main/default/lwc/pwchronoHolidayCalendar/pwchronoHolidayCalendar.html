@@ -1,0 +1,65 @@
+<template>
+  <div class="page-wrapper">
+    <div class="card overflow-hidden">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">Holiday Calendar</h5>
+        <p class="mb-0 small opacity-75 mt-1">View upcoming holidays and weekly offs</p>
+      </div>
+
+      <div class="card-body">
+        <template if:true={isLoading}>
+          <div class="d-flex align-items-center justify-content-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <span class="ms-2 text-muted">Loading holidays...</span>
+          </div>
+        </template>
+
+        <template if:false={isLoading}>
+          <template if:true={holidays}>
+            <template if:true={hasHolidays}>
+              <template for:each={holidays} for:item="holiday">
+                <div key={holiday.Id} class="d-flex align-items-start gap-3 p-3 bg-light rounded mb-2">
+                  <span class="avatar avatar-md bg-soft-primary flex-shrink-0">
+                    <i class="ti ti-calendar text-primary"></i>
+                  </span>
+                  <div class="flex-grow-1" style="min-width:0">
+                    <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-sm-between gap-1">
+                      <h6 class="fw-semibold mb-0">{holiday.Description__c}</h6>
+                      <p class="text-muted small mb-0">
+                        <lightning-formatted-date-time
+                          value={holiday.Holiday_Date__c}
+                          weekday="long"
+                          month="long"
+                          day="numeric"
+                          year="numeric"
+                        ></lightning-formatted-date-time>
+                      </p>
+                    </div>
+                    <template if:true={holiday.Is_Weekly_Off__c}>
+                      <span class="badge bg-soft-info text-info mt-2">Weekly Off</span>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </template>
+            <template if:false={hasHolidays}>
+              <div class="text-center py-5">
+                <i class="ti ti-calendar-off fs-1 text-muted d-block mb-2"></i>
+                <p class="text-muted mb-0">No upcoming holidays found.</p>
+              </div>
+            </template>
+          </template>
+        </template>
+
+        <template if:true={error}>
+          <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+            <i class="ti ti-alert-circle flex-shrink-0"></i>
+            <span>{error}</span>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+</template>

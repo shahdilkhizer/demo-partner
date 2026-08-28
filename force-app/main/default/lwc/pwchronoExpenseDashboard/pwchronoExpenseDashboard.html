@@ -1,0 +1,148 @@
+<template lwc:render-mode="light">
+  <div class="expense-dashboard">
+
+    <!-- Loading skeleton -->
+    <template if:true={isLoading}>
+      <div class="row g-3 mb-4">
+        <template for:each={skeletonRange} for:item="n">
+          <div key={n.id} class="col-6 col-md-3">
+            <div class="card shadow-sm border-0">
+              <div class="card-body text-center">
+                <div class="placeholder-glow"><span class="placeholder col-8 mb-2"></span></div>
+                <div class="placeholder-glow"><span class="placeholder col-4"></span></div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </template>
+
+    <!-- Error -->
+    <template if:true={error}>
+      <div class="alert alert-danger rounded-3" lwc:if={error}>{error}</div>
+    </template>
+
+    <!-- Content -->
+    <template if:false={isLoading}>
+
+      <!-- Month navigator -->
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn btn-sm btn-outline-secondary" onclick={handlePrevMonth}>
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          <span class="fw-semibold fs-6">{monthLabel}</span>
+          <button class="btn btn-sm btn-outline-secondary" onclick={handleNextMonth}>
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick={handleNewClaim}>
+          <i class="fa-solid fa-plus me-1"></i>New Claim
+        </button>
+      </div>
+
+      <!-- Metric cards -->
+      <div class="row g-3 mb-4">
+        <!-- Draft -->
+        <div class="col-6 col-md-3">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center py-3">
+              <div class="rounded-circle bg-secondary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-2" style="width:40px;height:40px">
+                <i class="fa-solid fa-file-lines text-secondary"></i>
+              </div>
+              <p class="text-muted mb-0" style="font-size:0.75rem">Draft</p>
+              <h4 class="fw-bold mb-0">{counts.draft}</h4>
+            </div>
+          </div>
+        </div>
+        <!-- Submitted -->
+        <div class="col-6 col-md-3">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center py-3">
+              <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-2" style="width:40px;height:40px">
+                <i class="fa-solid fa-paper-plane text-primary"></i>
+              </div>
+              <p class="text-muted mb-0" style="font-size:0.75rem">Submitted</p>
+              <h4 class="fw-bold mb-0">{counts.submitted}</h4>
+            </div>
+          </div>
+        </div>
+        <!-- Approved -->
+        <div class="col-6 col-md-3">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center py-3">
+              <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-2" style="width:40px;height:40px">
+                <i class="fa-solid fa-circle-check text-success"></i>
+              </div>
+              <p class="text-muted mb-0" style="font-size:0.75rem">Approved</p>
+              <h4 class="fw-bold mb-0">{counts.approved}</h4>
+            </div>
+          </div>
+        </div>
+        <!-- Rejected -->
+        <div class="col-6 col-md-3">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center py-3">
+              <div class="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-2" style="width:40px;height:40px">
+                <i class="fa-solid fa-circle-xmark text-danger"></i>
+              </div>
+              <p class="text-muted mb-0" style="font-size:0.75rem">Rejected</p>
+              <h4 class="fw-bold mb-0">{counts.rejected}</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Claims -->
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+          <h6 class="mb-0 fw-semibold">Recent Claims</h6>
+          <button class="btn btn-link btn-sm p-0 text-primary" onclick={handleViewAll}>
+            View All <i class="fa-solid fa-arrow-right ms-1" style="font-size:0.75rem"></i>
+          </button>
+        </div>
+        <div class="card-body p-0">
+          <template if:true={hasRecentClaims}>
+            <template for:each={recentClaims} for:item="claim">
+              <div
+                key={claim.Id}
+                class="d-flex align-items-center justify-content-between px-4 py-3 border-bottom hover-row"
+                style="cursor:pointer"
+                data-id={claim.Id}
+                onclick={handleRowClick}
+              >
+                <div class="d-flex align-items-center gap-3">
+                  <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px;height:36px">
+                    <i class="fa-solid fa-receipt text-primary" style="font-size:0.85rem"></i>
+                  </div>
+                  <div>
+                    <p class="mb-0 fw-medium" style="font-size:0.875rem">{claim.Description__c}</p>
+                    <p class="mb-0 text-muted" style="font-size:0.75rem">{claim.Name} &bull; {claim.Claim_Date__c}</p>
+                  </div>
+                </div>
+                <div class="text-end">
+                  <p class="mb-0 fw-semibold" style="font-size:0.875rem">
+                    <lightning-formatted-number
+                      value={claim.Total_Amount__c}
+                      format-style="currency"
+                      currency-code="MYR"
+                    ></lightning-formatted-number>
+                  </p>
+                  <c-pwchrono-request-status-badge status={claim.Status__c}></c-pwchrono-request-status-badge>
+                </div>
+              </div>
+            </template>
+          </template>
+          <template if:false={hasRecentClaims}>
+            <div class="text-center py-5">
+              <i class="fa-solid fa-receipt text-muted mb-3" style="font-size:2rem"></i>
+              <p class="text-muted mb-1">No expense claims yet</p>
+              <p class="text-muted" style="font-size:0.8rem">Click "New Claim" to get started</p>
+            </div>
+          </template>
+        </div>
+      </div>
+
+    </template>
+  </div>
+</template>

@@ -1,0 +1,283 @@
+<template lwc:render-mode="light">
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <div class="card flex-fill">
+        <div
+          class="card-header d-flex align-items-center justify-content-between"
+        >
+          <div>
+            <h5 class="mb-0">PWChrono Administration</h5>
+            <small class="text-muted"
+              >Configure system settings and feature toggles</small
+            >
+          </div>
+          <template if:true={isLoading}>
+            <lightning-spinner
+              alternative-text="Loading"
+              size="small"
+            ></lightning-spinner>
+          </template>
+        </div>
+
+        <div class="card-body">
+          <lightning-tabset active-tab-value={activeTab}>
+            <lightning-tab
+              label="Feature Toggles"
+              value="features"
+              onactive={handleTabActive}
+            >
+              <div class="pt-2">
+                <h6 class="mb-3">Enable/Disable System Modules</h6>
+
+                <div class="row g-3">
+                  <div class="col-12 col-md-6">
+                    <div class="card bg-light border">
+                      <div class="card-body">
+                        <lightning-input
+                          type="toggle"
+                          label="Goal Management"
+                          checked={featureSettings.Enable_Goal_Management__c}
+                          message-toggle-active="Enabled"
+                          message-toggle-inactive="Disabled"
+                          data-field="Enable_Goal_Management__c"
+                          onchange={handleFeatureChange}
+                        ></lightning-input>
+                        <div class="text-muted fs-13 mt-2">
+                          Allows employees and managers to track performance
+                          goals.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-md-6">
+                    <div class="card bg-light border">
+                      <div class="card-body">
+                        <lightning-input
+                          type="toggle"
+                          label="Recruitment Pipeline"
+                          checked={featureSettings.Enable_Recruitment_Pipeline__c}
+                          message-toggle-active="Enabled"
+                          message-toggle-inactive="Disabled"
+                          data-field="Enable_Recruitment_Pipeline__c"
+                          onchange={handleFeatureChange}
+                        ></lightning-input>
+                        <div class="text-muted fs-13 mt-2">
+                          Kanban board for managing job applicants.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-md-6">
+                    <div class="card bg-light border">
+                      <div class="card-body">
+                        <lightning-input
+                          type="toggle"
+                          label="Interview Scheduler"
+                          checked={featureSettings.Enable_Interview_Scheduler__c}
+                          message-toggle-active="Enabled"
+                          message-toggle-inactive="Disabled"
+                          data-field="Enable_Interview_Scheduler__c"
+                          onchange={handleFeatureChange}
+                        ></lightning-input>
+                        <div class="text-muted fs-13 mt-2">
+                          Tools for scheduling and managing interviews.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-md-6">
+                    <div class="card bg-light border">
+                      <div class="card-body">
+                        <lightning-input
+                          type="toggle"
+                          label="Offer Letter Generator"
+                          checked={featureSettings.Enable_Offer_Letter_Generator__c}
+                          message-toggle-active="Enabled"
+                          message-toggle-inactive="Disabled"
+                          data-field="Enable_Offer_Letter_Generator__c"
+                          onchange={handleFeatureChange}
+                        ></lightning-input>
+                        <div class="text-muted fs-13 mt-2">
+                          Automated generation of offer letters for candidates.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="d-flex justify-content-end gap-2 mt-3 pt-3 border-top"
+                >
+                  <lightning-button
+                    label="Reset"
+                    title="Reset Changes"
+                    onclick={handleResetFeatures}
+                  ></lightning-button>
+                  <lightning-button
+                    variant="brand"
+                    label="Save Changes"
+                    title="Save Feature Settings"
+                    onclick={handleSaveFeatures}
+                  ></lightning-button>
+                </div>
+              </div>
+            </lightning-tab>
+
+            <lightning-tab
+              label="Global Configuration"
+              value="globals"
+              onactive={handleTabActive}
+            >
+              <div class="pt-2">
+                <h6 class="mb-3">System-Wide Settings</h6>
+
+                <div class="mb-3">
+                  <div
+                    class="d-flex align-items-center justify-content-between"
+                  >
+                    <div
+                      class="fw-semibold text-secondary text-uppercase fs-13"
+                    >
+                      Localization
+                    </div>
+                  </div>
+                  <hr class="mt-2 mb-3" />
+                  <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                      <lightning-input
+                        type="text"
+                        label="Currency Code"
+                        value={globalSettings.Currency_Code__c}
+                        data-field="Currency_Code__c"
+                        onchange={handleGlobalChange}
+                      ></lightning-input>
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <lightning-input
+                        type="text"
+                        label="Time Zone"
+                        value={globalSettings.Time_Zone__c}
+                        data-field="Time_Zone__c"
+                        onchange={handleGlobalChange}
+                      ></lightning-input>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <div class="fw-semibold text-secondary text-uppercase fs-13">
+                    Work Schedule
+                  </div>
+                  <hr class="mt-2 mb-3" />
+                  <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                      <lightning-input
+                        type="number"
+                        label="Standard Working Hours"
+                        value={globalSettings.Standard_Working_Hours__c}
+                        step="0.5"
+                        data-field="Standard_Working_Hours__c"
+                        onchange={handleGlobalChange}
+                      ></lightning-input>
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <lightning-input
+                        type="number"
+                        label="Working Days Per Week"
+                        value={globalSettings.Working_Days_Per_Week__c}
+                        data-field="Working_Days_Per_Week__c"
+                        onchange={handleGlobalChange}
+                      ></lightning-input>
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <lightning-combobox
+                        label="Weekend Day 1"
+                        value={globalSettings.Weekend_Day_1__c}
+                        options={weekendOptions}
+                        data-field="Weekend_Day_1__c"
+                        onchange={handleGlobalChange}
+                      ></lightning-combobox>
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <lightning-combobox
+                        label="Weekend Day 2"
+                        value={globalSettings.Weekend_Day_2__c}
+                        options={weekendOptions}
+                        data-field="Weekend_Day_2__c"
+                        onchange={handleGlobalChange}
+                      ></lightning-combobox>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <div class="fw-semibold text-secondary text-uppercase fs-13">
+                    Policies
+                  </div>
+                  <hr class="mt-2 mb-3" />
+                  <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                      <lightning-input
+                        type="number"
+                        label="Probation Period (Days)"
+                        value={globalSettings.Probation_Period_Days__c}
+                        data-field="Probation_Period_Days__c"
+                        onchange={handleGlobalChange}
+                      ></lightning-input>
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <lightning-input
+                        type="number"
+                        label="Default Grace Period (Minutes)"
+                        value={globalSettings.Default_Grace_Period_Minutes__c}
+                        data-field="Default_Grace_Period_Minutes__c"
+                        onchange={handleGlobalChange}
+                      ></lightning-input>
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <lightning-input
+                        type="text"
+                        label="Leave Year Start Month"
+                        value={globalSettings.Leave_Year_Start_Month__c}
+                        data-field="Leave_Year_Start_Month__c"
+                        onchange={handleGlobalChange}
+                      ></lightning-input>
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <lightning-input
+                        type="number"
+                        label="Max Consecutive Leave Days"
+                        value={globalSettings.Max_Consecutive_Leave_Days__c}
+                        data-field="Max_Consecutive_Leave_Days__c"
+                        onchange={handleGlobalChange}
+                      ></lightning-input>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="d-flex justify-content-end gap-2 mt-3 pt-3 border-top"
+                >
+                  <lightning-button
+                    label="Reset"
+                    title="Reset Changes"
+                    onclick={handleResetGlobals}
+                  ></lightning-button>
+                  <lightning-button
+                    variant="brand"
+                    label="Save Changes"
+                    title="Save Global Settings"
+                    onclick={handleSaveGlobals}
+                  ></lightning-button>
+                </div>
+              </div>
+            </lightning-tab>
+          </lightning-tabset>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

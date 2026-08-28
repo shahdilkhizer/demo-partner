@@ -1,0 +1,174 @@
+<template>
+    <div class="page-wrapper">
+        <div class="content">
+            <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
+                <div class="my-auto mb-2">
+                    <h2 class="mb-1">Timesheets</h2>
+                    <nav>
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="javascript:void(0);"><i class="ti ti-smart-home"></i></a></li>
+                            <li class="breadcrumb-item">Attendance</li>
+                            <li class="breadcrumb-item active" aria-current="page">Timesheets</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+                    <div class="me-2 mb-2">
+                        <div class="dropdown">
+                            <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                <i class="ti ti-file-export me-1"></i>Export
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end p-3">
+                                <li><button type="button" onclick={exportPDF} class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100"><i class="ti ti-file-type-pdf me-1"></i>Export as PDF</button></li>
+                                <li><button type="button" onclick={exportExcel} class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100"><i class="ti ti-file-type-xls me-1"></i>Export as Excel</button></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <button onclick={openAddModal} class="btn btn-primary d-flex align-items-center">
+                            <i class="ti ti-circle-plus me-2"></i>Add Today’s Work
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+                    <h5>Timesheet</h5>
+                    <div class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3">
+                        <div class="dropdown me-3">
+                            <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">Select Project</a>
+                            <ul class="dropdown-menu dropdown-menu-end p-3">
+                                <template for:each={projectOptions} for:item="project">
+                                    <li key={project}><button type="button" onclick={handleProjectFilter} data-name={project} class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100">{project}</button></li>
+                                </template>
+                            </ul>
+                        </div>
+                        <div class="dropdown">
+                            <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">Sort By</a>
+                            <ul class="dropdown-menu dropdown-menu-end p-3">
+                                <li><button type="button" onclick={handleSort} data-sort="recent" class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100">Recently Added</button></li>
+                                <li><button type="button" onclick={handleSort} data-sort="asc" class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100">Ascending</button></li>
+                                <li><button type="button" onclick={handleSort} data-sort="desc" class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100">Descending</button></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    <div class="custom-datatable-filter table-responsive">
+                        <div class="dataTables_wrapper dt-bootstrap5 no-footer">
+                            <div class="row p-3">
+                                <div class="col-sm-12 col-md-6">
+                                    <label>Row Per Page
+                                        <select onchange={handleRowChange} class="form-select form-select-sm d-inline-block w-auto ms-1">
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                        </select>
+                                    </label>
+                                </div>
+                                <div class="col-sm-12 col-md-6 text-end">
+                                    <label>Search: <input type="search" oninput={handleSearch} class="form-control form-control-sm d-inline-block w-auto ms-1"></label>
+                                </div>
+                            </div>
+
+                            <table class="table datatable dataTable no-footer">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th class="sorting"><button type="button" onclick={handleSort} data-field="employeeName" class="btn btn-link p-0 text-decoration-none text-body">Employee</button></th>
+                                        <th class="sorting"><button type="button" onclick={handleSort} data-field="workDate" class="btn btn-link p-0 text-decoration-none text-body">Date</button></th>
+                                        <th class="sorting"><button type="button" onclick={handleSort} data-field="projectName" class="btn btn-link p-0 text-decoration-none text-body">Project</button></th>
+                                        <th>Assigned Hours</th>
+                                        <th>Worked Hours</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={filteredData} for:item="row">
+                                        <tr key={row.id} class="odd">
+                                            <td>
+                                                <div class="d-flex align-items-center file-name-icon">
+                                                    <span class="avatar avatar-md border avatar-rounded">
+                                                        <img src={row.imageUrl} alt="img">
+                                                    </span>
+                                                    <div class="ms-2">
+                                                        <h6 class="fw-medium">{row.employeeName}</h6>
+                                                        <span class="fs-12 fw-normal">{row.team}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>{row.workDate}</td>
+                                            <td>
+                                                <p class="fs-14 fw-medium text-gray-9 d-flex align-items-center">
+                                                    {row.projectName} <i class="ti ti-info-circle text-info ms-1"></i>
+                                                </p>
+                                            </td>
+                                            <td>{row.assignedHours}</td>
+                                            <td>{row.workedHours}</td>
+                                            <td>
+                                                <div class="action-icon d-inline-flex">
+                                                    <button type="button" onclick={handleEdit} data-id={row.id} class="me-2 border-0 bg-transparent p-0"><i class="ti ti-edit"></i></button>
+                                                    <button type="button" onclick={handleDelete} data-id={row.id} class="border-0 bg-transparent p-0"><i class="ti ti-trash"></i></button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <template if:true={isModalOpen}>
+            <dialog class="modal fade show d-block" open>
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Add Todays Work</h4>
+                            <button type="button" class="btn-close" onclick={closeAddModal}></button>
+                        </div>
+                        <form onsubmit={handleFormSubmit}>
+                            <div class="modal-body pb-0">
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label" for="timesheet-project">Project <span class="text-danger">*</span></label>
+                                        <select id="timesheet-project" class="form-select" required name="project">
+                                            <option value="">Select</option>
+                                            <template for:each={projectOptions} for:item="opt">
+                                                <option key={opt} value={opt}>{opt}</option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label" for="timesheet-deadline">Deadline <span class="text-danger">*</span></label>
+                                        <input id="timesheet-deadline" type="date" class="form-control" required name="deadline">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" for="timesheet-total-hours">Total Hours <span class="text-danger">*</span></label>
+                                        <input id="timesheet-total-hours" type="number" class="form-control" required name="totalHours">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" for="timesheet-remaining-hours">Remaining Hours <span class="text-danger">*</span></label>
+                                        <input id="timesheet-remaining-hours" type="number" class="form-control" required name="remainingHours">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" onclick={closeAddModal}>Cancel</button>
+                                <button type="submit" class="btn btn-primary">Add Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </dialog>
+            <div class="modal-backdrop fade show"></div>
+        </template>
+
+        <div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
+            <p class="mb-0">2014 - 2026 © SmartHR.</p>
+            <p>Designed & Developed By <a href="javascript:void(0);" class="text-primary">Dreams</a></p>
+        </div>
+    </div>
+</template>

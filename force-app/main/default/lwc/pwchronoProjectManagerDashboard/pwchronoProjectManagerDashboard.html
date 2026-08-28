@@ -1,0 +1,350 @@
+<template lwc:render-mode="light">
+  <div class="page-wrapper" style="min-height: 732px">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <!-- Page Header -->
+      <div
+        class="d-md-flex d-block align-items-center justify-content-between mb-3"
+      >
+        <div class="my-auto mb-2">
+          <h2 class="mb-1">Project Manager Dashboard</h2>
+          <nav>
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item">
+                <a href="javascript:void(0);"
+                  ><i class="fa-solid fa-house"></i
+                ></a>
+              </li>
+              <li class="breadcrumb-item">Dashboard</li>
+              <li class="breadcrumb-item active" aria-current="page">
+                Project Manager Dashboard
+              </li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+
+      <template if:true={error}>
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+          <i class="fa-solid fa-triangle-exclamation me-2"></i>
+          <div><strong>Error Loading Dashboard:</strong> {error}</div>
+        </div>
+      </template>
+
+      <template if:true={isLoading}>
+        <div class="d-flex justify-content-center p-5">
+          <div class="spinner-border text-primary">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </template>
+
+      <template if:false={isLoading}>
+        <div class="row">
+          <div class="col-md-3 d-flex">
+            <div class="card flex-fill">
+              <div class="card-body">
+                <span class="avatar rounded-circle bg-primary mb-2">
+                  <i class="fa-solid fa-diagram-project fs-16"></i>
+                </span>
+                <h6 class="fs-13 fw-medium text-default mb-1">
+                  Total Projects
+                </h6>
+                <h3 class="mb-0">{totalProjects}</h3>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3 d-flex">
+            <div class="card flex-fill">
+              <div class="card-body">
+                <span class="avatar rounded-circle bg-success mb-2">
+                  <i class="fa-solid fa-play fs-16"></i>
+                </span>
+                <h6 class="fs-13 fw-medium text-default mb-1">
+                  Active Projects
+                </h6>
+                <h3 class="mb-0">{activeProjects}</h3>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3 d-flex">
+            <div class="card flex-fill">
+              <div class="card-body">
+                <span class="avatar rounded-circle bg-danger mb-2">
+                  <i class="fa-solid fa-bolt fs-16"></i>
+                </span>
+                <h6 class="fs-13 fw-medium text-default mb-1">
+                  High Priority (Active)
+                </h6>
+                <h3 class="mb-0">{highPriorityActiveProjects}</h3>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3 d-flex">
+            <div class="card flex-fill">
+              <div class="card-body">
+                <span class="avatar rounded-circle bg-warning mb-2">
+                  <i class="fa-solid fa-calendar-days fs-16"></i>
+                </span>
+                <h6 class="fs-13 fw-medium text-default mb-1">
+                  Ending Soon (14 days)
+                </h6>
+                <h3 class="mb-0">{endingSoonProjects}</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PM Focus Widgets -->
+        <div class="row mt-1">
+          <div class="col-md-3 d-flex">
+            <div class="card flex-fill">
+              <div class="card-body">
+                <span class="avatar rounded-circle bg-secondary mb-2">
+                  <i class="fa-solid fa-sack-dollar fs-16"></i>
+                </span>
+                <h6 class="fs-13 fw-medium text-default mb-1">Active Value</h6>
+                <h3 class="mb-0">
+                  <lightning-formatted-number
+                    value={activeProjectValue}
+                    format-style="currency"
+                  ></lightning-formatted-number>
+                </h3>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3 d-flex">
+            <div class="card flex-fill">
+              <div class="card-body">
+                <span class="avatar rounded-circle bg-info mb-2">
+                  <i class="fa-solid fa-clock fs-16"></i>
+                </span>
+                <h6 class="fs-13 fw-medium text-default mb-1">
+                  Hours Logged / Planned
+                </h6>
+                <h3 class="mb-2">{activeHoursLogged} / {activeHoursPlanned}</h3>
+                <div class="progress" style="height: 6px">
+                  <div
+                    class="progress-bar bg-primary pm-hours-progress"
+                    title={hoursProgressPercent}
+                  ></div>
+                </div>
+                <div class="d-flex justify-content-between mt-2">
+                  <small class="text-muted">Utilization</small>
+                  <small class="text-muted">{hoursProgressPercent}%</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3 d-flex">
+            <div class="card flex-fill">
+              <div class="card-body">
+                <span class="avatar rounded-circle bg-warning mb-2">
+                  <i class="fa-solid fa-triangle-exclamation fs-16"></i>
+                </span>
+                <h6 class="fs-13 fw-medium text-default mb-1">At Risk</h6>
+                <h3 class="mb-0">{atRiskProjects}</h3>
+                <small class="text-muted">Ending soon &amp; behind plan</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3 d-flex">
+            <div class="card flex-fill">
+              <div class="card-body">
+                <span class="avatar rounded-circle bg-danger mb-2">
+                  <i class="fa-solid fa-fire-flame-curved fs-16"></i>
+                </span>
+                <h6 class="fs-13 fw-medium text-default mb-1">Overrun</h6>
+                <h3 class="mb-0">{overrunProjects}</h3>
+                <small class="text-muted">Logged hours &gt; planned</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mt-2">
+          <div class="col-md-6 d-flex">
+            <div class="card flex-fill">
+              <div
+                class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
+              >
+                <h5 class="mb-2">At Risk Projects</h5>
+              </div>
+              <div class="card-body p-0">
+                <template if:true={hasAtRiskProjects}>
+                  <div class="table-responsive">
+                    <table class="table table-nowrap mb-0">
+                      <thead>
+                        <tr>
+                          <th>Project</th>
+                          <th>End</th>
+                          <th>Hours</th>
+                          <th>Priority</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template for:each={atRiskProjectRows} for:item="p">
+                          <tr key={p.id}>
+                            <td>
+                              <h6 class="fs-13 fw-medium text-default mb-0">
+                                {p.name}
+                              </h6>
+                              <small class="text-muted">{p.accountName}</small>
+                            </td>
+                            <td>
+                              <lightning-formatted-date-time
+                                value={p.endDate}
+                                year="numeric"
+                                month="short"
+                                day="2-digit"
+                              ></lightning-formatted-date-time>
+                            </td>
+                            <td>{p.hoursLogged} / {p.totalHours}</td>
+                            <td>{p.priority}</td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+                </template>
+                <template if:false={hasAtRiskProjects}>
+                  <div class="p-4">
+                    <div class="alert alert-light text-center border-0 mb-0">
+                      No at-risk projects.
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 d-flex">
+            <div class="card flex-fill">
+              <div
+                class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
+              >
+                <h5 class="mb-2">Overrun Projects</h5>
+              </div>
+              <div class="card-body p-0">
+                <template if:true={hasOverrunProjects}>
+                  <div class="table-responsive">
+                    <table class="table table-nowrap mb-0">
+                      <thead>
+                        <tr>
+                          <th>Project</th>
+                          <th>End</th>
+                          <th>Hours</th>
+                          <th>Priority</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template for:each={overrunProjectRows} for:item="p">
+                          <tr key={p.id}>
+                            <td>
+                              <h6 class="fs-13 fw-medium text-default mb-0">
+                                {p.name}
+                              </h6>
+                              <small class="text-muted">{p.accountName}</small>
+                            </td>
+                            <td>
+                              <lightning-formatted-date-time
+                                value={p.endDate}
+                                year="numeric"
+                                month="short"
+                                day="2-digit"
+                              ></lightning-formatted-date-time>
+                            </td>
+                            <td>{p.hoursLogged} / {p.totalHours}</td>
+                            <td>{p.priority}</td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+                </template>
+                <template if:false={hasOverrunProjects}>
+                  <div class="p-4">
+                    <div class="alert alert-light text-center border-0 mb-0">
+                      No overrun projects.
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card flex-fill mt-4">
+          <div
+            class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
+          >
+            <h5 class="mb-2">Recent Projects</h5>
+          </div>
+          <div class="card-body p-0">
+            <template if:true={hasRecentProjects}>
+              <div class="table-responsive">
+                <table class="table table-nowrap mb-0">
+                  <thead>
+                    <tr>
+                      <th>Project</th>
+                      <th>Account</th>
+                      <th>Status</th>
+                      <th>Priority</th>
+                      <th>Start</th>
+                      <th>End</th>
+                      <th>Total Hours</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template for:each={recentProjects} for:item="p">
+                      <tr key={p.id}>
+                        <td>
+                          <h6 class="fs-13 fw-medium text-default mb-0">
+                            {p.name}
+                          </h6>
+                        </td>
+                        <td>{p.accountName}</td>
+                        <td>{p.status}</td>
+                        <td>{p.priority}</td>
+                        <td>
+                          <lightning-formatted-date-time
+                            value={p.startDate}
+                            year="numeric"
+                            month="short"
+                            day="2-digit"
+                          ></lightning-formatted-date-time>
+                        </td>
+                        <td>
+                          <lightning-formatted-date-time
+                            value={p.endDate}
+                            year="numeric"
+                            month="short"
+                            day="2-digit"
+                          ></lightning-formatted-date-time>
+                        </td>
+                        <td>{p.totalHours}</td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </template>
+
+            <template if:false={hasRecentProjects}>
+              <div class="p-4">
+                <div class="alert alert-light text-center border-0 mb-0">
+                  No projects found.
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+</template>

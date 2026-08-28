@@ -1,0 +1,21 @@
+<template>
+  <div class="profile-card">
+    <div class="profile-avatar">
+      <c-pwchrono-avatar
+        container-class="avatar avatar-xl avatar-rounded"
+        image-url={avatarUrl}
+        name={name}
+        alt-text={name}
+        image-class="avatar-image"
+        title-class="initial-wrap"
+        fallback-bg-class="bg-secondary"
+      ></c-pwchrono-avatar>
+    </div>
+    <h3 class="profile-name">{name}</h3>
+    <p class="profile-role">{role}</p>
+    <div class="performance-metric">
+      <p class="performance-label">Performance</p>
+      <p class="performance-value">{performance}%</p>
+    </div>
+  </div>
+</template>

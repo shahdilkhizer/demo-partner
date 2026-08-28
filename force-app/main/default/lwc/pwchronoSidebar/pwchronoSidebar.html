@@ -1,0 +1,246 @@
+<!--
+  @description       : 
+  @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+  @group             : 
+  @last modified on  : 01-17-2026
+  @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+-->
+<template lwc:render-mode="light">
+  <c-pwchrono-ui-assets></c-pwchrono-ui-assets>
+
+  <div
+    class="sidebar"
+    id="sidebar"
+    data-region="sidebar"
+    data-pwchrono="pwchronoSidebar"
+  >
+    <!-- Logo (matches SmartHR template structure) -->
+    <div class="sidebar-logo" data-region="sidebarLogo">
+      <a href={communityHomeHref} class="logo logo-normal">
+        <template if:false={logoLightErrored}>
+          <img src={logoLightUrl} alt="Logo" data-variant="light" />
+        </template>
+        <template if:true={logoLightErrored}>
+          <span class="logo-fallback" aria-label="Logo">{brandInitials}</span>
+        </template>
+      </a>
+      <a href={communityHomeHref} class="logo-small">
+        <template if:false={logoSmallErrored}>
+          <img src={logoSmallUrl} alt="Logo" data-variant="small" />
+        </template>
+        <template if:true={logoSmallErrored}>
+          <span class="logo-fallback logo-small-fallback" aria-label="Logo"
+            >{brandInitials}</span
+          >
+        </template>
+      </a>
+      <a href={communityHomeHref} class="logo-white">
+        <template if:false={logoDarkErrored}>
+          <img src={logoDarkUrl} alt="Logo" data-variant="dark" />
+        </template>
+        <template if:true={logoDarkErrored}>
+          <span class="logo-fallback" aria-label="Logo">{brandInitials}</span>
+        </template>
+      </a>
+    </div>
+
+    <!-- Profile blocks (optional; uses existing template classes) -->
+    <div class="modern-profile p-3 pb-0" data-region="sidebarProfile">
+      <div class="sidebar-nav mb-3">
+        <ul
+          class="nav nav-tabs nav-tabs-solid nav-tabs-rounded nav-justified bg-transparent"
+        >
+          <li class="nav-item">
+            <button
+              class={menuTabClass}
+              data-tab="menu"
+              onclick={handleSidebarTabClick}
+              role="tab"
+            >
+              Menu
+            </button>
+          </li>
+          <li class="nav-item">
+            <button
+              class={chatTabClass}
+              data-tab="chat"
+              onclick={handleSidebarTabClick}
+              role="tab"
+            >
+              Chats
+            </button>
+          </li>
+          <li class="nav-item">
+            <button
+              class={emailTabClass}
+              data-tab="email"
+              onclick={handleSidebarTabClick}
+              role="tab"
+            >
+              Inbox
+            </button>
+          </li>
+        </ul>
+      </div>
+      <div class="text-center rounded bg-light p-3 mb-4 user-profile">
+        <c-pwchrono-avatar
+          container-class="avatar avatar-lg online mb-3"
+          image-url={userAvatarUrl}
+          name={userName}
+          alt-text={userAvatarAlt}
+          image-class="img-fluid rounded-circle"
+          title-class="avatar-title rounded-circle"
+        ></c-pwchrono-avatar>
+        <h6 class="fs-12 fw-normal mb-1">{userName}</h6>
+        <p class="fs-10">{userRole}</p>
+      </div>
+    </div>
+
+    <div class="sidebar-header p-3 pb-0 pt-2" data-region="sidebarHeader">
+      <div class="input-group input-group-flat d-inline-flex mb-4">
+        <span class="input-icon-addon" aria-hidden="true">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        </span>
+        <input
+          type="search"
+          class="form-control"
+          placeholder="Search"
+          aria-label="Search"
+          role="searchbox"
+          onkeyup={handleSearch}
+        />
+        <span class="input-group-text" aria-hidden="true">
+          <kbd>CTRL + / </kbd>
+        </span>
+      </div>
+    </div>
+
+    <template if:true={isMenuTab}>
+      <div class="sidebar-inner slimscroll" data-region="sidebarMenu">
+        <div id="sidebar-menu" class="sidebar-menu">
+          <ul data-list="sidebarMenuGroups">
+            <template for:each={sidebarMenuGroups} for:item="grp">
+              <li key={grp.key} class="menu-title" data-repeat="menuGroup">
+                <span>{grp.label}</span>
+              </li>
+
+              <template if:false={grp.hasItems}>
+                <li
+                  key={grp.emptyKey}
+                  class="menu-empty"
+                  data-state="emptyMenu"
+                >
+                  <span>{grp.emptyText}</span>
+                </li>
+              </template>
+
+              <template if:true={grp.hasItems}>
+                <template for:each={grp.items} for:item="item">
+                  <li
+                    key={item.key}
+                    data-repeat="menuItem"
+                    class={item.liClass}
+                  >
+                    <template if:true={item.hasChildren}>
+                      <template if:true={item.isExpanded}>
+                        <a
+                          href={item.hrefOrToggle}
+                          data-key={item.key}
+                          onclick={handleItemClick}
+                          class={item.linkClass}
+                          aria-expanded="true"
+                          aria-controls={item.childId}
+                        >
+                          <i class={item.iconClass} aria-hidden="true"></i>
+                          <span>{item.label}</span>
+                          <template if:true={item.hasBadge}>
+                            <span class={item.badgeClass}
+                              >{item.badgeText}</span
+                            >
+                          </template>
+                          <span class="menu-arrow"></span>
+                        </a>
+                      </template>
+
+                      <template if:false={item.isExpanded}>
+                        <a
+                          href={item.hrefOrToggle}
+                          data-key={item.key}
+                          onclick={handleItemClick}
+                          class={item.linkClass}
+                          aria-expanded="false"
+                          aria-controls={item.childId}
+                        >
+                          <i class={item.iconClass} aria-hidden="true"></i>
+                          <span>{item.label}</span>
+                          <template if:true={item.hasBadge}>
+                            <span class={item.badgeClass}
+                              >{item.badgeText}</span
+                            >
+                          </template>
+                          <span class="menu-arrow"></span>
+                        </a>
+                      </template>
+                    </template>
+
+                    <template if:false={item.hasChildren}>
+                      <a
+                        href={item.hrefOrToggle}
+                        data-key={item.key}
+                        onclick={handleItemClick}
+                        class={item.linkClass}
+                      >
+                        <i class={item.iconClass} aria-hidden="true"></i>
+                        <span>{item.label}</span>
+                        <template if:true={item.hasBadge}>
+                          <span class={item.badgeClass}>{item.badgeText}</span>
+                        </template>
+                      </a>
+                    </template>
+
+                    <template if:true={item.hasChildren}>
+                      <ul class={item.childClass} id={item.childId}>
+                        <template for:each={item.children} for:item="child">
+                          <li key={child.key} data-repeat="child">
+                            <a
+                              href={child.href}
+                              data-key={child.key}
+                              onclick={handleItemClick}
+                              class={child.linkClass}
+                            >
+                              {child.label}
+                            </a>
+                          </li>
+                        </template>
+                      </ul>
+                    </template>
+                  </li>
+                </template>
+              </template>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </template>
+
+    <template if:true={isChatTab}>
+      <div class="sidebar-inner slimscroll" data-region="sidebarChat">
+        <div class="p-3">
+          <output class="alert alert-info mb-0 block">
+            Chat is coming soon.
+          </output>
+        </div>
+      </div>
+    </template>
+
+    <template if:true={isEmailTab}>
+      <div class="sidebar-inner slimscroll" data-region="sidebarEmail">
+        <div class="p-3">
+          <output class="alert alert-info mb-0 block">
+            Email is coming soon.
+          </output>
+        </div>
+      </div>
+    </template>
+  </div>
+</template>
