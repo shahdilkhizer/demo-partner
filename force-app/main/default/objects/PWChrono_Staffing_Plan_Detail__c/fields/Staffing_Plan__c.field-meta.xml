@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Staffing_Plan__c</fullName>
+    <label>Staffing Plan</label>
+    <referenceTo>PWChrono_Staffing_Plan__c</referenceTo>
+    <relationshipLabel>Staffing Plan Details</relationshipLabel>
+    <relationshipName>Staffing_Plan_Details</relationshipName>
+    <relationshipOrder>0</relationshipOrder>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <trackTrending>false</trackTrending>
+    <type>MasterDetail</type>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

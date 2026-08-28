@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Performance Appraisals for PWChrono</description>
+    <label>Performance</label>
+    <lwcComponent>pwchronoAppraisalForm</lwcComponent>
+    <motif>Custom48: Trophy</motif>
+</CustomTab>

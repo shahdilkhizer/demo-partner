@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>PWChrono_Staffing_Plan__c</members>
+        <members>PWChrono_Staffing_Plan_Detail__c</members>
+        <members>PWChrono_Job_Requisition__c</members>
+        <members>PWChrono_Job_Opening__c</members>
+        <members>PWChrono_Job_Applicant__c</members>
+        <members>PWChrono_Interview__c</members>
+        <members>PWChrono_Offer_Letter__c</members>
+        <members>PWChrono_Employee_Referral__c</members>
+        <members>PWChrono_Onboarding_Task__c</members>
+        <members>Portal_Users__c</members>
+        <members>PWChrono_Department__c</members>
+        <members>PWChrono_Designation__c</members>
+        <members>PWChrono_User_Feature_Access__c</members>
+        <name>CustomObject</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>CustomTab</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>PermissionSet</name>
+    </types>
+    <version>62.0</version>
+</Package>

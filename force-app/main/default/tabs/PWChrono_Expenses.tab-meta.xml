@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Expense Management for PWChrono</description>
+    <label>Expenses</label>
+    <lwcComponent>pwchronoExpenseClaimPortal</lwcComponent>
+    <motif>Custom17: Sack</motif>
+</CustomTab>

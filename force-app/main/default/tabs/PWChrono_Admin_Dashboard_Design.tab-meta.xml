@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Design-only Admin Dashboard preview (UI/UX)</description>
+    <label>Admin Dashboard (Design)</label>
+    <lwcComponent>pwchronoAdminDashboardDesign</lwcComponent>
+    <motif>Custom108: TV Widescreen</motif>
+</CustomTab>

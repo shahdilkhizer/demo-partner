@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Current_Employee__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <label>Current Employee</label>
+    <referenceTo>Portal_Users__c</referenceTo>
+    <relationshipLabel>Employee Referrals Made</relationshipLabel>
+    <relationshipName>PWChrono_Employee_Referrals_Made</relationshipName>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

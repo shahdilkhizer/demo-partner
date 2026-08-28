@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Feature_Name__c</fullName>
+    <label>Feature Name</label>
+    <required>true</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Dashboard</fullName>
+                <default>false</default>
+                <label>Dashboard</label>
+            </value>
+            <value>
+                <fullName>Leave Management</fullName>
+                <default>false</default>
+                <label>Leave Management</label>
+            </value>
+            <value>
+                <fullName>Attendance Management</fullName>
+                <default>false</default>
+                <label>Attendance Management</label>
+            </value>
+            <value>
+                <fullName>Employee Directory</fullName>
+                <default>false</default>
+                <label>Employee Directory</label>
+            </value>
+            <value>
+                <fullName>Expense Management</fullName>
+                <default>false</default>
+                <label>Expense Management</label>
+            </value>
+            <value>
+                <fullName>Payroll</fullName>
+                <default>false</default>
+                <label>Payroll</label>
+            </value>
+            <value>
+                <fullName>Performance Management</fullName>
+                <default>false</default>
+                <label>Performance Management</label>
+            </value>
+            <value>
+                <fullName>Training Management</fullName>
+                <default>false</default>
+                <label>Training Management</label>
+            </value>
+            <value>
+                <fullName>Recruitment</fullName>
+                <default>false</default>
+                <label>Recruitment</label>
+            </value>
+            <value>
+                <fullName>Onboarding</fullName>
+                <default>false</default>
+                <label>Onboarding</label>
+            </value>
+            <value>
+                <fullName>Manager Dashboard</fullName>
+                <default>false</default>
+                <label>Manager Dashboard</label>
+            </value>
+            <value>
+                <fullName>Admin Settings</fullName>
+                <default>false</default>
+                <label>Admin Settings</label>
+            </value>
+            <value>
+                <fullName>Appraisal</fullName>
+                <default>false</default>
+                <label>Appraisal</label>
+            </value>
+            <value>
+                <fullName>Approvals</fullName>
+                <default>false</default>
+                <label>Approvals</label>
+            </value>
+            <value>
+                <fullName>Company Policies</fullName>
+                <default>false</default>
+                <label>Company Policies</label>
+            </value>
+            <value>
+                <fullName>Goals</fullName>
+                <default>false</default>
+                <label>Goals</label>
+            </value>
+            <value>
+                <fullName>Holidays</fullName>
+                <default>false</default>
+                <label>Holidays</label>
+            </value>
+            <value>
+                <fullName>My Profile</fullName>
+                <default>false</default>
+                <label>My Profile</label>
+            </value>
+            <value>
+                <fullName>Tax Declaration</fullName>
+                <default>false</default>
+                <label>Tax Declaration</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

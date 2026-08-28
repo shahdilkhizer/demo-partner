@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>For_Designation__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <label>For Designation</label>
+    <referenceTo>PWChrono_Designation__c</referenceTo>
+    <relationshipLabel>Employee Referrals</relationshipLabel>
+    <relationshipName>PWChrono_Employee_Referrals</relationshipName>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>
