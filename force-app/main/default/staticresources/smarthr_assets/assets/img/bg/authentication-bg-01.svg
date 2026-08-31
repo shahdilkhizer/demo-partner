@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="460" height="260" viewBox="0 0 460 260" role="img" aria-label="Authentication illustration">
+  <rect x="0" y="0" width="460" height="260" rx="22" fill="rgba(255,255,255,0.08)"/>
+  <rect x="28" y="36" width="220" height="26" rx="13" fill="rgba(255,255,255,0.18)"/>
+  <rect x="28" y="78" width="310" height="18" rx="9" fill="rgba(255,255,255,0.12)"/>
+  <rect x="28" y="110" width="270" height="18" rx="9" fill="rgba(255,255,255,0.10)"/>
+  <rect x="28" y="148" width="340" height="18" rx="9" fill="rgba(255,255,255,0.11)"/>
+  <circle cx="376" cy="94" r="40" fill="rgba(255,255,255,0.14)"/>
+  <circle cx="376" cy="94" r="20" fill="rgba(255,255,255,0.10)"/>
+  <path d="M70 206 C118 184, 168 184, 216 206" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="10" stroke-linecap="round"/>
+</svg>
