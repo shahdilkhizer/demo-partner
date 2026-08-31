@@ -319,6 +319,10 @@ export default class PwchronoStaffingPlan extends LightningElement {
       delete planPayload.formattedCost;
       delete planPayload.statusBadgeClass;
       delete planPayload.isSubmitted;
+      if (!planPayload.Id) delete planPayload.Id;
+      if (!planPayload.From_Date__c) planPayload.From_Date__c = null;
+      if (!planPayload.To_Date__c) planPayload.To_Date__c = null;
+      if (!planPayload.Department__c) planPayload.Department__c = null;
 
       const planId = await saveStaffingPlan({
         planJson: JSON.stringify(planPayload),

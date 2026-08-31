@@ -1,31 +1,25 @@
-<template>
-  <div class="page-wrapper">
-    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
-      <div
-        class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
-      >
-        <!-- Header -->
-        <div
-          class="bg-gradient-to-r from-fuchsia-500 to-fuchsia-600 px-6 py-5 text-white flex items-center justify-between"
-        >
-          <div>
-            <h1 class="text-xl font-bold">Interview Scheduler</h1>
-            <p class="text-sm text-white/80 mt-1">
-              Schedule and manage candidate interviews
-            </p>
-          </div>
-          <lightning-button
-            label="Schedule Interview"
-            onclick={handleNewInterview}
-            variant="brand"
-            icon-name="utility:add"
-            disabled={isScheduleDisabled}
-          ></lightning-button>
+<template lwc:render-mode="light">
+  <div class="interview-scheduler-container">
+    <div class="card border shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+        <div>
+          <h5 class="mb-0 fw-bold text-dark">Interview Scheduler</h5>
+          <small class="text-muted">Schedule and manage candidate interviews</small>
         </div>
+        <button
+          type="button"
+          class="btn btn-sm btn-primary d-flex align-items-center gap-2"
+          onclick={handleNewInterview}
+          disabled={isScheduleDisabled}
+        >
+          <i class="fa-solid fa-calendar-plus"></i> Schedule Interview
+        </button>
+      </div>
 
-        <div class="p-4 md:p-6">
-          <!-- Applicant Selection -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div class="card-body p-4">
+        <!-- Applicant Selection -->
+        <div class="row mb-4">
+          <div class="col-12 col-md-6">
             <lightning-combobox
               name="applicant"
               label="Select Applicant"
@@ -35,177 +29,113 @@
               onchange={handleApplicantChange}
             ></lightning-combobox>
           </div>
+        </div>
 
-          <!-- Loading Spinner -->
-          <template if:true={isLoading}>
-            <div class="flex justify-center items-center p-8">
-              <div
-                class="animate-spin rounded-full h-12 w-12 border-b-2 border-fuchsia-500"
-              ></div>
-              <span class="ml-3 text-gray-600">Loading applicants...</span>
+        <!-- Loading Spinner -->
+        <template if:true={isLoading}>
+          <div class="d-flex justify-content-center align-items-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading applicants...</span>
+            </div>
+          </div>
+        </template>
+
+        <!-- Interviews Section -->
+        <template if:false={isLoading}>
+          <template if:true={isInterviewsLoading}>
+            <div class="d-flex justify-content-center align-items-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading interviews...</span>
+              </div>
             </div>
           </template>
 
-          <!-- Interviews Section -->
-          <template if:false={isLoading}>
-            <template if:true={isInterviewsLoading}>
-              <div class="flex justify-center items-center p-8">
-                <div
-                  class="animate-spin rounded-full h-8 w-8 border-b-2 border-fuchsia-500"
-                ></div>
-                <span class="ml-3 text-gray-600">Loading interviews...</span>
-              </div>
-            </template>
-
-            <!-- Interviews List -->
-            <template if:false={isInterviewsLoading}>
-              <div if:true={selectedApplicantId}>
-                <template if:true={interviews.length}>
-                  <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                    Scheduled Interviews
-                  </h3>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <template for:each={interviews} for:item="inv">
-                      <div
-                        key={inv.Id}
-                        class="interview-card p-4 bg-gray-50 rounded-xl border border-gray-200"
-                      >
-                        <div class="flex items-center justify-between mb-3">
-                          <span class="font-semibold text-fuchsia-600"
-                            >{inv.Round__c}</span
-                          >
-                          <span class={inv.statusClass}>{inv.Result__c}</span>
-                        </div>
-                        <div class="space-y-2 text-sm">
-                          <div class="flex items-center gap-2">
-                            <span class="text-gray-500 w-24">Date:</span>
-                            <span class="text-gray-800"
-                              >{inv.formattedDate}</span
-                            >
+          <template if:false={isInterviewsLoading}>
+            <div if:true={selectedApplicantId}>
+              <template if:true={interviews.length}>
+                <h6 class="fw-bold text-dark mb-3">Scheduled Interviews</h6>
+                <div class="row g-3">
+                  <template for:each={interviews} for:item="inv">
+                    <div key={inv.Id} class="col-12 col-md-6">
+                      <div class="card border bg-light h-100">
+                        <div class="card-body p-3">
+                          <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="fw-bold text-primary">{inv.Round__c}</span>
+                            <span class="badge bg-primary-subtle text-primary">{inv.Result__c}</span>
                           </div>
-                          <div class="flex items-center gap-2">
-                            <span class="text-gray-500 w-24">Interviewer:</span>
-                            <span class="text-gray-800"
-                              >{inv.interviewerName}</span
-                            >
-                          </div>
-                          <div
-                            if:true={inv.Feedback__c}
-                            class="flex items-start gap-2"
-                          >
-                            <span class="text-gray-500 w-24">Feedback:</span>
-                            <span class="text-gray-800">{inv.Feedback__c}</span>
+                          <div class="small text-muted">
+                            <div class="mb-1">
+                              <strong>Date:</strong> {inv.formattedDate}
+                            </div>
+                            <div class="mb-1">
+                              <strong>Interviewer:</strong> {inv.interviewerName}
+                            </div>
+                            <div if:true={inv.Feedback__c} class="mt-2 p-2 bg-white rounded border">
+                              <strong>Feedback:</strong> {inv.Feedback__c}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </template>
-                  </div>
-                </template>
-                <template if:false={interviews.length}>
-                  <div
-                    class="flex flex-col items-center justify-center py-12 text-center"
-                  >
-                    <div
-                      class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"
-                    >
-                      <lightning-icon
-                        icon-name="utility:event"
-                        size="medium"
-                        class="text-gray-400"
-                      ></lightning-icon>
                     </div>
-                    <p class="text-gray-500">
-                      No interviews scheduled for this applicant.
-                    </p>
-                  </div>
-                </template>
-              </div>
-              <div if:false={selectedApplicantId}>
-                <div
-                  class="flex flex-col items-center justify-center py-12 text-center"
-                >
-                  <div
-                    class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"
-                  >
-                    <lightning-icon
-                      icon-name="utility:user"
-                      size="medium"
-                      class="text-gray-400"
-                    ></lightning-icon>
-                  </div>
-                  <p class="text-gray-500">
-                    Select an applicant to view or schedule interviews.
-                  </p>
+                  </template>
                 </div>
-              </div>
-            </template>
-          </template>
-        </div>
-      </div>
+              </template>
 
-      <!-- Schedule Modal -->
-      <template if:true={isModalOpen}>
-        <div class="fixed inset-0 z-50 flex items-center justify-center">
-          <button
-            type="button"
-            class="fixed inset-0 bg-black/50 backdrop-blur-sm"
-            aria-label="Close dialog"
-            onclick={closeModal}
-          ></button>
-
-          <div
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 animate-modal-enter border-0 p-0 relative z-10"
-            aria-label="Schedule interview"
-          >
-            <div
-              class="flex items-center justify-between px-6 py-4 border-b border-gray-200"
-            >
-              <h2
-                id="scheduleInterviewDialogTitle"
-                class="text-xl font-bold text-gray-800"
-              >
-                Schedule Interview
-              </h2>
-              <button
-                class="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                onclick={closeModal}
-              >
-                <svg
-                  class="w-5 h-5 text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  ></path>
-                </svg>
-              </button>
+              <template if:false={interviews.length}>
+                <div class="d-flex flex-column align-items-center justify-content-center py-5 text-center">
+                  <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; float: none !important; margin: 0 auto !important;">
+                    <i class="fa-solid fa-calendar-xmark fa-2x text-muted" style="float: none !important; margin: 0 !important;"></i>
+                  </div>
+                  <p class="text-muted mb-0">No interviews scheduled for this applicant.</p>
+                </div>
+              </template>
             </div>
-            <div class="p-6">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <lightning-combobox
-                  name="Round__c"
-                  label="Interview Round"
-                  value={currentInterview.Round__c}
-                  options={roundOptions}
-                  onchange={handleInputChange}
-                  required
-                  class="interview-input"
-                ></lightning-combobox>
-                <lightning-input
-                  type="datetime"
-                  label="Date & Time"
-                  name="Interview_Date__c"
-                  value={currentInterview.Interview_Date__c}
-                  onchange={handleInputChange}
-                  required
-                  class="interview-input"
-                ></lightning-input>
-                <div class="md:col-span-2">
+
+            <div if:false={selectedApplicantId}>
+              <div class="d-flex flex-column align-items-center justify-content-center py-5 text-center">
+                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; float: none !important; margin: 0 auto !important;">
+                  <i class="fa-solid fa-user-clock fa-2x text-muted" style="float: none !important; margin: 0 !important;"></i>
+                </div>
+                <p class="text-muted mb-0">Select an applicant to view or schedule interviews.</p>
+              </div>
+            </div>
+          </template>
+        </template>
+      </div>
+    </div>
+
+    <!-- Schedule Modal -->
+    <template if:true={isModalOpen}>
+      <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+              <h5 class="modal-title fw-bold text-white">Schedule Interview</h5>
+              <button type="button" class="btn-close btn-close-white" onclick={closeModal} aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+              <div class="row g-3">
+                <div class="col-12 col-md-6">
+                  <lightning-combobox
+                    name="Round__c"
+                    label="Interview Round"
+                    value={currentInterview.Round__c}
+                    options={roundOptions}
+                    onchange={handleInputChange}
+                    required
+                  ></lightning-combobox>
+                </div>
+                <div class="col-12 col-md-6">
+                  <lightning-input
+                    type="datetime"
+                    label="Date & Time"
+                    name="Interview_Date__c"
+                    value={currentInterview.Interview_Date__c}
+                    onchange={handleInputChange}
+                    required
+                  ></lightning-input>
+                </div>
+                <div class="col-12">
                   <lightning-combobox
                     name="Interviewer__c"
                     label="Interviewer"
@@ -213,10 +143,9 @@
                     options={interviewerOptions}
                     onchange={handleInputChange}
                     required
-                    class="interview-input"
                   ></lightning-combobox>
                 </div>
-                <div class="md:col-span-2 pt-2">
+                <div class="col-12">
                   <lightning-input
                     type="checkbox"
                     label="Send Email Notification"
@@ -224,29 +153,17 @@
                     checked
                     disabled
                   ></lightning-input>
-                  <p class="text-sm text-gray-500 mt-1">
-                    Email notifications are automatically sent to the
-                    interviewer.
-                  </p>
+                  <small class="text-muted d-block mt-1">Email notifications are automatically sent to the interviewer.</small>
                 </div>
               </div>
             </div>
-            <div
-              class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl"
-            >
-              <lightning-button
-                label="Cancel"
-                onclick={closeModal}
-              ></lightning-button>
-              <lightning-button
-                label="Schedule"
-                variant="brand"
-                onclick={handleSaveInterview}
-              ></lightning-button>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-light" onclick={closeModal}>Cancel</button>
+              <button type="button" class="btn btn-primary" onclick={handleSaveInterview}>Schedule</button>
             </div>
           </div>
         </div>
-      </template>
-    </div>
+      </div>
+    </template>
   </div>
 </template>

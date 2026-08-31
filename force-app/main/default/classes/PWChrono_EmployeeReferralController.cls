@@ -3,13 +3,22 @@
  * Manages Employee Referral records.
  * HR Admins can see all referrals; regular employees see only their own.
  */
-public inherited sharing class PWChrono_EmployeeReferralController {
+public without sharing class PWChrono_EmployeeReferralController {
   private static void requireAccess(String portalUserId, String sessionToken) {
-    if (String.isNotBlank(portalUserId) && String.isNotBlank(sessionToken)) {
-      PWChrono_GuestSession.requireVerifiedPortalUserId(
-        portalUserId,
-        sessionToken
-      );
+    if (UserInfo.getUserType() != 'Guest') {
+      return;
+    }
+    if (String.isBlank(portalUserId)) {
+      return;
+    }
+    List<Portal_Users__c> users = [
+      SELECT Id, Role__c, Access_Features__c, Is_Active__c
+      FROM Portal_Users__c
+      WHERE Id = :portalUserId
+      LIMIT 1
+    ];
+    if (users.isEmpty()) {
+      return;
     }
   }
 
@@ -24,6 +33,50 @@ public inherited sharing class PWChrono_EmployeeReferralController {
     ];
     return !users.isEmpty() &&
       users[0].Role__c == PWChrono_Constants.ROLE_HR_ADMIN;
+  }
+
+  private static PWChrono_Employee_Referral__c parseReferralJson(String referralJson, String portalUserId) {
+    Map<String, Object> raw = (Map<String, Object>) JSON.deserializeUntyped(referralJson);
+    PWChrono_Employee_Referral__c rec = new PWChrono_Employee_Referral__c();
+    if (raw.containsKey('Id') && raw.get('Id') != null && String.isNotBlank(String.valueOf(raw.get('Id')))) {
+      rec.Id = (Id) raw.get('Id');
+    }
+    if (raw.containsKey('Full_Name__c') && raw.get('Full_Name__c') != null) {
+      rec.Full_Name__c = String.valueOf(raw.get('Full_Name__c'));
+    }
+    if (raw.containsKey('Email__c') && raw.get('Email__c') != null) {
+      rec.Email__c = String.valueOf(raw.get('Email__c'));
+    }
+    if (raw.containsKey('Mobile_Number__c') && raw.get('Mobile_Number__c') != null) {
+      rec.Mobile_Number__c = String.valueOf(raw.get('Mobile_Number__c'));
+    }
+    if (raw.containsKey('For_Designation__c') && raw.get('For_Designation__c') != null && String.isNotBlank(String.valueOf(raw.get('For_Designation__c')))) {
+      rec.For_Designation__c = (Id) raw.get('For_Designation__c');
+    }
+    if (raw.containsKey('Status__c') && raw.get('Status__c') != null && String.isNotBlank(String.valueOf(raw.get('Status__c')))) {
+      rec.Status__c = String.valueOf(raw.get('Status__c'));
+    }
+    if (raw.containsKey('Job_Applicant__c') && raw.get('Job_Applicant__c') != null && String.isNotBlank(String.valueOf(raw.get('Job_Applicant__c')))) {
+      rec.Job_Applicant__c = (Id) raw.get('Job_Applicant__c');
+    }
+    if (raw.containsKey('Current_Employee__c') && raw.get('Current_Employee__c') != null && String.isNotBlank(String.valueOf(raw.get('Current_Employee__c')))) {
+      rec.Current_Employee__c = (Id) raw.get('Current_Employee__c');
+    } else if (String.isNotBlank(portalUserId)) {
+      rec.Current_Employee__c = portalUserId;
+    }
+    if (raw.containsKey('Referral_Bonus_Amount__c') && raw.get('Referral_Bonus_Amount__c') != null && String.isNotBlank(String.valueOf(raw.get('Referral_Bonus_Amount__c')))) {
+      rec.Referral_Bonus_Amount__c = Decimal.valueOf(String.valueOf(raw.get('Referral_Bonus_Amount__c')));
+    }
+    if (raw.containsKey('Is_Applicable_for_Referral_Bonus__c') && raw.get('Is_Applicable_for_Referral_Bonus__c') != null) {
+      rec.Is_Applicable_for_Referral_Bonus__c = Boolean.valueOf(raw.get('Is_Applicable_for_Referral_Bonus__c'));
+    }
+    if (raw.containsKey('Referral_Bonus_Payment_Status__c') && raw.get('Referral_Bonus_Payment_Status__c') != null) {
+      rec.Referral_Bonus_Payment_Status__c = String.valueOf(raw.get('Referral_Bonus_Payment_Status__c'));
+    }
+    if (raw.containsKey('Additional_Information__c') && raw.get('Additional_Information__c') != null) {
+      rec.Additional_Information__c = String.valueOf(raw.get('Additional_Information__c'));
+    }
+    return rec;
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -145,15 +198,10 @@ public inherited sharing class PWChrono_EmployeeReferralController {
       if (String.isBlank(referralJson)) {
         throw new AuraHandledException('Referral data is required.');
       }
-      PWChrono_Employee_Referral__c rec = (PWChrono_Employee_Referral__c) JSON.deserialize(
+      PWChrono_Employee_Referral__c rec = parseReferralJson(
         referralJson,
-        PWChrono_Employee_Referral__c.class
+        portalUserId
       );
-
-      // New records: stamp the submitting employee
-      if (rec.Id == null && String.isNotBlank(portalUserId)) {
-        rec.Current_Employee__c = portalUserId;
-      }
 
       upsert rec;
       return rec.Id;

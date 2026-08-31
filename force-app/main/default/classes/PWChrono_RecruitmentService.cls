@@ -129,7 +129,7 @@ public without sharing class PWChrono_RecruitmentService {
     String newStatus
   ) {
     List<PWChrono_Job_Applicant__c> applicants = [
-      SELECT Id, Status__c
+      SELECT Id, Name, Email__c, Phone__c, Job_Opening__c, Status__c, Portal_Users__c
       FROM PWChrono_Job_Applicant__c
       WHERE Id = :applicantId
       LIMIT 1
@@ -151,9 +151,92 @@ public without sharing class PWChrono_RecruitmentService {
     }
 
     applicant.Status__c = newStatus;
+
+    // When status changes to Accepted, automate Onboarding task generation
+    if (newStatus == PWChrono_Constants.STATUS_ACCEPTED) {
+      createOnboardingTasksForApplicant(applicant);
+    }
+
     update applicant;
 
     return applicant;
+  }
+
+  private static void createOnboardingTasksForApplicant(PWChrono_Job_Applicant__c applicant) {
+    try {
+      Id employeeId = applicant.Portal_Users__c;
+
+      // Check if employee record exists or create one
+      if (employeeId == null && String.isNotBlank(applicant.Email__c)) {
+        List<Portal_Users__c> existing = [
+          SELECT Id FROM Portal_Users__c
+          WHERE Email__c = :applicant.Email__c
+          LIMIT 1
+        ];
+        if (!existing.isEmpty()) {
+          employeeId = existing[0].Id;
+        } else {
+          Portal_Users__c newEmp = new Portal_Users__c(
+            Name = applicant.Name,
+            Email__c = applicant.Email__c,
+            Role__c = PWChrono_Constants.ROLE_EMPLOYEE,
+            Is_Active__c = true,
+            Date_of_Joining__c = Date.today()
+          );
+          insert newEmp;
+          employeeId = newEmp.Id;
+        }
+        applicant.Portal_Users__c = employeeId;
+      }
+
+      if (employeeId != null) {
+        // Prevent duplicate task creation
+        List<PWChrono_Onboarding_Task__c> existingTasks = [
+          SELECT Id FROM PWChrono_Onboarding_Task__c
+          WHERE Assigned_Tos__c = :employeeId
+          LIMIT 1
+        ];
+        if (existingTasks.isEmpty()) {
+          List<PWChrono_Onboarding_Task__c> defaultTasks = new List<PWChrono_Onboarding_Task__c>{
+            new PWChrono_Onboarding_Task__c(
+              Name = 'Submit Verification Documents',
+              Description__c = 'Upload ID proof, educational certificates, and previous employment credentials.',
+              Assigned_Tos__c = employeeId,
+              Due_Date__c = Date.today().addDays(7),
+              Is_Mandatory__c = true,
+              Status__c = 'Not Started'
+            ),
+            new PWChrono_Onboarding_Task__c(
+              Name = 'IT Equipment & Email Setup',
+              Description__c = 'Receive company laptop, login credentials, and workstation allocation.',
+              Assigned_Tos__c = employeeId,
+              Due_Date__c = Date.today().addDays(3),
+              Is_Mandatory__c = true,
+              Status__c = 'Not Started'
+            ),
+            new PWChrono_Onboarding_Task__c(
+              Name = 'Company Policy & HR Compliance',
+              Description__c = 'Review employee handbook, security policies, and sign compliance forms.',
+              Assigned_Tos__c = employeeId,
+              Due_Date__c = Date.today().addDays(5),
+              Is_Mandatory__c = true,
+              Status__c = 'Not Started'
+            ),
+            new PWChrono_Onboarding_Task__c(
+              Name = 'Team & Department Orientation',
+              Description__c = 'Attend introductory session with reporting manager and department team.',
+              Assigned_Tos__c = employeeId,
+              Due_Date__c = Date.today().addDays(7),
+              Is_Mandatory__c = false,
+              Status__c = 'Not Started'
+            )
+          };
+          insert defaultTasks;
+        }
+      }
+    } catch (Exception e) {
+      PWChrono_Logger.error('Error creating onboarding tasks on applicant acceptance', e);
+    }
   }
 
   public static List<PWChrono_Interview__c> getApplicantInterviews(
@@ -312,5 +395,18 @@ public without sharing class PWChrono_RecruitmentService {
       ORDER BY Name
       LIMIT :queryLimit
     ];
+  }
+
+  public static Map<String, Object> getRecruitmentDashboardMetrics() {
+    Map<String, Object> metrics = new Map<String, Object>();
+    metrics.put('openJobsCount', [SELECT COUNT() FROM PWChrono_Job_Opening__c WHERE Status__c = 'Open']);
+    metrics.put('requisitionsCount', [SELECT COUNT() FROM PWChrono_Job_Requisition__c WHERE Status__c != 'Closed']);
+    metrics.put('staffingPlansCount', [SELECT COUNT() FROM PWChrono_Staffing_Plan__c WHERE Status__c != 'Closed']);
+    metrics.put('totalApplicantsCount', [SELECT COUNT() FROM PWChrono_Job_Applicant__c]);
+    metrics.put('interviewingCount', [SELECT COUNT() FROM PWChrono_Job_Applicant__c WHERE Status__c = 'Interview Scheduled' OR Status__c = 'Selected']);
+    metrics.put('offersExtendedCount', [SELECT COUNT() FROM PWChrono_Job_Applicant__c WHERE Status__c = 'Offer Extended']);
+    metrics.put('hiredCount', [SELECT COUNT() FROM PWChrono_Job_Applicant__c WHERE Status__c = 'Accepted']);
+    metrics.put('referralsCount', [SELECT COUNT() FROM PWChrono_Employee_Referral__c]);
+    return metrics;
   }
 }

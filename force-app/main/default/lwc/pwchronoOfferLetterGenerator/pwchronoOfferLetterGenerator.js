@@ -4,8 +4,13 @@ import { CONSTANTS } from "c/pwchronoConstants";
 import getJobApplicants from "@salesforce/apex/PWChrono_RecruitmentController.getJobApplicants";
 import getActiveDesignations from "@salesforce/apex/PWChrono_RecruitmentController.getActiveDesignations";
 import generateOfferLetter from "@salesforce/apex/PWChrono_RecruitmentController.generateOfferLetter";
+import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
 
 export default class PwchronoOfferLetterGenerator extends LightningElement {
+  static renderMode = "light";
+
+  @track portalUserId = getEmployeeId();
+  @track sessionToken = getSessionToken();
   @track selectedApplicantId;
   @track applicantOptions = [];
   @track designationOptions = [];
@@ -26,7 +31,17 @@ export default class PwchronoOfferLetterGenerator extends LightningElement {
   companyName = CONSTANTS.COMPANY_NAME;
   currencyCode = CONSTANTS.CURRENCY_CODE;
 
-  @wire(getJobApplicants, { jobOpeningId: null, statusFilter: "All" })
+  connectedCallback() {
+    this.portalUserId = getEmployeeId();
+    this.sessionToken = getSessionToken();
+  }
+
+  @wire(getJobApplicants, {
+    jobOpeningId: null,
+    statusFilter: "All",
+    portalUserId: "$portalUserId",
+    sessionToken: "$sessionToken"
+  })
   wiredApplicants({ error, data }) {
     if (data) {
       this.applicantOptions = data.map((app) => ({
@@ -39,7 +54,10 @@ export default class PwchronoOfferLetterGenerator extends LightningElement {
     }
   }
 
-  @wire(getActiveDesignations)
+  @wire(getActiveDesignations, {
+    portalUserId: "$portalUserId",
+    sessionToken: "$sessionToken"
+  })
   wiredDesignations({ error, data }) {
     if (data) {
       this.designationOptions = data.map((des) => ({
@@ -79,10 +97,13 @@ export default class PwchronoOfferLetterGenerator extends LightningElement {
     }
 
     this.isLoading = true;
-    // Set status to Sent if generating
     this.offerDetails.Status__c = "Sent";
 
-    generateOfferLetter({ offerLetter: this.offerDetails })
+    generateOfferLetter({
+      offerLetter: this.offerDetails,
+      portalUserId: this.portalUserId,
+      sessionToken: this.sessionToken
+    })
       .then(() => {
         this.showToast(
           "Success",
@@ -92,7 +113,7 @@ export default class PwchronoOfferLetterGenerator extends LightningElement {
         this.resetForm();
       })
       .catch((error) => {
-        this.showToast("Error", error.body.message, "error");
+        this.showToast("Error", error.body?.message || error.message || "Failed to generate offer", "error");
       })
       .finally(() => {
         this.isLoading = false;
@@ -100,14 +121,14 @@ export default class PwchronoOfferLetterGenerator extends LightningElement {
   }
 
   validateForm() {
-    const allValid = [...this.template.querySelectorAll(".offer-input")].reduce(
-      (validSoFar, inputCmp) => {
-        inputCmp.reportValidity();
-        return validSoFar && inputCmp.checkValidity();
-      },
-      true
-    );
-    return allValid;
+    const inputs = [
+      ...this.template.querySelectorAll("lightning-combobox"),
+      ...this.template.querySelectorAll("lightning-input")
+    ];
+    return inputs.reduce((validSoFar, inputCmp) => {
+      inputCmp.reportValidity();
+      return validSoFar && inputCmp.checkValidity();
+    }, true);
   }
 
   resetForm() {

@@ -1,0 +1,49 @@
+/* Recruitment Workspace Styles */
+.page-wrapper .page-wrapper {
+  margin-left: 0 !important;
+  padding-top: 0 !important;
+  min-height: auto !important;
+  width: 100% !important;
+}
+
+.page-wrapper .page-wrapper .content {
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: 100% !important;
+}
+
+/* Hide duplicate nested headers inside tab containers */
+.tab-content .page-breadcrumb,
+.tab-content .page-header {
+  display: none !important;
+}
+
+.tab-content {
+  width: 100%;
+}
+
+.nav-pills .nav-link {
+  color: #475569;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.15s ease-in-out;
+  border: 1px solid transparent;
+}
+
+.nav-pills .nav-link:hover:not(.active) {
+  background-color: #f8fafc;
+  color: #0f172a;
+  border-color: #e2e8f0;
+}
+
+.nav-pills .nav-link.active {
+  background-color: #ff6b35 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(255, 107, 53, 0.3);
+}
+
+.card {
+  border-radius: 0.75rem;
+}

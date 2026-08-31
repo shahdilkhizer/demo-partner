@@ -238,6 +238,9 @@ export default class PwchronoEmployeeReferral extends LightningElement {
     delete payload.Current_Employee__r;
     delete payload.Job_Applicant__r;
     if (!payload.Id) delete payload.Id;
+    if (!payload.For_Designation__c) payload.For_Designation__c = null;
+    if (!payload.Job_Applicant__c) payload.Job_Applicant__c = null;
+    if (!payload.Current_Employee__c) payload.Current_Employee__c = null;
 
     this.isSaving = true;
     saveReferral({

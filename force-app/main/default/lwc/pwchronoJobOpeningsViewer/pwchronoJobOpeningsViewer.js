@@ -2,6 +2,7 @@ import { LightningElement, wire, track } from "lwc";
 import getJobOpenings from "@salesforce/apex/PWChrono_RecruitmentController.getJobOpenings";
 import referCandidate from "@salesforce/apex/PWChrono_RecruitmentController.referCandidate";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
+import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
 
 export default class PwchronoJobOpeningsViewer extends LightningElement {
   static renderMode = "light";
@@ -28,8 +29,9 @@ export default class PwchronoJobOpeningsViewer extends LightningElement {
       // Precompute safe display fields to avoid template CallExpression
       this.jobs = data.map((job) => ({
         ...job,
-        designationName: job?.Designation__r?.Name || "N/A",
-        departmentName: job?.Department__r?.Name || "N/A"
+        designationName:
+          job?.Designation__r?.Name || job?.Name || "Open Position",
+        departmentName: job?.Department__r?.Name || "General"
       }));
       this.error = undefined;
     } else if (error) {
@@ -76,7 +78,9 @@ export default class PwchronoJobOpeningsViewer extends LightningElement {
       lastName: this.referral.lastName,
       email: this.referral.email,
       phone: this.referral.phone,
-      experience: Number.parseInt(this.referral.experience, 10)
+      experience: Number.parseInt(this.referral.experience, 10),
+      portalUserId: getEmployeeId(),
+      sessionToken: getSessionToken()
     })
       .then(() => {
         this.dispatchEvent(

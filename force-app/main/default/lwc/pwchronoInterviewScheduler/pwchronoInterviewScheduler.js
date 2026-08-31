@@ -3,10 +3,15 @@ import getApplicantInterviews from "@salesforce/apex/PWChrono_RecruitmentControl
 import getJobApplicants from "@salesforce/apex/PWChrono_RecruitmentController.getJobApplicants";
 import getPotentialInterviewers from "@salesforce/apex/PWChrono_RecruitmentController.getPotentialInterviewers";
 import scheduleInterview from "@salesforce/apex/PWChrono_RecruitmentController.scheduleInterview";
+import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { LightningElement, track, wire } from "lwc";
 
 export default class PwchronoInterviewScheduler extends LightningElement {
+  static renderMode = "light";
+
+  @track portalUserId = getEmployeeId();
+  @track sessionToken = getSessionToken();
   @track selectedApplicantId;
   @track applicantOptions = [];
   @track interviewerOptions = [];
@@ -19,6 +24,11 @@ export default class PwchronoInterviewScheduler extends LightningElement {
 
   wiredInterviewsResult;
 
+  connectedCallback() {
+    this.portalUserId = getEmployeeId();
+    this.sessionToken = getSessionToken();
+  }
+
   roundOptions = [
     { label: "Screening", value: "Screening" },
     { label: "Technical Round 1", value: "Technical Round 1" },
@@ -27,7 +37,12 @@ export default class PwchronoInterviewScheduler extends LightningElement {
     { label: "Final Round", value: "Final Round" }
   ];
 
-  @wire(getJobApplicants, { jobOpeningId: null, statusFilter: "All" })
+  @wire(getJobApplicants, {
+    jobOpeningId: null,
+    statusFilter: "All",
+    portalUserId: "$portalUserId",
+    sessionToken: "$sessionToken"
+  })
   wiredApplicants({ error, data }) {
     this.isLoading = false;
     if (data) {
@@ -40,7 +55,10 @@ export default class PwchronoInterviewScheduler extends LightningElement {
     }
   }
 
-  @wire(getPotentialInterviewers)
+  @wire(getPotentialInterviewers, {
+    portalUserId: "$portalUserId",
+    sessionToken: "$sessionToken"
+  })
   wiredInterviewers({ error, data }) {
     if (data) {
       this.interviewerOptions = data.map((emp) => ({
@@ -52,7 +70,11 @@ export default class PwchronoInterviewScheduler extends LightningElement {
     }
   }
 
-  @wire(getApplicantInterviews, { applicantId: "$selectedApplicantId" })
+  @wire(getApplicantInterviews, {
+    applicantId: "$selectedApplicantId",
+    portalUserId: "$portalUserId",
+    sessionToken: "$sessionToken"
+  })
   wiredInterviews(result) {
     this.wiredInterviewsResult = result;
     this.isInterviewsLoading = false;
@@ -114,7 +136,11 @@ export default class PwchronoInterviewScheduler extends LightningElement {
     }
 
     this.isLoading = true;
-    scheduleInterview({ interview: this.currentInterview })
+    scheduleInterview({
+      interview: this.currentInterview,
+      portalUserId: this.portalUserId,
+      sessionToken: this.sessionToken
+    })
       .then(() => {
         this.showToast(
           "Success",
@@ -125,7 +151,7 @@ export default class PwchronoInterviewScheduler extends LightningElement {
         return refreshApex(this.wiredInterviewsResult);
       })
       .catch((error) => {
-        this.showToast("Error", error.body.message, "error");
+        this.showToast("Error", error.body?.message || error.message || "Failed to schedule", "error");
       })
       .finally(() => {
         this.isLoading = false;
@@ -133,13 +159,14 @@ export default class PwchronoInterviewScheduler extends LightningElement {
   }
 
   validateForm() {
-    const allValid = [
-      ...this.template.querySelectorAll(".interview-input")
-    ].reduce((validSoFar, inputCmp) => {
+    const inputs = [
+      ...this.template.querySelectorAll("lightning-combobox"),
+      ...this.template.querySelectorAll("lightning-input")
+    ];
+    return inputs.reduce((validSoFar, inputCmp) => {
       inputCmp.reportValidity();
       return validSoFar && inputCmp.checkValidity();
     }, true);
-    return allValid;
   }
 
   getStatusClass(result) {

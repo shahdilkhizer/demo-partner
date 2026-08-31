@@ -14,6 +14,9 @@ import { LightningElement, track } from "lwc";
 export default class PwchronoMainLayout extends NavigationMixin(
   LightningElement
 ) {
+  uiAssetsLoadedKey = "__pwchronoUiAssetsLoaded";
+  @track isUiReady = false;
+  @track isAuthChecked = false;
   @track isLoggedIn = false;
   @track isExperienceBuilder = false;
   @track user;
@@ -26,6 +29,15 @@ export default class PwchronoMainLayout extends NavigationMixin(
 
   connectedCallback() {
     this.sessionToken = getSessionToken();
+    this.isUiReady = Boolean(globalThis[this.uiAssetsLoadedKey]);
+
+    // Safety fallback: if asset loading takes too long (>2.5s), display the page
+    // eslint-disable-next-line @lwc/lwc/no-async-operation
+    setTimeout(() => {
+      this.isUiReady = true;
+      this.isAuthChecked = true;
+    }, 2500);
+
     // If we're embedded inside Salesforce Lightning Experience (tabs/app pages),
     // don't render the portal chrome (header/sidebar) because Salesforce already provides navigation.
     const path = globalThis.location?.pathname || "";
@@ -44,8 +56,41 @@ export default class PwchronoMainLayout extends NavigationMixin(
     this.isLightningExperience = isLightning && !isLightningSetup;
 
     this.checkLoginStatus();
+  }
 
-    // Styling is expected to be loaded globally by the Experience site (Head Markup / Theme).
+  handleAssetsReady() {
+    this.isUiReady = true;
+  }
+
+  get isPageReady() {
+    if (this.isExperienceBuilder || this.isLightningExperience) {
+      return true;
+    }
+    return this.isUiReady && this.isAuthChecked;
+  }
+
+  get globalLoaderStyle() {
+    if (this.isPageReady) {
+      return "display: none !important;";
+    }
+    return [
+      "position: fixed",
+      "inset: 0",
+      "z-index: 9999999",
+      "display: flex",
+      "flex-direction: column",
+      "align-items: center",
+      "justify-content: center",
+      "background-color: #ffffff",
+      "transition: opacity 0.3s ease-out"
+    ].join("; ");
+  }
+
+  get mainWrapperStyle() {
+    if (this.isPageReady) {
+      return "opacity: 1; transition: opacity 0.25s ease-in-out;";
+    }
+    return "visibility: hidden; opacity: 0; pointer-events: none;";
   }
 
   getCommunityBasePath() {
@@ -143,13 +188,17 @@ export default class PwchronoMainLayout extends NavigationMixin(
   }
 
   async checkLoginStatus() {
-    const session = getSession();
+    try {
+      const session = getSession();
 
-    if (session.isLoggedIn) {
-      this.setSessionState(session.user, session.permissions);
-      await this.loadFeatureAccess(getEmployeeId());
-    } else {
-      await this.attemptAutoBootstrap();
+      if (session.isLoggedIn) {
+        this.setSessionState(session.user, session.permissions);
+        await this.loadFeatureAccess(getEmployeeId());
+      } else {
+        await this.attemptAutoBootstrap();
+      }
+    } finally {
+      this.isAuthChecked = true;
     }
   }
 

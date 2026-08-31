@@ -1,27 +1,14 @@
-<template>
-  <div class="page-wrapper">
-    <div class="content container-fluid">
-
-      <!-- Page Header -->
-      <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
-        <div class="my-auto mb-2">
-          <h2 class="mb-1">Recruitment Pipeline</h2>
-          <nav>
-            <ol class="breadcrumb mb-0">
-              <li class="breadcrumb-item">
-                <a href="javascript:void(0);"><i class="ti ti-smart-home"></i></a>
-              </li>
-              <li class="breadcrumb-item">Recruitment</li>
-              <li class="breadcrumb-item active">Pipeline</li>
-            </ol>
-          </nav>
-        </div>
-        <div class="d-flex my-xl-auto right-content align-items-center">
-          <button class="btn btn-outline-primary d-flex align-items-center gap-2" onclick={handleRefresh}>
-            <i class="ti ti-refresh"></i>Refresh
-          </button>
-        </div>
+<template lwc:render-mode="light">
+  <div class="recruitment-pipeline-container">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <div>
+        <h5 class="mb-0 fw-bold text-dark">Candidate Pipeline</h5>
+        <small class="text-muted">Drag and drop candidates across hiring stages</small>
       </div>
+      <button class="btn btn-sm btn-outline-primary d-flex align-items-center gap-2" onclick={handleRefresh}>
+        <i class="fa-solid fa-rotate"></i> Refresh
+      </button>
+    </div>
 
       <!-- Access Denied -->
       <template if:false={hasAccess}>
@@ -127,7 +114,5 @@
           </div>
         </div>
       </template>
-
-    </div>
   </div>
 </template>

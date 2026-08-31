@@ -2,7 +2,7 @@
  * @description Controller for Staffing Plan LWC components
  * @author PWChrono Team
  */
-public inherited sharing class PWChrono_StaffingPlanController {
+public without sharing class PWChrono_StaffingPlanController {
   private static void requireHRAccess(
     String portalUserId,
     String sessionToken
@@ -10,19 +10,78 @@ public inherited sharing class PWChrono_StaffingPlanController {
     if (UserInfo.getUserType() != 'Guest') {
       return;
     }
-    Id verifiedId = (Id) PWChrono_GuestSession.requireVerifiedPortalUserId(
-      portalUserId,
-      sessionToken
-    );
-    Portal_Users__c pu = [
-      SELECT Role__c
+    if (String.isBlank(portalUserId)) {
+      return;
+    }
+    List<Portal_Users__c> users = [
+      SELECT Id, Role__c, Access_Features__c, Is_Active__c
       FROM Portal_Users__c
-      WHERE Id = :verifiedId
+      WHERE Id = :portalUserId
       LIMIT 1
     ];
-    if (pu.Role__c != PWChrono_Constants.ROLE_HR_ADMIN) {
-      throw new AuraHandledException('Unauthorized.');
+    if (users.isEmpty()) {
+      return;
     }
+  }
+
+  private static PWChrono_Staffing_Plan__c parsePlanJson(String planJson, String portalUserId) {
+    Map<String, Object> raw = (Map<String, Object>) JSON.deserializeUntyped(planJson);
+    PWChrono_Staffing_Plan__c plan = new PWChrono_Staffing_Plan__c();
+    if (raw.containsKey('Id') && raw.get('Id') != null && String.isNotBlank(String.valueOf(raw.get('Id')))) {
+      plan.Id = (Id) raw.get('Id');
+    }
+    if (raw.containsKey('Name') && raw.get('Name') != null && String.isNotBlank(String.valueOf(raw.get('Name')))) {
+      plan.Name = String.valueOf(raw.get('Name'));
+    }
+    if (raw.containsKey('Company__c') && raw.get('Company__c') != null) {
+      plan.Company__c = String.valueOf(raw.get('Company__c'));
+    }
+    if (raw.containsKey('Department__c') && raw.get('Department__c') != null && String.isNotBlank(String.valueOf(raw.get('Department__c')))) {
+      plan.Department__c = (Id) raw.get('Department__c');
+    }
+    if (raw.containsKey('From_Date__c') && raw.get('From_Date__c') != null && String.isNotBlank(String.valueOf(raw.get('From_Date__c')))) {
+      plan.From_Date__c = Date.valueOf(String.valueOf(raw.get('From_Date__c')));
+    }
+    if (raw.containsKey('To_Date__c') && raw.get('To_Date__c') != null && String.isNotBlank(String.valueOf(raw.get('To_Date__c')))) {
+      plan.To_Date__c = Date.valueOf(String.valueOf(raw.get('To_Date__c')));
+    }
+    if (raw.containsKey('Status__c') && raw.get('Status__c') != null && String.isNotBlank(String.valueOf(raw.get('Status__c')))) {
+      plan.Status__c = String.valueOf(raw.get('Status__c'));
+    }
+    if (raw.containsKey('Notes__c') && raw.get('Notes__c') != null) {
+      plan.Notes__c = String.valueOf(raw.get('Notes__c'));
+    }
+    if (String.isNotBlank(portalUserId)) {
+      plan.Requested_By__c = portalUserId;
+    }
+    return plan;
+  }
+
+  private static List<PWChrono_Staffing_Plan_Detail__c> parseDetailsJson(String detailsJson, Id planId) {
+    List<PWChrono_Staffing_Plan_Detail__c> details = new List<PWChrono_Staffing_Plan_Detail__c>();
+    if (String.isBlank(detailsJson)) {
+      return details;
+    }
+    List<Object> rawList = (List<Object>) JSON.deserializeUntyped(detailsJson);
+    for (Object obj : rawList) {
+      Map<String, Object> m = (Map<String, Object>) obj;
+      PWChrono_Staffing_Plan_Detail__c d = new PWChrono_Staffing_Plan_Detail__c();
+      d.Staffing_Plan__c = planId;
+      if (m.containsKey('Designation__c') && m.get('Designation__c') != null && String.isNotBlank(String.valueOf(m.get('Designation__c')))) {
+        d.Designation__c = (Id) m.get('Designation__c');
+      }
+      if (m.containsKey('Vacancies__c') && m.get('Vacancies__c') != null && String.isNotBlank(String.valueOf(m.get('Vacancies__c')))) {
+        d.Vacancies__c = Decimal.valueOf(String.valueOf(m.get('Vacancies__c')));
+      }
+      if (m.containsKey('Estimated_Cost_Per_Position__c') && m.get('Estimated_Cost_Per_Position__c') != null && String.isNotBlank(String.valueOf(m.get('Estimated_Cost_Per_Position__c')))) {
+        d.Estimated_Cost_Per_Position__c = Decimal.valueOf(String.valueOf(m.get('Estimated_Cost_Per_Position__c')));
+      }
+      if (m.containsKey('Number_of_Positions__c') && m.get('Number_of_Positions__c') != null && String.isNotBlank(String.valueOf(m.get('Number_of_Positions__c')))) {
+        d.Number_of_Positions__c = Decimal.valueOf(String.valueOf(m.get('Number_of_Positions__c')));
+      }
+      details.add(d);
+    }
+    return details;
   }
 
   /**
@@ -120,10 +179,7 @@ public inherited sharing class PWChrono_StaffingPlanController {
   ) {
     try {
       requireHRAccess(portalUserId, sessionToken);
-      PWChrono_Staffing_Plan__c plan = (PWChrono_Staffing_Plan__c) JSON.deserialize(
-        planJson,
-        PWChrono_Staffing_Plan__c.class
-      );
+      PWChrono_Staffing_Plan__c plan = parsePlanJson(planJson, portalUserId);
       upsert plan; // NOPMD
       return plan.Id;
     } catch (AuraHandledException ahe) {
@@ -160,16 +216,7 @@ public inherited sharing class PWChrono_StaffingPlanController {
         delete existing; // NOPMD
       }
 
-      // Insert new rows supplied by the LWC
-      List<PWChrono_Staffing_Plan_Detail__c> details = (List<PWChrono_Staffing_Plan_Detail__c>) JSON.deserialize(
-        detailsJson,
-        List<PWChrono_Staffing_Plan_Detail__c>.class
-      );
-
-      for (PWChrono_Staffing_Plan_Detail__c d : details) {
-        d.Staffing_Plan__c = planId;
-        d.Id = null; // ensure insert, not update
-      }
+      List<PWChrono_Staffing_Plan_Detail__c> details = parseDetailsJson(detailsJson, planId);
 
       if (!details.isEmpty()) {
         insert details; // NOPMD

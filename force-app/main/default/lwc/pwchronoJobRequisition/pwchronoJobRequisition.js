@@ -301,6 +301,12 @@ export default class PwchronoJobRequisition extends LightningElement {
         "statusBadgeClass",
         "cannotApprove"
       ].forEach((k) => delete payload[k]);
+      if (!payload.Id) delete payload.Id;
+      if (!payload.Department__c) payload.Department__c = null;
+      if (!payload.Designation__c) payload.Designation__c = null;
+      if (!payload.Staffing_Plan__c) payload.Staffing_Plan__c = null;
+      if (!payload.Expected_By_Date__c) payload.Expected_By_Date__c = null;
+      if (!payload.Posting_Date__c) payload.Posting_Date__c = null;
 
       await saveJobRequisition({
         requisitionJson: JSON.stringify(payload),

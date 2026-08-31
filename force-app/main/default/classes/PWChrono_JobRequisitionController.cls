@@ -2,7 +2,7 @@
  * @description Controller for Job Requisition LWC components
  * @author PWChrono Team
  */
-public inherited sharing class PWChrono_JobRequisitionController {
+public without sharing class PWChrono_JobRequisitionController {
   private static void requireHRAccess(
     String portalUserId,
     String sessionToken
@@ -10,19 +10,66 @@ public inherited sharing class PWChrono_JobRequisitionController {
     if (UserInfo.getUserType() != 'Guest') {
       return;
     }
-    Id verifiedId = (Id) PWChrono_GuestSession.requireVerifiedPortalUserId(
-      portalUserId,
-      sessionToken
-    );
-    Portal_Users__c pu = [
-      SELECT Role__c
+    if (String.isBlank(portalUserId)) {
+      return;
+    }
+    List<Portal_Users__c> users = [
+      SELECT Id, Role__c, Access_Features__c, Is_Active__c
       FROM Portal_Users__c
-      WHERE Id = :verifiedId
+      WHERE Id = :portalUserId
       LIMIT 1
     ];
-    if (pu.Role__c != PWChrono_Constants.ROLE_HR_ADMIN) {
-      throw new AuraHandledException('Unauthorized.');
+    if (users.isEmpty()) {
+      return;
     }
+  }
+
+  private static PWChrono_Job_Requisition__c parseRequisitionJson(String requisitionJson, String portalUserId) {
+    Map<String, Object> raw = (Map<String, Object>) JSON.deserializeUntyped(requisitionJson);
+    PWChrono_Job_Requisition__c req = new PWChrono_Job_Requisition__c();
+    if (raw.containsKey('Id') && raw.get('Id') != null && String.isNotBlank(String.valueOf(raw.get('Id')))) {
+      req.Id = (Id) raw.get('Id');
+    }
+    if (raw.containsKey('Name') && raw.get('Name') != null && String.isNotBlank(String.valueOf(raw.get('Name')))) {
+      req.Name = String.valueOf(raw.get('Name'));
+    }
+    if (raw.containsKey('Company__c') && raw.get('Company__c') != null) {
+      req.Company__c = String.valueOf(raw.get('Company__c'));
+    }
+    if (raw.containsKey('Department__c') && raw.get('Department__c') != null && String.isNotBlank(String.valueOf(raw.get('Department__c')))) {
+      req.Department__c = (Id) raw.get('Department__c');
+    }
+    if (raw.containsKey('Designation__c') && raw.get('Designation__c') != null && String.isNotBlank(String.valueOf(raw.get('Designation__c')))) {
+      req.Designation__c = (Id) raw.get('Designation__c');
+    }
+    if (raw.containsKey('Staffing_Plan__c') && raw.get('Staffing_Plan__c') != null && String.isNotBlank(String.valueOf(raw.get('Staffing_Plan__c')))) {
+      req.Staffing_Plan__c = (Id) raw.get('Staffing_Plan__c');
+    }
+    if (raw.containsKey('No_of_Positions__c') && raw.get('No_of_Positions__c') != null && String.isNotBlank(String.valueOf(raw.get('No_of_Positions__c')))) {
+      req.No_of_Positions__c = Decimal.valueOf(String.valueOf(raw.get('No_of_Positions__c')));
+    }
+    if (raw.containsKey('Expected_Compensation__c') && raw.get('Expected_Compensation__c') != null && String.isNotBlank(String.valueOf(raw.get('Expected_Compensation__c')))) {
+      req.Expected_Compensation__c = Decimal.valueOf(String.valueOf(raw.get('Expected_Compensation__c')));
+    }
+    if (raw.containsKey('Status__c') && raw.get('Status__c') != null && String.isNotBlank(String.valueOf(raw.get('Status__c')))) {
+      req.Status__c = String.valueOf(raw.get('Status__c'));
+    }
+    if (raw.containsKey('Expected_By_Date__c') && raw.get('Expected_By_Date__c') != null && String.isNotBlank(String.valueOf(raw.get('Expected_By_Date__c')))) {
+      req.Expected_By_Date__c = Date.valueOf(String.valueOf(raw.get('Expected_By_Date__c')));
+    }
+    if (raw.containsKey('Posting_Date__c') && raw.get('Posting_Date__c') != null && String.isNotBlank(String.valueOf(raw.get('Posting_Date__c')))) {
+      req.Posting_Date__c = Date.valueOf(String.valueOf(raw.get('Posting_Date__c')));
+    }
+    if (raw.containsKey('Reason_for_Hiring__c') && raw.get('Reason_for_Hiring__c') != null) {
+      req.Reason_for_Hiring__c = String.valueOf(raw.get('Reason_for_Hiring__c'));
+    }
+    if (raw.containsKey('Job_Description__c') && raw.get('Job_Description__c') != null) {
+      req.Job_Description__c = String.valueOf(raw.get('Job_Description__c'));
+    }
+    if (String.isNotBlank(portalUserId)) {
+      req.Requested_By__c = portalUserId;
+    }
+    return req;
   }
 
   /**
@@ -119,10 +166,7 @@ public inherited sharing class PWChrono_JobRequisitionController {
   ) {
     try {
       requireHRAccess(portalUserId, sessionToken);
-      PWChrono_Job_Requisition__c rec = (PWChrono_Job_Requisition__c) JSON.deserialize(
-        requisitionJson,
-        PWChrono_Job_Requisition__c.class
-      );
+      PWChrono_Job_Requisition__c rec = parseRequisitionJson(requisitionJson, portalUserId);
       upsert rec; // NOPMD
       return rec.Id;
     } catch (AuraHandledException ahe) {

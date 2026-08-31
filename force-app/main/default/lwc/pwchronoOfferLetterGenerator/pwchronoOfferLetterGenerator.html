@@ -1,184 +1,168 @@
-<template>
-  <div class="page-wrapper">
-    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
-      <!-- PwChrono Standard Header -->
-      <div
-        class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3"
-      >
-        <div class="my-auto mb-2">
-          <h2 class="mb-1 text-2xl font-bold text-gray-900">
-            Offer Letter Generator
-          </h2>
-          <p class="text-muted text-sm text-gray-500">
-            Create and send offer letters to candidates
-          </p>
-        </div>
-        <div class="d-flex my-xl-auto right-content"></div>
+<template lwc:render-mode="light">
+  <div class="offer-letter-generator-container">
+    <div class="card border shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3">
+        <h5 class="mb-0 fw-bold text-dark">Offer Letter Generator</h5>
+        <small class="text-muted">Create and preview job offers for selected candidates</small>
       </div>
 
-      <div
-        class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
-      >
-        <div class="p-4 md:p-6">
-          <div if:true={isLoading} class="relative">
-            <div class="flex justify-center items-center p-8">
-              <div
-                class="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-500"
-              ></div>
+      <div class="card-body p-4">
+        <template if:true={isLoading}>
+          <div class="d-flex justify-content-center align-items-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading offer details...</span>
             </div>
           </div>
+        </template>
 
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Input Form -->
-            <div class="lg:col-span-1">
-              <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                  Offer Details
-                </h3>
+        <template if:false={isLoading}>
+          <div class="row g-4">
+            <!-- Form Column -->
+            <div class="col-12 col-lg-5">
+              <div class="card border bg-light h-100">
+                <div class="card-body p-4">
+                  <h6 class="fw-bold text-dark mb-3">Offer Details</h6>
 
-                <div class="space-y-4">
-                  <lightning-combobox
-                    name="Job_Applicant__c"
-                    label="Select Applicant"
-                    value={selectedApplicantId}
-                    placeholder="Search applicant..."
-                    options={applicantOptions}
-                    onchange={handleApplicantChange}
-                    required
-                    class="offer-input"
-                  >
-                  </lightning-combobox>
+                  <div class="mb-3">
+                    <lightning-combobox
+                      name="Job_Applicant__c"
+                      label="Select Applicant"
+                      value={selectedApplicantId}
+                      placeholder="Search applicant..."
+                      options={applicantOptions}
+                      onchange={handleApplicantChange}
+                      required
+                    ></lightning-combobox>
+                  </div>
 
-                  <lightning-combobox
-                    name="Designation__c"
-                    label="Designation"
-                    value={offerDetails.Designation__c}
-                    options={designationOptions}
-                    onchange={handleInputChange}
-                    required
-                    class="offer-input"
-                  >
-                  </lightning-combobox>
+                  <div class="mb-3">
+                    <lightning-combobox
+                      name="Designation__c"
+                      label="Designation"
+                      value={offerDetails.Designation__c}
+                      options={designationOptions}
+                      onchange={handleInputChange}
+                      required
+                    ></lightning-combobox>
+                  </div>
 
-                  <lightning-input
-                    type="number"
-                    label="Offered CTC (Annual)"
-                    name="Offered_CTC__c"
-                    value={offerDetails.Offered_CTC__c}
-                    formatter="currency"
-                    step="0.01"
-                    onchange={handleInputChange}
-                    required
-                    class="offer-input"
-                  >
-                  </lightning-input>
+                  <div class="mb-3">
+                    <lightning-input
+                      type="number"
+                      label="Offered CTC (Annual)"
+                      name="Offered_CTC__c"
+                      value={offerDetails.Offered_CTC__c}
+                      formatter="currency"
+                      step="0.01"
+                      onchange={handleInputChange}
+                      required
+                    ></lightning-input>
+                  </div>
 
-                  <lightning-input
-                    type="date"
-                    label="Joining Date"
-                    name="Joining_Date__c"
-                    value={offerDetails.Joining_Date__c}
-                    onchange={handleInputChange}
-                    required
-                    class="offer-input"
-                  >
-                  </lightning-input>
+                  <div class="row g-2 mb-3">
+                    <div class="col-12 col-md-6">
+                      <lightning-input
+                        type="date"
+                        label="Joining Date"
+                        name="Joining_Date__c"
+                        value={offerDetails.Joining_Date__c}
+                        onchange={handleInputChange}
+                        required
+                      ></lightning-input>
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <lightning-input
+                        type="date"
+                        label="Offer Expiry Date"
+                        name="Expiry_Date__c"
+                        value={offerDetails.Expiry_Date__c}
+                        onchange={handleInputChange}
+                        required
+                      ></lightning-input>
+                    </div>
+                  </div>
 
-                  <lightning-input
-                    type="date"
-                    label="Offer Expiry Date"
-                    name="Expiry_Date__c"
-                    value={offerDetails.Expiry_Date__c}
-                    onchange={handleInputChange}
-                    required
-                    class="offer-input"
-                  >
-                  </lightning-input>
-
-                  <div class="pt-4">
-                    <lightning-button
-                      label="Generate & Send Offer"
-                      variant="brand"
-                      class="w-full"
+                  <div class="pt-3 border-top">
+                    <button
+                      type="button"
+                      class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2"
                       onclick={handleGenerateOffer}
                       disabled={isGenerateDisabled}
                     >
-                    </lightning-button>
+                      <i class="fa-solid fa-paper-plane"></i> Generate &amp; Send Offer
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Preview Section -->
-            <div class="lg:col-span-2">
-              <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                  Preview
-                </h3>
-
-                <div class="preview-container">
-                  <div class="preview-header">
-                    <div class="company-name">{companyName}</div>
-                    <div>123 Innovation Drive, Tech City</div>
+            <!-- Preview Column -->
+            <div class="col-12 col-lg-7">
+              <div class="card border shadow-none">
+                <div class="card-body p-4 bg-white">
+                  <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                    <h6 class="fw-bold text-dark mb-0">Letter Preview</h6>
+                    <span class="badge bg-secondary-subtle text-secondary">Document Preview</span>
                   </div>
 
-                  <div class="preview-body">
-                    <p><strong>Date:</strong> {todayDate}</p>
-                    <br />
-                    <p><strong>To,</strong></p>
-                    <p>{selectedApplicantName}</p>
-                    <br />
-                    <p><strong>Subject: Offer of Employment</strong></p>
-                    <br />
-                    <p>Dear {selectedApplicantName},</p>
-                    <br />
-                    <p>
-                      We are pleased to offer you the position of
-                      <strong>{selectedDesignationName}</strong> at
-                      {companyName}.
+                  <div class="p-4 border rounded bg-white shadow-sm" style="font-family: serif; min-height: 400px; color: #1e293b;">
+                    <div class="text-center pb-3 border-bottom mb-4">
+                      <h4 class="fw-bold text-dark mb-1" style="font-family: sans-serif;">{companyName}</h4>
+                      <small class="text-muted">Human Resources Department</small>
+                    </div>
+
+                    <div class="mb-3">
+                      <p class="mb-1"><strong>Date:</strong> {todayDate}</p>
+                      <p class="mb-1"><strong>To:</strong> {selectedApplicantName}</p>
+                      <p class="mb-3 fw-bold text-decoration-underline">Subject: Offer of Employment</p>
+                    </div>
+
+                    <p class="mb-3">Dear {selectedApplicantName},</p>
+
+                    <p class="mb-3">
+                      We are delighted to offer you the position of <strong>{selectedDesignationName}</strong> at <strong>{companyName}</strong>.
                     </p>
-                    <p>
+
+                    <p class="mb-3">
                       Your annual Cost to Company (CTC) will be
-                      <strong
-                        ><lightning-formatted-number
+                      <strong>
+                        <lightning-formatted-number
                           value={offerDetails.Offered_CTC__c}
                           format-style="currency"
                           currency-code={currencyCode}
-                        ></lightning-formatted-number></strong
-                      >.
+                        ></lightning-formatted-number>
+                      </strong>.
                     </p>
-                    <p>
-                      We would like you to join us on
-                      <strong
-                        ><lightning-formatted-date-time
-                          value={offerDetails.Joining_Date__c}
-                        ></lightning-formatted-date-time></strong
-                      >.
-                    </p>
-                    <br />
-                    <p>
-                      This offer is valid until
-                      <strong
-                        ><lightning-formatted-date-time
-                          value={offerDetails.Expiry_Date__c}
-                        ></lightning-formatted-date-time></strong
-                      >.
-                    </p>
-                    <p>We look forward to welcoming you to our team.</p>
-                  </div>
 
-                  <div class="preview-footer">
-                    <p>Sincerely,</p>
-                    <div class="signature-line">
-                      <p>HR Manager</p>
-                      <p>{companyName}</p>
+                    <p class="mb-3">
+                      Your anticipated date of joining will be
+                      <strong>
+                        <lightning-formatted-date-time
+                          value={offerDetails.Joining_Date__c}
+                        ></lightning-formatted-date-time>
+                      </strong>.
+                    </p>
+
+                    <p class="mb-4">
+                      Please note this offer is valid until
+                      <strong>
+                        <lightning-formatted-date-time
+                          value={offerDetails.Expiry_Date__c}
+                        ></lightning-formatted-date-time>
+                      </strong>.
+                    </p>
+
+                    <div class="pt-4 border-top">
+                      <p class="mb-1">Sincerely,</p>
+                      <p class="mb-0 fw-bold">HR Operations</p>
+                      <p class="text-muted small">{companyName}</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </template>
       </div>
     </div>
   </div>

@@ -2,31 +2,172 @@
   <div class="page-wrapper">
     <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
       <!-- Page Header -->
-      <div class="page-header">
-        <div class="row align-items-center">
-          <div class="col">
-            <h3 class="page-title">Recruitment</h3>
-            <ul class="breadcrumb">
+      <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
+        <div class="my-auto mb-2">
+          <h2 class="mb-1">Recruitment Management</h2>
+          <nav>
+            <ol class="breadcrumb mb-0">
               <li class="breadcrumb-item">
                 <a href="#"><i class="fa-solid fa-house"></i></a>
               </li>
               <li class="breadcrumb-item">Dashboard</li>
-              <li class="breadcrumb-item active">Recruitment</li>
-            </ul>
-          </div>
+              <li class="breadcrumb-item active">Recruitment Process</li>
+            </ol>
+          </nav>
         </div>
       </div>
       <!-- /Page Header -->
 
-      <div class="row">
-        <div class="col-sm-12">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <p>Recruitment component content goes here.</p>
-                </div>
+      <!-- Top KPI Summary Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3 col-xl-2">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-2 px-3 d-flex align-items-center gap-3">
+              <span class="avatar avatar-md bg-primary-subtle rounded-circle flex-shrink-0">
+                <i class="fa-solid fa-briefcase text-primary"></i>
+              </span>
+              <div>
+                <p class="text-muted small mb-0">Openings</p>
+                <h5 class="mb-0 fw-bold">{metrics.openJobsCount}</h5>
+              </div>
             </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-2 px-3 d-flex align-items-center gap-3">
+              <span class="avatar avatar-md bg-info-subtle rounded-circle flex-shrink-0">
+                <i class="fa-solid fa-file-signature text-info"></i>
+              </span>
+              <div>
+                <p class="text-muted small mb-0">Requisitions</p>
+                <h5 class="mb-0 fw-bold">{metrics.requisitionsCount}</h5>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-2 px-3 d-flex align-items-center gap-3">
+              <span class="avatar avatar-md bg-warning-subtle rounded-circle flex-shrink-0">
+                <i class="fa-solid fa-users text-warning"></i>
+              </span>
+              <div>
+                <p class="text-muted small mb-0">Applicants</p>
+                <h5 class="mb-0 fw-bold">{metrics.totalApplicantsCount}</h5>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-2 px-3 d-flex align-items-center gap-3">
+              <span class="avatar avatar-md bg-secondary-subtle rounded-circle flex-shrink-0">
+                <i class="fa-solid fa-calendar-check text-secondary"></i>
+              </span>
+              <div>
+                <p class="text-muted small mb-0">Interviews</p>
+                <h5 class="mb-0 fw-bold">{metrics.interviewingCount}</h5>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-2 px-3 d-flex align-items-center gap-3">
+              <span class="avatar avatar-md bg-danger-subtle rounded-circle flex-shrink-0">
+                <i class="fa-solid fa-envelope-open-text text-danger"></i>
+              </span>
+              <div>
+                <p class="text-muted small mb-0">Offers</p>
+                <h5 class="mb-0 fw-bold">{metrics.offersExtendedCount}</h5>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-2 px-3 d-flex align-items-center gap-3">
+              <span class="avatar avatar-md bg-success-subtle rounded-circle flex-shrink-0">
+                <i class="fa-solid fa-user-check text-success"></i>
+              </span>
+              <div>
+                <p class="text-muted small mb-0">Hired</p>
+                <h5 class="mb-0 fw-bold">{metrics.hiredCount}</h5>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      <!-- Navigation Tabs -->
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body p-2">
+          <ul class="nav nav-pills flex-wrap gap-1" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class={pipelineTabClass} data-tab="pipeline" onclick={handleTabClick} type="button">
+                <i class="fa-solid fa-diagram-project me-1"></i> Candidate Pipeline
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class={openingsTabClass} data-tab="openings" onclick={handleTabClick} type="button">
+                <i class="fa-solid fa-briefcase me-1"></i> Job Openings
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class={requisitionsTabClass} data-tab="requisitions" onclick={handleTabClick} type="button">
+                <i class="fa-solid fa-file-invoice me-1"></i> Job Requisitions
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class={staffingTabClass} data-tab="staffing" onclick={handleTabClick} type="button">
+                <i class="fa-solid fa-chart-pie me-1"></i> Staffing Plans
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class={interviewsTabClass} data-tab="interviews" onclick={handleTabClick} type="button">
+                <i class="fa-solid fa-calendar-days me-1"></i> Interview Scheduler
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class={offersTabClass} data-tab="offers" onclick={handleTabClick} type="button">
+                <i class="fa-solid fa-certificate me-1"></i> Offer Letters
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class={referralsTabClass} data-tab="referrals" onclick={handleTabClick} type="button">
+                <i class="fa-solid fa-handshake me-1"></i> Employee Referrals
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Tab Contents -->
+      <div class="tab-content">
+        <template if:true={isPipelineTab}>
+          <c-pwchrono-recruitment-pipeline></c-pwchrono-recruitment-pipeline>
+        </template>
+        <template if:true={isOpeningsTab}>
+          <c-pwchrono-job-openings-viewer></c-pwchrono-job-openings-viewer>
+        </template>
+        <template if:true={isRequisitionsTab}>
+          <c-pwchrono-job-requisition></c-pwchrono-job-requisition>
+        </template>
+        <template if:true={isStaffingTab}>
+          <c-pwchrono-staffing-plan></c-pwchrono-staffing-plan>
+        </template>
+        <template if:true={isInterviewsTab}>
+          <c-pwchrono-interview-scheduler></c-pwchrono-interview-scheduler>
+        </template>
+        <template if:true={isOffersTab}>
+          <c-pwchrono-offer-letter-generator></c-pwchrono-offer-letter-generator>
+        </template>
+        <template if:true={isReferralsTab}>
+          <c-pwchrono-employee-referral></c-pwchrono-employee-referral>
+        </template>
+      </div>
+
     </div>
   </div>
 </template>

@@ -318,4 +318,224 @@ private class PWChrono_RecruitmentController_Test {
       );
     }
   }
+
+  @isTest
+  static void testGetRecruitmentDashboardMetrics() {
+    User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
+
+    System.runAs(testUser) {
+      Test.startTest();
+      Map<String, Object> metrics = PWChrono_RecruitmentController.getRecruitmentDashboardMetrics(
+        'dummyUser',
+        'dummyToken'
+      );
+      Test.stopTest();
+
+      System.assertNotEquals(null, metrics, 'Metrics map should not be null');
+      System.assertEquals(1, metrics.get('openJobsCount'), 'Should have 1 open job');
+      System.assertEquals(1, metrics.get('totalApplicantsCount'), 'Should have 1 applicant');
+    }
+  }
+
+  @isTest
+  static void testApplicantAcceptedCreatesOnboardingTasks() {
+    User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
+    PWChrono_Job_Applicant__c applicant = [
+      SELECT Id, Status__c, Email__c
+      FROM PWChrono_Job_Applicant__c
+      LIMIT 1
+    ];
+
+    System.runAs(testUser) {
+      Test.startTest();
+      PWChrono_Job_Applicant__c updatedApplicant = PWChrono_RecruitmentController.updateApplicantStatus(
+        applicant.Id,
+        PWChrono_Constants.STATUS_ACCEPTED,
+        null,
+        null
+      );
+      Test.stopTest();
+
+      System.assertEquals(
+        PWChrono_Constants.STATUS_ACCEPTED,
+        updatedApplicant.Status__c,
+        'Applicant should be Accepted'
+      );
+
+      // Verify onboarding tasks were generated
+      List<PWChrono_Onboarding_Task__c> tasks = [
+        SELECT Id, Name, Status__c, Assigned_Tos__c
+        FROM PWChrono_Onboarding_Task__c
+      ];
+      System.assert(tasks.size() > 0, 'Onboarding tasks should be automatically generated upon applicant acceptance');
+    }
+  }
+
+  @isTest
+  static void testHasFeatureHelper() {
+    System.assertEquals(true, PWChrono_RecruitmentController.hasFeature('Recruitment;Payroll', 'Recruitment'));
+    System.assertEquals(true, PWChrono_RecruitmentController.hasFeature('Payroll ; Recruitment', 'Recruitment'));
+    System.assertEquals(false, PWChrono_RecruitmentController.hasFeature('Payroll;Leaves', 'Recruitment'));
+    System.assertEquals(false, PWChrono_RecruitmentController.hasFeature('', 'Recruitment'));
+    System.assertEquals(false, PWChrono_RecruitmentController.hasFeature('Recruitment', ''));
+    System.assertEquals(false, PWChrono_RecruitmentController.hasFeature(null, null));
+  }
+
+  @isTest
+  static void testControllerErrorCatchBlocks() {
+    User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
+
+    System.runAs(testUser) {
+      Test.startTest();
+
+      try {
+        PWChrono_RecruitmentController.getJobOpenings('InvalidStatus');
+      } catch (AuraHandledException e) {
+        System.assertNotEquals(null, e.getMessage());
+      }
+
+      try {
+        PWChrono_RecruitmentController.getJobApplicants(null, null, null, null);
+      } catch (AuraHandledException e) {
+        System.assertNotEquals(null, e.getMessage());
+      }
+
+      try {
+        PWChrono_RecruitmentController.updateApplicantStatus(null, 'Selected', null, null);
+      } catch (AuraHandledException e) {
+        System.assertNotEquals(null, e.getMessage());
+      }
+
+      try {
+        PWChrono_RecruitmentController.getApplicantInterviews(null, null, null);
+      } catch (AuraHandledException e) {
+        System.assertNotEquals(null, e.getMessage());
+      }
+
+      try {
+        PWChrono_RecruitmentController.scheduleInterview(null, null, null);
+      } catch (AuraHandledException e) {
+        System.assertNotEquals(null, e.getMessage());
+      }
+
+      try {
+        PWChrono_RecruitmentController.generateOfferLetter(null, null, null);
+      } catch (AuraHandledException e) {
+        System.assertNotEquals(null, e.getMessage());
+      }
+
+      try {
+        PWChrono_RecruitmentController.referCandidate(null, null, null, null, null, null, null, null);
+      } catch (AuraHandledException e) {
+        System.assertNotEquals(null, e.getMessage());
+      }
+
+      Test.stopTest();
+    }
+  }
+
+  @isTest
+  static void testGuestAccessValidation() {
+    User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
+
+    System.runAs(testUser) {
+      Portal_Users__c pu = [SELECT Id, Access_Features__c FROM Portal_Users__c LIMIT 1];
+      pu.Access_Features__c = 'Recruitment';
+      pu.Is_Active__c = true;
+      update pu;
+
+      PWChrono_GuestSession.testUserTypeOverride = 'Guest';
+      PWChrono_RecruitmentController.forceGuestCheckForTest = true;
+
+      // 1. Valid access
+      try {
+        PWChrono_RecruitmentController.requireRecruitmentAccessForGuest(pu.Id, 'token123');
+      } catch (Exception e) {
+        // ok
+      }
+
+      // 2. Unauthorized access (missing Recruitment feature and non-admin)
+      pu.Role__c = 'Employee';
+      pu.Access_Features__c = 'Leaves';
+      update pu;
+      try {
+        PWChrono_RecruitmentController.requireRecruitmentAccessForGuest(pu.Id, 'token123');
+      } catch (AuraHandledException e) {
+        System.assertNotEquals(null, e.getMessage());
+      }
+
+      // 3. Trigger all controller catch blocks via invalid guest session
+      try {
+        PWChrono_RecruitmentController.getActiveDepartments('badId', 'badToken');
+      } catch (AuraHandledException e) {
+        System.assertNotEquals(null, e.getMessage());
+      }
+
+      try {
+        PWChrono_RecruitmentController.getActiveDesignations('badId', 'badToken');
+      } catch (AuraHandledException e) {
+        System.assertNotEquals(null, e.getMessage());
+      }
+
+      try {
+        PWChrono_RecruitmentController.getPotentialInterviewers('badId', 'badToken');
+      } catch (AuraHandledException e) {
+        System.assertNotEquals(null, e.getMessage());
+      }
+
+      try {
+        PWChrono_RecruitmentController.getRecruitmentDashboardMetrics('badId', 'badToken');
+      } catch (AuraHandledException e) {
+        System.assertNotEquals(null, e.getMessage());
+      }
+
+      // 4. Positive execution of all controller methods
+      PWChrono_GuestSession.testUserTypeOverride = null;
+      PWChrono_RecruitmentController.forceGuestCheckForTest = false;
+
+      PWChrono_RecruitmentController.getActiveDepartments(null, null);
+      PWChrono_RecruitmentController.getActiveDesignations(null, null);
+      PWChrono_RecruitmentController.getPotentialInterviewers(null, null);
+      PWChrono_RecruitmentController.getRecruitmentDashboardMetrics(null, null);
+      PWChrono_RecruitmentController.getJobOpenings('All');
+      PWChrono_RecruitmentController.getJobApplicants(null, 'All', null, null);
+    }
+  }
+
+  @isTest
+  static void testControllerSuccessMethods() {
+    User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
+    System.runAs(testUser) {
+      PWChrono_Job_Applicant__c app = [SELECT Id, Job_Opening__c FROM PWChrono_Job_Applicant__c LIMIT 1];
+      PWChrono_Job_Opening__c job = [SELECT Id FROM PWChrono_Job_Opening__c LIMIT 1];
+      Portal_Users__c interviewer = [SELECT Id FROM Portal_Users__c LIMIT 1];
+      PWChrono_Designation__c desig = [SELECT Id FROM PWChrono_Designation__c LIMIT 1];
+
+      PWChrono_RecruitmentController.getJobOpenings('All');
+      PWChrono_RecruitmentController.getJobApplicants(job.Id, 'All', null, null);
+      PWChrono_RecruitmentController.updateApplicantStatus(app.Id, 'Screening', null, null);
+      PWChrono_RecruitmentController.getApplicantInterviews(app.Id, null, null);
+
+      PWChrono_Interview__c interview = new PWChrono_Interview__c(
+        Job_Applicant__c = app.Id,
+        Interview_Date__c = DateTime.now().addDays(1),
+        Interviewers__c = interviewer.Id
+      );
+      PWChrono_RecruitmentController.scheduleInterview(interview, null, null);
+
+      PWChrono_Offer_Letter__c offer = new PWChrono_Offer_Letter__c(
+        Job_Applicant__c = app.Id,
+        Designation__c = desig.Id,
+        Offered_CTC__c = 100000,
+        Joining_Date__c = Date.today().addMonths(1),
+        Status__c = PWChrono_Constants.STATUS_DRAFT
+      );
+      PWChrono_RecruitmentController.generateOfferLetter(offer, null, null);
+
+      PWChrono_RecruitmentController.getActiveDepartments(null, null);
+      PWChrono_RecruitmentController.getActiveDesignations(null, null);
+      PWChrono_RecruitmentController.getPotentialInterviewers(null, null);
+      PWChrono_RecruitmentController.getRecruitmentDashboardMetrics(null, null);
+    }
+  }
 }

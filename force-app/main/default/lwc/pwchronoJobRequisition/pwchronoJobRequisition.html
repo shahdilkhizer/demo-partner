@@ -3,44 +3,26 @@
   @author      PWChrono Team
 -->
 <template lwc:render-mode="light">
-  <div class="page-wrapper">
-    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
-
-      <!-- Page Header -->
-      <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
-        <div class="my-auto mb-2">
-          <h2 class="mb-1">Job Requisitions</h2>
-          <nav>
-            <ol class="breadcrumb mb-0">
-              <li class="breadcrumb-item">
-                <button type="button" class="btn btn-link p-0 text-decoration-none" onclick={handleNoop}>
-                  <i class="fa-solid fa-house"></i>
-                </button>
-              </li>
-              <li class="breadcrumb-item">Recruitment</li>
-              <li class="breadcrumb-item active" aria-current="page">Job Requisitions</li>
-            </ol>
-          </nav>
-        </div>
-        <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
-          <div class="me-2 mb-2">
-            <select class="form-select form-select-sm" aria-label="Filter by status" onchange={handleStatusFilter}>
-              <option value="All">All Status</option>
-              <option value="Pending">Pending</option>
-              <option value="Open &amp; Approved">Open &amp; Approved</option>
-              <option value="Filled">Filled</option>
-              <option value="Rejected">Rejected</option>
-              <option value="Closed">Closed</option>
-            </select>
-          </div>
-          <div class="mb-2">
-            <button type="button" class="btn btn-primary d-flex align-items-center" onclick={handleNew}>
-              <i class="fa-solid fa-circle-plus me-2"></i>New Requisition
-            </button>
-          </div>
-        </div>
+  <div class="job-requisition-container">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <div>
+        <h5 class="mb-0 fw-bold text-dark">Job Requisitions</h5>
+        <small class="text-muted">Manage department hiring requests and staffing authorizations</small>
       </div>
-      <!-- /Page Header -->
+      <div class="d-flex align-items-center gap-2">
+        <select class="form-select form-select-sm" aria-label="Filter by status" onchange={handleStatusFilter} style="width: auto;">
+          <option value="All">All Status</option>
+          <option value="Pending">Pending</option>
+          <option value="Open &amp; Approved">Open &amp; Approved</option>
+          <option value="Filled">Filled</option>
+          <option value="Rejected">Rejected</option>
+          <option value="Closed">Closed</option>
+        </select>
+        <button type="button" class="btn btn-sm btn-primary d-flex align-items-center gap-2" onclick={handleNew}>
+          <i class="fa-solid fa-circle-plus"></i> New Requisition
+        </button>
+      </div>
+    </div>
 
       <!-- Metric Cards -->
       <div class="row g-3 mb-3">
@@ -167,9 +149,13 @@
                   </template>
                   <template if:false={hasRecords}>
                     <tr>
-                      <td colspan="8" class="text-center text-muted py-5">
-                        <i class="fa-solid fa-folder-open fa-2x mb-2 d-block"></i>
-                        No job requisitions found. Click <strong>New Requisition</strong> to create one.
+                      <td colspan="8" class="text-center py-5">
+                        <div class="d-flex flex-column align-items-center justify-content-center">
+                          <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px; float: none !important; margin: 0 auto !important;">
+                            <i class="fa-solid fa-folder-open fa-2x text-muted" style="float: none !important; margin: 0 !important;"></i>
+                          </div>
+                          <p class="text-muted mb-0">No job requisitions found. Click <strong>New Requisition</strong> to create one.</p>
+                        </div>
                       </td>
                     </tr>
                   </template>
@@ -181,7 +167,6 @@
       </template>
       <!-- /Requisitions Table -->
 
-    </div>
   </div>
 
   <!-- ===== Create / Edit Modal ===== -->
