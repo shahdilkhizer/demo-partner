@@ -18,7 +18,7 @@
     <div class="sidebar-logo" data-region="sidebarLogo">
       <a href={communityHomeHref} class="logo logo-normal">
         <template if:false={logoLightErrored}>
-          <img src={logoLightUrl} alt="Logo" data-variant="light" />
+          <img src={logoLightUrl} alt="Logo" data-variant="light" onerror={handleLogoError} />
         </template>
         <template if:true={logoLightErrored}>
           <span class="logo-fallback" aria-label="Logo">{brandInitials}</span>
@@ -26,7 +26,7 @@
       </a>
       <a href={communityHomeHref} class="logo-small">
         <template if:false={logoSmallErrored}>
-          <img src={logoSmallUrl} alt="Logo" data-variant="small" />
+          <img src={logoSmallUrl} alt="Logo" data-variant="small" onerror={handleLogoError} />
         </template>
         <template if:true={logoSmallErrored}>
           <span class="logo-fallback logo-small-fallback" aria-label="Logo"
@@ -36,7 +36,7 @@
       </a>
       <a href={communityHomeHref} class="logo-white">
         <template if:false={logoDarkErrored}>
-          <img src={logoDarkUrl} alt="Logo" data-variant="dark" />
+          <img src={logoDarkUrl} alt="Logo" data-variant="dark" onerror={handleLogoError} />
         </template>
         <template if:true={logoDarkErrored}>
           <span class="logo-fallback" aria-label="Logo">{brandInitials}</span>
