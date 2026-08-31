@@ -85,9 +85,10 @@ export default class PwchronoInterviewScheduler extends LightningElement {
     if (result.data) {
       this.interviews = result.data.map((inv) => ({
         ...inv,
-        interviewerName: inv.Interviewer__r
-          ? inv.Interviewer__r.Name
-          : "Not Assigned",
+        interviewerName:
+          inv.Interviewers__r?.Name ||
+          inv.Interviewer__r?.Name ||
+          "Not Assigned",
         formattedDate: inv.Interview_Date__c
           ? new Date(inv.Interview_Date__c).toLocaleString()
           : "TBD",

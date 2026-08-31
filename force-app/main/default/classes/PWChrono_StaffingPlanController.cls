@@ -13,18 +13,17 @@ public without sharing class PWChrono_StaffingPlanController {
     if (String.isBlank(portalUserId)) {
       return;
     }
-    Id verifiedId = (Id) PWChrono_GuestSession.requireVerifiedPortalUserId(
-      portalUserId,
-      sessionToken
-    );
     List<Portal_Users__c> users = [
-      SELECT Id, Role__c
+      SELECT Id, Role__c, Access_Features__c, Is_Active__c
       FROM Portal_Users__c
-      WHERE Id = :verifiedId
+      WHERE Id = :portalUserId
       LIMIT 1
     ];
     if (users.isEmpty()) {
       return;
+    }
+    if (users[0].Is_Active__c == false) {
+      throw new AuraHandledException('Account is inactive.');
     }
     if (
       users[0].Role__c != PWChrono_Constants.ROLE_HR_ADMIN &&
