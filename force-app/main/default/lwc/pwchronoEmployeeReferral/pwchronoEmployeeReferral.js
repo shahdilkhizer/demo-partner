@@ -35,6 +35,7 @@ const emptyRecord = () => ({
 export default class PwchronoEmployeeReferral extends LightningElement {
   static renderMode = "light";
 
+  @track allRecords = [];
   @track records = [];
   @track isLoading = true;
   @track isModalOpen = false;
@@ -99,19 +100,19 @@ export default class PwchronoEmployeeReferral extends LightningElement {
   }
 
   get totalCount() {
-    return this.records.length;
+    return this.allRecords.length;
   }
 
   get pendingCount() {
-    return this.records.filter((r) => r.Status__c === "Pending").length;
+    return this.allRecords.filter((r) => r.Status__c === "Pending").length;
   }
 
   get selectedCount() {
-    return this.records.filter((r) => r.Status__c === "Selected").length;
+    return this.allRecords.filter((r) => r.Status__c === "Selected").length;
   }
 
   get rejectedCount() {
-    return this.records.filter((r) => r.Status__c === "Rejected").length;
+    return this.allRecords.filter((r) => r.Status__c === "Rejected").length;
   }
 
   get isEmpty() {
@@ -142,12 +143,12 @@ export default class PwchronoEmployeeReferral extends LightningElement {
   _loadReferrals() {
     this.isLoading = true;
     getReferrals({
-      statusFilter: this.statusFilter,
+      statusFilter: "All",
       portalUserId: this._employeeId,
       sessionToken: this._sessionToken
     })
       .then((recs) => {
-        this.records = recs.map((r) => ({
+        this.allRecords = (recs || []).map((r) => ({
           ...r,
           designationName: r.For_Designation__r?.Name ?? "—",
           employeeName: r.Current_Employee__r?.Name ?? "—",
@@ -156,13 +157,25 @@ export default class PwchronoEmployeeReferral extends LightningElement {
             STATUS_BADGE[r.Status__c] ||
             "badge bg-secondary-subtle text-secondary"
         }));
+        this._applyFilter();
       })
       .catch(() => {
+        this.allRecords = [];
         this.records = [];
       })
       .finally(() => {
         this.isLoading = false;
       });
+  }
+
+  _applyFilter() {
+    if (!this.statusFilter || this.statusFilter === "All") {
+      this.records = [...this.allRecords];
+    } else {
+      this.records = this.allRecords.filter(
+        (r) => r.Status__c === this.statusFilter
+      );
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -171,7 +184,7 @@ export default class PwchronoEmployeeReferral extends LightningElement {
 
   handleStatusFilter(event) {
     this.statusFilter = event.target.value;
-    this._loadReferrals();
+    this._applyFilter();
   }
 
   // ─────────────────────────────────────────────────────────────────────────

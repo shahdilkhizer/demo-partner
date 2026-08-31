@@ -13,14 +13,24 @@ public without sharing class PWChrono_JobRequisitionController {
     if (String.isBlank(portalUserId)) {
       return;
     }
+    Id verifiedId = (Id) PWChrono_GuestSession.requireVerifiedPortalUserId(
+      portalUserId,
+      sessionToken
+    );
     List<Portal_Users__c> users = [
-      SELECT Id, Role__c, Access_Features__c, Is_Active__c
+      SELECT Id, Role__c
       FROM Portal_Users__c
-      WHERE Id = :portalUserId
+      WHERE Id = :verifiedId
       LIMIT 1
     ];
     if (users.isEmpty()) {
       return;
+    }
+    if (
+      users[0].Role__c != PWChrono_Constants.ROLE_HR_ADMIN &&
+      users[0].Role__c != 'System Admin'
+    ) {
+      throw new AuraHandledException('Unauthorized.');
     }
   }
 
@@ -45,8 +55,15 @@ public without sharing class PWChrono_JobRequisitionController {
     if (raw.containsKey('Staffing_Plan__c') && raw.get('Staffing_Plan__c') != null && String.isNotBlank(String.valueOf(raw.get('Staffing_Plan__c')))) {
       req.Staffing_Plan__c = (Id) raw.get('Staffing_Plan__c');
     }
+    if (raw.containsKey('Requested_By_Department__c') && raw.get('Requested_By_Department__c') != null) {
+      req.Requested_By_Department__c = String.valueOf(raw.get('Requested_By_Department__c'));
+    }
     if (raw.containsKey('No_of_Positions__c') && raw.get('No_of_Positions__c') != null && String.isNotBlank(String.valueOf(raw.get('No_of_Positions__c')))) {
-      req.No_of_Positions__c = Decimal.valueOf(String.valueOf(raw.get('No_of_Positions__c')));
+      Decimal pos = Decimal.valueOf(String.valueOf(raw.get('No_of_Positions__c')));
+      if (pos > 99999) {
+        pos = 99999;
+      }
+      req.No_of_Positions__c = pos;
     }
     if (raw.containsKey('Expected_Compensation__c') && raw.get('Expected_Compensation__c') != null && String.isNotBlank(String.valueOf(raw.get('Expected_Compensation__c')))) {
       req.Expected_Compensation__c = Decimal.valueOf(String.valueOf(raw.get('Expected_Compensation__c')));
@@ -59,6 +76,16 @@ public without sharing class PWChrono_JobRequisitionController {
     }
     if (raw.containsKey('Posting_Date__c') && raw.get('Posting_Date__c') != null && String.isNotBlank(String.valueOf(raw.get('Posting_Date__c')))) {
       req.Posting_Date__c = Date.valueOf(String.valueOf(raw.get('Posting_Date__c')));
+    }
+    if (raw.containsKey('Completed_On__c') && raw.get('Completed_On__c') != null && String.isNotBlank(String.valueOf(raw.get('Completed_On__c')))) {
+      req.Completed_On__c = Date.valueOf(String.valueOf(raw.get('Completed_On__c')));
+    }
+    if (raw.containsKey('Time_to_Fill__c') && raw.get('Time_to_Fill__c') != null && String.isNotBlank(String.valueOf(raw.get('Time_to_Fill__c')))) {
+      Decimal ttf = Decimal.valueOf(String.valueOf(raw.get('Time_to_Fill__c')));
+      if (ttf > 99999) {
+        ttf = 99999;
+      }
+      req.Time_to_Fill__c = ttf;
     }
     if (raw.containsKey('Reason_for_Hiring__c') && raw.get('Reason_for_Hiring__c') != null) {
       req.Reason_for_Hiring__c = String.valueOf(raw.get('Reason_for_Hiring__c'));
@@ -75,7 +102,7 @@ public without sharing class PWChrono_JobRequisitionController {
   /**
    * @description Returns Job Requisitions with optional status filter
    */
-  @AuraEnabled(cacheable=true)
+  @AuraEnabled
   public static List<PWChrono_Job_Requisition__c> getJobRequisitions(
     String statusFilter,
     String portalUserId,
@@ -230,17 +257,12 @@ public without sharing class PWChrono_JobRequisitionController {
       if (recs.isEmpty()) {
         throw new AuraHandledException('Job Requisition not found.');
       }
-      if (recs[0].Status__c != 'Pending') {
-        throw new AuraHandledException(
-          'Only pending job requisitions can be deleted.'
-        );
-      }
       delete recs[0]; // NOPMD
     } catch (AuraHandledException ahe) {
       throw ahe;
     } catch (Exception e) {
       PWChrono_Logger.error('deleteJobRequisition failed', e);
-      throw new AuraHandledException('Error deleting job requisition.');
+      throw new AuraHandledException('Error deleting job requisition: ' + e.getMessage());
     }
   }
 

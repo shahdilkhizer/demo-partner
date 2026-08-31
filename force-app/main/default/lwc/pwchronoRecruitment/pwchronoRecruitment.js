@@ -1,4 +1,5 @@
 import { LightningElement, track, wire } from "lwc";
+import { refreshApex } from "@salesforce/apex";
 import getRecruitmentDashboardMetrics from "@salesforce/apex/PWChrono_RecruitmentController.getRecruitmentDashboardMetrics";
 import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
 
@@ -20,6 +21,8 @@ export default class PwchronoRecruitment extends LightningElement {
     referralsCount: 0
   };
 
+  _wiredMetricsResult;
+
   connectedCallback() {
     this.portalUserId = getEmployeeId();
     this.sessionToken = getSessionToken();
@@ -29,8 +32,10 @@ export default class PwchronoRecruitment extends LightningElement {
     portalUserId: "$portalUserId",
     sessionToken: "$sessionToken"
   })
-  wiredMetrics({ error, data }) {
-    if (data) {
+  wiredMetrics(result) {
+    this._wiredMetricsResult = result;
+    if (result.data) {
+      const data = result.data;
       this.metrics = {
         openJobsCount: data.openJobsCount || 0,
         requisitionsCount: data.requisitionsCount || 0,
@@ -48,6 +53,9 @@ export default class PwchronoRecruitment extends LightningElement {
     const tab = event?.currentTarget?.dataset?.tab;
     if (tab) {
       this.activeTab = tab;
+      if (this._wiredMetricsResult) {
+        refreshApex(this._wiredMetricsResult);
+      }
     }
   }
 

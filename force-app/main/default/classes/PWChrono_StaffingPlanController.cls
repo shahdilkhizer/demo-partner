@@ -13,14 +13,24 @@ public without sharing class PWChrono_StaffingPlanController {
     if (String.isBlank(portalUserId)) {
       return;
     }
+    Id verifiedId = (Id) PWChrono_GuestSession.requireVerifiedPortalUserId(
+      portalUserId,
+      sessionToken
+    );
     List<Portal_Users__c> users = [
-      SELECT Id, Role__c, Access_Features__c, Is_Active__c
+      SELECT Id, Role__c
       FROM Portal_Users__c
-      WHERE Id = :portalUserId
+      WHERE Id = :verifiedId
       LIMIT 1
     ];
     if (users.isEmpty()) {
       return;
+    }
+    if (
+      users[0].Role__c != PWChrono_Constants.ROLE_HR_ADMIN &&
+      users[0].Role__c != 'System Admin'
+    ) {
+      throw new AuraHandledException('Unauthorized.');
     }
   }
 
@@ -87,7 +97,7 @@ public without sharing class PWChrono_StaffingPlanController {
   /**
    * @description Returns all Staffing Plans ordered by creation date
    */
-  @AuraEnabled(cacheable=true)
+  @AuraEnabled
   public static List<PWChrono_Staffing_Plan__c> getStaffingPlans(
     String statusFilter,
     String portalUserId,

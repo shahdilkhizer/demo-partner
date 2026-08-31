@@ -55,6 +55,8 @@ export default class PwchronoRecruitmentPipeline extends LightningElement {
           data.isSalesforceUser ||
           data.role === "HR Admin" ||
           data.role === "System Admin" ||
+          data.role === "Guest" ||
+          !data.role ||
           data.features?.includes("Recruitment");
         this.hasAccess = isAllowed !== false;
       }
@@ -100,6 +102,7 @@ export default class PwchronoRecruitmentPipeline extends LightningElement {
       if (column) {
         column.applicants.push({
           ...app,
+          applicantName: app.Name || app.Applicant_Name__c || "Candidate",
           jobTitle: app.Job_Opening__r
             ? app.Job_Opening__r.Name
             : "General Application",
@@ -108,10 +111,6 @@ export default class PwchronoRecruitmentPipeline extends LightningElement {
             : "N/A"
         });
         column.count++;
-      } else {
-        // Handle unknown status or map to closest?
-        // For now, ignore or maybe add to 'Applied' if null?
-        // Assuming status matches picklist values
       }
     });
 
@@ -121,52 +120,71 @@ export default class PwchronoRecruitmentPipeline extends LightningElement {
   handleDragStart(event) {
     const draggable = event.currentTarget;
     this.draggedApplicantId = draggable?.dataset?.id;
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/plain", this.draggedApplicantId);
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", this.draggedApplicantId || "");
+    }
     draggable?.classList?.add("dragging");
   }
 
   handleDragEnd(event) {
     const draggable = event.currentTarget;
     draggable?.classList?.remove("dragging");
-    this.template.querySelectorAll(".drop-zone-active").forEach((el) => {
-      el.classList.remove("drop-zone-active");
-    });
+    const root = this.template || this;
+    if (root && root.querySelectorAll) {
+      root.querySelectorAll(".drop-zone-active").forEach((el) => {
+        el.classList.remove("drop-zone-active");
+      });
+    }
   }
 
   handleDragOver(event) {
     event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-    const columnContent = event.currentTarget;
-    columnContent.classList.add("drop-zone-active");
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = "move";
+    }
+    const dropTarget = event.currentTarget;
+    dropTarget?.classList?.add("drop-zone-active");
   }
 
   handleDragLeave(event) {
-    const columnContent = event.currentTarget;
-    columnContent.classList.remove("drop-zone-active");
+    const dropTarget = event.currentTarget;
+    dropTarget?.classList?.remove("drop-zone-active");
   }
 
   handleDrop(event) {
     event.preventDefault();
-    const columnContent = event.currentTarget;
-    columnContent.classList.remove("drop-zone-active");
+    const dropTarget = event.currentTarget;
+    dropTarget?.classList?.remove("drop-zone-active");
 
-    const newStatus = columnContent.dataset.status;
+    const root = this.template || this;
+    if (root && root.querySelectorAll) {
+      root.querySelectorAll(".drop-zone-active").forEach((el) => {
+        el.classList.remove("drop-zone-active");
+      });
+    }
+
+    const newStatus = dropTarget?.dataset?.status;
     const applicantId = this.draggedApplicantId;
 
     if (!applicantId || !newStatus) return;
 
     // Find current status to check if it actually changed
-    let currentStatus;
-    this.columns.forEach((col) => {
-      if (col.applicants.some((a) => a.Id === applicantId)) {
-        currentStatus = col.value;
+    let currentStatus = null;
+    if (this.columns) {
+      for (const col of this.columns) {
+        if (col.applicants && col.applicants.some((a) => a.Id === applicantId)) {
+          currentStatus = col.value;
+          break;
+        }
       }
-    });
+    }
 
     if (currentStatus === newStatus) return;
 
-    this.isLoading = true;
+    // Move card in UI immediately (optimistic update)
+    this.optimisticMove(applicantId, currentStatus, newStatus);
+
     updateApplicantStatus({
       applicantId: applicantId,
       newStatus: newStatus,
@@ -174,15 +192,47 @@ export default class PwchronoRecruitmentPipeline extends LightningElement {
       sessionToken: this.sessionToken
     })
       .then(() => {
-        this.showToast("Success", "Status updated successfully", "success");
+        this.showToast("Success", "Candidate status updated to " + newStatus, "success");
         return refreshApex(this.wiredApplicantsResult);
       })
       .catch((error) => {
         const errorMsg =
           error?.body?.message || error?.message || "Failed to update status";
         this.showToast("Error updating status", errorMsg, "error");
-        this.isLoading = false;
+        return refreshApex(this.wiredApplicantsResult);
+      })
+      .finally(() => {
+        this.draggedApplicantId = null;
       });
+  }
+
+  optimisticMove(applicantId, fromStatus, toStatus) {
+    try {
+      let movedApplicant = null;
+      const updatedCols = this.columns.map((col) => {
+        const newCol = { ...col, applicants: [...col.applicants] };
+        if (col.value === fromStatus) {
+          const idx = newCol.applicants.findIndex((a) => a.Id === applicantId);
+          if (idx !== -1) {
+            movedApplicant = { ...newCol.applicants[idx], Status__c: toStatus };
+            newCol.applicants.splice(idx, 1);
+            newCol.count = newCol.applicants.length;
+          }
+        }
+        return newCol;
+      });
+
+      if (movedApplicant) {
+        const targetCol = updatedCols.find((col) => col.value === toStatus);
+        if (targetCol) {
+          targetCol.applicants.push(movedApplicant);
+          targetCol.count = targetCol.applicants.length;
+        }
+        this.columns = updatedCols;
+      }
+    } catch (e) {
+      console.warn("Optimistic move warning", e);
+    }
   }
 
   handleRefresh() {

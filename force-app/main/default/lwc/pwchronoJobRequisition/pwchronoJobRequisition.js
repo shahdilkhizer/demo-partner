@@ -382,6 +382,22 @@ export default class PwchronoJobRequisition extends LightningElement {
       );
       return false;
     }
+    if (pos > 99999) {
+      this.showToast(
+        "Validation",
+        "Number of Positions cannot exceed 99,999.",
+        "warning"
+      );
+      return false;
+    }
+    if (this.editRecord.Time_to_Fill__c && Number(this.editRecord.Time_to_Fill__c) > 99999) {
+      this.showToast(
+        "Validation",
+        "Time to Fill (Days) cannot exceed 99,999.",
+        "warning"
+      );
+      return false;
+    }
     return true;
   }
 

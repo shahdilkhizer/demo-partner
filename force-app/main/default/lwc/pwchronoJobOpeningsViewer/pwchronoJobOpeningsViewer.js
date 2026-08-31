@@ -62,10 +62,12 @@ export default class PwchronoJobOpeningsViewer extends LightningElement {
   }
 
   handleSubmit() {
-    // Validate
-    const allValid = [
-      ...this.template.querySelectorAll("lightning-input")
-    ].reduce((validSoFar, inputCmp) => {
+    // Validate Light-DOM-safely
+    const root = this.template || this;
+    const inputs = root.querySelectorAll
+      ? [...root.querySelectorAll("lightning-input")]
+      : [];
+    const allValid = inputs.reduce((validSoFar, inputCmp) => {
       inputCmp.reportValidity();
       return validSoFar && inputCmp.checkValidity();
     }, true);
@@ -78,7 +80,7 @@ export default class PwchronoJobOpeningsViewer extends LightningElement {
       lastName: this.referral.lastName,
       email: this.referral.email,
       phone: this.referral.phone,
-      experience: Number.parseInt(this.referral.experience, 10),
+      experience: parseFloat(this.referral.experience) || 0,
       portalUserId: getEmployeeId(),
       sessionToken: getSessionToken()
     })
@@ -93,10 +95,12 @@ export default class PwchronoJobOpeningsViewer extends LightningElement {
         this.isModalOpen = false;
       })
       .catch((error) => {
+        const errorMsg =
+          error?.body?.message || error?.message || "Failed to refer candidate";
         this.dispatchEvent(
           new ShowToastEvent({
             title: "Error referring candidate",
-            message: error.body.message,
+            message: errorMsg,
             variant: "error"
           })
         );

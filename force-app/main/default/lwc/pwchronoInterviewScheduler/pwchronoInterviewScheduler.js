@@ -46,10 +46,14 @@ export default class PwchronoInterviewScheduler extends LightningElement {
   wiredApplicants({ error, data }) {
     this.isLoading = false;
     if (data) {
-      this.applicantOptions = data.map((app) => ({
-        label: `${app.Applicant_Name__c} - ${app.Job_Opening__r?.Name || "General"}`,
-        value: app.Id
-      }));
+      this.applicantOptions = data.map((app) => {
+        const applicantName = app.Name || app.Applicant_Name__c || "Candidate";
+        const jobTitle = app.Job_Opening__r?.Name || "General Application";
+        return {
+          label: `${applicantName} - ${jobTitle}`,
+          value: app.Id
+        };
+      });
     } else if (error) {
       this.showToast("Error", "Error loading applicants", "error");
     }
@@ -159,9 +163,10 @@ export default class PwchronoInterviewScheduler extends LightningElement {
   }
 
   validateForm() {
+    const root = this.template || this;
     const inputs = [
-      ...this.template.querySelectorAll("lightning-combobox"),
-      ...this.template.querySelectorAll("lightning-input")
+      ...(root.querySelectorAll ? root.querySelectorAll("lightning-combobox") : []),
+      ...(root.querySelectorAll ? root.querySelectorAll("lightning-input") : [])
     ];
     return inputs.reduce((validSoFar, inputCmp) => {
       inputCmp.reportValidity();

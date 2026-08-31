@@ -55,7 +55,14 @@
             <template if:false={isLoading}>
               <div class="kanban-wrapper">
                 <template for:each={columns} for:item="column">
-                  <div key={column.value} class="kanban-column-wrap">
+                  <div
+                    key={column.value}
+                    class="kanban-column-wrap"
+                    data-status={column.value}
+                    ondragover={handleDragOver}
+                    ondragleave={handleDragLeave}
+                    ondrop={handleDrop}
+                  >
                     <!-- Column Header -->
                     <div class="kanban-col-header d-flex align-items-center justify-content-between mb-2 px-1">
                       <span class="fw-semibold text-dark">{column.label}</span>
@@ -66,6 +73,9 @@
                       class="kanban-col-body list-unstyled m-0 p-0"
                       data-status={column.value}
                       aria-label={column.label}
+                      ondragover={handleDragOver}
+                      ondragleave={handleDragLeave}
+                      ondrop={handleDrop}
                     >
                       <template for:each={column.applicants} for:item="applicant">
                         <li key={applicant.Id} class="kanban-card-item">
@@ -81,13 +91,13 @@
                             ondragleave={handleDragLeave}
                             ondrop={handleDrop}
                           >
-                            <h6 class="mb-1">{applicant.Applicant_Name__c}</h6>
+                            <h6 class="mb-1 text-dark fw-bold">{applicant.applicantName}</h6>
                             <p class="mb-1 text-muted small">{applicant.jobTitle}</p>
                             <p class="mb-2 text-muted small">
-                              <i class="ti ti-calendar me-1"></i>{applicant.formattedDate}
+                              <i class="fa-solid fa-calendar me-1"></i>{applicant.formattedDate}
                             </p>
                             <div class="d-flex align-items-center justify-content-between">
-                              <span class="badge bg-soft-info text-info">{applicant.Source__c}</span>
+                              <span class="badge bg-soft-info text-info">{applicant.Status__c}</span>
                             </div>
                           </button>
                         </li>

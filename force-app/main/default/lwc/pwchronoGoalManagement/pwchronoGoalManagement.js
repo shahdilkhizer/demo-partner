@@ -226,13 +226,14 @@ export default class PwchronoGoalManagement extends LightningElement {
   }
 
   validateForm() {
-    const allValid = [...this.template.querySelectorAll(".goal-input")].reduce(
-      (validSoFar, inputCmp) => {
-        inputCmp.reportValidity();
-        return validSoFar && inputCmp.checkValidity();
-      },
-      true
-    );
+    const root = this.template || this;
+    const inputs = root.querySelectorAll
+      ? [...root.querySelectorAll(".goal-input")]
+      : [];
+    const allValid = inputs.reduce((validSoFar, inputCmp) => {
+      inputCmp.reportValidity();
+      return validSoFar && inputCmp.checkValidity();
+    }, true);
     return allValid;
   }
 

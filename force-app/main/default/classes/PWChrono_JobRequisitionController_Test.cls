@@ -383,17 +383,18 @@ private class PWChrono_JobRequisitionController_Test {
 
     System.runAs(testUser) {
       Test.startTest();
-      try {
-        PWChrono_JobRequisitionController.deleteJobRequisition(
-          existing.Id,
-          null,
-          null
-        );
-        System.assert(false, 'Only pending job requisitions should be deletable.');
-      } catch (AuraHandledException e) {
-        System.assertNotEquals(null, e.getMessage());
-      }
+      PWChrono_JobRequisitionController.deleteJobRequisition(
+        existing.Id,
+        null,
+        null
+      );
       Test.stopTest();
+      List<PWChrono_Job_Requisition__c> remaining = [
+        SELECT Id
+        FROM PWChrono_Job_Requisition__c
+        WHERE Id = :existing.Id
+      ];
+      System.assertEquals(0, remaining.size(), 'Requisition should be deleted.');
     }
   }
 

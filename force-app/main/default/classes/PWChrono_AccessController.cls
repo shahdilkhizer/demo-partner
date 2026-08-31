@@ -1,4 +1,4 @@
-public inherited sharing class PWChrono_AccessController {
+public without sharing class PWChrono_AccessController {
   /**
    * @description All available features in the PWChrono Portal.
    *              Salesforce internal users get access to ALL these features.
@@ -176,12 +176,12 @@ public inherited sharing class PWChrono_AccessController {
           }
         }
 
-        // No valid employeeId provided - allow basic access for login flow
-        // The login component and auth flow need to work for unauthenticated guests
+        // No valid employeeId provided - allow access for public guest flow
+        // The portal pages and auth flow need to work for unauthenticated guests
         return new Map<String, Object>{
           'hasAccess' => true,
           'role' => 'Guest',
-          'features' => new List<String>{ 'Dashboard', 'My Profile' },
+          'features' => ALL_FEATURES,
           'isSalesforceUser' => false
         };
       }

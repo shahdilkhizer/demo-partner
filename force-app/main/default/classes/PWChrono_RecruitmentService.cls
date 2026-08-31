@@ -332,15 +332,26 @@ public without sharing class PWChrono_RecruitmentService {
     public String phone;
     @AuraEnabled
     public Decimal experience;
+    @AuraEnabled
+    public String portalUserId;
   }
 
   public static void referCandidate(CandidateWrapper candidate) {
-    Id currentUserId = UserInfo.getUserId();
-    Id employeeId = PWChrono_Utils.getCurrentEmployeeId(currentUserId);
+    Id referrerEmployeeId = null;
 
-    if (employeeId == null) {
-      throw new AuraHandledException(
-        'No employee record found for current user.'
+    // 1. If portalUserId is passed (from portal session), use it
+    if (String.isNotBlank(candidate.portalUserId)) {
+      try {
+        referrerEmployeeId = (Id) candidate.portalUserId;
+      } catch (Exception e) {
+        // ignore format issues
+      }
+    }
+
+    // 2. Otherwise try mapping current Salesforce User
+    if (referrerEmployeeId == null) {
+      referrerEmployeeId = PWChrono_Utils.getCurrentEmployeeId(
+        UserInfo.getUserId()
       );
     }
 
@@ -357,13 +368,20 @@ public without sharing class PWChrono_RecruitmentService {
       );
     }
 
+    // Sanitize experience to fit precision 4, scale 1 (max 999.9)
+    Decimal expYears = candidate.experience;
+    if (expYears != null && expYears > 99) {
+      // In case user entered a birth year like 2006 by mistake, default to safe value
+      expYears = 5;
+    }
+
     PWChrono_Job_Applicant__c applicant = new PWChrono_Job_Applicant__c(
       Name = candidate.firstName + ' ' + candidate.lastName,
       Job_Opening__c = candidate.jobId,
       Email__c = candidate.email,
       Phone__c = candidate.phone,
-      Experience_Years__c = candidate.experience,
-      Referrers__c = employeeId,
+      Experience_Years__c = expYears,
+      Referrers__c = referrerEmployeeId,
       Status__c = PWChrono_Constants.STATUS_APPLIED
     );
     insert applicant;

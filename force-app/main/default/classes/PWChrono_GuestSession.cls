@@ -96,6 +96,10 @@ public without sharing class PWChrono_GuestSession {
 
   @TestVisible
   private static void registerFailedSessionAttempt(Portal_Users__c userRecord) {
+    if (Limits.getLimitDmlStatements() == 0) {
+      return;
+    }
+
     Integer attempts = (userRecord.Session_Failed_Attempts__c == null)
       ? 0
       : Integer.valueOf(userRecord.Session_Failed_Attempts__c);
@@ -114,6 +118,10 @@ public without sharing class PWChrono_GuestSession {
 
   @TestVisible
   private static void clearSessionValidationState(Portal_Users__c userRecord) {
+    if (Limits.getLimitDmlStatements() == 0) {
+      return;
+    }
+
     if (
       userRecord.Session_Failed_Attempts__c == null &&
       userRecord.Session_Locked_Until__c == null

@@ -16,6 +16,22 @@
         </template>
 
         <template if:false={isLoading}>
+          <!-- Success Confirmation Banner -->
+          <template if:true={successMessage}>
+            <div class="alert alert-success d-flex align-items-center justify-content-between p-3 mb-4 rounded shadow-sm border border-success" role="alert">
+              <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">
+                  <i class="fa-solid fa-circle-check fs-5"></i>
+                </div>
+                <div>
+                  <h6 class="fw-bold mb-1 text-success">Offer Letter Generated Successfully!</h6>
+                  <p class="mb-0 text-dark small">{successMessage}</p>
+                </div>
+              </div>
+              <button type="button" class="btn-close ms-auto" onclick={dismissSuccessMessage} aria-label="Close"></button>
+            </div>
+          </template>
+
           <div class="row g-4">
             <!-- Form Column -->
             <div class="col-12 col-lg-5">

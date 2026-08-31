@@ -86,7 +86,7 @@ public without sharing class PWChrono_EmployeeReferralController {
   /**
    * Returns referrals. HR Admins see all; employees see only their own.
    */
-  @AuraEnabled(cacheable=true)
+  @AuraEnabled
   public static List<PWChrono_Employee_Referral__c> getReferrals(
     String statusFilter,
     String portalUserId,

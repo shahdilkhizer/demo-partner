@@ -138,7 +138,10 @@
                     label="Experience (Years)"
                     name="experience"
                     value={referral.experience}
-                    step="0.1"
+                    min="0"
+                    max="60"
+                    step="0.5"
+                    message-when-range-overflow="Experience should be in years (e.g. 5)"
                     onchange={handleFieldChange}
                     required
                   ></lightning-input>

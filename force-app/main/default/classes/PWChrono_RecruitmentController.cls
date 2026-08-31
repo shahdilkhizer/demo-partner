@@ -145,10 +145,13 @@ public without sharing class PWChrono_RecruitmentController {
       );
     } catch (Exception e) {
       PWChrono_Logger.error('An error occurred', e);
+      if (e instanceof AuraHandledException) {
+        throw e;
+      }
       AuraHandledException ahe = new AuraHandledException(
-        'Error updating applicant status: '
+        'Error updating applicant status: ' + e.getMessage()
       );
-      ahe.setMessage('Error updating applicant status: ');
+      ahe.setMessage('Error updating applicant status: ' + e.getMessage());
       throw ahe;
     }
   }
@@ -193,10 +196,13 @@ public without sharing class PWChrono_RecruitmentController {
       return PWChrono_RecruitmentService.scheduleInterview(interview);
     } catch (Exception e) {
       PWChrono_Logger.error('An error occurred', e);
+      if (e instanceof AuraHandledException) {
+        throw e;
+      }
       AuraHandledException ahe = new AuraHandledException(
-        'Error scheduling interview: '
+        'Error scheduling interview: ' + e.getMessage()
       );
-      ahe.setMessage('Error scheduling interview: ');
+      ahe.setMessage('Error scheduling interview: ' + e.getMessage());
       throw ahe;
     }
   }
@@ -217,10 +223,13 @@ public without sharing class PWChrono_RecruitmentController {
       return PWChrono_RecruitmentService.generateOfferLetter(offerLetter);
     } catch (Exception e) {
       PWChrono_Logger.error('An error occurred', e);
+      if (e instanceof AuraHandledException) {
+        throw e;
+      }
       AuraHandledException ahe = new AuraHandledException(
-        'Error generating offer letter: '
+        'Error generating offer letter: ' + e.getMessage()
       );
-      ahe.setMessage('Error generating offer letter: ');
+      ahe.setMessage('Error generating offer letter: ' + e.getMessage());
       throw ahe;
     }
   }
@@ -239,10 +248,13 @@ public without sharing class PWChrono_RecruitmentController {
       return PWChrono_RecruitmentService.getActiveDepartments();
     } catch (Exception e) {
       PWChrono_Logger.error('An error occurred', e);
+      if (e instanceof AuraHandledException) {
+        throw e;
+      }
       AuraHandledException ahe = new AuraHandledException(
-        'Error fetching departments: '
+        'Error fetching departments: ' + e.getMessage()
       );
-      ahe.setMessage('Error fetching departments: ');
+      ahe.setMessage('Error fetching departments: ' + e.getMessage());
       throw ahe;
     }
   }
@@ -261,10 +273,13 @@ public without sharing class PWChrono_RecruitmentController {
       return PWChrono_RecruitmentService.getActiveDesignations();
     } catch (Exception e) {
       PWChrono_Logger.error('An error occurred', e);
+      if (e instanceof AuraHandledException) {
+        throw e;
+      }
       AuraHandledException ahe = new AuraHandledException(
-        'Error fetching designations: '
+        'Error fetching designations: ' + e.getMessage()
       );
-      ahe.setMessage('Error fetching designations: ');
+      ahe.setMessage('Error fetching designations: ' + e.getMessage());
       throw ahe;
     }
   }
@@ -283,10 +298,13 @@ public without sharing class PWChrono_RecruitmentController {
       return PWChrono_RecruitmentService.getPotentialInterviewers();
     } catch (Exception e) {
       PWChrono_Logger.error('An error occurred', e);
+      if (e instanceof AuraHandledException) {
+        throw e;
+      }
       AuraHandledException ahe = new AuraHandledException(
-        'Error fetching interviewers: '
+        'Error fetching interviewers: ' + e.getMessage()
       );
-      ahe.setMessage('Error fetching interviewers: ');
+      ahe.setMessage('Error fetching interviewers: ' + e.getMessage());
       throw ahe;
     }
   }
@@ -324,14 +342,18 @@ public without sharing class PWChrono_RecruitmentController {
       candidate.email = email;
       candidate.phone = phone;
       candidate.experience = experience;
+      candidate.portalUserId = portalUserId;
 
       PWChrono_RecruitmentService.referCandidate(candidate);
     } catch (Exception e) {
       PWChrono_Logger.error('An error occurred', e);
+      if (e instanceof AuraHandledException) {
+        throw e;
+      }
       AuraHandledException ahe = new AuraHandledException(
-        'Error referring candidate: '
+        'Error referring candidate: ' + e.getMessage()
       );
-      ahe.setMessage('Error referring candidate: ');
+      ahe.setMessage('Error referring candidate: ' + e.getMessage());
       throw ahe;
     }
   }

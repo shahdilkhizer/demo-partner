@@ -1,5 +1,6 @@
 import { LightningElement, track, wire } from "lwc";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
+import { refreshApex } from "@salesforce/apex";
 import { CONSTANTS } from "c/pwchronoConstants";
 import getJobApplicants from "@salesforce/apex/PWChrono_RecruitmentController.getJobApplicants";
 import getActiveDesignations from "@salesforce/apex/PWChrono_RecruitmentController.getActiveDesignations";
@@ -16,6 +17,8 @@ export default class PwchronoOfferLetterGenerator extends LightningElement {
   @track designationOptions = [];
   @track isLoading = false;
 
+  _wiredApplicantsResult;
+
   @track offerDetails = {
     Job_Applicant__c: null,
     Designation__c: null,
@@ -28,6 +31,7 @@ export default class PwchronoOfferLetterGenerator extends LightningElement {
 
   selectedApplicantName = "";
   selectedDesignationName = "";
+  @track successMessage = null;
   companyName = CONSTANTS.COMPANY_NAME;
   currencyCode = CONSTANTS.CURRENCY_CODE;
 
@@ -42,13 +46,21 @@ export default class PwchronoOfferLetterGenerator extends LightningElement {
     portalUserId: "$portalUserId",
     sessionToken: "$sessionToken"
   })
-  wiredApplicants({ error, data }) {
-    if (data) {
-      this.applicantOptions = data.map((app) => ({
-        label: `${app.Applicant_Name__c} - ${app.Job_Opening__r ? app.Job_Opening__r.Job_Title__c : "General"}`,
-        value: app.Id,
-        name: app.Applicant_Name__c
-      }));
+  wiredApplicants(result) {
+    this._wiredApplicantsResult = result;
+    if (result.data) {
+      this.applicantOptions = result.data.map((app) => {
+        const applicantName = app.Name || app.Applicant_Name__c || "Candidate";
+        const jobTitle =
+          app.Job_Opening__r?.Name ||
+          app.Job_Opening__r?.Job_Title__c ||
+          "General Application";
+        return {
+          label: `${applicantName} - ${jobTitle}`,
+          value: app.Id,
+          name: applicantName
+        };
+      });
     } else if (error) {
       this.showToast("Error", "Error loading applicants", "error");
     }
@@ -104,13 +116,18 @@ export default class PwchronoOfferLetterGenerator extends LightningElement {
       portalUserId: this.portalUserId,
       sessionToken: this.sessionToken
     })
-      .then(() => {
+      .then((result) => {
+        const offerNumber = result?.Name || "OFR";
+        this.successMessage = `Offer Letter #${offerNumber} has been successfully generated & marked as "Sent". Candidate status has been automatically moved to "Offer Extended" in Candidate Pipeline.`;
         this.showToast(
           "Success",
-          "Offer letter generated and sent successfully",
+          `Offer letter #${offerNumber} generated and sent successfully`,
           "success"
         );
         this.resetForm();
+        if (this._wiredApplicantsResult) {
+          refreshApex(this._wiredApplicantsResult);
+        }
       })
       .catch((error) => {
         this.showToast("Error", error.body?.message || error.message || "Failed to generate offer", "error");
@@ -120,10 +137,15 @@ export default class PwchronoOfferLetterGenerator extends LightningElement {
       });
   }
 
+  dismissSuccessMessage() {
+    this.successMessage = null;
+  }
+
   validateForm() {
+    const root = this.template || this;
     const inputs = [
-      ...this.template.querySelectorAll("lightning-combobox"),
-      ...this.template.querySelectorAll("lightning-input")
+      ...(root.querySelectorAll ? root.querySelectorAll("lightning-combobox") : []),
+      ...(root.querySelectorAll ? root.querySelectorAll("lightning-input") : [])
     ];
     return inputs.reduce((validSoFar, inputCmp) => {
       inputCmp.reportValidity();
