@@ -1,262 +1,640 @@
-<template>
-  <div class="page-wrapper">
-    <div class="content container-fluid">
+﻿<template>
+  <div class="page-wrapper" style="margin-left: 0 !important; padding-top: 20px !important; padding-left: 20px !important; padding-right: 20px !important; min-height: 732px;">
 
-      <!-- Page Header -->
+    <!-- Start Content -->
+    <div class="content" style="padding: 0 !important;">
+
+      <!-- Breadcrumb -->
       <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
         <div class="my-auto mb-2">
-          <h2 class="mb-1">{pageTitle}</h2>
+          <h2 class="mb-1">Performance Indicator</h2>
           <nav>
             <ol class="breadcrumb mb-0">
               <li class="breadcrumb-item">
                 <a href="javascript:void(0);"><i class="ti ti-smart-home"></i></a>
               </li>
-              <li class="breadcrumb-item">{breadcrumbParent}</li>
-              <li class="breadcrumb-item active">{breadcrumbActive}</li>
+              <li class="breadcrumb-item">
+                Performance
+              </li>
+              <li class="breadcrumb-item active" aria-current="page">Performance Indicator</li>
             </ol>
           </nav>
         </div>
-        <div class="d-flex my-xl-auto right-content align-items-center flex-wrap gap-2">
-          <button
-            class="btn btn-primary d-flex align-items-center gap-2"
-            data-action="openAdd"
-            onclick={handleActionClick}
-          >
-            <i class="ti ti-circle-plus"></i>{addBtnLabel}
-          </button>
+        <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+          <div class="mb-2">
+            <button type="button" class="btn btn-primary d-flex align-items-center" onclick={openAddModal}>
+              <i class="ti ti-circle-plus me-2"></i>Add Indicator
+            </button>
+          </div>
+          <div class="head-icons ms-2">
+            <a href="javascript:void(0);" class="btn-collapse" onclick={toggleCollapse} title="Collapse" id="collapse-header">
+              <i class={collapseIcon}></i>
+            </a>
+          </div>
         </div>
       </div>
+      <!-- /Breadcrumb -->
 
-      <div class="card">
-        <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-          <h5 class="card-title mb-0">{listTitle}</h5>
-          <div class="d-flex align-items-center gap-2">
-            <div class="dropdown">
-              <button class="btn btn-white dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                <i class="ti ti-sort-ascending me-1"></i>{sortByLabel}
+      <!-- Performance Indicator list -->
+      <template if:false={isCollapsed}>
+        <div class="card shadow-sm">
+          <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+            <h5>Performance Indicator List</h5>
+            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3 position-relative">
+              <div class="dropdown">
+                <button
+                  type="button"
+                  class="dropdown-toggle btn btn-white d-inline-flex align-items-center border"
+                  onclick={toggleSortDropdown}
+                >
+                  Sort By : {currentSort}
+                </button>
+                <template if:true={isSortDropdownOpen}>
+                  <ul class="dropdown-menu dropdown-menu-end p-2 show sort-menu-custom">
+                    <li><a href="javascript:void(0);" class="dropdown-item rounded-1" data-sort="Recently Added" onclick={selectSort}>Recently Added</a></li>
+                    <li><a href="javascript:void(0);" class="dropdown-item rounded-1" data-sort="Ascending" onclick={selectSort}>Ascending</a></li>
+                    <li><a href="javascript:void(0);" class="dropdown-item rounded-1" data-sort="Descending" onclick={selectSort}>Descending</a></li>
+                    <li><a href="javascript:void(0);" class="dropdown-item rounded-1" data-sort="Last Month" onclick={selectSort}>Last Month</a></li>
+                    <li><a href="javascript:void(0);" class="dropdown-item rounded-1" data-sort="Last 7 Days" onclick={selectSort}>Last 7 Days</a></li>
+                  </ul>
+                </template>
+              </div>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="custom-datatable-filter table-responsive">
+              <div id="DataTables_Table_0_wrapper" class="dataTables_wrapper dt-bootstrap5 no-footer">
+                
+                <div class="row p-3 align-items-center justify-content-between">
+                  <div class="col-sm-12 col-md-6">
+                    <div class="dataTables_length" id="DataTables_Table_0_length">
+                      <label class="d-inline-flex align-items-center">
+                        Row Per Page
+                        <select name="DataTables_Table_0_length" class="form-select form-select-sm mx-2" onchange={handlePageSizeChange} style="width: 75px;">
+                          <option value="10">10</option>
+                          <option value="25">25</option>
+                          <option value="50">50</option>
+                          <option value="100">100</option>
+                        </select>
+                        Entries
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-sm-12 col-md-6">
+                    <div id="DataTables_Table_0_filter" class="dataTables_filter text-md-end mt-2 mt-md-0">
+                      <label class="d-inline-flex align-items-center">
+                        <input
+                          type="search"
+                          class="form-control form-control-sm"
+                          placeholder="Search"
+                          value={searchKeyword}
+                          oninput={handleSearch}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row dt-row m-0">
+                  <div class="col-sm-12 table-responsive p-0">
+                    <table class="table datatable dataTable no-footer" id="DataTables_Table_0">
+                      <thead class="thead-light">
+                        <tr>
+                          <th class="no-sort" style="width: 50px;">
+                            <div class="form-check form-check-md">
+                              <input class="form-check-input" type="checkbox" id="select-all" checked={isAllSelected} onchange={handleSelectAll} />
+                            </div>
+                          </th>
+                          <th>Designation</th>
+                          <th>Department</th>
+                          <th>Approved By</th>
+                          <th>Created Date</th>
+                          <th>Status</th>
+                          <th class="text-end" style="width: 100px;">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template for:each={displayedIndicators} for:item="ind">
+                          <tr key={ind.id} class="odd">
+                            <td>
+                              <div class="form-check form-check-md">
+                                <input class="form-check-input" type="checkbox" data-id={ind.id} checked={ind.selected} onchange={handleSelectRow} />
+                              </div>
+                            </td>
+                            <td>
+                              <div class="d-flex align-items-center file-name-icon">
+                                <div class="ms-2">
+                                  <h6 class="fw-medium mb-0">
+                                    <a href="javascript:void(0);" data-id={ind.id} onclick={openEditModal}>{ind.designation}</a>
+                                  </h6>
+                                </div>
+                              </div>
+                            </td>
+                            <td>{ind.department}</td>
+                            <td>
+                              <div class="d-flex align-items-center file-name-icon">
+                                <a href="javascript:void(0);" class="avatar avatar-md avatar-rounded">
+                                  <img src={ind.avatarUrl} class="img-fluid rounded-circle" alt="img" style="width: 38px; height: 38px; object-fit: cover;" />
+                                </a>
+                                <div class="ms-2">
+                                  <h6 class="fw-medium mb-0"><a href="javascript:void(0);">{ind.approvedByName}</a></h6>
+                                  <p class="fs-12 text-muted mb-0">{ind.approvedByRole}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td>{ind.createdDate}</td>
+                            <td>
+                              <span class="badge badge-success d-inline-flex align-items-center badge-xs">
+                                <i class="ti ti-point-filled me-1"></i>{ind.status}
+                              </span>
+                            </td>
+                            <td class="text-end">
+                              <div class="action-icon d-inline-flex">
+                                <a href="javascript:void(0);" class="me-2 text-secondary" data-id={ind.id} onclick={openEditModal} title="Edit">
+                                  <i class="ti ti-edit"></i>
+                                </a>
+                                <a href="javascript:void(0);" class="text-danger" data-id={ind.id} onclick={openDeleteModal} title="Delete">
+                                  <i class="ti ti-trash"></i>
+                                </a>
+                              </div>
+                            </td>
+                          </tr>
+                        </template>
+
+                        <template if:false={hasData}>
+                          <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">
+                              No performance indicators found
+                            </td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="row p-3 align-items-center">
+                  <div class="col-sm-12 col-md-5">
+                    <div class="dataTables_info" id="DataTables_Table_0_info" role="status" aria-live="polite">
+                      Showing 1 - {displayedCount} of {displayedCount} entries
+                    </div>
+                  </div>
+                  <div class="col-sm-12 col-md-7">
+                    <div class="dataTables_paginate paging_simple_numbers" id="DataTables_Table_0_paginate">
+                      <ul class="pagination justify-content-md-end mb-0">
+                        <li class="paginate_button page-item previous disabled">
+                          <a href="javascript:void(0);" class="page-link"><i class="ti ti-chevron-left"></i> </a>
+                        </li>
+                        <li class="paginate_button page-item active">
+                          <a href="javascript:void(0);" class="page-link">1</a>
+                        </li>
+                        <li class="paginate_button page-item next disabled">
+                          <a href="javascript:void(0);" class="page-link"><i class="ti ti-chevron-right"></i></a>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+      <!-- /Performance Indicator list -->
+
+    </div>
+    <!-- End Content -->
+
+    <!-- Add Indicator Modal -->
+    <template if:true={isAddModalOpen}>
+      <div class="modal fade show d-block modal-backdrop-custom" role="dialog" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content shadow">
+            <div class="modal-header">
+              <h4 class="modal-title">Add New Indicator</h4>
+              <button type="button" class="btn-close custom-btn-close" onclick={closeAddModal} aria-label="Close">
+                <i class="ti ti-x"></i>
               </button>
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="javascript:void(0);">Recently Added</a></li>
-                <li><a class="dropdown-item" href="javascript:void(0);">Last 7 Days</a></li>
-                <li><a class="dropdown-item" href="javascript:void(0);">Last Month</a></li>
-              </ul>
+            </div>
+            <div class="modal-body pb-0">
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <label class="form-label">Designation</label>
+                    <select class="form-select" data-field="designation" onchange={handleAddFormChange}>
+                      <option value="">Select</option>
+                      <option value="Web Designer">Web Designer</option>
+                      <option value="Web Developer">Web Developer</option>
+                      <option value="IOS Developer">IOS Developer</option>
+                      <option value="Android Developer">Android Developer</option>
+                      <option value="DevOps Engineer">DevOps Engineer</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <h5 class="fw-medium">Technical</h5>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Customer Experience</label>
+                    <select class="form-select" data-field="customerExperience" onchange={handleAddFormChange}>
+                      <option value="Select">Select</option>
+                      <option value="Advanced">Advanced</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Average">Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Marketing</label>
+                    <select class="form-select" data-field="marketing" onchange={handleAddFormChange}>
+                      <option value="Select">Select</option>
+                      <option value="Expert/Leader">Expert/Leader</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Average">Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Management</label>
+                    <select class="form-select" data-field="management" onchange={handleAddFormChange}>
+                      <option value="Select">Select</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Average">Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Administration</label>
+                    <select class="form-select" data-field="administration" onchange={handleAddFormChange}>
+                      <option value="Select">Select</option>
+                      <option value="Advanced">Advanced</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Average">Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Presentation Skills</label>
+                    <select class="form-select" data-field="presentationSkills" onchange={handleAddFormChange}>
+                      <option value="Select">Select</option>
+                      <option value="None">None</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Average">Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Quality of Work</label>
+                    <select class="form-select" data-field="qualityOfWork" onchange={handleAddFormChange}>
+                      <option value="Select">Select</option>
+                      <option value="None">None</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Average">Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Efficiency</label>
+                    <select class="form-select" data-field="efficiency" onchange={handleAddFormChange}>
+                      <option value="Select">Select</option>
+                      <option value="None">None</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Average">Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <h5 class="fw-medium">Organizational</h5>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Integrity</label>
+                    <select class="form-select" data-field="integrity" onchange={handleAddFormChange}>
+                      <option value="Select">Select</option>
+                      <option value="None">None</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Average">Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Professionalism</label>
+                    <select class="form-select" data-field="professionalism" onchange={handleAddFormChange}>
+                      <option value="Select">Select</option>
+                      <option value="Advanced">Advanced</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Average">Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Team Work</label>
+                    <select class="form-select" data-field="teamWork" onchange={handleAddFormChange}>
+                      <option value="Select">Select</option>
+                      <option value="None">None</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Average">Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Critical Thinking</label>
+                    <select class="form-select" data-field="criticalThinking" onchange={handleAddFormChange}>
+                      <option value="Select">Select</option>
+                      <option value="Advanced">Advanced</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Average">Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Conflict Management</label>
+                    <select class="form-select" data-field="conflictManagement" onchange={handleAddFormChange}>
+                      <option value="Select">Select</option>
+                      <option value="Advanced">Advanced</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Average">Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Attendance</label>
+                    <select class="form-select" data-field="attendance" onchange={handleAddFormChange}>
+                      <option value="Select">Select</option>
+                      <option value="Advanced">Advanced</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Average">Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Ability To Meet Deadline</label>
+                    <select class="form-select" data-field="abilityToMeetDeadline" onchange={handleAddFormChange}>
+                      <option value="Select">Select</option>
+                      <option value="Advanced">Advanced</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Average">Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" data-field="status" onchange={handleAddFormChange}>
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-light me-2" onclick={closeAddModal}>Cancel</button>
+              <button type="button" class="btn btn-primary" onclick={saveNewIndicator}>Add Indicator</button>
             </div>
           </div>
         </div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-              <thead class="table-light">
-                <tr>
-                  <th style="width: 36px;">
-                    <input type="checkbox" class="form-check-input" />
-                  </th>
-                  <th>{colName}</th>
-                  <th>{colDesignation}</th>
-                  <th>{colDepartment}</th>
-                  <th>{colAppraisalDate}</th>
-                  <th>{colStatus}</th>
-                  <th class="text-end">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <template for:each={appraisalData} for:item="row">
-                  <tr key={row.id}>
-                    <td><input type="checkbox" class="form-check-input" /></td>
-                    <td>
-                      <div class="d-flex align-items-center gap-2">
-                        <span class="avatar avatar-md avatar-rounded bg-primary flex-shrink-0">
-                          <span class="fw-semibold text-white">{row.initials}</span>
-                        </span>
-                        <h6 class="fw-medium mb-0">{row.name}</h6>
-                      </div>
-                    </td>
-                    <td class="text-muted">{row.designation}</td>
-                    <td class="text-muted">{row.department}</td>
-                    <td class="text-muted">{row.appraisalDate}</td>
-                    <td>
-                      <span class={row.statusClass}>
-                        <i class="ti ti-point-filled me-1"></i>{row.status}
-                      </span>
-                    </td>
-                    <td class="text-end">
-                      <div class="d-inline-flex gap-2">
-                        <button
-                          class="btn btn-sm btn-outline-secondary"
-                          data-id={row.id}
-                          data-action="edit"
-                          onclick={handleActionClick}
-                          title="Edit"
-                        >
-                          <i class="ti ti-edit"></i>
-                        </button>
-                        <button
-                          class="btn btn-sm btn-outline-danger"
-                          data-id={row.id}
-                          data-action="delete"
-                          onclick={handleActionClick}
-                          title="Delete"
-                        >
-                          <i class="ti ti-trash"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </template>
-                <template if:false={hasData}>
-                  <tr>
-                    <td colspan="7" class="text-center py-5 text-muted">
-                      <i class="ti ti-file-off fs-1 d-block mb-2"></i>
-                      No appraisal records found
-                    </td>
-                  </tr>
-                </template>
-              </tbody>
-            </table>
+      </div>
+    </template>
+    <!-- /Add Indicator Modal -->
+
+    <!-- Edit Indicator Modal -->
+    <template if:true={isEditModalOpen}>
+      <div class="modal fade show d-block modal-backdrop-custom" role="dialog" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content shadow">
+            <div class="modal-header">
+              <h4 class="modal-title">Edit New Indicator</h4>
+              <button type="button" class="btn-close custom-btn-close" onclick={closeEditModal} aria-label="Close">
+                <i class="ti ti-x"></i>
+              </button>
+            </div>
+            <div class="modal-body pb-0">
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <label class="form-label">Designation</label>
+                    <select class="form-select" data-field="designation" onchange={handleEditFormChange}>
+                      <template for:each={designationOptions} for:item="opt">
+                        <option key={opt.value} value={opt.value} selected={opt.selected}>{opt.label}</option>
+                      </template>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <h5 class="fw-medium">Technical</h5>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Customer Experience</label>
+                    <select class="form-select" data-field="customerExperience" onchange={handleEditFormChange}>
+                      <option value="Advanced" selected={isCustExpAdv}>Advanced</option>
+                      <option value="Intermediate" selected={isCustExpInt}>Intermediate</option>
+                      <option value="Average" selected={isCustExpAvg}>Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Marketing</label>
+                    <select class="form-select" data-field="marketing" onchange={handleEditFormChange}>
+                      <option value="Expert/Leader" selected={isMktgExp}>Expert/Leader</option>
+                      <option value="Intermediate" selected={isMktgInt}>Intermediate</option>
+                      <option value="Average" selected={isMktgAvg}>Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Management</label>
+                    <select class="form-select" data-field="management" onchange={handleEditFormChange}>
+                      <option value="Intermediate" selected={isMgmtInt}>Intermediate</option>
+                      <option value="Medium" selected={isMgmtMed}>Medium</option>
+                      <option value="Average" selected={isMgmtAvg}>Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Administration</label>
+                    <select class="form-select" data-field="administration" onchange={handleEditFormChange}>
+                      <option value="Advanced" selected={isAdminAdv}>Advanced</option>
+                      <option value="Intermediate" selected={isAdminInt}>Intermediate</option>
+                      <option value="Average" selected={isAdminAvg}>Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Presentation Skills</label>
+                    <select class="form-select" data-field="presentationSkills" onchange={handleEditFormChange}>
+                      <option value="None" selected={isPresNone}>None</option>
+                      <option value="Intermediate" selected={isPresInt}>Intermediate</option>
+                      <option value="Average" selected={isPresAvg}>Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Quality of Work</label>
+                    <select class="form-select" data-field="qualityOfWork" onchange={handleEditFormChange}>
+                      <option value="None" selected={isQualityNone}>None</option>
+                      <option value="Intermediate" selected={isQualityInt}>Intermediate</option>
+                      <option value="Average" selected={isQualityAvg}>Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Efficiency</label>
+                    <select class="form-select" data-field="efficiency" onchange={handleEditFormChange}>
+                      <option value="None" selected={isEffNone}>None</option>
+                      <option value="Intermediate" selected={isEffInt}>Intermediate</option>
+                      <option value="Average" selected={isEffAvg}>Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <h5 class="fw-medium">Organizational</h5>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Integrity</label>
+                    <select class="form-select" data-field="integrity" onchange={handleEditFormChange}>
+                      <option value="None" selected={isIntegNone}>None</option>
+                      <option value="Intermediate" selected={isIntegInt}>Intermediate</option>
+                      <option value="Average" selected={isIntegAvg}>Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Professionalism</label>
+                    <select class="form-select" data-field="professionalism" onchange={handleEditFormChange}>
+                      <option value="Advanced" selected={isProfAdv}>Advanced</option>
+                      <option value="Intermediate" selected={isProfInt}>Intermediate</option>
+                      <option value="Average" selected={isProfAvg}>Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Team Work</label>
+                    <select class="form-select" data-field="teamWork" onchange={handleEditFormChange}>
+                      <option value="None" selected={isTeamNone}>None</option>
+                      <option value="Intermediate" selected={isTeamInt}>Intermediate</option>
+                      <option value="Average" selected={isTeamAvg}>Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Critical Thinking</label>
+                    <select class="form-select" data-field="criticalThinking" onchange={handleEditFormChange}>
+                      <option value="Advanced" selected={isCritAdv}>Advanced</option>
+                      <option value="Intermediate" selected={isCritInt}>Intermediate</option>
+                      <option value="Average" selected={isCritAvg}>Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Conflict Management</label>
+                    <select class="form-select" data-field="conflictManagement" onchange={handleEditFormChange}>
+                      <option value="Advanced" selected={isConfAdv}>Advanced</option>
+                      <option value="Intermediate" selected={isConfInt}>Intermediate</option>
+                      <option value="Average" selected={isConfAvg}>Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Attendance</label>
+                    <select class="form-select" data-field="attendance" onchange={handleEditFormChange}>
+                      <option value="Advanced" selected={isAttAdv}>Advanced</option>
+                      <option value="Intermediate" selected={isAttInt}>Intermediate</option>
+                      <option value="Average" selected={isAttAvg}>Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="mb-3">
+                    <label class="form-label">Ability To Meet Deadline</label>
+                    <select class="form-select" data-field="abilityToMeetDeadline" onchange={handleEditFormChange}>
+                      <option value="Advanced" selected={isDeadAdv}>Advanced</option>
+                      <option value="Intermediate" selected={isDeadInt}>Intermediate</option>
+                      <option value="Average" selected={isDeadAvg}>Average</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" data-field="status" onchange={handleEditFormChange}>
+                      <option value="Active" selected={isEditActive}>Active</option>
+                      <option value="Inactive" selected={isEditInactive}>Inactive</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-light me-2" onclick={closeEditModal}>Cancel</button>
+              <button type="button" class="btn btn-primary" onclick={saveEditIndicator}>Save Changes</button>
+            </div>
           </div>
         </div>
       </div>
+    </template>
+    <!-- /Edit Indicator Modal -->
 
-    </div>
+    <!-- Delete Modal -->
+    <template if:true={isDeleteModalOpen}>
+      <div class="modal fade show d-block modal-backdrop-custom" role="dialog" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content shadow">
+            <div class="modal-body text-center p-4">
+              <span class="avatar avatar-xl text-danger mb-3 d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 65px; height: 65px; background: rgba(235, 87, 87, 0.12); margin: 0 auto;">
+                <i class="ti ti-trash-x" style="font-size: 36px; color: #e03131;"></i>
+              </span>
+              <h4 class="mb-1 fw-bold">Confirm Delete</h4>
+              <p class="mb-4 text-muted">You want to delete all the marked items, this cant be undone once you delete.</p>
+              <div class="d-flex justify-content-center">
+                <button type="button" class="btn btn-light me-3 px-4" onclick={closeDeleteModal}>Cancel</button>
+                <button type="button" class="btn btn-danger px-4" onclick={confirmDelete}>Yes, Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+    <!-- /Delete Modal -->
+
   </div>
-
-  <!-- Add / Edit Modal -->
-  <template lwc:if={isModalOpen}>
-    <div
-      class="modal custom-modal fade show d-block"
-      role="dialog"
-      style="background: rgba(0, 0, 0, 0.6); z-index: 1050;"
-    >
-      <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h4 class="modal-title">
-              <i class="ti ti-trending-up me-2"></i>{addBtnLabel}
-            </h4>
-            <button
-              type="button"
-              class="btn-close"
-              data-action="closeModal"
-              onclick={handleActionClick}
-            ></button>
-          </div>
-          <div class="modal-body">
-
-            <!-- Basic Info -->
-            <div class="row g-3 mb-4">
-              <div class="col-12 col-md-6">
-                <label class="form-label fw-medium">Employee <span class="text-danger">*</span></label>
-                <select class="form-select" name="employee" onchange={handleFieldChange}>
-                  <option value="">Select Employee</option>
-                  <template for:each={appraisalData} for:item="emp">
-                    <option key={emp.id} value={emp.id}>{emp.name}</option>
-                  </template>
-                </select>
-              </div>
-              <div class="col-12 col-md-6">
-                <label class="form-label fw-medium">Appraisal Date <span class="text-danger">*</span></label>
-                <input type="date" class="form-control" name="appraisalDate" onchange={handleFieldChange} />
-              </div>
-            </div>
-
-            <!-- Technical Competencies -->
-            <div class="mb-4">
-              <h6 class="fw-semibold mb-3 d-flex align-items-center gap-2">
-                <i class="ti ti-code text-primary"></i>Technical Competencies
-              </h6>
-              <div class="table-responsive">
-                <table class="table table-bordered align-middle mb-0">
-                  <thead class="table-light">
-                    <tr>
-                      <th>Competency</th>
-                      <th style="width: 160px;">Expected Level</th>
-                      <th style="width: 180px;">Assessed Level</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <template for:each={technicalCompetencies} for:item="comp">
-                      <tr key={comp.key}>
-                        <td class="fw-medium">{comp.label}</td>
-                        <td>
-                          <span class="badge bg-soft-primary text-primary">{comp.expected}</span>
-                        </td>
-                        <td>
-                          <select class="form-select form-select-sm" data-key={comp.key} onchange={handleRatingChange}>
-                            <option value="">Select</option>
-                            <option value="Beginner">Beginner</option>
-                            <option value="Intermediate">Intermediate</option>
-                            <option value="Advanced">Advanced</option>
-                            <option value="Expert">Expert</option>
-                            <option value="Leader">Leader</option>
-                          </select>
-                        </td>
-                      </tr>
-                    </template>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Organisational Competencies -->
-            <div class="mb-2">
-              <h6 class="fw-semibold mb-3 d-flex align-items-center gap-2">
-                <i class="ti ti-users text-success"></i>Organisational Competencies
-              </h6>
-              <div class="table-responsive">
-                <table class="table table-bordered align-middle mb-0">
-                  <thead class="table-light">
-                    <tr>
-                      <th>Competency</th>
-                      <th style="width: 160px;">Expected Level</th>
-                      <th style="width: 180px;">Assessed Level</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <template for:each={organisationalCompetencies} for:item="comp">
-                      <tr key={comp.key}>
-                        <td class="fw-medium">{comp.label}</td>
-                        <td>
-                          <span class="badge bg-soft-success text-success">{comp.expected}</span>
-                        </td>
-                        <td>
-                          <select class="form-select form-select-sm" data-key={comp.key} onchange={handleRatingChange}>
-                            <option value="">Select</option>
-                            <option value="Beginner">Beginner</option>
-                            <option value="Intermediate">Intermediate</option>
-                            <option value="Advanced">Advanced</option>
-                            <option value="Expert">Expert</option>
-                            <option value="Leader">Leader</option>
-                          </select>
-                        </td>
-                      </tr>
-                    </template>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-          </div>
-          <div class="modal-footer">
-            <button
-              class="btn btn-light"
-              data-action="closeModal"
-              onclick={handleActionClick}
-            >
-              <i class="ti ti-x me-1"></i>Cancel
-            </button>
-            <button
-              class="btn btn-primary"
-              data-action="saveModal"
-              onclick={handleActionClick}
-              disabled={isSaving}
-            >
-              <i class="ti ti-device-floppy me-1"></i>
-              <template if:true={isSaving}>Saving...</template>
-              <template if:false={isSaving}>Save Appraisal</template>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </template>
 </template>
+
+
+

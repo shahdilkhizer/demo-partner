@@ -1,0 +1,146 @@
+﻿export const INITIAL_NOTICE_RECORDS = [
+    {
+        "id":  "emp-001",
+        "empId":  "Emp-001",
+        "name":  "Anthony Lewis",
+        "img":  "user-11.jpg",
+        "designation":  "Accountant",
+        "startDate":  "14 Jun 2025",
+        "endDate":  "12 Sep 2025",
+        "totalDays":  "90",
+        "completedDays":  "60",
+        "remainingDays":  "30",
+        "status":  "Active"
+    },
+    {
+        "id":  "emp-002",
+        "empId":  "Emp-002",
+        "name":  "Brian Villalobos",
+        "img":  "user-12.jpg",
+        "designation":  "App Developer",
+        "startDate":  "25 May 2025",
+        "endDate":  "24 Jul 2025",
+        "totalDays":  "60",
+        "completedDays":  "60",
+        "remainingDays":  "0",
+        "status":  "Completed"
+    },
+    {
+        "id":  "emp-003",
+        "empId":  "Emp-003",
+        "name":  "Harvey Smith",
+        "img":  "user-13.jpg",
+        "designation":  "Technician",
+        "startDate":  "10 May 2025",
+        "endDate":  "08 Aug 2025",
+        "totalDays":  "90",
+        "completedDays":  "90",
+        "remainingDays":  "0",
+        "status":  "Closing Soon"
+    },
+    {
+        "id":  "emp-004",
+        "empId":  "Emp-004",
+        "name":  "Stephan Peralt",
+        "img":  "user-14.jpg",
+        "designation":  "Web Developer",
+        "startDate":  "28 Apr 2025",
+        "endDate":  "27 Jul 2025",
+        "totalDays":  "90",
+        "completedDays":  "90",
+        "remainingDays":  "0",
+        "status":  "Completed"
+    },
+    {
+        "id":  "emp-005",
+        "empId":  "Emp-005",
+        "name":  "Doglas Martini",
+        "img":  "user-15.jpg",
+        "designation":  "Sales Executive Officer",
+        "startDate":  "15 Apr 2025",
+        "endDate":  "14 Jun 2025",
+        "totalDays":  "60",
+        "completedDays":  "60",
+        "remainingDays":  "60",
+        "status":  "Closing Soon"
+    },
+    {
+        "id":  "emp-006",
+        "empId":  "Emp-006",
+        "name":  "Linda Ray",
+        "img":  "user-16.jpg",
+        "designation":  "Designer",
+        "startDate":  "20 Mar 2025",
+        "endDate":  "18 Jun 2025",
+        "totalDays":  "90",
+        "completedDays":  "90",
+        "remainingDays":  "90",
+        "status":  "Completed"
+    },
+    {
+        "id":  "emp-007",
+        "empId":  "Emp-007",
+        "name":  "Elliot Murray",
+        "img":  "user-17.jpg",
+        "designation":  "Account Manager",
+        "startDate":  "10 Mar 2025",
+        "endDate":  "08 Jun 2025",
+        "totalDays":  "90",
+        "completedDays":  "90",
+        "remainingDays":  "90",
+        "status":  "Active"
+    },
+    {
+        "id":  "emp-008",
+        "empId":  "Emp-008",
+        "name":  "Rebecca Smtih",
+        "img":  "user-18.jpg",
+        "designation":  "SEO Analyst",
+        "startDate":  "17 Feb 2025",
+        "endDate":  "18 Apr 2025",
+        "totalDays":  "60",
+        "completedDays":  "60",
+        "remainingDays":  "60",
+        "status":  "Closing Soon"
+    },
+    {
+        "id":  "emp-009",
+        "empId":  "Emp-009",
+        "name":  "Connie Waters",
+        "img":  "user-19.jpg",
+        "designation":  "Admin",
+        "startDate":  "02 Feb 2025",
+        "endDate":  "03 Apr 2025",
+        "totalDays":  "60",
+        "completedDays":  "60",
+        "remainingDays":  "60",
+        "status":  "Active"
+    },
+    {
+        "id":  "emp-010",
+        "empId":  "Emp-010",
+        "name":  "Lori Broaddus",
+        "img":  "user-20.jpg",
+        "designation":  "Business Analyst",
+        "startDate":  "24 Jan 2025",
+        "endDate":  "24 Apr 2025",
+        "totalDays":  "90",
+        "completedDays":  "90",
+        "remainingDays":  "90",
+        "status":  "Completed"
+    }
+]
+;
+
+export const DESIGNATION_OPTIONS = [
+  "Accountant",
+  "App Developer",
+  "Technician",
+  "Web Developer",
+  "Sales Executive Officer",
+  "Designer",
+  "Account Manager",
+  "SEO Analyst",
+  "Admin",
+  "Business Analyst"
+];

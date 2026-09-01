@@ -1,23 +1,125 @@
-.employee-card {
-  position: relative;
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
+.employee-grid-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 8px;
 }
 
-.employee-card:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
+.employee-grid-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
 }
 
-.emp-card-overlay {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  border: none;
-  background: transparent;
+.badge-soft-purple {
+  background-color: rgba(139, 92, 246, 0.12);
+  color: #8b5cf6;
+}
+
+.badge-soft-primary {
+  background-color: rgba(30, 169, 137, 0.12);
+  color: #1ea989;
+}
+
+.badge-soft-dark {
+  background-color: rgba(33, 37, 41, 0.1);
+  color: #212529;
+}
+
+.badge-soft-secondary {
+  background-color: rgba(108, 117, 125, 0.12);
+  color: #6c757d;
+}
+
+.bg-purple {
+  background-color: #8b5cf6 !important;
+}
+
+.bg-pink-transparent {
+  background-color: rgba(236, 72, 153, 0.12);
+}
+
+.text-pink {
+  color: #ec4899 !important;
+}
+
+.cursor-pointer {
   cursor: pointer;
-  z-index: 1;
-  padding: 0;
-  margin: 0;
+}
+
+.avatar-rounded {
+  border-radius: 50% !important;
+}
+
+.icon-list button.active {
+  background-color: #ff5e3a !important;
+  color: #ffffff !important;
+  border-color: #ff5e3a !important;
+}
+
+.nav-pills .nav-link.active {
+  background-color: #ff5e3a !important;
+  color: #ffffff !important;
+}
+
+.btn-primary {
+  background-color: #ff5e3a !important;
+  border-color: #ff5e3a !important;
+}
+
+.btn-primary:hover {
+  background-color: #e04b28 !important;
+  border-color: #e04b28 !important;
+}
+
+/* SmartHR Detail View Profile Card Banner */
+.card-bg-banner {
+  height: 90px;
+  border-radius: 8px 8px 0 0;
+  background-size: cover;
+  background-position: top center;
+  background-repeat: no-repeat;
+  width: 100%;
+}
+
+.profile-avatar-wrap {
+  margin-top: -45px;
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.profile-avatar-img {
+  width: 76px;
+  height: 76px;
+  border-radius: 50% !important;
+  border: 3px solid #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  object-fit: cover;
+}
+
+/* Accordions and Collapsible Cards */
+.collapsible-card-header {
+  cursor: pointer;
+  user-select: none;
+  background-color: #ffffff;
+}
+
+.collapsible-card-header:hover {
+  background-color: #f8fafc;
+}
+
+.collapse-arrow {
+  color: #64748b;
+  transition: transform 0.2s ease;
+}
+
+.custom-btn-close {
+  background: transparent;
+  border: 0;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.custom-btn-close:hover {
+  color: #0f172a;
 }

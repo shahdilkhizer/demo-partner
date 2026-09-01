@@ -1,168 +1,1421 @@
-<template>
-  <div class="page-wrapper">
-    <div class="content container-fluid">
+<template lwc:render-mode="light">
+  <div class="page-wrapper" style="min-height: 900px;">
+    <div class="content">
 
-      <!-- Page Header -->
-      <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
-        <div class="my-auto mb-2">
-          <h2 class="mb-1">Employee Directory</h2>
-          <nav>
-            <ol class="breadcrumb mb-0">
-              <li class="breadcrumb-item">
-                <a href="javascript:void(0);"><i class="ti ti-smart-home"></i></a>
-              </li>
-              <li class="breadcrumb-item active">Employee Directory</li>
-            </ol>
-          </nav>
-        </div>
-        <div class="d-flex my-xl-auto right-content align-items-center gap-2">
-          <div class="input-group input-group-sm" style="width: 260px;">
-            <span class="input-group-text bg-white">
-              <i class="ti ti-search text-muted"></i>
-            </span>
-            <lightning-input
-              type="search"
-              placeholder="Search employees..."
-              onchange={handleSearch}
-              variant="label-hidden"
-              class="flex-fill"
-            ></lightning-input>
+      <!-- ========================================================================= -->
+      <!-- TOP BREADCRUMB & ACTIONS                                                  -->
+      <!-- ========================================================================= -->
+      <template if:false={isDetailView}>
+        <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
+          <div class="my-auto mb-2">
+            <h2 class="mb-1">{headerTitle}</h2>
+            <nav>
+              <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                  <a href="javascript:void(0);"><i class="fa-solid fa-house"></i></a>
+                </li>
+                <li class="breadcrumb-item">Employees</li>
+                <li class="breadcrumb-item active" aria-current="page">{headerTitle}</li>
+              </ol>
+            </nav>
           </div>
-        </div>
-      </div>
-
-      <!-- Loading -->
-      <template if:true={isLoading}>
-        <div class="d-flex align-items-center justify-content-center p-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
+          <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+            <!-- View Switch Toggle (List vs Grid) -->
+            <div class="me-2 mb-2">
+              <div class="d-flex align-items-center border bg-white rounded p-1 me-2 icon-list">
+                <button type="button" class={listBtnClass} onclick={switchToList} title="List View">
+                  <i class="fa-solid fa-list-ul"></i>
+                </button>
+                <button type="button" class={gridBtnClass} onclick={switchToGrid} title="Grid View">
+                  <i class="fa-solid fa-table-cells-large"></i>
+                </button>
+              </div>
+            </div>
+            <!-- Export Dropdown -->
+            <div class="me-2 mb-2">
+              <div class="dropdown">
+                <button type="button" class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                  <i class="fa-solid fa-file-export me-1"></i>Export
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end p-3">
+                  <li>
+                    <a href="javascript:void(0);" class="dropdown-item rounded-1"><i class="fa-solid fa-file-pdf me-2 text-danger"></i>Export as PDF</a>
+                  </li>
+                  <li>
+                    <a href="javascript:void(0);" class="dropdown-item rounded-1"><i class="fa-solid fa-file-excel me-2 text-success"></i>Export as Excel</a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <!-- Add Employee Button -->
+            <div class="mb-2">
+              <button type="button" class="btn btn-primary d-flex align-items-center" onclick={handleOpenAddModal}>
+                <i class="fa-solid fa-circle-plus me-2"></i>Add Employee
+              </button>
+            </div>
           </div>
         </div>
       </template>
 
-      <!-- Error -->
-      <template if:true={loadError}>
-        <div class="alert alert-danger d-flex align-items-center gap-3" role="alert">
-          <i class="ti ti-alert-circle fs-4 flex-shrink-0"></i>
-          <div>
-            <strong>Error loading employees</strong>
-            <p class="mb-0 small">{loadError}</p>
+      <!-- DETAIL VIEW BREADCRUMB -->
+      <template if:true={isDetailView}>
+        <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
+          <div class="my-auto mb-2">
+            <h6 class="fw-medium d-inline-flex align-items-center mb-3 mb-sm-0">
+              <a href="javascript:void(0);" onclick={handleBackToList} class="text-dark d-inline-flex align-items-center text-decoration-none">
+                <i class="fa-solid fa-arrow-left me-2"></i>Employee Details
+              </a>
+            </h6>
+          </div>
+          <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+            <div class="mb-2">
+              <button type="button" class="btn btn-primary d-flex align-items-center" onclick={handleOpenBankModal}>
+                <i class="fa-solid fa-circle-plus me-2"></i>Bank &amp; Statutory
+              </button>
+            </div>
           </div>
         </div>
       </template>
 
-      <template if:true={employees}>
-        <template if:true={employees.length}>
-
-          <!-- Results info + page size -->
-          <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-            <p class="mb-0 text-muted small">
-              Showing <strong>{pageInfo}</strong> of <strong>{totalCount}</strong> employees
-            </p>
-            <lightning-combobox
-              value={pageSize}
-              options={pageSizeOptions}
-              onchange={handlePageSizeChange}
-              variant="label-hidden"
-            ></lightning-combobox>
-          </div>
-
-          <!-- Employee Grid -->
-          <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-4">
-            <template for:each={employees} for:item="emp">
-              <div key={emp.Id} class="col">
-                <div class="card h-100 employee-card">
-                  <button
-                    type="button"
-                    class="emp-card-overlay"
-                    onclick={handleNavigate}
-                    data-id={emp.Id}
-                  >
-                    <span class="visually-hidden">View {emp.Name}</span>
-                  </button>
-
-                  <!-- Card header / avatar section -->
-                  <div class="card-header text-center pb-3 pt-4 bg-light border-bottom">
-                    <span class="avatar avatar-xl avatar-rounded bg-primary mx-auto mb-2">
-                      <span class="fw-bold fs-4">{emp.initials}</span>
+      <!-- ========================================================================= -->
+      <!-- TOP METRIC CARDS (Shown on List & Grid Views)                             -->
+      <!-- ========================================================================= -->
+      <template if:false={isDetailView}>
+        <div class="row mb-3">
+          <!-- Total Employee -->
+          <div class="col-lg-3 col-md-6 d-flex">
+            <div class="card flex-fill shadow-sm border-0">
+              <div class="card-body d-flex align-items-center justify-content-between p-3">
+                <div class="d-flex align-items-center overflow-hidden">
+                  <div>
+                    <span class="avatar avatar-lg bg-dark text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                      <i class="fa-solid fa-users fs-5"></i>
                     </span>
-                    <h6 class="mb-0 text-truncate" title={emp.Name}>{emp.Name}</h6>
-                    <span class="badge bg-soft-primary text-primary mt-1">{emp.Designation__c}</span>
                   </div>
+                  <div class="ms-3 overflow-hidden">
+                    <p class="fs-12 fw-medium mb-1 text-muted text-truncate">Total Employee</p>
+                    <h4 class="mb-0 fw-bold">{metrics.total}</h4>
+                  </div>
+                </div>
+                <div>
+                  <span class="badge badge-soft-purple badge-sm fw-normal">
+                    <i class="fa-solid fa-arrow-trend-up"></i> +19.01%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-                  <!-- Card body / details -->
-                  <div class="card-body p-3">
-                    <ul class="list-unstyled mb-0 small">
-                      <li class="d-flex align-items-start gap-2 mb-2">
-                        <i class="ti ti-building text-muted mt-1 flex-shrink-0"></i>
-                        <div>
-                          <span class="text-muted d-block" style="font-size: 10px; text-transform: uppercase; letter-spacing: .5px;">Department</span>
-                          <span class="text-truncate d-block" title={emp.Department__c}>{emp.Department__c}</span>
+          <!-- Active -->
+          <div class="col-lg-3 col-md-6 d-flex">
+            <div class="card flex-fill shadow-sm border-0">
+              <div class="card-body d-flex align-items-center justify-content-between p-3">
+                <div class="d-flex align-items-center overflow-hidden">
+                  <div>
+                    <span class="avatar avatar-lg bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                      <i class="fa-solid fa-user-check fs-5"></i>
+                    </span>
+                  </div>
+                  <div class="ms-3 overflow-hidden">
+                    <p class="fs-12 fw-medium mb-1 text-muted text-truncate">Active</p>
+                    <h4 class="mb-0 fw-bold text-success">{metrics.active}</h4>
+                  </div>
+                </div>
+                <div>
+                  <span class="badge badge-soft-primary badge-sm fw-normal">
+                    <i class="fa-solid fa-arrow-trend-up"></i> +19.01%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- InActive -->
+          <div class="col-lg-3 col-md-6 d-flex">
+            <div class="card flex-fill shadow-sm border-0">
+              <div class="card-body d-flex align-items-center justify-content-between p-3">
+                <div class="d-flex align-items-center overflow-hidden">
+                  <div>
+                    <span class="avatar avatar-lg bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                      <i class="fa-solid fa-user-xmark fs-5"></i>
+                    </span>
+                  </div>
+                  <div class="ms-3 overflow-hidden">
+                    <p class="fs-12 fw-medium mb-1 text-muted text-truncate">InActive</p>
+                    <h4 class="mb-0 fw-bold text-danger">{metrics.inactive}</h4>
+                  </div>
+                </div>
+                <div>
+                  <span class="badge badge-soft-dark badge-sm fw-normal">
+                    <i class="fa-solid fa-arrow-trend-up"></i> +19.01%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- New Joiners -->
+          <div class="col-lg-3 col-md-6 d-flex">
+            <div class="card flex-fill shadow-sm border-0">
+              <div class="card-body d-flex align-items-center justify-content-between p-3">
+                <div class="d-flex align-items-center overflow-hidden">
+                  <div>
+                    <span class="avatar avatar-lg bg-info text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                      <i class="fa-solid fa-user-plus fs-5"></i>
+                    </span>
+                  </div>
+                  <div class="ms-3 overflow-hidden">
+                    <p class="fs-12 fw-medium mb-1 text-muted text-truncate">New Joiners</p>
+                    <h4 class="mb-0 fw-bold text-info">{metrics.newJoiners}</h4>
+                  </div>
+                </div>
+                <div>
+                  <span class="badge badge-soft-secondary badge-sm fw-normal">
+                    <i class="fa-solid fa-arrow-trend-up"></i> +19.01%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ========================================================================= -->
+      <!-- VIEW 1: EMPLOYEE LIST VIEW (Images 1 & 2)                                 -->
+      <!-- ========================================================================= -->
+      <template if:true={isListView}>
+        <div class="card shadow-sm border-0">
+          <!-- Filter Header -->
+          <div class="card-header bg-white d-flex align-items-center justify-content-between flex-wrap row-gap-3 py-3 border-bottom">
+            <h5 class="mb-0 fw-bold">Plan List</h5>
+            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-2">
+              <!-- Date Range Display -->
+              <div class="me-3">
+                <div class="input-icon position-relative">
+                  <span class="input-icon-addon">
+                    <i class="fa-regular fa-calendar text-muted"></i>
+                  </span>
+                  <input type="text" class="form-control form-control-sm date-range" style="width: 220px;" value="08/26/2026 - 09/01/2026" readonly>
+                </div>
+              </div>
+              <!-- Designation Filter -->
+              <div class="me-3">
+                <select class="form-select form-select-sm" onchange={handleDesignationChange} style="width: 150px;">
+                  <template for:each={designationOptions} for:item="opt">
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  </template>
+                </select>
+              </div>
+              <!-- Status Filter -->
+              <div class="me-3">
+                <select class="form-select form-select-sm" onchange={handleStatusChange} style="width: 140px;">
+                  <template for:each={statusOptions} for:item="opt">
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  </template>
+                </select>
+              </div>
+              <!-- Sort Filter -->
+              <div>
+                <select class="form-select form-select-sm" onchange={handleSortChange} style="width: 160px;">
+                  <template for:each={sortOptions} for:item="opt">
+                    <option key={opt.value} value={opt.value}>Sort By : {opt.label}</option>
+                  </template>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table Controls: Rows per page & Live Search -->
+          <div class="card-body p-0">
+            <div class="p-3 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <label class="mb-0 fs-13 text-muted">Row Per Page</label>
+                <select class="form-select form-select-sm" style="width: 80px;" onchange={handlePageSizeChange}>
+                  <template for:each={pageSizeOptions} for:item="opt">
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  </template>
+                </select>
+                <span class="fs-13 text-muted">Entries</span>
+              </div>
+              <div style="width: 250px;">
+                <input type="search" class="form-control form-control-sm" placeholder="Search..." oninput={handleSearch}>
+              </div>
+            </div>
+
+            <!-- Loading Spinner -->
+            <template if:true={isLoading}>
+              <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            </template>
+
+            <!-- Table -->
+            <template if:false={isLoading}>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 datatable">
+                  <thead class="thead-light bg-light">
+                    <tr>
+                      <th style="width: 40px;" class="ps-3">
+                        <div class="form-check form-check-md">
+                          <input class="form-check-input" type="checkbox" onchange={handleSelectAll} checked={selectAllChecked}>
                         </div>
-                      </li>
-                      <li class="d-flex align-items-start gap-2 mb-2">
-                        <i class="ti ti-mail text-muted mt-1 flex-shrink-0"></i>
-                        <div class="min-w-0">
-                          <span class="text-muted d-block" style="font-size: 10px; text-transform: uppercase; letter-spacing: .5px;">Email</span>
-                          <lightning-formatted-email value={emp.Email__c}></lightning-formatted-email>
-                        </div>
-                      </li>
-                      <li class="d-flex align-items-start gap-2 mb-2">
-                        <i class="ti ti-phone text-muted mt-1 flex-shrink-0"></i>
-                        <div>
-                          <span class="text-muted d-block" style="font-size: 10px; text-transform: uppercase; letter-spacing: .5px;">Phone</span>
-                          <lightning-formatted-phone value={emp.Phone__c}></lightning-formatted-phone>
-                        </div>
-                      </li>
-                      <template if:true={emp.managerName}>
-                        <li class="d-flex align-items-start gap-2">
-                          <i class="ti ti-user text-muted mt-1 flex-shrink-0"></i>
-                          <div>
-                            <span class="text-muted d-block" style="font-size: 10px; text-transform: uppercase; letter-spacing: .5px;">Manager</span>
-                            <span class="text-truncate d-block" title={emp.managerName}>{emp.managerName}</span>
+                      </th>
+                      <th>Emp ID</th>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Phone</th>
+                      <th>Designation</th>
+                      <th>Joining Date</th>
+                      <th>Status</th>
+                      <th class="text-end pe-3">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template for:each={displayedEmployees} for:item="emp">
+                      <tr key={emp.id} class="cursor-pointer" data-id={emp.id} onclick={handleSelectEmployee}>
+                        <td class="ps-3" onclick={handleStopPropagation}>
+                          <div class="form-check form-check-md">
+                            <input class="form-check-input" type="checkbox" data-id={emp.id} onchange={handleSelectRow}>
                           </div>
-                        </li>
-                      </template>
-                    </ul>
+                        </td>
+                        <td>
+                          <a href="javascript:void(0);" data-id={emp.id} onclick={handleSelectEmployee} class="fw-medium text-primary text-decoration-none">
+                            {emp.empId}
+                          </a>
+                        </td>
+                        <td>
+                          <div class="d-flex align-items-center">
+                            <a href="javascript:void(0);" data-id={emp.id} onclick={handleSelectEmployee} class="avatar avatar-md me-2 flex-shrink-0">
+                              <img src={displayAvatarUrl} class="img-fluid rounded-circle" alt="img" style="width: 38px; height: 38px; object-fit: cover;" onerror={handleImageError}>
+                            </a>
+                            <div>
+                              <p class="text-dark fw-medium mb-0">
+                                <a href="javascript:void(0);" data-id={emp.id} onclick={handleSelectEmployee} class="text-dark text-decoration-none">
+                                  {emp.name}
+                                </a>
+                              </p>
+                              <span class="fs-12 text-muted">{emp.department}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td class="text-muted">{emp.email}</td>
+                        <td class="text-muted">{emp.phone}</td>
+                        <td>
+                          <span class="badge bg-light text-dark border px-2 py-1">{emp.title}</span>
+                        </td>
+                        <td class="text-muted">{emp.joiningDate}</td>
+                        <td>
+                          <span class={emp.statusClass}>
+                            <i class="ti ti-point-filled me-1"></i>{emp.status}
+                          </span>
+                        </td>
+                        <td class="text-end pe-3" onclick={handleStopPropagation}>
+                          <div class="action-icon d-inline-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-icon btn-light text-primary" data-id={emp.id} onclick={handleSelectEmployee} title="View Details">
+                              <i class="fa-solid fa-eye"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-icon btn-light text-secondary" data-id={emp.id} onclick={handleOpenEditEmployeeModal} title="Edit">
+                              <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-icon btn-light text-danger" data-id={emp.id} onclick={handleOpenDeleteModal} title="Delete">
+                              <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    </template>
+                    <template if:false={displayedEmployees.length}>
+                      <tr>
+                        <td colspan="9" class="text-center py-5 text-muted">
+                          <i class="fa-solid fa-users-slash fs-1 d-block mb-2 text-secondary"></i>
+                          No employees found matching the criteria.
+                        </td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Pagination footer -->
+              <div class="p-3 border-top d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="text-muted fs-13">
+                  Showing {pageInfo} of {totalCount} entries
+                </div>
+                <nav aria-label="Page navigation">
+                  <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item">
+                      <button type="button" class="page-link" onclick={handlePrevPage} disabled={isPrevDisabled}>
+                        <i class="fa-solid fa-chevron-left"></i>
+                      </button>
+                    </li>
+                    <template for:each={paginationPages} for:item="p">
+                      <li key={p.number} class={p.className}>
+                        <button type="button" class="page-link" data-page={p.number} onclick={handleGoToPage}>
+                          {p.number}
+                        </button>
+                      </li>
+                    </template>
+                    <li class="page-item">
+                      <button type="button" class="page-link" onclick={handleNextPage} disabled={isNextDisabled}>
+                        <i class="fa-solid fa-chevron-right"></i>
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+
+      <!-- ========================================================================= -->
+      <!-- VIEW 2: EMPLOYEE GRID VIEW (Images 3 & 4)                                 -->
+      <!-- ========================================================================= -->
+      <template if:true={isGridView}>
+        <!-- Grid Header Filter Card -->
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-body p-3">
+            <div class="d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+              <h5 class="mb-0 fw-bold">Employees Grid</h5>
+              <div class="d-flex align-items-center flex-wrap gap-3">
+                <div style="width: 220px;">
+                  <input type="search" class="form-control form-control-sm" placeholder="Search employees..." oninput={handleSearch}>
+                </div>
+                <div style="width: 150px;">
+                  <select class="form-select form-select-sm" onchange={handleDesignationChange}>
+                    <template for:each={designationOptions} for:item="opt">
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    </template>
+                  </select>
+                </div>
+                <div style="width: 170px;">
+                  <select class="form-select form-select-sm" onchange={handleSortChange}>
+                    <template for:each={sortOptions} for:item="opt">
+                      <option key={opt.value} value={opt.value}>Sort By : {opt.label}</option>
+                    </template>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <template if:true={isLoading}>
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        </template>
+
+        <!-- Grid of Employee Cards -->
+        <template if:false={isLoading}>
+          <div class="row g-4">
+            <template for:each={displayedEmployees} for:item="emp">
+              <div key={emp.id} class="col-xl-3 col-lg-4 col-md-6">
+                <div class="card h-100 shadow-sm border-0 employee-grid-card cursor-pointer" data-id={emp.id} onclick={handleSelectEmployee}>
+                  <div class="card-body p-3 d-flex flex-column justify-content-between">
+                    <div>
+                      <!-- Card Header: Checkbox, Avatar, 3-dots dropdown -->
+                      <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="form-check form-check-md" onclick={handleStopPropagation}>
+                          <input class="form-check-input" type="checkbox" data-id={emp.id} onchange={handleSelectRow}>
+                        </div>
+                        <div class="text-center position-relative">
+                          <a href="javascript:void(0);" data-id={emp.id} onclick={handleSelectEmployee} class="avatar avatar-xl avatar-rounded border p-1 border-primary rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 64px; height: 64px;">
+                            <img src={displayAvatarUrl} class="img-fluid rounded-circle" alt="img" style="width: 100%; height: 100%; object-fit: cover;" onerror={handleImageError}>
+                          </a>
+                          <span class="position-absolute bottom-0 end-0 p-1 bg-success border border-white rounded-circle" style="width: 14px; height: 14px;"></span>
+                        </div>
+                        <div class="dropdown" onclick={handleStopPropagation}>
+                          <button class="btn btn-icon btn-sm rounded-circle text-muted" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                          </button>
+                          <ul class="dropdown-menu dropdown-menu-end p-2 shadow-sm">
+                            <li>
+                              <a class="dropdown-item rounded-1" href="javascript:void(0);" data-id={emp.id} onclick={handleSelectEmployee}>
+                                <i class="fa-solid fa-eye me-2 text-primary"></i>View Profile
+                              </a>
+                            </li>
+                            <li>
+                              <a class="dropdown-item rounded-1" href="javascript:void(0);" data-id={emp.id} onclick={handleOpenEditEmployeeModal}>
+                                <i class="fa-solid fa-pen-to-square me-2 text-secondary"></i>Edit
+                              </a>
+                            </li>
+                            <li>
+                              <a class="dropdown-item rounded-1 text-danger" href="javascript:void(0);" data-id={emp.id} onclick={handleOpenDeleteModal}>
+                                <i class="fa-solid fa-trash-can me-2"></i>Delete
+                              </a>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+
+                      <!-- Name and Title -->
+                      <div class="text-center mb-3">
+                        <h6 class="mb-1 fw-bold">
+                          <a href="javascript:void(0);" data-id={emp.id} onclick={handleSelectEmployee} class="text-dark text-decoration-none">
+                            {emp.name}
+                          </a>
+                        </h6>
+                        <span class="badge bg-pink-transparent text-pink fs-10 fw-medium">
+                          {emp.title}
+                        </span>
+                      </div>
+
+                      <!-- Stats row: Projects / Done / Progress -->
+                      <div class="row text-center mb-3">
+                        <div class="col-4">
+                          <div>
+                            <span class="fs-12 text-muted d-block">Projects</span>
+                            <h6 class="fw-bold mb-0">{emp.projects}</h6>
+                          </div>
+                        </div>
+                        <div class="col-4">
+                          <div>
+                            <span class="fs-12 text-muted d-block">Done</span>
+                            <h6 class="fw-bold mb-0">{emp.done}</h6>
+                          </div>
+                        </div>
+                        <div class="col-4">
+                          <div>
+                            <span class="fs-12 text-muted d-block">Progress</span>
+                            <h6 class="fw-bold mb-0">{emp.progress}</h6>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Productivity bar -->
+                    <div>
+                      <p class="mb-1 text-center fs-12 text-muted">
+                        Productivity : <span class="fw-bold text-dark">{emp.productivity}%</span>
+                      </p>
+                      <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-purple" role="progressbar" style="width: 65%;"></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </template>
           </div>
 
-          <!-- Pagination -->
-          <div class="d-flex align-items-center justify-content-between mt-4 py-3 border-top flex-wrap gap-2">
-            <span class="text-muted small">{pageInfo} of {totalCount}</span>
-            <div class="d-flex gap-2">
-              <button
-                class="btn btn-sm btn-outline-secondary"
-                onclick={handlePrevPage}
-                disabled={isPrevDisabled}
-              >
-                <i class="ti ti-chevron-left me-1"></i>Previous
-              </button>
-              <button
-                class="btn btn-sm btn-outline-secondary"
-                onclick={handleNextPage}
-                disabled={isNextDisabled}
-              >
-                Next<i class="ti ti-chevron-right ms-1"></i>
-              </button>
+          <!-- Empty Grid state -->
+          <template if:false={displayedEmployees.length}>
+            <div class="card p-5 text-center shadow-sm border-0 mt-3">
+              <i class="fa-solid fa-users-slash fs-1 text-secondary mb-2"></i>
+              <h5 class="text-muted">No employees found</h5>
+              <p class="text-muted fs-13">Try clearing search or filters.</p>
+            </div>
+          </template>
+
+          <!-- Grid Pagination footer -->
+          <div class="p-3 mt-4 border bg-white rounded d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="text-muted fs-13">
+              Showing {pageInfo} of {totalCount} entries
+            </div>
+            <nav aria-label="Page navigation">
+              <ul class="pagination pagination-sm mb-0">
+                <li class="page-item">
+                  <button type="button" class="page-link" onclick={handlePrevPage} disabled={isPrevDisabled}>
+                    <i class="fa-solid fa-chevron-left"></i>
+                  </button>
+                </li>
+                <template for:each={paginationPages} for:item="p">
+                  <li key={p.number} class={p.className}>
+                    <button type="button" class="page-link" data-page={p.number} onclick={handleGoToPage}>
+                      {p.number}
+                    </button>
+                  </li>
+                </template>
+                <li class="page-item">
+                  <button type="button" class="page-link" onclick={handleNextPage} disabled={isNextDisabled}>
+                    <i class="fa-solid fa-chevron-right"></i>
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </template>
+      </template>
+
+      <!-- ========================================================================= -->
+      <!-- VIEW 3: EMPLOYEE DETAIL VIEW (Matching SmartHR Image 1 Exactly)           -->
+      <!-- ========================================================================= -->
+      <template if:true={isDetailView}>
+        <div if:true={selectedEmployee} class="row g-4">
+
+          <!-- LEFT COLUMN: Profile & Personal Cards (col-xl-4) -->
+          <div class="col-xl-4 col-lg-5">
+            <!-- Main Profile Card with Curved Top Banner -->
+            <div class="card shadow-sm border-0 mb-4 overflow-hidden bg-white">
+              <div class="card-body p-0">
+                <!-- Top Orange Curved Banner -->
+                <div class="card-bg-banner" style={bannerBackgroundStyle}></div>
+
+                <!-- Avatar overlapping half-way -->
+                <div class="profile-avatar-wrap">
+                  <span class="avatar avatar-xl avatar-rounded border border-2 border-white m-auto d-inline-block shadow-sm" style="width: 76px; height: 76px; border-radius: 50%;">
+                    <img src={displayAvatarUrl} class="rounded-circle" alt="Img" style="width: 100%; height: 100%; object-fit: cover;" onerror={handleImageError}>
+                  </span>
+                </div>
+
+                <!-- Clean White Details Section -->
+                <div class="text-center px-3 pb-3 border-bottom">
+                  <div class="mb-3">
+                    <h5 class="d-flex align-items-center justify-content-center mb-1 fw-bold text-dark">
+                      {selectedEmployee.name}
+                      <i class="ti ti-discount-check-filled text-success ms-1" title="Verified Employee"></i>
+                    </h5>
+                    <span class="badge badge-soft-dark fw-medium me-2 px-2 py-1">
+                      <i class="ti ti-point-filled me-1"></i>{selectedEmployee.title}
+                    </span>
+                    <span class="badge badge-soft-secondary fw-medium px-2 py-1">
+                      {selectedEmployee.experienceYears}
+                    </span>
+                  </div>
+
+                  <!-- Metadata Rows -->
+                  <div class="text-start">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                      <span class="text-muted fs-13 d-inline-flex align-items-center">
+                        <i class="ti ti-id me-2 text-primary"></i>Client ID
+                      </span>
+                      <p class="text-dark fw-medium mb-0 fs-13">{selectedEmployee.empId}</p>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                      <span class="text-muted fs-13 d-inline-flex align-items-center">
+                        <i class="ti ti-star me-2 text-warning"></i>Team
+                      </span>
+                      <p class="text-dark fw-medium mb-0 fs-13">{selectedEmployee.department}</p>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                      <span class="text-muted fs-13 d-inline-flex align-items-center">
+                        <i class="ti ti-calendar-check me-2 text-success"></i>Date Of Join
+                      </span>
+                      <p class="text-dark fw-medium mb-0 fs-13">{selectedEmployee.joiningDate}</p>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                      <span class="text-muted fs-13 d-inline-flex align-items-center">
+                        <i class="ti ti-calendar-check me-2 text-info"></i>Report Office
+                      </span>
+                      <div class="d-flex align-items-center">
+                        <img src={managerAvatarUrl} class="avatar avatar-xs rounded-circle me-1" alt="Img" style="width: 20px; height: 20px; object-fit: cover;">
+                        <p class="text-dark fw-medium mb-0 fs-13">{selectedEmployee.managerName}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Two Action Buttons -->
+                  <div class="row gx-2 mt-3">
+                    <div class="col-6">
+                      <button type="button" class="btn btn-dark w-100 btn-sm" onclick={handleOpenEditEmployeeModal}>
+                        <i class="ti ti-edit me-1"></i>Edit Info
+                      </button>
+                    </div>
+                    <div class="col-6">
+                      <button type="button" class="btn btn-primary w-100 btn-sm">
+                        <i class="ti ti-message-heart me-1"></i>Message
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Basic Information Section -->
+                <div class="p-3 border-bottom">
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h6 class="fw-bold mb-0">Basic Information</h6>
+                    <a href="javascript:void(0);" class="btn btn-icon btn-sm text-muted" onclick={handleOpenBasicInfoModal} title="Edit Basic Information">
+                      <i class="ti ti-edit"></i>
+                    </a>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted fs-13 d-inline-flex align-items-center">
+                      <i class="ti ti-phone me-2 text-secondary"></i>Phone
+                    </span>
+                    <p class="text-dark mb-0 fs-13">{selectedEmployee.phone}</p>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted fs-13 d-inline-flex align-items-center">
+                      <i class="ti ti-mail-check me-2 text-secondary"></i>Email
+                    </span>
+                    <a href="javascript:void(0);" onclick={handleCopyEmail} class="text-info fs-13 text-decoration-none d-inline-flex align-items-center">
+                      {selectedEmployee.email}<i class="ti ti-copy text-dark ms-2"></i>
+                    </a>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted fs-13 d-inline-flex align-items-center">
+                      <i class="ti ti-gender-male me-2 text-secondary"></i>Gender
+                    </span>
+                    <p class="text-dark mb-0 fs-13">{selectedEmployee.gender}</p>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted fs-13 d-inline-flex align-items-center">
+                      <i class="ti ti-cake me-2 text-secondary"></i>Birdthday
+                    </span>
+                    <p class="text-dark mb-0 fs-13">{selectedEmployee.birthDateFormatted}</p>
+                  </div>
+                  <div class="d-flex align-items-start justify-content-between">
+                    <span class="text-muted fs-13 d-inline-flex align-items-center">
+                      <i class="ti ti-map-pin-check me-2 text-secondary"></i>Address
+                    </span>
+                    <p class="text-dark text-end mb-0 fs-13" style="max-width: 180px;">{selectedEmployee.address}</p>
+                  </div>
+                </div>
+
+                <!-- Personal Information Section -->
+                <div class="p-3 border-bottom">
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h6 class="fw-bold mb-0">Personal Information</h6>
+                    <a href="javascript:void(0);" class="btn btn-icon btn-sm text-muted" onclick={handleOpenPersonalModal} title="Edit Personal Information">
+                      <i class="ti ti-edit"></i>
+                    </a>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted fs-13 d-inline-flex align-items-center">
+                      <i class="ti ti-e-passport me-2 text-secondary"></i>Passport No
+                    </span>
+                    <p class="text-dark mb-0 fs-13">{selectedEmployee.personalInfo.passportNo}</p>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted fs-13 d-inline-flex align-items-center">
+                      <i class="ti ti-calendar-x me-2 text-secondary"></i>Passport Exp Date
+                    </span>
+                    <p class="text-dark mb-0 fs-13">{selectedEmployee.personalInfo.passportExpDate}</p>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted fs-13 d-inline-flex align-items-center">
+                      <i class="ti ti-gender-male me-2 text-secondary"></i>Nationality
+                    </span>
+                    <p class="text-dark mb-0 fs-13">{selectedEmployee.personalInfo.nationality}</p>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted fs-13 d-inline-flex align-items-center">
+                      <i class="ti ti-bookmark-plus me-2 text-secondary"></i>Religion
+                    </span>
+                    <p class="text-dark mb-0 fs-13">{selectedEmployee.personalInfo.religion}</p>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted fs-13 d-inline-flex align-items-center">
+                      <i class="ti ti-hotel-service me-2 text-secondary"></i>Marital status
+                    </span>
+                    <p class="text-dark mb-0 fs-13">{selectedEmployee.personalInfo.maritalStatus}</p>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted fs-13 d-inline-flex align-items-center">
+                      <i class="ti ti-briefcase-2 me-2 text-secondary"></i>Employment of spouse
+                    </span>
+                    <p class="text-dark mb-0 fs-13">{selectedEmployee.personalInfo.spouseEmployment}</p>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between">
+                    <span class="text-muted fs-13 d-inline-flex align-items-center">
+                      <i class="ti ti-baby-bottle me-2 text-secondary"></i>No. of children
+                    </span>
+                    <p class="text-dark mb-0 fs-13">{selectedEmployee.personalInfo.noOfChildren}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Emergency Contact Number Card (Image 1 & Image 3) -->
+            <div class="card shadow-sm border-0 mb-4 bg-white">
+              <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold mb-0">Emergency Contact Number</h6>
+                <a href="javascript:void(0);" class="btn btn-icon btn-sm text-muted" onclick={handleOpenEmergencyModal} title="Edit Emergency Contact Details">
+                  <i class="ti ti-edit"></i>
+                </a>
+              </div>
+              <div class="card-body p-0">
+                <div class="p-3 border-bottom">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                      <span class="text-muted fs-12 d-block">Primary</span>
+                      <h6 class="fw-medium mb-0 mt-1 fs-13">
+                        {selectedEmployee.emergencyContact.primaryName}
+                        <span class="d-inline-flex mx-1"><i class="ti ti-point-filled text-danger"></i></span>
+                        {selectedEmployee.emergencyContact.primaryRelationship}
+                      </h6>
+                    </div>
+                    <p class="text-dark mb-0 fs-13">{selectedEmployee.emergencyContact.primaryPhone1}</p>
+                  </div>
+                </div>
+                <div class="p-3">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                      <span class="text-muted fs-12 d-block">Secondry</span>
+                      <h6 class="fw-medium mb-0 mt-1 fs-13">
+                        {selectedEmployee.emergencyContact.secondaryName}
+                        <span class="d-inline-flex mx-1"><i class="ti ti-point-filled text-danger"></i></span>
+                        {selectedEmployee.emergencyContact.secondaryRelationship}
+                      </h6>
+                    </div>
+                    <p class="text-dark mb-0 fs-13">{selectedEmployee.emergencyContact.secondaryPhone1}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-        </template>
+          <!-- RIGHT COLUMN: Accordion Collapsible Cards & Projects Tabs (col-xl-8) -->
+          <div class="col-xl-8 col-lg-7">
 
-        <!-- Empty state -->
-        <template if:false={employees.length}>
-          <div class="card">
-            <div class="card-body text-center py-5">
-              <i class="ti ti-users-off fs-1 text-muted d-block mb-2"></i>
-              <h6 class="text-muted mb-1">No employees found</h6>
-              <p class="text-muted small mb-0">Try adjusting your search criteria</p>
+            <!-- 1. About Employee Card (Collapsible) -->
+            <div class="card shadow-sm border-0 mb-3 bg-white">
+              <div class="card-header collapsible-card-header border-bottom py-3 d-flex align-items-center justify-content-between" onclick={toggleAbout}>
+                <h5 class="fw-bold mb-0 text-dark">About Employee</h5>
+                <div class="d-flex align-items-center gap-2" onclick={handleStopPropagation}>
+                  <a href="javascript:void(0);" class="btn btn-sm btn-icon text-muted" onclick={handleOpenAboutModal} title="Edit About">
+                    <i class="ti ti-edit"></i>
+                  </a>
+                  <a href="javascript:void(0);" class="d-flex align-items-center text-muted" onclick={toggleAbout}>
+                    <i class={aboutChevronClass}></i>
+                  </a>
+                </div>
+              </div>
+              <template if:true={isAboutOpen}>
+                <div class="card-body p-3">
+                  <p class="text-muted mb-0 leading-relaxed">
+                    {selectedEmployee.about}
+                  </p>
+                </div>
+              </template>
+            </div>
+
+            <!-- 2. Bank Information Card (Collapsible) -->
+            <div class="card shadow-sm border-0 mb-3 bg-white">
+              <div class="card-header collapsible-card-header border-bottom py-3 d-flex align-items-center justify-content-between" onclick={toggleBank}>
+                <h5 class="fw-bold mb-0 text-dark">Bank Information</h5>
+                <div class="d-flex align-items-center gap-2" onclick={handleStopPropagation}>
+                  <a href="javascript:void(0);" class="btn btn-sm btn-icon text-muted" onclick={handleOpenBankModal} title="Edit Bank Information">
+                    <i class="ti ti-edit"></i>
+                  </a>
+                  <a href="javascript:void(0);" class="d-flex align-items-center text-muted" onclick={toggleBank}>
+                    <i class={bankChevronClass}></i>
+                  </a>
+                </div>
+              </div>
+              <template if:true={isBankOpen}>
+                <div class="card-body p-3">
+                  <div class="row g-3">
+                    <div class="col-md-3 col-6">
+                      <span class="text-muted fs-12 d-block">Bank Name</span>
+                      <h6 class="fw-medium mt-1 mb-0 fs-14">{selectedEmployee.bankInfo.bankName}</h6>
+                    </div>
+                    <div class="col-md-3 col-6">
+                      <span class="text-muted fs-12 d-block">Bank Account No</span>
+                      <h6 class="fw-medium mt-1 mb-0 fs-14">{selectedEmployee.bankInfo.accountNo}</h6>
+                    </div>
+                    <div class="col-md-3 col-6">
+                      <span class="text-muted fs-12 d-block">IFSC Code</span>
+                      <h6 class="fw-medium mt-1 mb-0 fs-14">{selectedEmployee.bankInfo.ifscCode}</h6>
+                    </div>
+                    <div class="col-md-3 col-6">
+                      <span class="text-muted fs-12 d-block">Branch</span>
+                      <h6 class="fw-medium mt-1 mb-0 fs-14">{selectedEmployee.bankInfo.branch}</h6>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <!-- 3. Family Information Card (Collapsible) -->
+            <div class="card shadow-sm border-0 mb-3 bg-white">
+              <div class="card-header collapsible-card-header border-bottom py-3 d-flex align-items-center justify-content-between" onclick={toggleFamily}>
+                <h5 class="fw-bold mb-0 text-dark">Family Information</h5>
+                <div class="d-flex align-items-center gap-2" onclick={handleStopPropagation}>
+                  <a href="javascript:void(0);" class="btn btn-sm btn-icon text-muted" onclick={handleOpenFamilyModal} title="Edit Family Information">
+                    <i class="ti ti-edit"></i>
+                  </a>
+                  <a href="javascript:void(0);" class="d-flex align-items-center text-muted" onclick={toggleFamily}>
+                    <i class={familyChevronClass}></i>
+                  </a>
+                </div>
+              </div>
+              <template if:true={isFamilyOpen}>
+                <div class="card-body p-3">
+                  <div class="row g-3">
+                    <div class="col-md-3 col-6">
+                      <span class="text-muted fs-12 d-block">Name</span>
+                      <h6 class="fw-medium mt-1 mb-0 fs-14">{selectedEmployee.familyInfo.name}</h6>
+                    </div>
+                    <div class="col-md-3 col-6">
+                      <span class="text-muted fs-12 d-block">Relationship</span>
+                      <h6 class="fw-medium mt-1 mb-0 fs-14">{selectedEmployee.familyInfo.relationship}</h6>
+                    </div>
+                    <div class="col-md-3 col-6">
+                      <span class="text-muted fs-12 d-block">Date of Birth</span>
+                      <h6 class="fw-medium mt-1 mb-0 fs-14">{selectedEmployee.familyInfo.dateOfBirth}</h6>
+                    </div>
+                    <div class="col-md-3 col-6">
+                      <span class="text-muted fs-12 d-block">Phone</span>
+                      <h6 class="fw-medium mt-1 mb-0 fs-14">{selectedEmployee.familyInfo.phone}</h6>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <!-- 4. Education & Experience (Collapsible Side-by-Side) -->
+            <div class="row g-3 mb-3">
+              <!-- Education Details -->
+              <div class="col-md-6">
+                <div class="card shadow-sm border-0 h-100 bg-white">
+                  <div class="card-header collapsible-card-header border-bottom py-3 d-flex align-items-center justify-content-between" onclick={toggleEducation}>
+                    <h5 class="fw-bold mb-0 text-dark fs-15">Education Details</h5>
+                    <div class="d-flex align-items-center gap-2" onclick={handleStopPropagation}>
+                      <a href="javascript:void(0);" class="btn btn-sm btn-icon text-muted"><i class="ti ti-edit"></i></a>
+                      <a href="javascript:void(0);" class="d-flex align-items-center text-muted" onclick={toggleEducation}>
+                        <i class={educationChevronClass}></i>
+                      </a>
+                    </div>
+                  </div>
+                  <template if:true={isEducationOpen}>
+                    <div class="card-body p-3">
+                      <div class="mb-3 pb-2 border-bottom">
+                        <div class="d-flex align-items-center justify-content-between">
+                          <div>
+                            <span class="text-muted fs-12">Oxford University</span>
+                            <h6 class="fw-medium mt-1 mb-0 fs-13">Computer Science</h6>
+                          </div>
+                          <p class="text-muted fs-12 mb-0">2020 - 2022</p>
+                        </div>
+                      </div>
+                      <div class="mb-3 pb-2 border-bottom">
+                        <div class="d-flex align-items-center justify-content-between">
+                          <div>
+                            <span class="text-muted fs-12">Cambridge University</span>
+                            <h6 class="fw-medium mt-1 mb-0 fs-13">Computer Systems</h6>
+                          </div>
+                          <p class="text-muted fs-12 mb-0">2016 - 2019</p>
+                        </div>
+                      </div>
+                      <div>
+                        <div class="d-flex align-items-center justify-content-between">
+                          <div>
+                            <span class="text-muted fs-12">Oxford School</span>
+                            <h6 class="fw-medium mt-1 mb-0 fs-13">Grade X</h6>
+                          </div>
+                          <p class="text-muted fs-12 mb-0">2012 - 2016</p>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+
+              <!-- Experience -->
+              <div class="col-md-6">
+                <div class="card shadow-sm border-0 h-100 bg-white">
+                  <div class="card-header collapsible-card-header border-bottom py-3 d-flex align-items-center justify-content-between" onclick={toggleExperience}>
+                    <h5 class="fw-bold mb-0 text-dark fs-15">Experience</h5>
+                    <div class="d-flex align-items-center gap-2" onclick={handleStopPropagation}>
+                      <a href="javascript:void(0);" class="btn btn-sm btn-icon text-muted"><i class="ti ti-edit"></i></a>
+                      <a href="javascript:void(0);" class="d-flex align-items-center text-muted" onclick={toggleExperience}>
+                        <i class={experienceChevronClass}></i>
+                      </a>
+                    </div>
+                  </div>
+                  <template if:true={isExperienceOpen}>
+                    <div class="card-body p-3">
+                      <div class="mb-3 pb-2 border-bottom">
+                        <div class="d-flex align-items-center justify-content-between">
+                          <div>
+                            <h6 class="fw-medium mb-1 fs-13">Google</h6>
+                            <span class="badge bg-secondary-subtle text-secondary fs-10">UI/UX Developer</span>
+                          </div>
+                          <p class="text-muted fs-12 mb-0">Jan 2023 - Present</p>
+                        </div>
+                      </div>
+                      <div class="mb-3 pb-2 border-bottom">
+                        <div class="d-flex align-items-center justify-content-between">
+                          <div>
+                            <h6 class="fw-medium mb-1 fs-13">Salesforce</h6>
+                            <span class="badge bg-secondary-subtle text-secondary fs-10">Web Developer</span>
+                          </div>
+                          <p class="text-muted fs-12 mb-0">Dec 2021 - Jan 2023</p>
+                        </div>
+                      </div>
+                      <div>
+                        <div class="d-flex align-items-center justify-content-between">
+                          <div>
+                            <h6 class="fw-medium mb-1 fs-13">HubSpot</h6>
+                            <span class="badge bg-secondary-subtle text-secondary fs-10">Software Developer</span>
+                          </div>
+                          <p class="text-muted fs-12 mb-0">Dec 2019 - Jan 2021</p>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. Projects & Assets Card (Tabs) -->
+            <div class="card shadow-sm border-0 bg-white">
+              <div class="card-header bg-white border-bottom p-3">
+                <ul class="nav nav-pills gap-2" role="tablist">
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link active btn-sm" type="button" onclick={selectProjectsTab}>Projects</button>
+                  </li>
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link btn-sm" type="button" onclick={selectAssetsTab}>Assets</button>
+                  </li>
+                </ul>
+              </div>
+              <div class="card-body p-3">
+                <!-- Projects Tab Content -->
+                <template if:true={isProjectsTabActive}>
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <div class="card border h-100 p-3 bg-light">
+                        <div class="d-flex align-items-center pb-2 mb-2 border-bottom">
+                          <span class="avatar avatar-md rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
+                            <i class="ti ti-world"></i>
+                          </span>
+                          <div>
+                            <h6 class="mb-0 fw-bold">World Health</h6>
+                            <p class="fs-12 text-muted mb-0">8 tasks • <span class="text-success">15 Completed</span></p>
+                          </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center pt-1 fs-12">
+                          <div>
+                            <span class="text-muted d-block">Deadline</span>
+                            <strong class="text-dark">31 July 2025</strong>
+                          </div>
+                          <div class="text-end">
+                            <span class="text-muted d-block">Project Lead</span>
+                            <div class="d-flex align-items-center justify-content-end gap-1">
+                              <img src={displayAvatarUrl} class="avatar avatar-xs rounded-circle" alt="Img" style="width: 18px; height: 18px; object-fit: cover;">
+                              <strong class="text-primary">Leona</strong>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-md-6">
+                      <div class="card border h-100 p-3 bg-light">
+                        <div class="d-flex align-items-center pb-2 mb-2 border-bottom">
+                          <span class="avatar avatar-md rounded-circle text-white d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px; background-color: #8b5cf6;">
+                            <i class="ti ti-building-hospital"></i>
+                          </span>
+                          <div>
+                            <h6 class="mb-0 fw-bold">Hospital Administration</h6>
+                            <p class="fs-12 text-muted mb-0">8 tasks • <span class="text-success">15 Completed</span></p>
+                          </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center pt-1 fs-12">
+                          <div>
+                            <span class="text-muted d-block">Deadline</span>
+                            <strong class="text-dark">31 July 2025</strong>
+                          </div>
+                          <div class="text-end">
+                            <span class="text-muted d-block">Project Lead</span>
+                            <div class="d-flex align-items-center justify-content-end gap-1">
+                              <img src={displayAvatarUrl} class="avatar avatar-xs rounded-circle" alt="Img" style="width: 18px; height: 18px; object-fit: cover;">
+                              <strong class="text-primary">Leona</strong>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- Assets Tab Content -->
+                <template if:true={isAssetsTabActive}>
+                  <div class="text-center py-4 text-muted">
+                    <i class="fa-solid fa-laptop fs-1 d-block mb-2 text-secondary"></i>
+                    <p class="mb-0 fw-medium text-dark">MacBook Pro 16" (M2 Max) • 32GB RAM</p>
+                    <small class="text-muted">Serial: C02G451XMD6R • Assigned on: {selectedEmployee.joiningDate}</small>
+                  </div>
+                </template>
+              </div>
             </div>
           </div>
-        </template>
+
+        </div>
+      </template>
+
+      <!-- ========================================================================= -->
+      <!-- MODAL 1: EMERGENCY CONTACT DETAILS (Matching Image 3 Exactly)             -->
+      <!-- ========================================================================= -->
+      <template if:true={isEmergencyModalOpen}>
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+          <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow">
+              <div class="modal-header">
+                <h4 class="modal-title fw-bold">Emergency Contact Details</h4>
+                <button type="button" class="btn-close custom-btn-close" onclick={handleCloseEmergencyModal}>
+                  <i class="ti ti-x"></i>
+                </button>
+              </div>
+              <form onsubmit={handleSaveEmergency}>
+                <div class="modal-body pb-0">
+                  <!-- Block 1: Secondary / Primary Contact Details -->
+                  <div class="border-bottom mb-3 pb-3">
+                    <h5 class="mb-3 fw-medium">Secondary Contact Details</h5>
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="primaryName" value={emergencyForm.primaryName} oninput={handleEmergencyFieldChange} required>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Relationship</label>
+                        <input type="text" class="form-control" name="primaryRelationship" value={emergencyForm.primaryRelationship} oninput={handleEmergencyFieldChange}>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Phone No 1 <span class="text-danger">*</span></label>
+                        <input type="tel" class="form-control" name="primaryPhone1" value={emergencyForm.primaryPhone1} oninput={handleEmergencyFieldChange} required>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Phone No 2</label>
+                        <input type="tel" class="form-control" name="primaryPhone2" value={emergencyForm.primaryPhone2} oninput={handleEmergencyFieldChange}>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Block 2: Secondary Contact Details -->
+                  <div class="mb-3">
+                    <h5 class="mb-3 fw-medium">Secondary Contact Details</h5>
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="secondaryName" value={emergencyForm.secondaryName} oninput={handleEmergencyFieldChange} required>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Relationship</label>
+                        <input type="text" class="form-control" name="secondaryRelationship" value={emergencyForm.secondaryRelationship} oninput={handleEmergencyFieldChange}>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Phone No 1 <span class="text-danger">*</span></label>
+                        <input type="tel" class="form-control" name="secondaryPhone1" value={emergencyForm.secondaryPhone1} oninput={handleEmergencyFieldChange} required>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Phone No 2</label>
+                        <input type="tel" class="form-control" name="secondaryPhone2" value={emergencyForm.secondaryPhone2} oninput={handleEmergencyFieldChange}>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-white border me-2" onclick={handleCloseEmergencyModal}>Cancel</button>
+                  <button type="submit" class="btn btn-primary px-4">Save</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ========================================================================= -->
+      <!-- MODAL 2: BASIC INFORMATION MODAL                                          -->
+      <!-- ========================================================================= -->
+      <template if:true={isBasicInfoModalOpen}>
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+          <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow">
+              <div class="modal-header">
+                <h4 class="modal-title fw-bold">Basic Information</h4>
+                <button type="button" class="btn-close custom-btn-close" onclick={handleCloseBasicInfoModal}>
+                  <i class="ti ti-x"></i>
+                </button>
+              </div>
+              <form onsubmit={handleSaveBasicInfo}>
+                <div class="modal-body pb-0">
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Phone</label>
+                      <input type="tel" class="form-control" name="Phone" value={basicInfoForm.Phone} oninput={handleBasicInfoFieldChange}>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Email</label>
+                      <input type="email" class="form-control" name="Email" value={basicInfoForm.Email} oninput={handleBasicInfoFieldChange}>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Gender</label>
+                      <select class="form-select" name="Gender" onchange={handleBasicInfoFieldChange}>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Birthday</label>
+                      <input type="text" class="form-control" name="Birthdate" value={basicInfoForm.Birthdate} oninput={handleBasicInfoFieldChange} placeholder="e.g. 24th July 2000">
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label">Address</label>
+                      <input type="text" class="form-control" name="MailingStreet" value={basicInfoForm.MailingStreet} oninput={handleBasicInfoFieldChange} placeholder="Street, City, State, ZIP">
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-white border me-2" onclick={handleCloseBasicInfoModal}>Cancel</button>
+                  <button type="submit" class="btn btn-primary px-4">Save</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ========================================================================= -->
+      <!-- MODAL 3: PERSONAL INFORMATION MODAL                                       -->
+      <!-- ========================================================================= -->
+      <template if:true={isPersonalModalOpen}>
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+          <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow">
+              <div class="modal-header">
+                <h4 class="modal-title fw-bold">Personal Information</h4>
+                <button type="button" class="btn-close custom-btn-close" onclick={handleClosePersonalModal}>
+                  <i class="ti ti-x"></i>
+                </button>
+              </div>
+              <form onsubmit={handleSavePersonal}>
+                <div class="modal-body pb-0">
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Passport No</label>
+                      <input type="text" class="form-control" name="passportNo" value={personalForm.passportNo} oninput={handlePersonalFieldChange}>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Passport Exp Date</label>
+                      <input type="text" class="form-control" name="passportExpDate" value={personalForm.passportExpDate} oninput={handlePersonalFieldChange} placeholder="e.g. 15 May 2029">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Nationality</label>
+                      <input type="text" class="form-control" name="nationality" value={personalForm.nationality} oninput={handlePersonalFieldChange}>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Religion</label>
+                      <input type="text" class="form-control" name="religion" value={personalForm.religion} oninput={handlePersonalFieldChange}>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Marital Status</label>
+                      <select class="form-select" name="maritalStatus" onchange={handlePersonalFieldChange}>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Employment of Spouse</label>
+                      <select class="form-select" name="spouseEmployment" onchange={handlePersonalFieldChange}>
+                        <option value="No">No</option>
+                        <option value="Yes">Yes</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">No. of Children</label>
+                      <input type="number" class="form-control" name="noOfChildren" value={personalForm.noOfChildren} oninput={handlePersonalFieldChange}>
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-white border me-2" onclick={handleClosePersonalModal}>Cancel</button>
+                  <button type="submit" class="btn btn-primary px-4">Save</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ========================================================================= -->
+      <!-- MODAL 4: BANK DETAILS MODAL                                               -->
+      <!-- ========================================================================= -->
+      <template if:true={isBankModalOpen}>
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+          <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow">
+              <div class="modal-header">
+                <h4 class="modal-title fw-bold">Bank Details</h4>
+                <button type="button" class="btn-close custom-btn-close" onclick={handleCloseBankModal}>
+                  <i class="ti ti-x"></i>
+                </button>
+              </div>
+              <form onsubmit={handleSaveBank}>
+                <div class="modal-body pb-0">
+                  <div class="row g-3">
+                    <div class="col-12">
+                      <label class="form-label">Bank Name <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" name="bankName" value={bankForm.bankName} oninput={handleBankFieldChange} required>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label">Bank Account No</label>
+                      <input type="text" class="form-control" name="accountNo" value={bankForm.accountNo} oninput={handleBankFieldChange}>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label">IFSC Code</label>
+                      <input type="text" class="form-control" name="ifscCode" value={bankForm.ifscCode} oninput={handleBankFieldChange}>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label">Branch Address</label>
+                      <input type="text" class="form-control" name="branch" value={bankForm.branch} oninput={handleBankFieldChange}>
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-white border me-2" onclick={handleCloseBankModal}>Cancel</button>
+                  <button type="submit" class="btn btn-primary px-4">Save</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ========================================================================= -->
+      <!-- MODAL 5: FAMILY INFORMATION MODAL                                         -->
+      <!-- ========================================================================= -->
+      <template if:true={isFamilyModalOpen}>
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+          <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow">
+              <div class="modal-header">
+                <h4 class="modal-title fw-bold">Family Information</h4>
+                <button type="button" class="btn-close custom-btn-close" onclick={handleCloseFamilyModal}>
+                  <i class="ti ti-x"></i>
+                </button>
+              </div>
+              <form onsubmit={handleSaveFamily}>
+                <div class="modal-body pb-0">
+                  <div class="row g-3">
+                    <div class="col-12">
+                      <label class="form-label">Name <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" name="name" value={familyForm.name} oninput={handleFamilyFieldChange} required>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label">Relationship</label>
+                      <input type="text" class="form-control" name="relationship" value={familyForm.relationship} oninput={handleFamilyFieldChange}>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label">Phone</label>
+                      <input type="tel" class="form-control" name="phone" value={familyForm.phone} oninput={handleFamilyFieldChange}>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label">Date of Birth</label>
+                      <input type="text" class="form-control" name="dateOfBirth" value={familyForm.dateOfBirth} oninput={handleFamilyFieldChange} placeholder="e.g. 25 May 2014">
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-white border me-2" onclick={handleCloseFamilyModal}>Cancel</button>
+                  <button type="submit" class="btn btn-primary px-4">Save</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ========================================================================= -->
+      <!-- MODAL 6: ABOUT EMPLOYEE MODAL                                             -->
+      <!-- ========================================================================= -->
+      <template if:true={isAboutModalOpen}>
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow">
+              <div class="modal-header">
+                <h4 class="modal-title fw-bold">About Employee</h4>
+                <button type="button" class="btn-close custom-btn-close" onclick={handleCloseAboutModal}>
+                  <i class="ti ti-x"></i>
+                </button>
+              </div>
+              <form onsubmit={handleSaveAbout}>
+                <div class="modal-body pb-0">
+                  <div class="mb-3">
+                    <label class="form-label">About / Bio Description</label>
+                    <textarea class="form-control" rows="5" value={aboutForm.about} oninput={handleAboutFieldChange}></textarea>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-white border me-2" onclick={handleCloseAboutModal}>Cancel</button>
+                  <button type="submit" class="btn btn-primary px-4">Save</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ========================================================================= -->
+      <!-- MODAL 7: ADD / EDIT FULL EMPLOYEE MODAL                                   -->
+      <!-- ========================================================================= -->
+      <template if:true={isAddEditModalOpen}>
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+          <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow">
+              <div class="modal-header">
+                <h4 class="modal-title fw-bold">{modalTitle}</h4>
+                <button type="button" class="btn-close custom-btn-close" onclick={handleCloseAddEditModal}>
+                  <i class="ti ti-x"></i>
+                </button>
+              </div>
+              <div class="modal-body">
+                <div class="row g-3">
+                  <div class="col-6">
+                    <label class="form-label fs-13 fw-medium">First Name</label>
+                    <input type="text" class="form-control" name="FirstName" value={employeeForm.FirstName} oninput={handleFormFieldChange}>
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label fs-13 fw-medium">Last Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="LastName" value={employeeForm.LastName} oninput={handleFormFieldChange} required>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label fs-13 fw-medium">Email</label>
+                    <input type="email" class="form-control" name="Email" value={employeeForm.Email} oninput={handleFormFieldChange}>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label fs-13 fw-medium">Phone</label>
+                    <input type="tel" class="form-control" name="Phone" value={employeeForm.Phone} oninput={handleFormFieldChange}>
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label fs-13 fw-medium">Designation / Title</label>
+                    <input type="text" class="form-control" name="Title" value={employeeForm.Title} oninput={handleFormFieldChange} placeholder="e.g. Software Developer">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label fs-13 fw-medium">Department</label>
+                    <input type="text" class="form-control" name="Department" value={employeeForm.Department} oninput={handleFormFieldChange} placeholder="e.g. Engineering">
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-white border" onclick={handleCloseAddEditModal}>Cancel</button>
+                <button type="button" class="btn btn-primary" onclick={handleSaveEmployee}>Save Employee</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ========================================================================= -->
+      <!-- MODAL 8: DELETE CONFIRMATION MODAL                                        -->
+      <!-- ========================================================================= -->
+      <template if:true={isDeleteModalOpen}>
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+          <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content shadow text-center p-4">
+              <div class="text-danger mb-3">
+                <i class="fa-solid fa-trash-can fs-1"></i>
+              </div>
+              <h5 class="fw-bold mb-2">Delete Employee</h5>
+              <p class="text-muted fs-13 mb-4">
+                Are you sure you want to delete <strong>{employeeToDelete.name}</strong>? This action cannot be undone.
+              </p>
+              <div class="d-flex justify-content-center gap-2">
+                <button type="button" class="btn btn-white border px-3" onclick={handleCloseDeleteModal}>Cancel</button>
+                <button type="button" class="btn btn-danger px-3" onclick={handleConfirmDelete}>Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </template>
 
     </div>
