@@ -2,7 +2,7 @@
  * @description Controller for managing Portal User Profile permissions
  * @author PWChrono Team
  */
-public inherited sharing class PWChrono_PermissionController {
+public without sharing class PWChrono_PermissionController {
   // --- Guest portal authorization helpers (Admin Settings) ---
   // Permissions management is an admin/config function. In the guest runtime,
   // require a verified session and profile-level access to Portal Users.
@@ -96,12 +96,12 @@ public inherited sharing class PWChrono_PermissionController {
     String portalUserId,
     String sessionToken
   ) {
-    requireAdminSettingsAccessForGuest(portalUserId, sessionToken);
-
     List<PortalUserRow> rows = new List<PortalUserRow>();
     if (profileId == null) {
       return rows;
     }
+
+    requireAdminSettingsAccessForGuest(portalUserId, sessionToken);
 
     for (Portal_Users__c u : [
       SELECT Id, Name, Email__c, Is_Active__c, Role__c

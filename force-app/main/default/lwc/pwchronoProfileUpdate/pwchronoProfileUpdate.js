@@ -4,9 +4,11 @@ import getProfileWithAccess from "@salesforce/apex/PWChrono_ProfileController.ge
 import updateProfileWithAccess from "@salesforce/apex/PWChrono_ProfileController.updateProfileWithAccess";
 import uploadProfileImageWithAccess from "@salesforce/apex/PWChrono_ProfileController.uploadProfileImageWithAccess";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
+import { logError } from "c/pwchronoErrorHandler";
 import {
   getEmployeeId,
   getSessionToken,
+  SESSION_CHANGED_EVENT,
   updateSessionUser
 } from "c/pwchronoSession";
 
@@ -16,10 +18,13 @@ export default class PwchronoProfileUpdate extends LightningElement {
   @api employeeId;
   @track profile;
   @track error;
+  @track errorMessage = "";
+  @track isLoading = true;
   @track isSaving = false;
 
   // Actor portal user (the verified session user). Used to enforce access on the server.
   portalUserId = getEmployeeId();
+  sessionToken = getSessionToken();
 
   // Track editable fields locally
   @track formState = {
@@ -31,19 +36,57 @@ export default class PwchronoProfileUpdate extends LightningElement {
   };
 
   wiredProfileResult;
-
-  sessionToken;
-
   updatedFields = {};
+  _boundSessionChanged;
 
   // Target employee ID - use provided value or fall back to current session portal user.
   get targetEmployeeId() {
-    return this.employeeId || this.portalUserId;
+    return this.employeeId || this.portalUserId || undefined;
   }
 
   connectedCallback() {
     this.portalUserId = getEmployeeId();
     this.sessionToken = getSessionToken();
+
+    this._boundSessionChanged = this.handleSessionChanged.bind(this);
+    try {
+      globalThis?.addEventListener?.(
+        SESSION_CHANGED_EVENT,
+        this._boundSessionChanged
+      );
+    } catch {
+      // no-op
+    }
+  }
+
+  disconnectedCallback() {
+    try {
+      globalThis?.removeEventListener?.(
+        SESSION_CHANGED_EVENT,
+        this._boundSessionChanged
+      );
+    } catch {
+      // no-op
+    }
+  }
+
+  handleSessionChanged() {
+    this.portalUserId = getEmployeeId();
+    this.sessionToken = getSessionToken();
+    if (this.wiredProfileResult) {
+      this.isLoading = true;
+      refreshApex(this.wiredProfileResult);
+    }
+  }
+
+  handleRetry() {
+    this.isLoading = true;
+    this.errorMessage = "";
+    this.portalUserId = getEmployeeId();
+    this.sessionToken = getSessionToken();
+    if (this.wiredProfileResult) {
+      refreshApex(this.wiredProfileResult);
+    }
   }
 
   // Computed Properties
@@ -76,10 +119,18 @@ export default class PwchronoProfileUpdate extends LightningElement {
     if (result.data) {
       this.profile = { ...result.data };
       this.error = undefined;
+      this.errorMessage = "";
+      this.isLoading = false;
       this.resetFormState();
     } else if (result.error) {
       this.error = result.error;
       this.profile = undefined;
+      this.isLoading = false;
+      this.errorMessage =
+        result.error?.body?.message ||
+        result.error?.message ||
+        "Unable to load profile details. Please try again or re-authenticate.";
+      logError("pwchronoProfileUpdate.wiredProfile", result.error);
     }
   }
 

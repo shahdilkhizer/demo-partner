@@ -272,10 +272,10 @@ export default class PwchronoProfileUpdatePage extends LightningElement {
   }
 
   get usersProfileId() {
-    // Load the Portal Users list whenever we're on the Portal User Profile record page.
-    // (UI was simplified to remove Dashboard/Employees/Attendance tabs.)
-    if (!this.isPortalUserProfileRecord) return null;
-    return this.recordId;
+    // Load the Portal Users list ONLY when we're on the Portal User Profile record page.
+    // Returning undefined prevents @wire from firing when not on a profile record.
+    if (!this.isPortalUserProfileRecord) return undefined;
+    return this.recordId || undefined;
   }
 
   @wire(getPortalUsersForProfile, {
@@ -290,7 +290,7 @@ export default class PwchronoProfileUpdatePage extends LightningElement {
       return;
     }
 
-    // When profileId is null (e.g. user is on another main tab), keep state as-is.
+    // When profileId is undefined/null (e.g. user is on another main tab), keep state as-is.
     if (!this.usersProfileId) {
       this.isUsersLoading = false;
       return;
@@ -329,7 +329,7 @@ export default class PwchronoProfileUpdatePage extends LightningElement {
       return this.recordId;
     }
 
-    // Otherwise, let the child component fall back to session-based employee id.
-    return null;
+    // Otherwise, fall back to current session employee id.
+    return this.portalUserId || null;
   }
 }

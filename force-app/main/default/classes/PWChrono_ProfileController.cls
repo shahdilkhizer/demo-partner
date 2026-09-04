@@ -3,7 +3,7 @@
  * @author PWChrono Team
  */
 @SuppressWarnings('PMD.ApexCRUDViolation')
-public inherited sharing class PWChrono_ProfileController {
+public without sharing class PWChrono_ProfileController {
   /**
    * @description Resolve the target employee record Id for a profile operation.
    *              - Guest: portalUserId+sessionToken identify the actor; targetEmployeeId can be another employee only if actor is admin.

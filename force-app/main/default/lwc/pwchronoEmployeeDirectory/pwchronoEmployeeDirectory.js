@@ -4,7 +4,6 @@ import getEmployeeDetail from "@salesforce/apex/PWChrono_EmployeeDirectoryContro
 import getEmployeeDirectoryMetrics from "@salesforce/apex/PWChrono_EmployeeDirectoryController.getEmployeeDirectoryMetrics";
 import getEmployees from "@salesforce/apex/PWChrono_EmployeeDirectoryController.getEmployees";
 import saveEmployee from "@salesforce/apex/PWChrono_EmployeeDirectoryController.saveEmployee";
-import saveEmployeeFull from "@salesforce/apex/PWChrono_EmployeeDirectoryController.saveEmployeeFull";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { LightningElement, track } from "lwc";
 import {
