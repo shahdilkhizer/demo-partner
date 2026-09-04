@@ -303,7 +303,7 @@ public inherited sharing class PWChrono_ProfileController {
    * @description Upload profile image with access enforcement.
    */
   @AuraEnabled
-  public static void uploadProfileImageWithAccess(
+  public static String uploadProfileImageWithAccess(
     String targetEmployeeId,
     String fileName,
     String base64Data,
@@ -320,34 +320,7 @@ public inherited sharing class PWChrono_ProfileController {
         throw new AuraHandledException('Employee record not found');
       }
 
-      ContentVersion cv = new ContentVersion();
-      cv.VersionData = EncodingUtil.base64Decode(base64Data);
-      cv.Title = fileName;
-      cv.PathOnClient = fileName;
-      cv.FirstPublishLocationId = resolvedId;
-      insert cv;
-
-      cv = [SELECT Id, ContentDocumentId FROM ContentVersion WHERE Id = :cv.Id];
-
-      ContentDistribution cd = new ContentDistribution();
-      cd.Name = fileName;
-      cd.ContentVersionId = cv.Id;
-      cd.PreferencesAllowViewInBrowser = true;
-      cd.PreferencesLinkLatestVersion = true;
-      cd.PreferencesNotifyOnVisit = false;
-      cd.PreferencesPasswordRequired = false;
-      cd.PreferencesAllowOriginalDownload = true;
-      insert cd;
-
-      cd = [
-        SELECT DistributionPublicUrl, ContentDownloadUrl
-        FROM ContentDistribution
-        WHERE Id = :cd.Id
-      ];
-
-      Portal_Users__c emp = new Portal_Users__c(Id = resolvedId);
-      emp.Photo_Url__c = cd.ContentDownloadUrl;
-      update emp;
+      return storeProfileImage(resolvedId, fileName, base64Data);
     } catch (Exception e) {
       PWChrono_Logger.error('Error uploading profile image (with access)', e);
       AuraHandledException ahe = new AuraHandledException(
@@ -365,7 +338,7 @@ public inherited sharing class PWChrono_ProfileController {
    * @param base64Data Base64 encoded file data
    */
   @AuraEnabled
-  public static void uploadProfileImage(
+  public static String uploadProfileImage(
     String employeeId,
     String fileName,
     String base64Data,
@@ -388,34 +361,7 @@ public inherited sharing class PWChrono_ProfileController {
         throw new AuraHandledException('Employee record not found');
       }
 
-      ContentVersion cv = new ContentVersion();
-      cv.VersionData = EncodingUtil.base64Decode(base64Data);
-      cv.Title = fileName;
-      cv.PathOnClient = fileName;
-      cv.FirstPublishLocationId = targetEmployeeId;
-      insert cv;
-
-      cv = [SELECT Id, ContentDocumentId FROM ContentVersion WHERE Id = :cv.Id];
-
-      ContentDistribution cd = new ContentDistribution();
-      cd.Name = fileName;
-      cd.ContentVersionId = cv.Id;
-      cd.PreferencesAllowViewInBrowser = true;
-      cd.PreferencesLinkLatestVersion = true;
-      cd.PreferencesNotifyOnVisit = false;
-      cd.PreferencesPasswordRequired = false;
-      cd.PreferencesAllowOriginalDownload = true;
-      insert cd;
-
-      cd = [
-        SELECT DistributionPublicUrl, ContentDownloadUrl
-        FROM ContentDistribution
-        WHERE Id = :cd.Id
-      ];
-
-      Portal_Users__c emp = new Portal_Users__c(Id = targetEmployeeId);
-      emp.Photo_Url__c = cd.ContentDownloadUrl;
-      update emp;
+      return storeProfileImage(targetEmployeeId, fileName, base64Data);
     } catch (Exception e) {
       PWChrono_Logger.error('Error uploading profile image', e);
       AuraHandledException ahe = new AuraHandledException(
@@ -424,5 +370,42 @@ public inherited sharing class PWChrono_ProfileController {
       ahe.setMessage('Error uploading profile image: ');
       throw ahe;
     }
+  }
+
+  private static String storeProfileImage(
+    Id employeeId,
+    String fileName,
+    String base64Data
+  ) {
+    ContentVersion cv = new ContentVersion(
+      VersionData = EncodingUtil.base64Decode(base64Data),
+      Title = fileName,
+      PathOnClient = fileName,
+      FirstPublishLocationId = employeeId
+    );
+    insert cv;
+
+    ContentDistribution cd = new ContentDistribution(
+      Name = fileName,
+      ContentVersionId = cv.Id,
+      PreferencesAllowViewInBrowser = true,
+      PreferencesLinkLatestVersion = true,
+      PreferencesNotifyOnVisit = false,
+      PreferencesPasswordRequired = false,
+      PreferencesAllowOriginalDownload = true
+    );
+    insert cd;
+
+    cd = [
+      SELECT ContentDownloadUrl
+      FROM ContentDistribution
+      WHERE Id = :cd.Id
+    ];
+
+    update new Portal_Users__c(
+      Id = employeeId,
+      Photo_Url__c = cd.ContentDownloadUrl
+    );
+    return cd.ContentDownloadUrl;
   }
 }

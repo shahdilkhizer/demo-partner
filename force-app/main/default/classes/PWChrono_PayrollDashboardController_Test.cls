@@ -3,8 +3,15 @@ private class PWChrono_PayrollDashboardController_Test {
   @IsTest
   static void testSummaryBasic() {
     Date period = Date.today();
+    Portal_Users__c employee = PWChrono_TestDataFactory.createPortalUser(
+      'Payroll Dashboard Employee',
+      'payroll.dashboard@testorg.com',
+      'Employee'
+    );
     insert new List<PWChrono_Salary_Slip__c>{
       new PWChrono_Salary_Slip__c(
+        Contact__c = employee.Contact__c,
+        Employees__c = employee.Id,
         Payroll_Period__c = period,
         Gross_Pay__c = 25000,
         Net_Pay__c = 20000,
@@ -12,6 +19,8 @@ private class PWChrono_PayrollDashboardController_Test {
         Status__c = 'Paid'
       ),
       new PWChrono_Salary_Slip__c(
+        Contact__c = employee.Contact__c,
+        Employees__c = employee.Id,
         Payroll_Period__c = period,
         Gross_Pay__c = 60000,
         Net_Pay__c = 48000,
@@ -21,7 +30,10 @@ private class PWChrono_PayrollDashboardController_Test {
     };
 
     Test.startTest();
-    PWChrono_PayrollDashboardController.PayrollDashboardDTO dto = PWChrono_PayrollDashboardController.getDashboardSummary();
+    PWChrono_PayrollDashboardController.PayrollDashboardDTO dto = PWChrono_PayrollDashboardController.getDashboardSummary(
+      null,
+      null
+    );
     Test.stopTest();
 
     System.assertNotEquals(null, dto, 'DTO should not be null');

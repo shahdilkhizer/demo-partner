@@ -4,6 +4,7 @@
     <isExposed>true</isExposed>
     <masterLabel>PWChrono Attendance Management Page</masterLabel>
     <targets>
+        <target>lightning__Tab</target>
         <target>lightningCommunity__Page</target>
         <target>lightningCommunity__Default</target>
     </targets>

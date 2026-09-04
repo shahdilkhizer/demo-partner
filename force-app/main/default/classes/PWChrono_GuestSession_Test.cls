@@ -58,7 +58,11 @@ private class PWChrono_GuestSession_Test {
   @isTest
   static void testRequireVerifiedPortalUserId_NonGuestFallsBackToMappedEmployee() {
     User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
-    Portal_Users__c employee = [SELECT Id, User__c FROM Portal_Users__c LIMIT 1];
+    Portal_Users__c employee = [
+      SELECT Id, User__c
+      FROM Portal_Users__c
+      LIMIT 1
+    ];
 
     System.runAs(testUser) {
       Id result = PWChrono_GuestSession.requireVerifiedPortalUserId(null, null);
@@ -75,7 +79,10 @@ private class PWChrono_GuestSession_Test {
         String.valueOf(employee.Id),
         null
       );
-      System.assert(false, 'Expected guest session validation to reject blank token.');
+      System.assert(
+        false,
+        'Expected guest session validation to reject blank token.'
+      );
     } catch (AuraHandledException e) {
       System.assertEquals(
         'Session invalid or expired. Please log in again.',
@@ -88,7 +95,11 @@ private class PWChrono_GuestSession_Test {
 
   @isTest
   static void testRequireVerifiedPortalUserId_GuestInactiveRejected() {
-    Portal_Users__c employee = [SELECT Id, Is_Active__c FROM Portal_Users__c LIMIT 1];
+    Portal_Users__c employee = [
+      SELECT Id, Is_Active__c
+      FROM Portal_Users__c
+      LIMIT 1
+    ];
     employee.Is_Active__c = false;
     update employee;
 
@@ -125,7 +136,10 @@ private class PWChrono_GuestSession_Test {
       );
       System.assert(false, 'Expected expired session to be rejected.');
     } catch (AuraHandledException e) {
-      System.assertEquals('Session expired. Please log in again.', e.getMessage());
+      System.assertEquals(
+        'Session expired. Please log in again.',
+        e.getMessage()
+      );
     } finally {
       resetGuestSessionOverrides();
     }
@@ -136,7 +150,10 @@ private class PWChrono_GuestSession_Test {
       WHERE Id = :employee.Id
       LIMIT 1
     ];
-    System.assertEquals(0, Integer.valueOf(refreshed.Session_Failed_Attempts__c));
+    System.assertEquals(
+      0,
+      Integer.valueOf(refreshed.Session_Failed_Attempts__c)
+    );
     System.assertEquals(null, refreshed.Session_Locked_Until__c);
   }
 
@@ -156,7 +173,10 @@ private class PWChrono_GuestSession_Test {
       );
       System.assert(false, 'Expected invalid token to be rejected.');
     } catch (AuraHandledException e) {
-      System.assertEquals('Session invalid. Please log in again.', e.getMessage());
+      System.assertEquals(
+        'Session invalid. Please log in again.',
+        e.getMessage()
+      );
     } finally {
       resetGuestSessionOverrides();
     }
@@ -167,7 +187,10 @@ private class PWChrono_GuestSession_Test {
       WHERE Id = :employee.Id
       LIMIT 1
     ];
-    System.assertEquals(1, Integer.valueOf(refreshed.Session_Failed_Attempts__c));
+    System.assertEquals(
+      1,
+      Integer.valueOf(refreshed.Session_Failed_Attempts__c)
+    );
   }
 
   @isTest
@@ -224,8 +247,46 @@ private class PWChrono_GuestSession_Test {
       WHERE Id = :employee.Id
       LIMIT 1
     ];
-    System.assertEquals(0, Integer.valueOf(refreshed.Session_Failed_Attempts__c));
+    System.assertEquals(
+      0,
+      Integer.valueOf(refreshed.Session_Failed_Attempts__c)
+    );
     System.assertEquals(null, refreshed.Session_Locked_Until__c);
+  }
+
+  @isTest
+  static void testGetVerifiedUserAccess_ReturnsPrivateProfileFeatures() {
+    Portal_Users__c employee = [
+      SELECT Id
+      FROM Portal_Users__c
+      LIMIT 1
+    ];
+    Portal_User_Profile__c profile = new Portal_User_Profile__c();
+    insert profile;
+    employee.Portal_User_Profile__c = profile.Id;
+    update employee;
+    insert new Portal_Profile_Feature__c(
+      Portal_User_Profile__c = profile.Id,
+      Feature_Key__c = 'Employee Directory',
+      Feature_Label__c = 'Employee Directory',
+      Is_Enabled__c = true
+    );
+
+    PWChrono_GuestSession.testUserTypeOverride = 'Guest';
+    try {
+      Map<String, Object> result = PWChrono_GuestSession.getVerifiedUserAccess(
+        String.valueOf(employee.Id),
+        'valid_token'
+      );
+      System.assertEquals(true, result.get('hasAccess'));
+      System.assertEquals(false, result.get('isSalesforceUser'));
+      System.assertEquals(
+        new List<String>{ 'Employee Directory' },
+        (List<String>) result.get('features')
+      );
+    } finally {
+      resetGuestSessionOverrides();
+    }
   }
 
   @isTest

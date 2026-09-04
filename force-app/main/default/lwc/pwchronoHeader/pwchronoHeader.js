@@ -1,4 +1,8 @@
-import { clearSession, getSession } from "c/pwchronoSession";
+import {
+  clearSession,
+  getSession,
+  SESSION_CHANGED_EVENT
+} from "c/pwchronoSession";
 import { api, LightningElement, track } from "lwc";
 
 export default class PwchronoHeader extends LightningElement {
@@ -93,11 +97,20 @@ export default class PwchronoHeader extends LightningElement {
   }
 
   _handleDocClick;
+  _handleSessionChanged;
 
   connectedCallback() {
     this.isLightningExperience =
       globalThis?.location?.pathname?.startsWith("/lightning") === true;
     this.loadUserData();
+
+    this._handleSessionChanged = () => this.loadUserData();
+    try {
+      const w = globalThis?.window ?? globalThis;
+      w?.addEventListener?.(SESSION_CHANGED_EVENT, this._handleSessionChanged);
+    } catch {
+      // no-op
+    }
 
     // Close popovers when clicking outside the header.
     this._handleDocClick = (evt) => {
@@ -124,6 +137,11 @@ export default class PwchronoHeader extends LightningElement {
       if (this._handleDocClick) {
         document.removeEventListener("click", this._handleDocClick);
       }
+      const w = globalThis?.window ?? globalThis;
+      w?.removeEventListener?.(
+        SESSION_CHANGED_EVENT,
+        this._handleSessionChanged
+      );
     } catch {
       // no-op
     }
@@ -131,9 +149,7 @@ export default class PwchronoHeader extends LightningElement {
 
   loadUserData() {
     const session = getSession();
-    if (session.isLoggedIn && session.user) {
-      this.userData = session.user;
-    }
+    this.userData = session.isLoggedIn && session.user ? session.user : null;
   }
 
   get userName() {
@@ -168,7 +184,7 @@ export default class PwchronoHeader extends LightningElement {
         name: name,
         role: this.userData.Role__c || this.userData.role || "",
         initials: this.getInitials(name),
-        photoUrl: this.userData.Photo_Url__c || this.userData.photoUrl || null
+        photoUrl: this.userData.Photo_Url__c || null
       };
     }
     return {

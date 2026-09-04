@@ -62,6 +62,8 @@
                             <th style="width: 15%">Enable Access</th>
                             <th>Read</th>
                             <th>Create</th>
+                            <th>View All</th>
+                            <th>Modify All</th>
                             <th>Edit</th>
                             <th>Delete</th>
                           </tr>
@@ -121,6 +123,30 @@
                                   data-field="canCreate"
                                   onchange={handleChange}
                                   class="permission-checkbox"
+                                ></lightning-input>
+                              </td>
+                              <td>
+                                <lightning-input
+                                  type="checkbox"
+                                  label="View All"
+                                  variant="label-hidden"
+                                  checked={perm.canViewAll}
+                                  disabled={perm.disabled}
+                                  data-id={perm.objectName}
+                                  data-field="canViewAll"
+                                  onchange={handleChange}
+                                ></lightning-input>
+                              </td>
+                              <td>
+                                <lightning-input
+                                  type="checkbox"
+                                  label="Modify All"
+                                  variant="label-hidden"
+                                  checked={perm.canModifyAll}
+                                  disabled={perm.disabled}
+                                  data-id={perm.objectName}
+                                  data-field="canModifyAll"
+                                  onchange={handleChange}
                                 ></lightning-input>
                               </td>
                               <td>

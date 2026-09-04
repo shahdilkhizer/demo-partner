@@ -7,16 +7,50 @@
 -->
 <template lwc:render-mode="light">
   <!-- UI Assets loaded at root level so CSS starts downloading immediately -->
-  <c-pwchrono-ui-assets onassetsready={handleAssetsReady}></c-pwchrono-ui-assets>
+  <c-pwchrono-ui-assets
+    onassetsready={handleAssetsReady}
+  ></c-pwchrono-ui-assets>
 
   <!-- Fullscreen Loading Shield to eliminate Flash of Unstyled Content (FOUC) -->
   <div id="pwchrono-global-loader" style={globalLoaderStyle} aria-live="polite">
-    <div style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;">
+    <div
+      style="
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+      "
+    >
       <!-- Native animated SVG spinner: renders immediately with zero external dependencies -->
       <svg width="48" height="48" viewBox="0 0 50 50" aria-hidden="true">
-        <circle cx="25" cy="25" r="20" fill="none" stroke="#f0f2f5" stroke-width="4" />
-        <circle cx="25" cy="25" r="20" fill="none" stroke="url(#spinnerGrad)" stroke-width="4" stroke-linecap="round" stroke-dasharray="35 65">
-          <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.75s" repeatCount="indefinite" />
+        <circle
+          cx="25"
+          cy="25"
+          r="20"
+          fill="none"
+          stroke="#f0f2f5"
+          stroke-width="4"
+        />
+        <circle
+          cx="25"
+          cy="25"
+          r="20"
+          fill="none"
+          stroke="url(#spinnerGrad)"
+          stroke-width="4"
+          stroke-linecap="round"
+          stroke-dasharray="35 65"
+        >
+          <animateTransform
+            attributeName="transform"
+            type="rotate"
+            from="0 25 25"
+            to="360 25 25"
+            dur="0.75s"
+            repeatCount="indefinite"
+          />
         </circle>
         <defs>
           <linearGradient id="spinnerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -25,7 +59,17 @@
           </linearGradient>
         </defs>
       </svg>
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; font-weight: 600; color: #4b5563; letter-spacing: 0.3px;">
+      <div
+        style="
+          font-family:
+            -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto,
+            Helvetica, Arial, sans-serif;
+          font-size: 15px;
+          font-weight: 600;
+          color: #4b5563;
+          letter-spacing: 0.3px;
+        "
+      >
         Loading PulseWork Chrono...
       </div>
     </div>
@@ -36,7 +80,7 @@
     <template if:true={shouldRenderPortalChrome}>
       <c-pwchrono-header
         onlogout={handleLogout}
-        onnavigate={handleHeaderNavigate}
+        onnavigate={handleChildNavigate}
         ontogglesidebar={handleSidebarToggle}
       >
       </c-pwchrono-header>
@@ -44,7 +88,9 @@
       <c-pwchrono-sidebar
         features={features}
         is-salesforce-user={isSalesforceUser}
-        onnavigate={handleHeaderNavigate}
+        application-mode={applicationNavigationEnabled}
+        navigation-context={navigationContext}
+        onnavigate={handleChildNavigate}
       >
       </c-pwchrono-sidebar>
     </template>

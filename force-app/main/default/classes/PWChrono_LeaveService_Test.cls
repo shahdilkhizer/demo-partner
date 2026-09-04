@@ -93,7 +93,7 @@ private class PWChrono_LeaveService_Test {
     );
 
     Test.startTest();
-    PWChrono_Leave__c result = PWChrono_LeaveService.submitLeave(dto, b.employee.Id);
+    Leave__c result = PWChrono_LeaveService.submitLeave(dto, b.employee.Id);
     Test.stopTest();
 
     System.assertNotEquals(null, result.Id, 'Leave should be created');
@@ -115,7 +115,7 @@ private class PWChrono_LeaveService_Test {
     dto.halfDay = true;
 
     Test.startTest();
-    PWChrono_Leave__c result = PWChrono_LeaveService.submitLeave(dto, b.employee.Id);
+    Leave__c result = PWChrono_LeaveService.submitLeave(dto, b.employee.Id);
     Test.stopTest();
 
     System.assertEquals(0.5, result.Total_Days__c, 'Half day should be 0.5');
@@ -167,13 +167,13 @@ private class PWChrono_LeaveService_Test {
   static void testApproveLeave_Success() {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
-    PWChrono_Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
       b.employee.Id, b.annualLeave.Id, b.manager.Id,
       Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
     );
 
     Test.startTest();
-    PWChrono_Leave__c result = PWChrono_LeaveService.processApproval(
+    Leave__c result = PWChrono_LeaveService.processApproval(
       leave.Id, 'Approve', null, b.manager.Id
     );
     Test.stopTest();
@@ -197,13 +197,13 @@ private class PWChrono_LeaveService_Test {
   static void testRejectLeave_Success() {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
-    PWChrono_Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
       b.employee.Id, b.annualLeave.Id, b.manager.Id,
       Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
     );
 
     Test.startTest();
-    PWChrono_Leave__c result = PWChrono_LeaveService.processApproval(
+    Leave__c result = PWChrono_LeaveService.processApproval(
       leave.Id, 'Reject', 'Insufficient staff coverage', b.manager.Id
     );
     Test.stopTest();
@@ -220,7 +220,7 @@ private class PWChrono_LeaveService_Test {
   static void testRejectLeave_NoReason() {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
-    PWChrono_Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
       b.employee.Id, b.annualLeave.Id, b.manager.Id,
       Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
     );
@@ -240,7 +240,7 @@ private class PWChrono_LeaveService_Test {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
     // Create an already-approved leave
-    PWChrono_Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
       b.employee.Id, b.annualLeave.Id, b.manager.Id,
       Date.today().addDays(5), Date.today().addDays(7), 'Approved'
     );
@@ -259,7 +259,7 @@ private class PWChrono_LeaveService_Test {
   static void testApproveLeave_InvalidAction() {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
-    PWChrono_Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
       b.employee.Id, b.annualLeave.Id, b.manager.Id,
       Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
     );
@@ -280,13 +280,13 @@ private class PWChrono_LeaveService_Test {
   static void testCancelSubmittedLeave() {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
-    PWChrono_Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
       b.employee.Id, b.annualLeave.Id, b.manager.Id,
       Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
     );
 
     Test.startTest();
-    PWChrono_Leave__c result = PWChrono_LeaveService.cancelLeave(
+    Leave__c result = PWChrono_LeaveService.cancelLeave(
       leave.Id, 'Change of plans', b.employee.Id
     );
     Test.stopTest();
@@ -298,7 +298,7 @@ private class PWChrono_LeaveService_Test {
   static void testCancelApprovedLeave_ReversesBalance() {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
-    PWChrono_Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
       b.employee.Id, b.annualLeave.Id, b.manager.Id,
       Date.today().addDays(5), Date.today().addDays(7), 'Approved'
     );
@@ -308,7 +308,7 @@ private class PWChrono_LeaveService_Test {
     update b.annualAllocation;
 
     Test.startTest();
-    PWChrono_Leave__c result = PWChrono_LeaveService.cancelLeave(
+    Leave__c result = PWChrono_LeaveService.cancelLeave(
       leave.Id, 'Emergency resolved', b.employee.Id
     );
     Test.stopTest();
@@ -331,7 +331,7 @@ private class PWChrono_LeaveService_Test {
   static void testCancelRejectedLeave_Fails() {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
-    PWChrono_Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
       b.employee.Id, b.annualLeave.Id, b.manager.Id,
       Date.today().addDays(5), Date.today().addDays(7), 'Rejected'
     );
@@ -354,7 +354,7 @@ private class PWChrono_LeaveService_Test {
       'Other Employee', true
     );
 
-    PWChrono_Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
       b.employee.Id, b.annualLeave.Id, b.manager.Id,
       Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
     );
@@ -516,7 +516,7 @@ private class PWChrono_LeaveService_Test {
     );
 
     Test.startTest();
-    List<PWChrono_Leave__c> leaves = PWChrono_LeaveController.getMyLeaves(
+    List<Leave__c> leaves = PWChrono_LeaveController.getMyLeaves(
       null, null, null, String.valueOf(b.employee.Id), null
     );
     Test.stopTest();
@@ -528,13 +528,13 @@ private class PWChrono_LeaveService_Test {
   static void testController_GetLeaveDetail() {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
-    PWChrono_Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
       b.employee.Id, b.annualLeave.Id, b.manager.Id,
       Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
     );
 
     Test.startTest();
-    PWChrono_Leave__c detail = PWChrono_LeaveController.getLeaveDetail(
+    Leave__c detail = PWChrono_LeaveController.getLeaveDetail(
       leave.Id, String.valueOf(b.employee.Id), null
     );
     Test.stopTest();
@@ -566,7 +566,7 @@ private class PWChrono_LeaveService_Test {
     );
 
     Test.startTest();
-    PWChrono_Leave__c result = PWChrono_LeaveController.submitLeaveApplication(
+    Leave__c result = PWChrono_LeaveController.submitLeaveApplication(
       dto, String.valueOf(b.employee.Id), null
     );
     Test.stopTest();
@@ -579,13 +579,13 @@ private class PWChrono_LeaveService_Test {
   static void testController_ProcessApproval() {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
-    PWChrono_Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
       b.employee.Id, b.annualLeave.Id, b.manager.Id,
       Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
     );
 
     Test.startTest();
-    PWChrono_Leave__c result = PWChrono_LeaveController.processLeaveApproval(
+    Leave__c result = PWChrono_LeaveController.processLeaveApproval(
       leave.Id, 'Approve', null,
       String.valueOf(b.manager.Id), null
     );
@@ -598,13 +598,13 @@ private class PWChrono_LeaveService_Test {
   static void testController_CancelLeave() {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
-    PWChrono_Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
       b.employee.Id, b.annualLeave.Id, b.manager.Id,
       Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
     );
 
     Test.startTest();
-    PWChrono_Leave__c result = PWChrono_LeaveController.cancelLeave(
+    Leave__c result = PWChrono_LeaveController.cancelLeave(
       leave.Id, 'Changed mind',
       String.valueOf(b.employee.Id), null
     );
@@ -640,7 +640,7 @@ private class PWChrono_LeaveService_Test {
     );
 
     Test.startTest();
-    List<PWChrono_Leave__c> pending = PWChrono_LeaveController.getTeamLeavesForApproval(
+    List<Leave__c> pending = PWChrono_LeaveController.getTeamLeavesForApproval(
       String.valueOf(b.manager.Id), null
     );
     Test.stopTest();

@@ -1,8 +1,9 @@
-import { LightningElement, track } from "lwc";
+import { LightningElement, track, wire } from "lwc";
 import getUserAccessById from "@salesforce/apex/PWChrono_AccessController.getUserAccessById";
-import getAttendanceTrackerData from "@salesforce/apex/PWChrono_AttendanceController.getAttendanceTrackerData";
+import getAttendanceTrackerDataForEmployee from "@salesforce/apex/PWChrono_AttendanceController.getAttendanceTrackerDataForEmployee";
 import { showErrorToast, logError } from "c/pwchronoErrorHandler";
 import { getSession, getEmployeeId, getSessionToken } from "c/pwchronoSession";
+import { CurrentPageReference, NavigationMixin } from "lightning/navigation";
 
 const MONTH_NAMES = [
   "January",
@@ -19,7 +20,9 @@ const MONTH_NAMES = [
   "December"
 ];
 
-export default class PwchronoAttendanceTracker extends LightningElement {
+export default class PwchronoAttendanceTracker extends NavigationMixin(
+  LightningElement
+) {
   @track currentDate = new Date();
   @track attendanceData = [];
   @track isLoading = false;
@@ -68,6 +71,7 @@ export default class PwchronoAttendanceTracker extends LightningElement {
   rawAttendanceData = [];
 
   employeeId;
+  targetEmployeeId;
   sessionToken;
   userName = "Employee";
   hasRendered = false;
@@ -80,6 +84,31 @@ export default class PwchronoAttendanceTracker extends LightningElement {
     this.sessionToken = getSessionToken();
     this.userName = session.user ? session.user.Name : "Employee";
     this.checkAccess();
+  }
+
+  @wire(CurrentPageReference)
+  capturePageReference(pageReference) {
+    const nextEmployeeId = pageReference?.state?.c__employeeId || null;
+    const employeeChanged = nextEmployeeId !== this.targetEmployeeId;
+    this.targetEmployeeId = nextEmployeeId;
+    if (employeeChanged && this.hasAccess) {
+      this.loadData();
+    }
+  }
+
+  get isViewingEmployeeAsAdmin() {
+    return Boolean(
+      this.targetEmployeeId && this.targetEmployeeId !== this.employeeId
+    );
+  }
+
+  handleBackToAdmin() {
+    this[NavigationMixin.Navigate]({
+      type: "comm__namedPage",
+      attributes: {
+        name: "Attendance_Admin__c"
+      }
+    });
   }
 
   get isListView() {
@@ -350,13 +379,17 @@ export default class PwchronoAttendanceTracker extends LightningElement {
     const startStr = this.formatDateToIso(startDate);
     const endStr = this.formatDateToIso(endDate);
 
-    getAttendanceTrackerData({
+    getAttendanceTrackerDataForEmployee({
       startDate: startStr,
       endDate: endStr,
-      employeeId: this.employeeId,
+      targetEmployeeId: this.targetEmployeeId,
+      portalUserId: this.employeeId,
       sessionToken: this.sessionToken
     })
       .then((result) => {
+        if (result?.[0]?.employeeName) {
+          this.userName = result[0].employeeName;
+        }
         this.rawAttendanceData = result; // Store for filtering
         this.processData(result);
         this.filterData(); // Apply status filter

@@ -27,7 +27,7 @@
                 <div>
                   <lightning-combobox
                     label="Employee"
-                    value={selectedEmployeeId}
+                    value={selectedContactId}
                     options={employeeOptions}
                     onchange={handleEmployeeChange}
                     disabled={isEmployeeDropdownReadOnly}
@@ -242,16 +242,18 @@
             Salary Slip: {selectedSlipName}
           </h2>
           <div class="flex items-center gap-2">
-            <button
-              class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
-              onclick={handleOpenEmailModal}
-            >
-              <lightning-icon
-                icon-name="utility:email"
-                size="x-small"
-              ></lightning-icon>
-              Email
-            </button>
+            <template lwc:if={canSendPayslips}>
+              <button
+                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+                onclick={handleOpenEmailModal}
+              >
+                <lightning-icon
+                  icon-name="utility:email"
+                  size="x-small"
+                ></lightning-icon>
+                Email
+              </button>
+            </template>
             <button
               class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors"
               onclick={handlePrint}
@@ -511,9 +513,7 @@
         </div>
         <div class="text-right">
           <p class="font-bold text-gray-800">{employeeName}</p>
-          <p class="text-gray-600">
-            ID: {slipDetails.salarySlip.Employees__r.Name}
-          </p>
+          <p class="text-gray-600">ID: {employeeCode}</p>
         </div>
       </div>
 

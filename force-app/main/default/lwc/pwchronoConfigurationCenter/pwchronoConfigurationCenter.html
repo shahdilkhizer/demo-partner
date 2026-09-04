@@ -26,22 +26,38 @@
           <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
             <ul class="nav nav-tabs mb-4">
               <li class="nav-item">
-                <button class={usersTabClass} onclick={handleTabChange} data-tab="users">
+                <button
+                  class={usersTabClass}
+                  onclick={handleTabChange}
+                  data-tab="users"
+                >
                   <i class="ti ti-users me-1"></i>User Management
                 </button>
               </li>
               <li class="nav-item">
-                <button class={settingsTabClass} onclick={handleTabChange} data-tab="settings">
+                <button
+                  class={settingsTabClass}
+                  onclick={handleTabChange}
+                  data-tab="settings"
+                >
                   <i class="ti ti-settings me-1"></i>Global Settings
                 </button>
               </li>
               <li class="nav-item">
-                <button class={leaveTabClass} onclick={handleTabChange} data-tab="leave">
+                <button
+                  class={leaveTabClass}
+                  onclick={handleTabChange}
+                  data-tab="leave"
+                >
                   <i class="ti ti-calendar me-1"></i>Leave Settings
                 </button>
               </li>
               <li class="nav-item">
-                <button class={attendanceTabClass} onclick={handleTabChange} data-tab="attendance">
+                <button
+                  class={attendanceTabClass}
+                  onclick={handleTabChange}
+                  data-tab="attendance"
+                >
                   <i class="ti ti-clock me-1"></i>Attendance Settings
                 </button>
               </li>
@@ -50,7 +66,9 @@
             <template if:true={isUserManagementTab}>
               <div class="mb-4">
                 <template if:true={isLoading}>
-                  <div class="d-flex flex-column align-items-center justify-content-center py-5">
+                  <div
+                    class="d-flex flex-column align-items-center justify-content-center py-5"
+                  >
                     <div class="spinner-border text-primary mb-3" role="status">
                       <span class="visually-hidden">Loading...</span>
                     </div>
@@ -59,7 +77,9 @@
                 </template>
 
                 <template if:false={isLoading}>
-                  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3">
+                  <div
+                    class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3"
+                  >
                     <div class="flex-grow-1">
                       <lightning-input
                         type="search"
@@ -95,7 +115,9 @@
                         hide-checkbox-column="true"
                       ></lightning-datatable>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between mt-3 p-3 bg-light rounded">
+                    <div
+                      class="d-flex align-items-center justify-content-between mt-3 p-3 bg-light rounded"
+                    >
                       <span class="text-muted small">{paginationInfo}</span>
                       <div class="d-flex gap-2 align-items-center">
                         <lightning-button-icon
@@ -105,7 +127,9 @@
                           disabled={isPrevDisabled}
                           variant="border-filled"
                         ></lightning-button-icon>
-                        <span class="small text-muted">Page {currentPage} of {totalPages}</span>
+                        <span class="small text-muted"
+                          >Page {currentPage} of {totalPages}</span
+                        >
                         <lightning-button-icon
                           icon-name="utility:chevronright"
                           alternative-text="Next"
@@ -118,12 +142,18 @@
                   </template>
 
                   <template if:false={hasUsers}>
-                    <div class="d-flex flex-column align-items-center justify-content-center py-5 text-center bg-light rounded">
-                      <span class="avatar avatar-xl bg-soft-secondary mx-auto mb-3">
+                    <div
+                      class="d-flex flex-column align-items-center justify-content-center py-5 text-center bg-light rounded"
+                    >
+                      <span
+                        class="avatar avatar-xl bg-soft-secondary mx-auto mb-3"
+                      >
                         <i class="ti ti-users fs-2 text-muted"></i>
                       </span>
                       <p class="text-muted mb-1">No users found.</p>
-                      <p class="text-muted small mb-0">Click "New User" to add one.</p>
+                      <p class="text-muted small mb-0">
+                        Click "New User" to add one.
+                      </p>
                     </div>
                   </template>
                 </template>
@@ -219,6 +249,8 @@
 
   <template if:true={showNewUserModal}>
     <c-pwchrono-new-user-form
+      caller-portal-user-id={employeeId}
+      session-token={sessionToken}
       onclose={handleCloseNewUserModal}
       onusersaved={handleUserSaved}
     ></c-pwchrono-new-user-form>
@@ -230,55 +262,55 @@
         <div class="modal-content">
           <div class="modal-header">
             <div>
-              <h5 class="modal-title">Manage Access: {selectedUser.userName}</h5>
-              <p class="text-muted small mb-0">Role: {selectedUser.profileName}</p>
+              <h5 class="modal-title">
+                Assign Profile: {selectedUser.userName}
+              </h5>
+              <p class="text-muted small mb-0">
+                Current profile: {selectedUser.profileName}
+              </p>
             </div>
-            <button type="button" class="btn-close" onclick={closeModal}></button>
+            <button
+              type="button"
+              class="btn-close"
+              onclick={closeModal}
+            ></button>
           </div>
 
           <div class="modal-body">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
-              <h6 class="mb-0 fw-semibold">Feature Access</h6>
-              <div class="d-flex gap-2">
-                <lightning-button label="Select All" onclick={handleSelectAllFeatures} variant="neutral"></lightning-button>
-                <lightning-button label="Deselect All" onclick={handleDeselectAllFeatures} variant="neutral"></lightning-button>
-              </div>
+            <div class="alert alert-info mb-4" role="status">
+              Access is inherited from the selected Portal User Profile. Object
+              and field permissions are managed on the profile record.
             </div>
-
-            <div class="row g-3">
-              <template for:each={features} for:item="feature">
-                <div key={feature.name} class="col-12 col-md-6">
-                  <div class="d-flex align-items-center justify-content-between bg-light border rounded p-3">
-                    <div class="d-flex align-items-center gap-3 flex-grow-1">
-                      <lightning-icon
-                        icon-name={feature.iconName}
-                        size="medium"
-                        variant={feature.iconVariant}
-                      ></lightning-icon>
-                      <div>
-                        <div class="fw-semibold">{feature.name}</div>
-                        <div class="text-muted small">{feature.description}</div>
-                      </div>
-                    </div>
-                    <lightning-input
-                      type="toggle"
-                      label="Access"
-                      variant="label-hidden"
-                      checked={feature.hasAccess}
-                      data-name={feature.name}
-                      onchange={handleFeatureToggle}
-                      message-toggle-active="On"
-                      message-toggle-inactive="Off"
-                    ></lightning-input>
-                  </div>
-                </div>
-              </template>
-            </div>
+            <lightning-combobox
+              name="portalProfile"
+              label="Portal User Profile"
+              value={selectedProfileId}
+              options={profileOptions}
+              onchange={handleProfileChange}
+              required
+            ></lightning-combobox>
+            <lightning-combobox
+              class="mt-3"
+              name="reportingManager"
+              label="Reports To"
+              value={selectedManagerId}
+              options={availableManagerOptions}
+              onchange={handleManagerChange}
+              field-level-help="This Portal User becomes the employee's manager for team views and approval routing. Leave blank only for top-level users."
+            ></lightning-combobox>
           </div>
 
           <div class="modal-footer">
-            <lightning-button label="Cancel" variant="neutral" onclick={closeModal}></lightning-button>
-            <lightning-button label="Save Changes" variant="brand" onclick={handleSaveUserFeatures}></lightning-button>
+            <lightning-button
+              label="Cancel"
+              variant="neutral"
+              onclick={closeModal}
+            ></lightning-button>
+            <lightning-button
+              label="Assign Profile"
+              variant="brand"
+              onclick={handleSaveUserProfile}
+            ></lightning-button>
           </div>
         </div>
       </div>

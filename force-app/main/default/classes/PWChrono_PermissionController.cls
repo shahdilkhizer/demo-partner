@@ -4,9 +4,8 @@
  */
 public inherited sharing class PWChrono_PermissionController {
   // --- Guest portal authorization helpers (Admin Settings) ---
-  // Permissions management is an admin/config function.
-  // In the portal Guest runtime, require a verified portal session AND
-  // that the caller has the Admin Settings feature.
+  // Permissions management is an admin/config function. In the guest runtime,
+  // require a verified session and profile-level access to Portal Users.
   private static void requireAdminSettingsAccessForGuest(
     String callerPortalUserId,
     String sessionToken
@@ -20,29 +19,28 @@ public inherited sharing class PWChrono_PermissionController {
       sessionToken
     );
 
-    Portal_Users__c caller = [
-      SELECT Id, Access_Features__c
+    List<Portal_Users__c> callers = [
+      SELECT Id, Portal_User_Profile__c
       FROM Portal_Users__c
       WHERE Id = :verifiedPortalUserId
       LIMIT 1
     ];
-
-    if (!hasFeature(caller.Access_Features__c, 'Admin Settings')) {
+    if (callers.isEmpty() || callers[0].Portal_User_Profile__c == null) {
       throw new AuraHandledException('Unauthorized.');
     }
-  }
-
-  private static Boolean hasFeature(String accessFeatures, String featureName) {
-    if (String.isBlank(accessFeatures) || String.isBlank(featureName)) {
-      return false;
+    if (
+      [
+        SELECT COUNT()
+        FROM Portal_Object_Permission__c
+        WHERE
+          Portal_User_Profile__c = :callers[0].Portal_User_Profile__c
+          AND Portal_Object__r.Object_API_Name__c = 'Portal_Users__c'
+          AND Can_View__c = TRUE
+          AND Can_Edit__c = TRUE
+      ] == 0
+    ) {
+      throw new AuraHandledException('Unauthorized.');
     }
-
-    for (String part : accessFeatures.split('\\s*;\\s*')) {
-      if (part == featureName) {
-        return true;
-      }
-    }
-    return false;
   }
 
   /**
@@ -63,6 +61,10 @@ public inherited sharing class PWChrono_PermissionController {
     public Boolean canEdit;
     @AuraEnabled
     public Boolean canDelete;
+    @AuraEnabled
+    public Boolean canViewAll;
+    @AuraEnabled
+    public Boolean canModifyAll;
     @AuraEnabled
     public Boolean isAssigned;
   }
@@ -156,7 +158,9 @@ public inherited sharing class PWChrono_PermissionController {
         Can_View__c,
         Can_Create__c,
         Can_Edit__c,
-        Can_Delete__c
+        Can_Delete__c,
+        Can_View_All__c,
+        Can_Modify_All__c
       FROM Portal_Object_Permission__c
       WHERE Portal_User_Profile__c = :profileId
     ]) {
@@ -181,6 +185,8 @@ public inherited sharing class PWChrono_PermissionController {
         wrapper.canCreate = perm.Can_Create__c;
         wrapper.canEdit = perm.Can_Edit__c;
         wrapper.canDelete = perm.Can_Delete__c;
+        wrapper.canViewAll = perm.Can_View_All__c;
+        wrapper.canModifyAll = perm.Can_Modify_All__c;
         wrapper.isAssigned = true;
       } else {
         wrapper.id = null;
@@ -188,6 +194,8 @@ public inherited sharing class PWChrono_PermissionController {
         wrapper.canCreate = false;
         wrapper.canEdit = false;
         wrapper.canDelete = false;
+        wrapper.canViewAll = false;
+        wrapper.canModifyAll = false;
         wrapper.isAssigned = false;
       }
       result.add(wrapper);
@@ -248,6 +256,8 @@ public inherited sharing class PWChrono_PermissionController {
           record.Can_Create__c = perm.canCreate;
           record.Can_Edit__c = perm.canEdit;
           record.Can_Delete__c = perm.canDelete;
+          record.Can_View_All__c = perm.canViewAll == true;
+          record.Can_Modify_All__c = perm.canModifyAll == true;
           toUpsert.add(record);
         } else if (String.isNotBlank(perm.id)) {
           // If unassigned but has ID, delete it
@@ -266,5 +276,110 @@ public inherited sharing class PWChrono_PermissionController {
         'Error saving permissions: ' + e.getMessage()
       );
     }
+  }
+
+  public class FieldPermissionWrapper {
+    @AuraEnabled
+    public String id;
+    @AuraEnabled
+    public String fieldId;
+    @AuraEnabled
+    public String objectName;
+    @AuraEnabled
+    public String fieldApiName;
+    @AuraEnabled
+    public Boolean canView;
+    @AuraEnabled
+    public Boolean canEdit;
+    @AuraEnabled
+    public Boolean isAssigned;
+    @AuraEnabled
+    public Boolean isSystemField;
+  }
+
+  @AuraEnabled(cacheable=true)
+  public static List<FieldPermissionWrapper> getProfileFieldPermissions(
+    Id profileId,
+    String portalUserId,
+    String sessionToken
+  ) {
+    requireAdminSettingsAccessForGuest(portalUserId, sessionToken);
+    Map<Id, Portal_Field_Permission__c> existing = new Map<Id, Portal_Field_Permission__c>();
+    for (Portal_Field_Permission__c permission : [
+      SELECT Id, Portal_Object_Field__c, Can_View__c, Can_Edit__c
+      FROM Portal_Field_Permission__c
+      WHERE Portal_User_Profile__c = :profileId
+    ]) {
+      existing.put(permission.Portal_Object_Field__c, permission);
+    }
+
+    List<FieldPermissionWrapper> result = new List<FieldPermissionWrapper>();
+    for (Portal_Object_Field__c field : [
+      SELECT
+        Id,
+        Field_API_Name__c,
+        Is_System_Field__c,
+        Portal_Object__r.Object_API_Name__c
+      FROM Portal_Object_Field__c
+      WHERE Portal_Object__c != NULL
+      ORDER BY Portal_Object__r.Object_API_Name__c, Field_API_Name__c
+    ]) {
+      FieldPermissionWrapper wrapper = new FieldPermissionWrapper();
+      wrapper.fieldId = field.Id;
+      wrapper.objectName = field.Portal_Object__r.Object_API_Name__c;
+      wrapper.fieldApiName = field.Field_API_Name__c;
+      wrapper.isSystemField = field.Is_System_Field__c;
+      if (existing.containsKey(field.Id)) {
+        Portal_Field_Permission__c permission = existing.get(field.Id);
+        wrapper.id = permission.Id;
+        wrapper.canView = permission.Can_View__c;
+        wrapper.canEdit = permission.Can_Edit__c;
+        wrapper.isAssigned = true;
+      } else {
+        wrapper.canView = false;
+        wrapper.canEdit = false;
+        wrapper.isAssigned = false;
+      }
+      result.add(wrapper);
+    }
+    return result;
+  }
+
+  @AuraEnabled
+  public static void saveProfileFieldPermissions(
+    Id profileId,
+    String permissionsJson,
+    String portalUserId,
+    String sessionToken
+  ) {
+    requireAdminSettingsAccessForGuest(portalUserId, sessionToken);
+    List<FieldPermissionWrapper> permissions = (List<FieldPermissionWrapper>) JSON.deserialize(
+      permissionsJson == null ? '[]' : permissionsJson,
+      List<FieldPermissionWrapper>.class
+    );
+    List<Portal_Field_Permission__c> toUpsert = new List<Portal_Field_Permission__c>();
+    List<Portal_Field_Permission__c> toDelete = new List<Portal_Field_Permission__c>();
+    for (FieldPermissionWrapper permission : permissions) {
+      if (
+        permission.isAssigned == true && String.isNotBlank(permission.fieldId)
+      ) {
+        Portal_Field_Permission__c record = new Portal_Field_Permission__c(
+          Portal_User_Profile__c = profileId,
+          Portal_Object_Field__c = permission.fieldId,
+          Can_View__c = permission.canView == true,
+          Can_Edit__c = permission.canEdit == true
+        );
+        if (String.isNotBlank(permission.id)) {
+          record.Id = permission.id;
+        }
+        toUpsert.add(record);
+      } else if (String.isNotBlank(permission.id)) {
+        toDelete.add(new Portal_Field_Permission__c(Id = permission.id));
+      }
+    }
+    if (!toDelete.isEmpty())
+      delete toDelete;
+    if (!toUpsert.isEmpty())
+      upsert toUpsert;
   }
 }

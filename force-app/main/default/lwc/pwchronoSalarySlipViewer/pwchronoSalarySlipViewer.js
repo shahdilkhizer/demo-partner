@@ -4,6 +4,7 @@ import getMySalarySlips from "@salesforce/apex/PWChrono_PayrollController.getMyS
 import getPayrollConfiguration from "@salesforce/apex/PWChrono_PayrollController.getPayrollConfiguration";
 import getSalarySlipDetails from "@salesforce/apex/PWChrono_PayrollController.getSalarySlipDetails";
 import sendSalarySlipEmail from "@salesforce/apex/PWChrono_PayrollController.sendSalarySlipEmail";
+import hasSendPayslipPermission from "@salesforce/customPermission/PWChrono_Send_Payslips";
 import { CONSTANTS } from "c/pwchronoConstants";
 import {
   logError,
@@ -32,6 +33,7 @@ const COLUMNS = [
 export default class PwchronoSalarySlipViewer extends LightningElement {
   static renderMode = "light";
   currencyCode = CONSTANTS.CURRENCY_CODE;
+  canSendPayslips = hasSendPayslipPermission === true;
 
   portalUserId = getEmployeeId();
   sessionToken = getSessionToken();
@@ -52,8 +54,8 @@ export default class PwchronoSalarySlipViewer extends LightningElement {
   @track isLoading = true;
 
   // Employee Dropdown
-  @track employeeId = getEmployeeId(); // The ID used for querying slips
-  @track selectedEmployeeId = getEmployeeId(); // The value in the dropdown
+  @track contactId;
+  @track selectedContactId;
   @track employeeOptions = [];
   @track isSalesforceUser = false;
   @track isEmployeeDropdownReadOnly = true;
@@ -87,8 +89,7 @@ export default class PwchronoSalarySlipViewer extends LightningElement {
     // Initial employee ID from session
     this.portalUserId = getEmployeeId();
     this.sessionToken = getSessionToken();
-    this.employeeId = session.user ? session.user.Id : this.portalUserId;
-    this.selectedEmployeeId = this.employeeId;
+    this.portalUserId = session.user ? session.user.Id : this.portalUserId;
     // Check access imperatively
     this.checkAccess();
   }
@@ -129,6 +130,14 @@ export default class PwchronoSalarySlipViewer extends LightningElement {
         label: emp.Name,
         value: emp.Id
       }));
+
+      const selectedContactExists = this.employeeOptions.some(
+        (option) => option.value === this.selectedContactId
+      );
+      if (!selectedContactExists) {
+        this.selectedContactId = this.employeeOptions[0]?.value;
+        this.contactId = this.selectedContactId;
+      }
 
       // If Salesforce user, dropdown is editable. If not, read-only (unless we add more logic later)
       // The requirement says: "if user is not Salesforce User... check rights... if not then read only"
@@ -184,7 +193,7 @@ export default class PwchronoSalarySlipViewer extends LightningElement {
   @wire(getMySalarySlips, {
     year: "$selectedYearInt",
     month: "$selectedMonthInt",
-    employeeId: "$employeeId",
+    contactId: "$contactId",
     portalUserId: "$portalUserId",
     sessionToken: "$sessionToken"
   })
@@ -259,8 +268,8 @@ export default class PwchronoSalarySlipViewer extends LightningElement {
   }
 
   handleEmployeeChange(event) {
-    this.selectedEmployeeId = event.detail.value;
-    this.employeeId = event.detail.value; // Triggers wire
+    this.selectedContactId = event.detail.value;
+    this.contactId = event.detail.value;
   }
 
   handleYearChange(event) {
@@ -295,7 +304,7 @@ export default class PwchronoSalarySlipViewer extends LightningElement {
     this.isLoadingDetails = true;
     getSalarySlipDetails({
       salarySlipId: this.selectedSlipId,
-      employeeId: this.employeeId,
+      contactId: this.contactId,
       portalUserId: this.portalUserId,
       sessionToken: this.sessionToken
     })
@@ -303,13 +312,14 @@ export default class PwchronoSalarySlipViewer extends LightningElement {
         this.slipDetails = result;
         // Pre-fill email details
         if (this.slipDetails?.salarySlip) {
-          // Try to get email from Employee record, fallback to session user email if it matches
-          const empEmail = this.slipDetails.salarySlip.Employees__r
-            ? this.slipDetails.salarySlip.Employees__r.Email__c
-            : "";
+          const empEmail = this.slipDetails.salarySlip.Contact__r?.Email || "";
+          const employeeName =
+            this.slipDetails.salarySlip.Employee_Name_Snapshot__c ||
+            this.slipDetails.salarySlip.Contact__r?.Name ||
+            "Employee";
           this.emailTo = empEmail;
           this.emailSubject = `Salary Slip - ${this.slipDetails.salarySlip.Name} - ${this.formattedPeriod}`;
-          this.emailBody = `Dear ${this.slipDetails.salarySlip.Employees__r ? this.slipDetails.salarySlip.Employees__r.Name : "Employee"},<br/><br/>Please find attached your salary slip for ${this.formattedPeriod}.<br/><br/>Regards,<br/>HR Team`;
+          this.emailBody = `Dear ${employeeName},<br/><br/>Please find attached your salary slip for ${this.formattedPeriod}.<br/><br/>Regards,<br/>HR Team`;
         }
       })
       .catch((error) => {
@@ -335,7 +345,15 @@ export default class PwchronoSalarySlipViewer extends LightningElement {
   }
 
   get employeeName() {
-    return this.slipDetails?.salarySlip?.Employees__r?.Name || "N/A";
+    return (
+      this.slipDetails?.salarySlip?.Employee_Name_Snapshot__c ||
+      this.slipDetails?.salarySlip?.Contact__r?.Name ||
+      "N/A"
+    );
+  }
+
+  get employeeCode() {
+    return this.slipDetails?.salarySlip?.Employee_Code_Snapshot__c || "N/A";
   }
 
   handlePrint() {
@@ -344,6 +362,9 @@ export default class PwchronoSalarySlipViewer extends LightningElement {
 
   // Email Handlers
   handleOpenEmailModal() {
+    if (!this.canSendPayslips) {
+      return;
+    }
     this.showEmailModal = true;
   }
 

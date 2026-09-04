@@ -436,6 +436,8 @@ public inherited sharing class PWChrono_AttendanceController {
     public Boolean isLate;
     @AuraEnabled
     public Boolean isEarlyLeave;
+    @AuraEnabled
+    public String employeeName;
   }
 
   /**
@@ -461,6 +463,57 @@ public inherited sharing class PWChrono_AttendanceController {
       PWChrono_Logger.error('Error fetching attendance tracker data', e);
       throw new AuraHandledException(
         'Error loading attendance data. Please try again.'
+      );
+    }
+  }
+
+  /**
+   * @description Returns tracker data for a selected employee. The caller's
+   *              portal identity is verified separately from the employee
+   *              being viewed so an administrator never impersonates them.
+   */
+  @AuraEnabled(cacheable=false)
+  public static List<AttendanceDayWrapper> getAttendanceTrackerDataForEmployee(
+    Date startDate,
+    Date endDate,
+    String targetEmployeeId,
+    String portalUserId,
+    String sessionToken
+  ) {
+    try {
+      Id actorEmployeeId = PWChrono_RequestValidator.resolveEmployeeId(
+        portalUserId,
+        sessionToken
+      );
+      Id effectiveEmployeeId = resolveAttendanceViewEmployeeId(
+        actorEmployeeId,
+        targetEmployeeId,
+        sessionToken
+      );
+      Portal_Users__c employee = [
+        SELECT Name, Contact__r.Name
+        FROM Portal_Users__c
+        WHERE Id = :effectiveEmployeeId
+        LIMIT 1
+      ];
+      String employeeName = employee.Contact__r != null
+        ? employee.Contact__r.Name
+        : employee.Name;
+      List<AttendanceDayWrapper> days = buildTrackerData(
+        effectiveEmployeeId,
+        startDate,
+        endDate
+      );
+      for (AttendanceDayWrapper day : days) {
+        day.employeeName = employeeName;
+      }
+      return days;
+    } catch (AuraHandledException ahe) {
+      throw ahe;
+    } catch (Exception e) {
+      PWChrono_Logger.error('Error fetching selected employee attendance', e);
+      throw new AuraHandledException(
+        'Error loading employee attendance data. Please try again.'
       );
     }
   }
@@ -511,9 +564,9 @@ public inherited sharing class PWChrono_AttendanceController {
       requestsMap.put(req.Attendance_Date__c, req);
     }
 
-    List<PWChrono_Leave__c> leaves = [
+    List<Leave__c> leaves = [
       SELECT From_Date__c, To_Date__c, Leave_Type__r.Name
-      FROM PWChrono_Leave__c
+      FROM Leave__c
       WHERE
         Employees__c = :employeeId
         AND Status__c = :PWChrono_Constants.STATUS_APPROVED
@@ -543,7 +596,7 @@ public inherited sharing class PWChrono_AttendanceController {
     Date d,
     List<PWChrono_Shift_Assignment__c> shifts,
     Map<Date, PWChrono_Attendance_Request__c> reqMap,
-    List<PWChrono_Leave__c> leaves,
+    List<Leave__c> leaves,
     Map<Date, String> holidays
   ) {
     AttendanceDayWrapper day = new AttendanceDayWrapper();
@@ -569,7 +622,7 @@ public inherited sharing class PWChrono_AttendanceController {
     }
 
     // Approved leave overrides
-    for (PWChrono_Leave__c lv : leaves) {
+    for (Leave__c lv : leaves) {
       if (d >= lv.From_Date__c && d <= lv.To_Date__c) {
         day.status = 'Leave';
         day.leaveType = lv.Leave_Type__r.Name;
@@ -577,8 +630,13 @@ public inherited sharing class PWChrono_AttendanceController {
       }
     }
 
-    // Correction request (Approved or Submitted) = Present
-    if (reqMap.containsKey(d)) {
+    // A correction request can establish attendance on a working day, but it
+    // must not overwrite an approved leave or company holiday.
+    if (
+      reqMap.containsKey(d) &&
+      day.status != 'Holiday' &&
+      day.status != 'Leave'
+    ) {
       PWChrono_Attendance_Request__c req = reqMap.get(d);
       day.attendanceRequestId = req.Id;
       day.checkIn = req.From_Time__c;
@@ -749,6 +807,203 @@ public inherited sharing class PWChrono_AttendanceController {
   // ═══════════════════════════════════════════════════════════════════════════
   // ADMIN
   // ═══════════════════════════════════════════════════════════════════════════
+
+  public class AttendanceAdminRow {
+    @AuraEnabled
+    public Id employeeId;
+    @AuraEnabled
+    public String employeeName;
+    @AuraEnabled
+    public String role;
+    @AuraEnabled
+    public String department;
+    @AuraEnabled
+    public Id attendanceRecordId;
+    @AuraEnabled
+    public Date attendanceDate;
+    @AuraEnabled
+    public Time checkIn;
+    @AuraEnabled
+    public Time checkOut;
+    @AuraEnabled
+    public String status;
+    @AuraEnabled
+    public Boolean isLate;
+  }
+
+  /**
+   * @description One row per active employee for the selected date. This keeps
+   *              employees visible even when they have no attendance request.
+   */
+  @AuraEnabled(cacheable=false)
+  public static List<AttendanceAdminRow> getAttendanceAdminRows(
+    Date dateFilter,
+    String portalUserId,
+    String sessionToken
+  ) {
+    try {
+      if (UserInfo.getUserType() == 'Guest') {
+        requireAttendanceAdminAccess(portalUserId, sessionToken);
+      }
+
+      Date targetDate = dateFilter != null ? dateFilter : Date.today();
+      List<Portal_Users__c> employees = [
+        SELECT
+          Id,
+          Name,
+          Role__c,
+          Department__c,
+          Designation__c,
+          Contact__r.Name,
+          Contact__r.Title,
+          Contact__r.Department
+        FROM Portal_Users__c
+        WHERE Is_Active__c = TRUE
+        ORDER BY Name ASC
+      ];
+      Set<Id> employeeIds = new Map<Id, Portal_Users__c>(employees).keySet();
+
+      Map<Id, List<PWChrono_Shift_Assignment__c>> shiftsByEmployee = new Map<Id, List<PWChrono_Shift_Assignment__c>>();
+      for (PWChrono_Shift_Assignment__c shift : [
+        SELECT
+          Employees__c,
+          Shift_Type__r.Name,
+          Shift_Type__r.Start_Time__c,
+          Shift_Type__r.End_Time__c,
+          From_Date__c,
+          To_Date__c
+        FROM PWChrono_Shift_Assignment__c
+        WHERE
+          Employees__c IN :employeeIds
+          AND From_Date__c <= :targetDate
+          AND To_Date__c >= :targetDate
+      ]) {
+        if (!shiftsByEmployee.containsKey(shift.Employees__c)) {
+          shiftsByEmployee.put(
+            shift.Employees__c,
+            new List<PWChrono_Shift_Assignment__c>()
+          );
+        }
+        shiftsByEmployee.get(shift.Employees__c).add(shift);
+      }
+
+      Map<Id, Map<Date, PWChrono_Attendance_Request__c>> requestsByEmployee = new Map<Id, Map<Date, PWChrono_Attendance_Request__c>>();
+      for (PWChrono_Attendance_Request__c request : [
+        SELECT
+          Id,
+          Employees__c,
+          Attendance_Date__c,
+          From_Time__c,
+          To_Time__c,
+          Correction_Type__c,
+          Status__c
+        FROM PWChrono_Attendance_Request__c
+        WHERE
+          Employees__c IN :employeeIds
+          AND Attendance_Date__c = :targetDate
+          AND Status__c IN (
+            :PWChrono_Constants.STATUS_APPROVED,
+            :PWChrono_Constants.STATUS_SUBMITTED
+          )
+        ORDER BY LastModifiedDate DESC
+      ]) {
+        if (!requestsByEmployee.containsKey(request.Employees__c)) {
+          requestsByEmployee.put(
+            request.Employees__c,
+            new Map<Date, PWChrono_Attendance_Request__c>()
+          );
+        }
+        Map<Date, PWChrono_Attendance_Request__c> employeeRequests = requestsByEmployee.get(
+          request.Employees__c
+        );
+        if (!employeeRequests.containsKey(request.Attendance_Date__c)) {
+          employeeRequests.put(request.Attendance_Date__c, request);
+        }
+      }
+
+      Map<Id, List<Leave__c>> leavesByEmployee = new Map<Id, List<Leave__c>>();
+      for (Leave__c leaveRecord : [
+        SELECT Employees__c, From_Date__c, To_Date__c, Leave_Type__r.Name
+        FROM Leave__c
+        WHERE
+          Employees__c IN :employeeIds
+          AND Status__c = :PWChrono_Constants.STATUS_APPROVED
+          AND From_Date__c <= :targetDate
+          AND To_Date__c >= :targetDate
+      ]) {
+        if (!leavesByEmployee.containsKey(leaveRecord.Employees__c)) {
+          leavesByEmployee.put(leaveRecord.Employees__c, new List<Leave__c>());
+        }
+        leavesByEmployee.get(leaveRecord.Employees__c).add(leaveRecord);
+      }
+
+      Map<Date, String> holidays = new Map<Date, String>();
+      for (PWChrono_Holiday__c holiday : [
+        SELECT Holiday_Date__c, Name
+        FROM PWChrono_Holiday__c
+        WHERE Holiday_Date__c = :targetDate
+      ]) {
+        holidays.put(holiday.Holiday_Date__c, holiday.Name);
+      }
+
+      List<AttendanceAdminRow> rows = new List<AttendanceAdminRow>();
+      for (Portal_Users__c employee : employees) {
+        List<PWChrono_Shift_Assignment__c> employeeShifts = shiftsByEmployee.containsKey(
+            employee.Id
+          )
+          ? shiftsByEmployee.get(employee.Id)
+          : new List<PWChrono_Shift_Assignment__c>();
+        Map<Date, PWChrono_Attendance_Request__c> employeeRequests = requestsByEmployee.containsKey(
+            employee.Id
+          )
+          ? requestsByEmployee.get(employee.Id)
+          : new Map<Date, PWChrono_Attendance_Request__c>();
+        List<Leave__c> employeeLeaves = leavesByEmployee.containsKey(
+            employee.Id
+          )
+          ? leavesByEmployee.get(employee.Id)
+          : new List<Leave__c>();
+        AttendanceDayWrapper day = buildDayWrapper(
+          targetDate,
+          employeeShifts,
+          employeeRequests,
+          employeeLeaves,
+          holidays
+        );
+
+        AttendanceAdminRow row = new AttendanceAdminRow();
+        row.employeeId = employee.Id;
+        row.employeeName = employee.Contact__r != null
+          ? employee.Contact__r.Name
+          : employee.Name;
+        row.role = employee.Contact__r != null &&
+          String.isNotBlank(employee.Contact__r.Title)
+          ? employee.Contact__r.Title
+          : (String.isNotBlank(employee.Designation__c)
+              ? employee.Designation__c
+              : employee.Role__c);
+        row.department = employee.Contact__r != null &&
+          String.isNotBlank(employee.Contact__r.Department)
+          ? employee.Contact__r.Department
+          : employee.Department__c;
+        row.attendanceRecordId = day.attendanceRequestId;
+        row.attendanceDate = day.attendanceDate;
+        row.checkIn = day.checkIn;
+        row.checkOut = day.checkOut;
+        row.status = day.status;
+        row.isLate = day.isLate;
+        rows.add(row);
+      }
+      return rows;
+    } catch (AuraHandledException ahe) {
+      throw ahe;
+    } catch (Exception e) {
+      PWChrono_Logger.error('Error fetching admin attendance rows', e);
+      throw new AuraHandledException(
+        'Error loading employee attendance. Please try again.'
+      );
+    }
+  }
 
   /**
    * @description All attendance records for a given date (admin view).
@@ -968,6 +1223,46 @@ public inherited sharing class PWChrono_AttendanceController {
         'Access denied: You are not authorized to view this request.'
       );
     }
+  }
+
+  private static Id resolveAttendanceViewEmployeeId(
+    Id actorEmployeeId,
+    String targetEmployeeId,
+    String sessionToken
+  ) {
+    if (String.isBlank(targetEmployeeId)) {
+      return actorEmployeeId;
+    }
+
+    Id targetId;
+    try {
+      targetId = (Id) targetEmployeeId;
+    } catch (Exception e) {
+      throw new AuraHandledException('Invalid employee selection.');
+    }
+
+    if (targetId == actorEmployeeId) {
+      return actorEmployeeId;
+    }
+
+    if (UserInfo.getUserType() == 'Guest') {
+      requireAttendanceAdminAccess((String) actorEmployeeId, sessionToken);
+    } else if (!PWChrono_RequestValidator.isCurrentUserAdmin(actorEmployeeId)) {
+      throw new AuraHandledException(
+        'Access denied: Admin privileges required.'
+      );
+    }
+
+    List<Portal_Users__c> targets = [
+      SELECT Id
+      FROM Portal_Users__c
+      WHERE Id = :targetId AND Is_Active__c = TRUE
+      LIMIT 1
+    ];
+    if (targets.isEmpty()) {
+      throw new AuraHandledException('Employee is inactive or unavailable.');
+    }
+    return targets[0].Id;
   }
 
   /**

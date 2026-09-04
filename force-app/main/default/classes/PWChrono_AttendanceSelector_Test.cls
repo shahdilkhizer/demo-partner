@@ -215,7 +215,7 @@ private class PWChrono_AttendanceSelector_Test {
     Portal_Users__c emp = [SELECT Id FROM Portal_Users__c WHERE Role__c = 'Employee' LIMIT 1];
 
     Test.startTest();
-    List<PWChrono_Leave__c> result =
+    List<Leave__c> result =
       PWChrono_AttendanceSelector.getApprovedLeaveCoveringDate(emp.Id, Date.today().addDays(-10));
     Test.stopTest();
 

@@ -173,12 +173,12 @@ public inherited sharing class PWChrono_LeaveValidator {
    */
   @SuppressWarnings('PMD.ExcessiveParameterList')
   public static String validateOverlap(Id employeeId, Date fromDate, Date toDate, Id excludeLeaveId) {
-    List<PWChrono_Leave__c> overlapping = PWChrono_LeaveSelector.getOverlappingLeaves(
+    List<Leave__c> overlapping = PWChrono_LeaveSelector.getOverlappingLeaves(
       employeeId, fromDate, toDate, excludeLeaveId
     );
 
     if (!overlapping.isEmpty()) {
-      PWChrono_Leave__c overlap = overlapping[0];
+      Leave__c overlap = overlapping[0];
       return 'Leave request overlaps with existing ' +
              overlap.Leave_Type__r.Name + ' (' +
              overlap.From_Date__c.format() + ' - ' +
@@ -237,7 +237,7 @@ public inherited sharing class PWChrono_LeaveValidator {
 
     List<AggregateResult> aggregates = [
       SELECT SUM(Total_Days__c) totalDays
-      FROM PWChrono_Leave__c
+      FROM Leave__c
       WHERE Employees__c = :employeeId
         AND Leave_Type__c = :leaveTypeId
         AND (Status__c = :PWChrono_Constants.STATUS_APPROVED

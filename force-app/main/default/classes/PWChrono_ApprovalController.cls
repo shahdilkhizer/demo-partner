@@ -97,15 +97,19 @@ public inherited sharing class PWChrono_ApprovalController {
       ];
 
       if (workItems.isEmpty()) {
-        throw new AuraHandledException(
-          'Approval request not found or already processed.'
-        );
+        String message = 'Approval request not found or already processed.';
+        AuraHandledException notFound = new AuraHandledException(message);
+        notFound.setMessage(message);
+        throw notFound;
       }
 
       if (workItems[0].ProcessInstance.Status != 'Pending') {
-        throw new AuraHandledException(
-          'This approval request has already been processed.'
+        String message = 'This approval request has already been processed.';
+        AuraHandledException alreadyProcessed = new AuraHandledException(
+          message
         );
+        alreadyProcessed.setMessage(message);
+        throw alreadyProcessed;
       }
 
       Approval.ProcessWorkitemRequest req = new Approval.ProcessWorkitemRequest();
@@ -120,7 +124,11 @@ public inherited sharing class PWChrono_ApprovalController {
         if (!result.getErrors().isEmpty()) {
           errorMsg += ': ' + result.getErrors()[0].getMessage();
         }
-        throw new AuraHandledException(errorMsg);
+        AuraHandledException processingError = new AuraHandledException(
+          errorMsg
+        );
+        processingError.setMessage(errorMsg);
+        throw processingError;
       }
     } catch (Exception e) {
       PWChrono_Logger.error(

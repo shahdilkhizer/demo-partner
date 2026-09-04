@@ -1,9 +1,11 @@
 ﻿.page-wrapper {
-  margin-left: 0 !important;
+  margin-left: 260px !important;
   padding-top: 20px !important;
   padding-left: 20px !important;
   padding-right: 20px !important;
-  min-height: auto !important;
+  min-height: calc(100vh - 60px) !important;
+  box-sizing: border-box !important;
+  transition: all 0.2s ease-in-out !important;
 }
 
 .content {

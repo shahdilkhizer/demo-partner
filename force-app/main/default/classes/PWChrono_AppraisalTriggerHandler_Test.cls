@@ -16,6 +16,7 @@ private class PWChrono_AppraisalTriggerHandler_Test {
       insert structure;
 
       PWChrono_Salary_Assignment__c assignment = new PWChrono_Salary_Assignment__c(
+        Contact__c = employee.Contact__c,
         Employees__c = employee.Id,
         Salary_Structure__c = structure.Id,
         Base_Salary__c = 5000,
@@ -28,7 +29,11 @@ private class PWChrono_AppraisalTriggerHandler_Test {
 
   @isTest
   static void testHandleAfterUpdate_SalaryIncrementCreatesNewAssignment() {
-    Portal_Users__c employee = [SELECT Id FROM Portal_Users__c LIMIT 1];
+    Portal_Users__c employee = [
+      SELECT Id, Contact__c
+      FROM Portal_Users__c
+      LIMIT 1
+    ];
 
     PWChrono_Appraisal__c oldAppraisal = new PWChrono_Appraisal__c(
       Employees__c = employee.Id,
@@ -62,7 +67,7 @@ private class PWChrono_AppraisalTriggerHandler_Test {
     Test.stopTest();
 
     List<PWChrono_Salary_Assignment__c> assignments = [
-      SELECT Id, Employees__c, Base_Salary__c, Is_Active__c
+      SELECT Id, Contact__c, Employees__c, Base_Salary__c, Is_Active__c
       FROM PWChrono_Salary_Assignment__c
       WHERE Employees__c = :employee.Id
       ORDER BY CreatedDate ASC
@@ -92,6 +97,11 @@ private class PWChrono_AppraisalTriggerHandler_Test {
       5750,
       activeSalary,
       'Active salary should reflect increment amount.'
+    );
+    System.assertEquals(
+      employee.Contact__c,
+      assignments[1].Contact__c,
+      'New salary assignments must use the employee Contact.'
     );
   }
 

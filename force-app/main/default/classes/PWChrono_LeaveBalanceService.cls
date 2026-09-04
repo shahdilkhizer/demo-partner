@@ -233,7 +233,7 @@ public inherited sharing class PWChrono_LeaveBalanceService {
 
     List<AggregateResult> pending = [
       SELECT Leave_Type__c leaveType, SUM(Total_Days__c) totalDays
-      FROM PWChrono_Leave__c
+      FROM Leave__c
       WHERE Employees__c = :employeeId
         AND Status__c = :PWChrono_Constants.STATUS_SUBMITTED
       GROUP BY Leave_Type__c

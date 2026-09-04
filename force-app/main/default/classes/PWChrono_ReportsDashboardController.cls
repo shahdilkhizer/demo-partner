@@ -210,7 +210,7 @@ public inherited sharing class PWChrono_ReportsDashboardController {
     // Get leave counts by status
     List<AggregateResult> statusCounts = [
       SELECT Status__c, COUNT(Id) cnt
-      FROM PWChrono_Leave__c
+      FROM Leave__c
       WHERE CreatedDate = THIS_FISCAL_YEAR
       GROUP BY Status__c
     ];
@@ -237,7 +237,7 @@ public inherited sharing class PWChrono_ReportsDashboardController {
     // Get leave counts by type
     List<AggregateResult> typeCounts = [
       SELECT Leave_Type__c, COUNT(Id) cnt
-      FROM PWChrono_Leave__c
+      FROM Leave__c
       WHERE CreatedDate = THIS_FISCAL_YEAR
       GROUP BY Leave_Type__c
       ORDER BY COUNT(Id) DESC

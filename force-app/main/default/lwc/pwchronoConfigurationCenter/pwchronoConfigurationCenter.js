@@ -3,10 +3,12 @@ import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { refreshApex } from "@salesforce/apex";
 import { NavigationMixin } from "lightning/navigation";
 import getAllUsersWithAccess from "@salesforce/apex/PWChrono_ConfigurationController.getAllUsersWithAccess";
-import getAvailableFeatures from "@salesforce/apex/PWChrono_ConfigurationController.getAvailableFeatures";
-import saveUserFeatureAccess from "@salesforce/apex/PWChrono_ConfigurationController.saveUserFeatureAccess";
+import getAvailableProfiles from "@salesforce/apex/PWChrono_ConfigurationController.getAvailableProfiles";
+import getReportingOptions from "@salesforce/apex/PWChrono_ReportingManagerController.getReportingOptions";
+import saveUserSetup from "@salesforce/apex/PWChrono_ReportingManagerController.saveUserSetup";
 import getGlobalFeatureSettings from "@salesforce/apex/PWChrono_ConfigurationController.getGlobalFeatureSettings";
 import saveGlobalFeatureSettings from "@salesforce/apex/PWChrono_ConfigurationController.saveGlobalFeatureSettings";
+import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
 
 export default class PwchronoConfigurationCenter extends NavigationMixin(
   LightningElement
@@ -18,13 +20,18 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
   @track showUserFeatureModal = false;
   @track showNewUserModal = false;
   @track selectedUser = null;
-  @track features = [];
+  @track selectedProfileId = "";
+  @track selectedManagerId = "";
+  @track profileOptions = [];
+  @track managerOptions = [];
+  reportingByUserId = new Map();
   @track globalSettings = {};
   @track isSaving = false;
   @track isLoading = true;
   @track activeTab = "users";
   wiredUsersResult;
-  baseFeatures = [];
+  employeeId = getEmployeeId();
+  sessionToken = getSessionToken();
 
   // Pagination
   @track currentPage = 1;
@@ -37,38 +44,21 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
     { label: "50", value: "50" }
   ];
 
-  // Feature icon mapping
-  featureIcons = {
-    Dashboard: "standard:dashboard",
-    "Leave Management": "standard:event",
-    "Attendance Management": "standard:timesheet",
-    "Employee Directory": "standard:people",
-    "Expense Management": "standard:service_contract",
-    Payroll: "standard:currency",
-    "Performance Management": "standard:goals",
-    "Training Management": "standard:education",
-    Recruitment: "standard:lead",
-    Onboarding: "standard:task",
-    "Manager Dashboard": "standard:employee",
-    "Admin Settings": "standard:settings",
-    Appraisal: "standard:performance",
-    Approvals: "standard:approval",
-    "Company Policies": "standard:article",
-    Goals: "standard:metrics",
-    Holidays: "standard:date_input",
-    "My Profile": "standard:user",
-    "Tax Declaration": "standard:investment_account"
-  };
-
   userColumns = [
     { label: "Name", fieldName: "userName", type: "text", sortable: true },
     { label: "Email", fieldName: "userEmail", type: "email", sortable: true },
-    { label: "Role", fieldName: "profileName", type: "text", sortable: true },
     {
-      label: "Active Features",
-      fieldName: "activeFeatureCount",
-      type: "number",
-      cellAttributes: { alignment: "center" }
+      label: "Portal User Profile",
+      fieldName: "profileName",
+      type: "text",
+      sortable: true
+    },
+    { label: "Role", fieldName: "roleName", type: "text", sortable: true },
+    {
+      label: "Reports To",
+      fieldName: "managerName",
+      type: "text",
+      sortable: true
     },
     {
       type: "action",
@@ -81,7 +71,10 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
     }
   ];
 
-  @wire(getAllUsersWithAccess)
+  @wire(getAllUsersWithAccess, {
+    portalUserId: "$employeeId",
+    sessionToken: "$sessionToken"
+  })
   wiredUsers(result) {
     this.wiredUsersResult = result;
     this.isLoading = true;
@@ -89,10 +82,10 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
     if (data) {
       this.users = data.map((user) => ({
         ...user,
-        activeFeatureCount: user.featureAccess
-          ? user.featureAccess.filter((f) => f.isActive).length
-          : 0,
-        profileName: user.profileName || "N/A"
+        profileName: user.profileName || "N/A",
+        managerId: this.reportingByUserId.get(user.userId)?.managerId || "",
+        managerName:
+          this.reportingByUserId.get(user.userId)?.managerName || "Unassigned"
       }));
       this.filterUsers();
     } else if (error) {
@@ -105,26 +98,70 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
     this.isLoading = false;
   }
 
-  @wire(getAvailableFeatures)
-  wiredFeatures({ error, data }) {
+  @wire(getAvailableProfiles, {
+    portalUserId: "$employeeId",
+    sessionToken: "$sessionToken"
+  })
+  wiredProfiles({ error, data }) {
     if (data) {
-      // Store base feature list and check for empty
-      this.baseFeatures = data;
-      if (!data || data.length === 0) {
+      this.profileOptions = data.map((profile) => ({
+        label: profile.profileName,
+        value: profile.profileId
+      }));
+      if (this.profileOptions.length === 0) {
         this.showToast(
           "Warning",
-          "No features are available. Please contact your administrator.",
+          "No Portal User Profiles are available for assignment.",
           "warning"
         );
       }
     } else if (error) {
       const errorMsg =
-        error?.body?.message || error?.message || "Failed to load features";
-      this.showToast("Error", "Failed to load features: " + errorMsg, "error");
+        error?.body?.message || error?.message || "Failed to load profiles";
+      this.showToast("Error", "Failed to load profiles: " + errorMsg, "error");
     }
   }
 
-  @wire(getGlobalFeatureSettings)
+  @wire(getReportingOptions, {
+    callerPortalUserId: "$employeeId",
+    sessionToken: "$sessionToken"
+  })
+  wiredManagers({ error, data }) {
+    if (data) {
+      this.reportingByUserId = new Map(
+        data.map((portalUser) => [portalUser.portalUserId, portalUser])
+      );
+      this.managerOptions = [
+        { label: "No manager (top-level)", value: "" },
+        ...data
+          .filter((manager) => manager.isActive)
+          .map((manager) => ({
+            label: manager.designation
+              ? `${manager.portalUserName} — ${manager.designation}`
+              : manager.portalUserName,
+            value: manager.portalUserId
+          }))
+      ];
+      if (this.users.length > 0) {
+        this.users = this.users.map((user) => ({
+          ...user,
+          managerId: this.reportingByUserId.get(user.userId)?.managerId || "",
+          managerName:
+            this.reportingByUserId.get(user.userId)?.managerName || "Unassigned"
+        }));
+        this.filterUsers();
+      }
+    } else if (error) {
+      const errorMsg =
+        error?.body?.message || error?.message || "Failed to load managers";
+      this.showToast("Error", `Failed to load managers: ${errorMsg}`, "error");
+    }
+  }
+
+  @wire(getGlobalFeatureSettings, {
+    portalUserId: "$employeeId",
+    sessionToken: "$sessionToken"
+  })
   wiredGlobalSettings({ error, data }) {
     if (data) {
       this.globalSettings = { ...data };
@@ -240,90 +277,56 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
 
   openManageAccessModal(user) {
     this.selectedUser = { ...user };
-
-    // Map existing user access
-    const userAccessMap = new Map();
-    if (user.featureAccess) {
-      user.featureAccess.forEach((f) => {
-        userAccessMap.set(f.featureName, f);
-      });
-    }
-
-    // Build features list for the modal
-    this.features = this.baseFeatures.map((featureName) => {
-      const existing = userAccessMap.get(featureName);
-      return {
-        name: featureName,
-        description: this.getFeatureDescription(featureName),
-        iconName: this.featureIcons[featureName] || "standard:default",
-        iconVariant: existing && existing.isActive ? "success" : "warning",
-        hasAccess: existing ? existing.isActive : false,
-        accessLevel: existing ? existing.accessLevel : "No Access",
-        featureAccessId: existing ? existing.featureAccessId : null
-      };
-    });
-
+    this.selectedProfileId = user.profileId || "";
+    this.selectedManagerId = user.managerId || "";
     this.showUserFeatureModal = true;
   }
 
   closeModal() {
     this.showUserFeatureModal = false;
     this.selectedUser = null;
+    this.selectedProfileId = "";
+    this.selectedManagerId = "";
   }
 
-  handleFeatureToggle(event) {
-    const featureName = event.target.dataset.name;
-    const isChecked = event.target.checked;
-
-    this.features = this.features.map((f) => {
-      if (f.name === featureName) {
-        return {
-          ...f,
-          hasAccess: isChecked,
-          iconVariant: isChecked ? "success" : "warning",
-          accessLevel: isChecked ? "Full Access" : "No Access" // Default to Full Access when toggled on
-        };
-      }
-      return f;
-    });
+  handleProfileChange(event) {
+    this.selectedProfileId = event.detail.value;
   }
 
-  handleSelectAllFeatures() {
-    this.features = this.features.map((f) => ({
-      ...f,
-      hasAccess: true,
-      iconVariant: "success",
-      accessLevel: "Full Access"
-    }));
+  handleManagerChange(event) {
+    this.selectedManagerId = event.detail.value;
   }
 
-  handleDeselectAllFeatures() {
-    this.features = this.features.map((f) => ({
-      ...f,
-      hasAccess: false,
-      iconVariant: "warning",
-      accessLevel: "No Access"
-    }));
+  get availableManagerOptions() {
+    if (!this.selectedUser) {
+      return this.managerOptions;
+    }
+    return this.managerOptions.filter(
+      (option) => !option.value || option.value !== this.selectedUser.userId
+    );
   }
 
-  handleSaveUserFeatures() {
+  handleSaveUserProfile() {
+    if (!this.selectedUser || !this.selectedProfileId) {
+      this.showToast(
+        "Error",
+        "Select a Portal User Profile before saving.",
+        "error"
+      );
+      return;
+    }
     this.isSaving = true;
-
-    const featuresToSave = this.features.map((f) => ({
-      featureAccessId: f.featureAccessId,
-      featureName: f.name,
-      accessLevel: f.hasAccess ? "Full Access" : "No Access",
-      isActive: f.hasAccess
-    }));
-
-    saveUserFeatureAccess({
-      portalUserId: this.selectedUser.userId,
-      features: featuresToSave
+    saveUserSetup({
+      targetPortalUserId: this.selectedUser.userId,
+      profileId: this.selectedProfileId,
+      managerPortalUserId: this.selectedManagerId || null,
+      callerPortalUserId: this.employeeId,
+      sessionToken: this.sessionToken
     })
       .then(() => {
         this.showToast(
           "Success",
-          "User permissions updated successfully",
+          "Portal User Profile and reporting manager saved successfully",
           "success"
         );
         this.closeModal();
@@ -347,7 +350,11 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
 
   handleSaveGlobalSettings() {
     this.isSaving = true;
-    saveGlobalFeatureSettings({ settings: this.globalSettings })
+    saveGlobalFeatureSettings({
+      settings: this.globalSettings,
+      portalUserId: this.employeeId,
+      sessionToken: this.sessionToken
+    })
       .then(() => {
         this.showToast("Success", "Global settings saved", "success");
       })
@@ -357,24 +364,6 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
       .finally(() => {
         this.isSaving = false;
       });
-  }
-
-  getFeatureDescription(featureName) {
-    const descriptions = {
-      Dashboard: "Personalized dashboard with quick stats",
-      "Leave Management": "Apply and track leave requests",
-      "Attendance Management": "Mark attendance and view history",
-      "Employee Directory": "Browse employee directory",
-      "Expense Management": "Submit and track expenses",
-      Payroll: "View salary slips and tax info",
-      "Performance Management": "Goals and appraisals",
-      "Training Management": "Training programs and tracking",
-      Recruitment: "Job openings and applicants",
-      Onboarding: "New hire onboarding tasks",
-      "Manager Dashboard": "Team management and approvals",
-      "Admin Settings": "System configuration"
-    };
-    return descriptions[featureName] || "Feature access control";
   }
 
   // Tab visibility getters

@@ -5,11 +5,14 @@ public inherited sharing class PWChrono_TestDataFactory {
     String email,
     String role
   ) {
+    Contact employeeContact = new Contact(LastName = name, Email = email);
+    insert employeeContact;
     Portal_Users__c user = new Portal_Users__c(
       Name = name,
       Email__c = email,
       Role__c = role,
-      Is_Active__c = true
+      Is_Active__c = true,
+      Contact__c = employeeContact.Id
     );
     insert user;
     return user;
@@ -144,12 +147,21 @@ public inherited sharing class PWChrono_TestDataFactory {
   }
 
   public static Portal_Users__c createTestEmployee(Id userId) {
+    String userToken = String.valueOf(userId).right(8).toLowerCase();
+    String employeeEmail = 'testemployee.' + userToken + '@example.com';
+    Contact employeeContact = new Contact(
+      FirstName = 'Test',
+      LastName = 'Employee ' + userToken,
+      Email = employeeEmail
+    );
+    insert employeeContact;
     Portal_Users__c pu = new Portal_Users__c(
       Name = 'Test Employee',
-      Email__c = 'testemployee@example.com',
+      Email__c = employeeEmail,
       Role__c = 'Employee',
       User__c = userId,
-      Is_Active__c = true
+      Is_Active__c = true,
+      Contact__c = employeeContact.Id
     );
     insert pu;
     return pu;

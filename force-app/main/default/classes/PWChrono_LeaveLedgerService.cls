@@ -20,7 +20,7 @@ public inherited sharing class PWChrono_LeaveLedgerService {
    * @param leave The approved leave record
    * @param approverId Who approved it
    */
-  public static void recordLeaveUsed(PWChrono_Leave__c leave, Id approverId) {
+  public static void recordLeaveUsed(Leave__c leave, Id approverId) {
     createEntry(
       leave.Employees__c,
       leave.Leave_Type__c,
@@ -37,7 +37,7 @@ public inherited sharing class PWChrono_LeaveLedgerService {
    * @param leave The cancelled leave record
    * @param cancelledBy Who cancelled it
    */
-  public static void recordLeaveCancelled(PWChrono_Leave__c leave, Id cancelledBy) {
+  public static void recordLeaveCancelled(Leave__c leave, Id cancelledBy) {
     createEntry(
       leave.Employees__c,
       leave.Leave_Type__c,
@@ -118,7 +118,7 @@ public inherited sharing class PWChrono_LeaveLedgerService {
       entries = [
         SELECT Id, Transaction_Type__c, Days__c, Balance_After__c,
                Transaction_Date__c, Notes__c,
-               Created_By__r.Name, Leave__r.Name
+               Created_By__r.Name, Canonical_Leave__r.Name
         FROM PWChrono_Leave_Ledger__c
         WHERE Employee__c = :employeeId
           AND Leave_Type__c = :leaveTypeId
@@ -128,7 +128,7 @@ public inherited sharing class PWChrono_LeaveLedgerService {
       entries = [
         SELECT Id, Transaction_Type__c, Days__c, Balance_After__c,
                Transaction_Date__c, Notes__c,
-               Created_By__r.Name, Leave__r.Name
+               Created_By__r.Name, Canonical_Leave__r.Name
         FROM PWChrono_Leave_Ledger__c
         WHERE Employee__c = :employeeId
         ORDER BY Transaction_Date__c DESC, CreatedDate DESC
@@ -145,9 +145,9 @@ public inherited sharing class PWChrono_LeaveLedgerService {
     return mapEntries([
       SELECT Id, Transaction_Type__c, Days__c, Balance_After__c,
              Transaction_Date__c, Notes__c,
-             Created_By__r.Name, Leave__r.Name
+             Created_By__r.Name, Canonical_Leave__r.Name
       FROM PWChrono_Leave_Ledger__c
-      WHERE Leave__c = :leaveId
+      WHERE Canonical_Leave__c = :leaveId
       ORDER BY Transaction_Date__c DESC, CreatedDate DESC
     ]);
   }
@@ -165,7 +165,7 @@ public inherited sharing class PWChrono_LeaveLedgerService {
     PWChrono_Leave_Ledger__c entry = new PWChrono_Leave_Ledger__c();
     entry.Employee__c = employeeId;
     entry.Leave_Type__c = leaveTypeId;
-    entry.Leave__c = leaveId;
+    entry.Canonical_Leave__c = leaveId;
     entry.Transaction_Type__c = transactionType;
     entry.Days__c = days;
     entry.Balance_After__c = balanceAfter;
@@ -198,7 +198,9 @@ public inherited sharing class PWChrono_LeaveLedgerService {
       dto.transactionDate = entry.Transaction_Date__c;
       dto.notes = entry.Notes__c;
       dto.createdByName = entry.Created_By__r != null ? entry.Created_By__r.Name : null;
-      dto.leaveName = entry.Leave__r != null ? entry.Leave__r.Name : null;
+      dto.leaveName = entry.Canonical_Leave__r != null
+        ? entry.Canonical_Leave__r.Name
+        : null;
       results.add(dto);
     }
 

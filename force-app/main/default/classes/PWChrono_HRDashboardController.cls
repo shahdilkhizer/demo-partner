@@ -371,7 +371,7 @@ public inherited sharing class PWChrono_HRDashboardController {
   private static void populateLeaveDistribution(HRDashboardDTO dto) {
     for (AggregateResult ar : [
       SELECT Leave_Type__r.Name ln, COUNT(Id) c
-      FROM PWChrono_Leave__c
+      FROM Leave__c
       WHERE From_Date__c = THIS_YEAR
       GROUP BY Leave_Type__r.Name
     ]) {
@@ -666,16 +666,16 @@ public inherited sharing class PWChrono_HRDashboardController {
   }
 
   private static void populatePendingApprovals(HRDashboardDTO dto) {
-    List<PWChrono_Leave__c> leaves = [
+    List<Leave__c> leaves = [
       SELECT Id, Employees__c, From_Date__c, To_Date__c, Reason__c
-      FROM PWChrono_Leave__c
+      FROM Leave__c
       WHERE Status__c = 'Submitted'
       ORDER BY Applied_Date__c DESC
       LIMIT 3
     ];
 
     Set<Id> employeeIds = new Set<Id>();
-    for (PWChrono_Leave__c leaveItem : leaves) {
+    for (Leave__c leaveItem : leaves) {
       if (leaveItem.Employees__c != null) {
         employeeIds.add(leaveItem.Employees__c);
       }
@@ -692,7 +692,7 @@ public inherited sharing class PWChrono_HRDashboardController {
       );
     }
 
-    for (PWChrono_Leave__c leaveItem : leaves) {
+    for (Leave__c leaveItem : leaves) {
       Portal_Users__c employee = usersById.get(leaveItem.Employees__c);
       PendingApprovalRow row = new PendingApprovalRow();
       row.key = String.valueOf(leaveItem.Id);

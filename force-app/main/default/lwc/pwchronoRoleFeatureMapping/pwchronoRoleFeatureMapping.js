@@ -1,6 +1,7 @@
 import deleteMapping from "@salesforce/apex/PWChrono_RoleFeatureMappingController.deleteMapping";
 import getMappings from "@salesforce/apex/PWChrono_RoleFeatureMappingController.getMappings";
 import saveMapping from "@salesforce/apex/PWChrono_RoleFeatureMappingController.saveMapping";
+import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { LightningElement, track } from "lwc";
 
@@ -27,6 +28,8 @@ const ROLE_OPTIONS = [
 ];
 
 export default class PwchronoRoleFeatureMapping extends LightningElement {
+  portalUserId = getEmployeeId();
+  sessionToken = getSessionToken();
   @track allMappings = [];
   @track mappings = [];
   @track columns = COLUMNS;
@@ -65,7 +68,10 @@ export default class PwchronoRoleFeatureMapping extends LightningElement {
 
   loadMappings() {
     this.isLoading = true;
-    getMappings()
+    getMappings({
+      callerPortalUserId: this.portalUserId,
+      sessionToken: this.sessionToken
+    })
       .then((result) => {
         this.allMappings = result;
         this.applyFilters();
@@ -188,7 +194,11 @@ export default class PwchronoRoleFeatureMapping extends LightningElement {
 
   deleteRecord(row) {
     const mappingName = row.MasterLabel.replaceAll(" ", "_");
-    deleteMapping({ mappingName: mappingName })
+    deleteMapping({
+      mappingName: mappingName,
+      callerPortalUserId: this.portalUserId,
+      sessionToken: this.sessionToken
+    })
       .then(() => {
         this.showToast("Success", "Mapping deletion initiated.", "success");
         // Add a delay to allow metadata to refresh
@@ -231,13 +241,20 @@ export default class PwchronoRoleFeatureMapping extends LightningElement {
       this.originalMasterLabel &&
       this.originalMasterLabel !== Role__c + " " + Feature__c
         ? deleteMapping({
-            mappingName: this.originalMasterLabel.replaceAll(" ", "_")
+            mappingName: this.originalMasterLabel.replaceAll(" ", "_"),
+            callerPortalUserId: this.portalUserId,
+            sessionToken: this.sessionToken
           })
         : Promise.resolve();
 
     savePromise
       .then(() => {
-        return saveMapping({ role: Role__c, feature: Feature__c });
+        return saveMapping({
+          role: Role__c,
+          feature: Feature__c,
+          callerPortalUserId: this.portalUserId,
+          sessionToken: this.sessionToken
+        });
       })
       .then(() => {
         this.showToast("Success", "Mapping save initiated.", "success");

@@ -204,7 +204,7 @@ public without sharing class PWChrono_LeaveAllocationBatch implements Database.B
         Employees__c empId,
         Leave_Type__c typeId,
         SUM(Total_Days__c) totalUsed
-      FROM PWChrono_Leave__c
+      FROM Leave__c
       WHERE
         Employees__c IN :employeeIds
         AND Leave_Type__c IN :leaveTypeIds

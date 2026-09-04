@@ -19,67 +19,46 @@ private class PWChrono_EmpDirectoryCtrl_Test {
 
   @isTest
   static void testSearchEmployees() {
-    User testUser = [
-      SELECT Id
-      FROM User
-      WHERE LastName = 'Standard User'
-      LIMIT 1
-    ];
+    Test.startTest();
+    List<Contact> employees = PWChrono_EmployeeDirectoryController.searchEmployees(
+      'Test',
+      null,
+      null
+    );
+    Test.stopTest();
 
-    System.runAs(testUser) {
-      Test.startTest();
-      List<Portal_Users__c> employees = PWChrono_EmployeeDirectoryController.searchEmployees(
-        'Test'
-      );
-      Test.stopTest();
-
-      System.assert(!employees.isEmpty(), 'Should find employee');
-    }
+    System.assert(!employees.isEmpty(), 'Should find employee');
   }
 
   @isTest
   static void testSearchEmployeesWithDepartment() {
-    User testUser = [
-      SELECT Id
-      FROM User
-      WHERE LastName = 'Standard User'
-      LIMIT 1
-    ];
+    Test.startTest();
+    List<Contact> employees = PWChrono_EmployeeDirectoryController.searchEmployees(
+      'IT',
+      null,
+      null
+    );
+    Test.stopTest();
 
-    System.runAs(testUser) {
-      Test.startTest();
-      List<Portal_Users__c> employees = PWChrono_EmployeeDirectoryController.searchEmployees(
-        'IT'
-      );
-      Test.stopTest();
-
-      System.assert(!employees.isEmpty(), 'Should find employee by department');
-    }
+    System.assert(!employees.isEmpty(), 'Should find employee by department');
   }
 
   @isTest
   static void testCheckRecordAccess() {
-    User testUser = [
-      SELECT Id
-      FROM User
-      WHERE LastName = 'Standard User'
-      LIMIT 1
-    ];
     Portal_Users__c employee = [
-      SELECT Id
+      SELECT Id, Contact__c
       FROM Portal_Users__c
-      WHERE User__c = :testUser.Id
       LIMIT 1
     ];
 
-    System.runAs(testUser) {
-      Test.startTest();
-      Boolean hasAccess = PWChrono_EmployeeDirectoryController.checkRecordAccess(
-        employee.Id
-      );
-      Test.stopTest();
+    Test.startTest();
+    Boolean hasAccess = PWChrono_EmployeeDirectoryController.checkRecordAccess(
+      employee.Contact__c,
+      null,
+      null
+    );
+    Test.stopTest();
 
-      System.assert(hasAccess, 'Should have access to own record');
-    }
+    System.assert(hasAccess, 'Should have access to the Contact record');
   }
 }

@@ -1,9 +1,12 @@
 import getTeamLeavesForApproval from "@salesforce/apex/PWChrono_LeaveController.getTeamLeavesForApproval";
 import processLeaveApproval from "@salesforce/apex/PWChrono_LeaveController.processLeaveApproval";
+import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { LightningElement, track } from "lwc";
 
 export default class PwchronoLeaveAdmin extends LightningElement {
+  employeeId = getEmployeeId();
+  sessionToken = getSessionToken();
   @track teamLeaves = [];
   @track allTeamLeaves = [];
   @track isLoading = false;
@@ -33,7 +36,10 @@ export default class PwchronoLeaveAdmin extends LightningElement {
   async loadTeamLeaves() {
     this.isLoading = true;
     try {
-      const result = await getTeamLeavesForApproval();
+      const result = await getTeamLeavesForApproval({
+        employeeId: this.employeeId,
+        sessionToken: this.sessionToken
+      });
       if (result) {
         this.allTeamLeaves = result.map((record) => ({
           ...record,
@@ -144,7 +150,9 @@ export default class PwchronoLeaveAdmin extends LightningElement {
     processLeaveApproval({
       leaveId: this.selectedLeaveId,
       action: this.modalAction,
-      comments: this.rejectionReason || "Processed via Admin Console"
+      comments: this.rejectionReason || "Processed via Admin Console",
+      employeeId: this.employeeId,
+      sessionToken: this.sessionToken
     })
       .then(() => {
         this.showToast(

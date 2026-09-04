@@ -31,7 +31,7 @@ private class PWChrono_ApprovalController_Test {
     insert leaveType;
 
     // Create Leave Request
-    PWChrono_Leave__c leave = new PWChrono_Leave__c(
+    Leave__c leave = new Leave__c(
       Employees__c = employee.Id,
       Leave_Type__c = leaveType.Id,
       From_Date__c = Date.today().addDays(5),
@@ -46,7 +46,7 @@ private class PWChrono_ApprovalController_Test {
   @isTest
   static void testGetPendingApprovals() {
     User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
-    PWChrono_Leave__c leave = [SELECT Id FROM PWChrono_Leave__c LIMIT 1];
+    Leave__c leave = [SELECT Id FROM Leave__c LIMIT 1];
 
     // Submit for approval
     Approval.ProcessSubmitRequest req1 = new Approval.ProcessSubmitRequest();

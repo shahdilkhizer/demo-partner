@@ -16,6 +16,7 @@ import getTodoTasks from "@salesforce/apex/PWChrono_AdminController.getTodoTasks
 import { logError } from "c/pwchronoErrorHandler";
 import {
   getEmployeeId,
+  getSession,
   getSessionToken,
   SESSION_CHANGED_EVENT
 } from "c/pwchronoSession";
@@ -26,7 +27,6 @@ export default class PwchronoAdminDashboardDesign extends NavigationMixin(
   static renderMode = "light";
 
   // Template avatar images (served from static resource; no /assets paths in Salesforce)
-  avatar31Url = `${smarthrAssets}/assets/img/profiles/avatar-31.jpg`;
   avatar24Url = `${smarthrAssets}/assets/img/profiles/avatar-24.jpg`;
   avatar23Url = `${smarthrAssets}/assets/img/profiles/avatar-23.jpg`;
   avatar25Url = `${smarthrAssets}/assets/img/profiles/avatar-25.jpg`;
@@ -34,6 +34,7 @@ export default class PwchronoAdminDashboardDesign extends NavigationMixin(
 
   employeeId = getEmployeeId();
   sessionToken = getSessionToken();
+  userData;
   // Right column
   @track employeeStatus;
   @track attendanceOverview;
@@ -58,6 +59,7 @@ export default class PwchronoAdminDashboardDesign extends NavigationMixin(
   sessionChangedHandler;
 
   refreshSessionFromStore() {
+    this.userData = getSession()?.user || null;
     const nextEmployeeId = getEmployeeId();
     const nextSessionToken = getSessionToken();
 
@@ -85,6 +87,14 @@ export default class PwchronoAdminDashboardDesign extends NavigationMixin(
       this.empChart = null;
       this.attendanceChart = null;
     }
+  }
+
+  get currentUserName() {
+    return this.userData?.Name || "Admin";
+  }
+
+  get currentUserAvatarUrl() {
+    return this.userData?.Photo_Url__c || null;
   }
 
   connectedCallback() {

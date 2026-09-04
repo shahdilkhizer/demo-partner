@@ -9,11 +9,16 @@ import {
   setSession
 } from "c/pwchronoSession";
 import { NavigationMixin } from "lightning/navigation";
-import { LightningElement, track } from "lwc";
+import { api, LightningElement, track } from "lwc";
 
 export default class PwchronoMainLayout extends NavigationMixin(
   LightningElement
 ) {
+  static renderMode = "light";
+
+  @api forcePortalChrome = false;
+  @api applicationMode = false;
+  @api navigationContext;
   uiAssetsLoadedKey = "__pwchronoUiAssetsLoaded";
   @track isUiReady = false;
   @track isAuthChecked = false;
@@ -166,7 +171,18 @@ export default class PwchronoMainLayout extends NavigationMixin(
   }
 
   get showPortalChrome() {
-    return !this.isLightningExperience && !this.isLoginRoute;
+    return (
+      this.forcePortalChrome ||
+      (!this.isLightningExperience && !this.isLoginRoute)
+    );
+  }
+
+  get applicationNavigationEnabled() {
+    return (
+      this.applicationMode ||
+      this.navigationContext === "application" ||
+      (this.forcePortalChrome && this.isLightningExperience)
+    );
   }
 
   get shouldRenderPortalChrome() {
@@ -290,9 +306,25 @@ export default class PwchronoMainLayout extends NavigationMixin(
     document.body.classList.toggle("mini-sidebar");
   }
 
-  handleHeaderNavigate(event) {
-    const page = event.detail.page;
-    const action = event.detail.action;
+  handleChildNavigate(event) {
+    const page = event.detail?.page;
+    const action = event.detail?.action;
+
+    event.stopPropagation();
+
+    // Use a distinct boundary event. Re-emitting `navigate` while handling
+    // `navigate` makes ownership ambiguous for nested/light DOM components.
+    this.dispatchEvent(
+      new CustomEvent("appnavigate", {
+        detail: { page: page, action: action },
+        bubbles: true,
+        composed: true
+      })
+    );
+
+    if (this.applicationNavigationEnabled) {
+      return;
+    }
 
     if (action === "my_profile" || page === "profile") {
       navigateTo("profile");

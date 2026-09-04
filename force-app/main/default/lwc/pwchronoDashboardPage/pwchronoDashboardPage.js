@@ -1,8 +1,8 @@
 import getDashboardSummaryForPortal from "@salesforce/apex/PWChrono_DashboardController.getDashboardSummaryForPortal";
-import smarthrAssets from "@salesforce/resourceUrl/smarthr_assets";
 import { logError } from "c/pwchronoErrorHandler";
 import {
   getEmployeeId,
+  getSession,
   getSessionToken,
   SESSION_CHANGED_EVENT
 } from "c/pwchronoSession";
@@ -19,7 +19,7 @@ export default class PwchronoDashboardPage extends NavigationMixin(
   employeeId = getEmployeeId();
   sessionToken = getSessionToken();
 
-  avatar02Url = `${smarthrAssets}/assets/img/profiles/avatar-02.jpg`;
+  userData;
 
   sessionChangedHandler;
 
@@ -54,8 +54,17 @@ export default class PwchronoDashboardPage extends NavigationMixin(
   }
 
   refreshSessionFromStore() {
+    this.userData = getSession()?.user || null;
     this.employeeId = getEmployeeId();
     this.sessionToken = getSessionToken();
+  }
+
+  get currentUserName() {
+    return this.userData?.Name || "Employee";
+  }
+
+  get currentUserAvatarUrl() {
+    return this.userData?.Photo_Url__c || null;
   }
 
   async loadDashboard() {

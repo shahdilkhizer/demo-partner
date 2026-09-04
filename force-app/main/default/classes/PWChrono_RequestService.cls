@@ -3,15 +3,20 @@
  *              Handles status transitions, notification dispatch, and common orchestration.
  */
 public inherited sharing class PWChrono_RequestService {
-
   /**
    * @description Transition a request record's status with validation.
    * @param currentStatus Current status value
    * @param newStatus Desired status value
    * @return The validated new status
    */
-  public static String transitionStatus(String currentStatus, String newStatus) {
-    String error = PWChrono_RequestValidator.validateStatusTransition(currentStatus, newStatus);
+  public static String transitionStatus(
+    String currentStatus,
+    String newStatus
+  ) {
+    String error = PWChrono_RequestValidator.validateStatusTransition(
+      currentStatus,
+      newStatus
+    );
     if (error != null) {
       throw new AuraHandledException(error);
     }
@@ -19,7 +24,9 @@ public inherited sharing class PWChrono_RequestService {
   }
 
   /**
-   * @description Auto-assign approver based on employee's Reports_To field.
+   * @description Auto-assign approver from the employee's profile routing configuration.
+   *              A configured destination profile constrains the reporting-line approver;
+   *              profiles without routing retain the existing reporting-line behavior.
    * @param employeeId The employee submitting the request
    * @return The approver's Portal_Users__c Id, or null if no manager found
    */
@@ -29,7 +36,7 @@ public inherited sharing class PWChrono_RequestService {
     }
 
     List<Portal_Users__c> employees = [
-      SELECT Reports_To__c
+      SELECT Reports_To__c, Portal_User_Profile__r.Default_Approval_Profile__c
       FROM Portal_Users__c
       WHERE Id = :employeeId
       LIMIT 1
@@ -38,8 +45,24 @@ public inherited sharing class PWChrono_RequestService {
     if (employees.isEmpty() || employees[0].Reports_To__c == null) {
       return null;
     }
+    Portal_Users__c employee = employees[0];
+    if (
+      employee.Portal_User_Profile__r == null ||
+      employee.Portal_User_Profile__r.Default_Approval_Profile__c == null
+    ) {
+      return employee.Reports_To__c;
+    }
 
-    return employees[0].Reports_To__c;
+    List<Portal_Users__c> managers = [
+      SELECT Id
+      FROM Portal_Users__c
+      WHERE
+        Id = :employee.Reports_To__c
+        AND Is_Active__c = TRUE
+        AND Portal_User_Profile__c = :employee.Portal_User_Profile__r.Default_Approval_Profile__c
+      LIMIT 1
+    ];
+    return managers.isEmpty() ? null : managers[0].Id;
   }
 
   /**
@@ -64,8 +87,15 @@ public inherited sharing class PWChrono_RequestService {
     Id relatedRecordId
   ) {
     String title = requestType + ' Request ' + action;
-    String message = actorName + ' has ' + action.toLowerCase() + ' ' +
-                     requestType.toLowerCase() + ' request ' + requestName + '.';
+    String message =
+      actorName +
+      ' has ' +
+      action.toLowerCase() +
+      ' ' +
+      requestType.toLowerCase() +
+      ' request ' +
+      requestName +
+      '.';
 
     // Resolve the User Id from Portal_Users__c for OwnerId
     Id ownerId = resolveUserId(recipientEmployeeId);
@@ -97,7 +127,12 @@ public inherited sharing class PWChrono_RequestService {
   ) {
     try {
       TLG_Task_Notifications__c notif = buildNotification(
-        recipientEmployeeId, requestType, requestName, action, actorName, relatedRecordId
+        recipientEmployeeId,
+        requestType,
+        requestName,
+        action,
+        actorName,
+        relatedRecordId
       );
       insert notif;
     } catch (Exception e) {
@@ -108,14 +143,18 @@ public inherited sharing class PWChrono_RequestService {
   /**
    * @description Send notifications in bulk.
    */
-  public static void sendNotifications(List<TLG_Task_Notifications__c> notifications) {
+  public static void sendNotifications(
+    List<TLG_Task_Notifications__c> notifications
+  ) {
     if (notifications == null || notifications.isEmpty()) {
       return;
     }
     try {
       insert notifications;
     } catch (Exception e) {
-      PWChrono_Logger.warn('Failed to send bulk notifications: ' + e.getMessage());
+      PWChrono_Logger.warn(
+        'Failed to send bulk notifications: ' + e.getMessage()
+      );
     }
   }
 

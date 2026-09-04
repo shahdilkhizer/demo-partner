@@ -2,16 +2,32 @@
 private class PWChrono_AccessController_Test {
   @TestSetup
   static void makeData() {
-    PWChrono_TestDataFactory.createPortalUser(
+    Portal_User_Profile__c profile = new Portal_User_Profile__c();
+    insert profile;
+    Portal_Users__c admin = PWChrono_TestDataFactory.createPortalUser(
       'Test Admin',
       'admin@test.com',
       'HR Admin'
     );
-    PWChrono_TestDataFactory.createPortalUser(
+    admin.Portal_User_Profile__c = profile.Id;
+    admin.Session_Token__c = 'profile_feature_token';
+    admin.Session_Expires_At__c = System.now().addHours(1);
+    update admin;
+    insert new Portal_Profile_Feature__c(
+      Portal_User_Profile__c = profile.Id,
+      Feature_Key__c = 'Attendance Management',
+      Feature_Label__c = 'Attendance Management',
+      Is_Enabled__c = true,
+      Required_Objects__c = 'PWChrono_Attendance__c',
+      Required_Fields__c = 'Status__c'
+    );
+    Portal_Users__c employee = PWChrono_TestDataFactory.createPortalUser(
       'Test Employee',
       'emp@test.com',
       'Employee'
     );
+    employee.Portal_User_Profile__c = profile.Id;
+    update employee;
   }
 
   @isTest
@@ -132,5 +148,73 @@ private class PWChrono_AccessController_Test {
       isSfUser,
       'Test user should be recognized as Salesforce internal user'
     );
+  }
+
+  @isTest
+  static void testProfileFeatureAccessBranches() {
+    Portal_Users__c employee = [
+      SELECT Id, Portal_User_Profile__c
+      FROM Portal_Users__c
+      WHERE Name = 'Test Employee'
+      LIMIT 1
+    ];
+
+    Test.startTest();
+    Map<String, Object> portalResult = PWChrono_AccessController.getUserAccessImpl(
+      employee.Id,
+      'PowerCustomerSuccess'
+    );
+    Map<String, Object> guestResult = PWChrono_AccessController.getUserAccessImpl(
+      employee.Id,
+      'Guest'
+    );
+    Map<String, Object> guestLoginResult = PWChrono_AccessController.getUserAccessImpl(
+      null,
+      'Guest'
+    );
+    Map<String, Object> missingUserResult = PWChrono_AccessController.getUserAccessImpl(
+      null,
+      'PowerCustomerSuccess'
+    );
+    Test.stopTest();
+
+    System.assertEquals(true, portalResult.get('hasAccess'));
+    System.assertEquals(
+      new List<String>{ 'Attendance Management' },
+      (List<String>) portalResult.get('features')
+    );
+    System.assertEquals(true, guestResult.get('hasAccess'));
+    System.assertEquals(
+      new List<String>{ 'Attendance Management' },
+      (List<String>) guestResult.get('features')
+    );
+    System.assertEquals(
+      new List<String>{ 'Dashboard', 'My Profile' },
+      (List<String>) guestLoginResult.get('features')
+    );
+    System.assertEquals(false, missingUserResult.get('hasAccess'));
+  }
+
+  @isTest
+  static void testPublicAccessWrappersAndInternalAdmin() {
+    Portal_Users__c employee = [
+      SELECT Id
+      FROM Portal_Users__c
+      WHERE Name = 'Test Employee'
+      LIMIT 1
+    ];
+
+    Test.startTest();
+    Map<String, Object> result = PWChrono_AccessController.getUserAccessById(
+      employee.Id,
+      null
+    );
+    Boolean adminResult = PWChrono_AccessController.isAdmin(employee.Id);
+    Boolean nullAdminResult = PWChrono_AccessController.isAdmin(null);
+    Test.stopTest();
+
+    System.assertEquals(true, result.get('hasAccess'));
+    System.assertEquals(true, adminResult);
+    System.assertEquals(true, nullAdminResult);
   }
 }

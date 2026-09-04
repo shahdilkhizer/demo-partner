@@ -94,6 +94,53 @@ public without sharing class PWChrono_GuestSession {
     return u.Id;
   }
 
+  /**
+   * @description Resolve feature access for a verified OTP portal session.
+   *              This method intentionally runs in this without-sharing security
+   *              utility because Portal Users and their profile children use a
+   *              private external sharing model. Identity is verified before
+   *              any access configuration is returned.
+   */
+  public static Map<String, Object> getVerifiedUserAccess(
+    String portalUserId,
+    String sessionToken
+  ) {
+    Id verifiedPortalUserId = requireVerifiedPortalUserId(
+      portalUserId,
+      sessionToken
+    );
+
+    Portal_Users__c portalUser = [
+      SELECT Id, Role__c, Portal_User_Profile__c
+      FROM Portal_Users__c
+      WHERE Id = :verifiedPortalUserId AND Is_Active__c = TRUE
+      LIMIT 1
+    ];
+
+    List<String> features = new List<String>();
+    if (portalUser.Portal_User_Profile__c != null) {
+      for (Portal_Profile_Feature__c assignment : [
+        SELECT Feature_Key__c
+        FROM Portal_Profile_Feature__c
+        WHERE
+          Portal_User_Profile__c = :portalUser.Portal_User_Profile__c
+          AND Is_Enabled__c = TRUE
+        ORDER BY Feature_Key__c
+      ]) {
+        if (String.isNotBlank(assignment.Feature_Key__c)) {
+          features.add(assignment.Feature_Key__c);
+        }
+      }
+    }
+
+    return new Map<String, Object>{
+      'hasAccess' => true,
+      'role' => portalUser.Role__c,
+      'features' => features,
+      'isSalesforceUser' => false
+    };
+  }
+
   @TestVisible
   private static void registerFailedSessionAttempt(Portal_Users__c userRecord) {
     if (Limits.getLimitDmlStatements() == 0) {

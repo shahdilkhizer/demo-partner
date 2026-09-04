@@ -74,16 +74,18 @@
           class="card-body d-flex align-items-center justify-content-between flex-wrap pb-1"
         >
           <div class="d-flex align-items-center mb-3">
-            <span class="avatar avatar-xl flex-shrink-0">
-              <img
-                src={smarthrAssetsAvatar31}
-                class="rounded-circle"
-                alt="img"
-              />
-            </span>
+            <c-pwchrono-avatar
+              container-class="avatar avatar-xl flex-shrink-0 avatar-rounded"
+              image-url={currentUserAvatarUrl}
+              name={currentUserName}
+              alt-text={currentUserName}
+              image-class="rounded-circle"
+              title-class="initial-wrap"
+              fallback-bg-class="bg-secondary"
+            ></c-pwchrono-avatar>
             <div class="ms-3">
               <h3 class="mb-2">
-                Welcome Back, Adrian
+                Welcome Back, {currentUserName}
                 <a href="javascript:void(0);" class="edit-icon"
                   ><i class="ti ti-edit fs-14"></i
                 ></a>

@@ -1,0 +1,11 @@
+{
+  "activeViewId" : "d4453835-2189-46b0-9ae1-7dff0dfc1609",
+  "appPageId" : "fb287de7-9abe-4e91-b008-9047e3ceee0d",
+  "configurationTags" : [ ],
+  "devName" : "Lead_Inspection",
+  "id" : "1e87db64-9501-467c-aae3-499799be93e2",
+  "label" : "Lead Inspection",
+  "routeType" : "lead-inspection",
+  "type" : "route",
+  "urlPrefix" : "lead-inspection"
+}

@@ -120,6 +120,23 @@ export function setSession(user, permissions, sessionToken) {
   notifySessionChanged();
 }
 
+/**
+ * Updates the current session user's non-sensitive presentation fields while
+ * preserving permissions and the verified session token.
+ */
+export function updateSessionUser(userPatch) {
+  const current = getSession();
+  if (!current.user || !userPatch) {
+    return;
+  }
+
+  setSession(
+    { ...current.user, ...userPatch },
+    current.permissions,
+    current.sessionToken
+  );
+}
+
 export function clearSession() {
   memorySession = { user: null, permissions: null, sessionToken: null };
   try {

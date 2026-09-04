@@ -189,7 +189,7 @@ public inherited sharing class PWChrono_DashboardController {
     // Pending leave approvals
     Integer pendingLeaves = [
       SELECT COUNT()
-      FROM PWChrono_Leave__c
+      FROM Leave__c
       WHERE
         Approvers__c = :employeeId
         AND Status__c = :PWChrono_Constants.STATUS_SUBMITTED

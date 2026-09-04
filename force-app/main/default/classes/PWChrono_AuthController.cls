@@ -19,7 +19,14 @@ public inherited sharing class PWChrono_AuthController {
 
       Id userId = UserInfo.getUserId();
       List<Portal_Users__c> users = [
-        SELECT Id, Name, Email__c, Role__c, Portal_User_Profile__c, User__c
+        SELECT
+          Id,
+          Name,
+          Email__c,
+          Role__c,
+          Photo_Url__c,
+          Portal_User_Profile__c,
+          User__c
         FROM Portal_Users__c
         WHERE User__c = :userId
         LIMIT 1
@@ -372,6 +379,7 @@ public inherited sharing class PWChrono_AuthController {
           Name,
           Email__c,
           Role__c,
+          Photo_Url__c,
           Portal_User_Profile__c,
           Portal_User_Profile__r.Name,
           One_Time_Password__c,

@@ -11,8 +11,8 @@ public inherited sharing class PWChrono_LeaveSelector {
   /**
    * @description Get a single leave record with all fields needed for detail view.
    */
-  public static PWChrono_Leave__c getLeaveById(Id leaveId) {
-    List<PWChrono_Leave__c> leaves = [
+  public static Leave__c getLeaveById(Id leaveId) {
+    List<Leave__c> leaves = [
       SELECT
         Id,
         Name,
@@ -41,7 +41,7 @@ public inherited sharing class PWChrono_LeaveSelector {
         Working_Days_Excluded__c,
         CreatedDate,
         LastModifiedDate
-      FROM PWChrono_Leave__c
+      FROM Leave__c
       WHERE Id = :leaveId
       LIMIT 1
     ];
@@ -59,7 +59,7 @@ public inherited sharing class PWChrono_LeaveSelector {
    * @return Filtered list of leave records
    */
   @SuppressWarnings('PMD.ApexSOQLInjection,PMD.ExcessiveParameterList')
-  public static List<PWChrono_Leave__c> getLeavesByEmployee(
+  public static List<Leave__c> getLeavesByEmployee(
     Id employeeId,
     String statusFilter,
     Date startDate,
@@ -73,7 +73,7 @@ public inherited sharing class PWChrono_LeaveSelector {
       'From_Date__c, To_Date__c, Total_Days__c, Half_Day__c, ' +
       'Reason__c, Status__c, Approvers__c, Approvers__r.Name, ' +
       'Applied_Date__c, CreatedDate ' +
-      'FROM PWChrono_Leave__c ' +
+      'FROM Leave__c ' +
       'WHERE Employees__c = :employeeId ';
 
     if (String.isNotBlank(statusFilter) && statusFilter != 'All') {
@@ -94,7 +94,7 @@ public inherited sharing class PWChrono_LeaveSelector {
   /**
    * @description Get team pending leaves for manager approval.
    */
-  public static List<PWChrono_Leave__c> getTeamPendingLeaves(Id managerId) {
+  public static List<Leave__c> getTeamPendingLeaves(Id managerId) {
     return [
       SELECT
         Id,
@@ -110,7 +110,7 @@ public inherited sharing class PWChrono_LeaveSelector {
         Reason__c,
         Status__c,
         CreatedDate
-      FROM PWChrono_Leave__c
+      FROM Leave__c
       WHERE
         Approvers__c = :managerId
         AND Status__c = :PWChrono_Constants.STATUS_SUBMITTED
@@ -123,7 +123,7 @@ public inherited sharing class PWChrono_LeaveSelector {
    * @description Get team leaves for approval workspace (all statuses).
    */
   @SuppressWarnings('PMD.ExcessiveParameterList,PMD.ApexSOQLInjection')
-  public static List<PWChrono_Leave__c> getTeamLeaves(
+  public static List<Leave__c> getTeamLeaves(
     Id managerId,
     String statusFilter,
     Date startDate,
@@ -135,7 +135,7 @@ public inherited sharing class PWChrono_LeaveSelector {
       'From_Date__c, To_Date__c, Total_Days__c, ' +
       'Half_Day__c, Reason__c, Status__c, ' +
       'CreatedDate ' +
-      'FROM PWChrono_Leave__c ' +
+      'FROM Leave__c ' +
       'WHERE Approvers__c = :managerId ';
 
     if (String.isNotBlank(statusFilter) && statusFilter != 'All') {
@@ -160,7 +160,7 @@ public inherited sharing class PWChrono_LeaveSelector {
    * @description Get approved leaves in a date range for calendar display.
    *              Includes own leaves and team leaves (direct reports).
    */
-  public static List<PWChrono_Leave__c> getLeaveCalendar(
+  public static List<Leave__c> getLeaveCalendar(
     Id employeeId,
     Date startDate,
     Date endDate
@@ -178,7 +178,7 @@ public inherited sharing class PWChrono_LeaveSelector {
         Total_Days__c,
         Half_Day__c,
         Status__c
-      FROM PWChrono_Leave__c
+      FROM Leave__c
       WHERE
         Status__c = :PWChrono_Constants.STATUS_APPROVED
         AND From_Date__c <= :endDate
@@ -193,7 +193,7 @@ public inherited sharing class PWChrono_LeaveSelector {
    * @description Find overlapping leaves for validation.
    */
   @SuppressWarnings('PMD.ExcessiveParameterList')
-  public static List<PWChrono_Leave__c> getOverlappingLeaves(
+  public static List<Leave__c> getOverlappingLeaves(
     Id employeeId,
     Date fromDate,
     Date toDate,
@@ -205,7 +205,7 @@ public inherited sharing class PWChrono_LeaveSelector {
     if (excludeLeaveId != null) {
       return [
         SELECT Id, Name, From_Date__c, To_Date__c, Status__c, Leave_Type__r.Name
-        FROM PWChrono_Leave__c
+        FROM Leave__c
         WHERE
           Employees__c = :employeeId
           AND Id != :excludeLeaveId
@@ -218,7 +218,7 @@ public inherited sharing class PWChrono_LeaveSelector {
 
     return [
       SELECT Id, Name, From_Date__c, To_Date__c, Status__c, Leave_Type__r.Name
-      FROM PWChrono_Leave__c
+      FROM Leave__c
       WHERE
         Employees__c = :employeeId
         AND (Status__c = :submitted

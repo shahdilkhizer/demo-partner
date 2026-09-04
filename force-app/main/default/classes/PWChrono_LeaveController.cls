@@ -33,7 +33,7 @@ public inherited sharing class PWChrono_LeaveController {
    * @description Get leave applications for current employee
    */
   @AuraEnabled(cacheable=false)
-  public static List<PWChrono_Leave__c> getMyLeaves(
+  public static List<Leave__c> getMyLeaves(
     String statusFilter,
     Date startDate,
     Date endDate,
@@ -64,7 +64,7 @@ public inherited sharing class PWChrono_LeaveController {
    * @description Get a single leave record detail
    */
   @AuraEnabled(cacheable=false)
-  public static PWChrono_Leave__c getLeaveDetail(
+  public static Leave__c getLeaveDetail(
     Id leaveId,
     String employeeId,
     String sessionToken
@@ -87,7 +87,7 @@ public inherited sharing class PWChrono_LeaveController {
    * @description Get team leaves for manager approval
    */
   @AuraEnabled(cacheable=false)
-  public static List<PWChrono_Leave__c> getTeamLeavesForApproval(
+  public static List<Leave__c> getTeamLeavesForApproval(
     String employeeId,
     String sessionToken
   ) {
@@ -109,7 +109,7 @@ public inherited sharing class PWChrono_LeaveController {
    * @description Get team leaves with filters (approval workspace)
    */
   @AuraEnabled(cacheable=false)
-  public static List<PWChrono_Leave__c> getTeamLeaves(
+  public static List<Leave__c> getTeamLeaves(
     String statusFilter,
     Date startDate,
     Date endDate,
@@ -139,7 +139,7 @@ public inherited sharing class PWChrono_LeaveController {
    * @description Get leave calendar data for team
    */
   @AuraEnabled(cacheable=true)
-  public static List<PWChrono_Leave__c> getLeaveCalendarData(
+  public static List<Leave__c> getLeaveCalendarData(
     Date startDate,
     Date endDate,
     String employeeId,
@@ -257,7 +257,7 @@ public inherited sharing class PWChrono_LeaveController {
         employeeId,
         sessionToken
       );
-      PWChrono_Leave__c leave = requireAccessibleLeave(leaveId, empId);
+      Leave__c leave = requireAccessibleLeave(leaveId, empId);
       if (
         leave.Employees__c != empId &&
         !PWChrono_RequestValidator.isCurrentUserAdmin(empId)
@@ -274,14 +274,14 @@ public inherited sharing class PWChrono_LeaveController {
       );
 
       leave.Certificate_Uploaded__c = true;
-      update new PWChrono_Leave__c(
+      update new Leave__c(
         Id = leaveId,
         Certificate_Uploaded__c = true
       );
 
       PWChrono_RequestCommentService.addSystemComment(
         leaveId,
-        'PWChrono_Leave__c',
+        'Leave__c',
         'Attachment uploaded: ' + fileDto.name,
         empId
       );
@@ -312,7 +312,7 @@ public inherited sharing class PWChrono_LeaveController {
       requireAccessibleLeave(leaveId, empId);
       return PWChrono_RequestCommentService.getComments(
         leaveId,
-        'PWChrono_Leave__c'
+        'Leave__c'
       );
     } catch (AuraHandledException ahe) {
       throw ahe;
@@ -340,7 +340,7 @@ public inherited sharing class PWChrono_LeaveController {
       requireAccessibleLeave(leaveId, empId);
       return PWChrono_RequestCommentService.addComment(
         leaveId,
-        'PWChrono_Leave__c',
+        'Leave__c',
         commentText,
         empId
       );
@@ -382,7 +382,7 @@ public inherited sharing class PWChrono_LeaveController {
    * @description Submit a leave application
    */
   @AuraEnabled
-  public static PWChrono_Leave__c submitLeaveApplication(
+  public static Leave__c submitLeaveApplication(
     PWChrono_LeaveValidator.LeaveDTO leaveDTO,
     String employeeId,
     String sessionToken
@@ -405,7 +405,7 @@ public inherited sharing class PWChrono_LeaveController {
    * @description Cancel a leave request
    */
   @AuraEnabled
-  public static PWChrono_Leave__c cancelLeave(
+  public static Leave__c cancelLeave(
     Id leaveId,
     String reason,
     String employeeId,
@@ -429,7 +429,7 @@ public inherited sharing class PWChrono_LeaveController {
    * @description Approve or reject leave application
    */
   @AuraEnabled
-  public static PWChrono_Leave__c processLeaveApproval(
+  public static Leave__c processLeaveApproval(
     Id leaveId,
     String action,
     String comments,
@@ -543,8 +543,8 @@ public inherited sharing class PWChrono_LeaveController {
    * @description Legacy: Save leave application (old signature used by pwchronoLeaveApplication)
    */
   @AuraEnabled
-  public static PWChrono_Leave__c saveLeaveApplication(
-    PWChrono_Leave__c leaveRecord,
+  public static Leave__c saveLeaveApplication(
+    Leave__c leaveRecord,
     String portalUserId,
     String sessionToken
   ) {
@@ -573,11 +573,11 @@ public inherited sharing class PWChrono_LeaveController {
     }
   }
 
-  private static PWChrono_Leave__c requireAccessibleLeave(
+  private static Leave__c requireAccessibleLeave(
     Id leaveId,
     Id employeeId
   ) {
-    PWChrono_Leave__c leave = PWChrono_LeaveSelector.getLeaveById(leaveId);
+    Leave__c leave = PWChrono_LeaveSelector.getLeaveById(leaveId);
 
     if (leave == null) {
       throw new AuraHandledException('Leave record not found.');

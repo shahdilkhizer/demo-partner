@@ -76,26 +76,50 @@ public inherited sharing class PWChrono_AppraisalTriggerHandler {
       employeeIds.add(appraisal.Employees__c);
     }
 
-    // Lock active salary assignments for affected employees to reduce update contention.
+    Map<Id, Portal_Users__c> portalUsersById = new Map<Id, Portal_Users__c>(
+      [
+        SELECT Id, Contact__c
+        FROM Portal_Users__c
+        WHERE Id IN :employeeIds
+      ]
+    );
+    Set<Id> contactIds = new Set<Id>();
+    for (Portal_Users__c portalUser : portalUsersById.values()) {
+      if (portalUser.Contact__c != null) {
+        contactIds.add(portalUser.Contact__c);
+      }
+    }
+
+    // Contact is canonical; lock active assignments for the affected Contacts.
     Map<Id, PWChrono_Salary_Assignment__c> currentAssignments = new Map<Id, PWChrono_Salary_Assignment__c>();
     for (PWChrono_Salary_Assignment__c sa : [
-      SELECT Id, Name, Employees__c, Base_Salary__c, From_Date__c
+      SELECT Id, Name, Contact__c, Employees__c, Base_Salary__c, From_Date__c
       FROM PWChrono_Salary_Assignment__c
-      WHERE Employees__c IN :employeeIds AND Is_Active__c = TRUE
+      WHERE Contact__c IN :contactIds AND Is_Active__c = TRUE
       FOR UPDATE
     ]) {
-      currentAssignments.put(sa.Employees__c, sa);
+      currentAssignments.put(sa.Contact__c, sa);
     }
 
     for (PWChrono_Appraisal__c appraisal : appraisals) {
+      Portal_Users__c portalUser = portalUsersById.get(appraisal.Employees__c);
+      Id contactId = portalUser != null ? portalUser.Contact__c : null;
+      if (contactId == null) {
+        appraisal.addError(
+          'The appraisal Portal User must be linked to an employee Contact before creating a salary assignment.'
+        );
+        continue;
+      }
       PWChrono_Salary_Assignment__c currentSA = currentAssignments.get(
-        appraisal.Employees__c
+        contactId
       );
       Decimal newSalary =
         (currentSA != null ? currentSA.Base_Salary__c : 0) +
         appraisal.Proposed_Amount__c;
 
       PWChrono_Salary_Assignment__c newSA = new PWChrono_Salary_Assignment__c(
+        Contact__c = contactId,
+        // Retained only during the Portal User relationship migration.
         Employees__c = appraisal.Employees__c,
         Base_Salary__c = newSalary,
         From_Date__c = appraisal.Effective_Date__c != null

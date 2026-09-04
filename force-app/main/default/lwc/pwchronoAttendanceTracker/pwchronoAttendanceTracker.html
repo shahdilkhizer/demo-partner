@@ -1,4 +1,11 @@
 <template>
+  <!--
+    Fallback for the standalone Lightning tab while Salesforce refreshes the
+    tab's component mapping. Portal pages receive these assets from
+    pwchronoMainLayout.
+  -->
+  <c-pwchrono-ui-assets></c-pwchrono-ui-assets>
+
   <template if:true={isLoading}>
     <lightning-spinner
       alternative-text="Loading"
@@ -97,12 +104,26 @@
               </div>
             </div>
             <div class="mb-2">
-              <a
-                href="javascript:void(0);"
-                class="btn btn-primary d-flex align-items-center"
-                onclick={handleAddAttendance}
-                ><i class="ti ti-file-analytics me-2"></i>Request Attendance</a
-              >
+              <template if:false={isViewingEmployeeAsAdmin}>
+                <button
+                  type="button"
+                  class="btn btn-primary d-flex align-items-center"
+                  onclick={handleAddAttendance}
+                >
+                  <i class="ti ti-file-analytics me-2" aria-hidden="true"></i
+                  >Request Attendance
+                </button>
+              </template>
+              <template if:true={isViewingEmployeeAsAdmin}>
+                <button
+                  type="button"
+                  class="btn btn-outline-primary d-flex align-items-center"
+                  onclick={handleBackToAdmin}
+                >
+                  <i class="ti ti-arrow-left me-2" aria-hidden="true"></i>Back
+                  to Admin Attendance
+                </button>
+              </template>
             </div>
             <div class="mb-2 ms-2">
               <a

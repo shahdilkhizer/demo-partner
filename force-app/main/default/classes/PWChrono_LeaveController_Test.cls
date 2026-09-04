@@ -36,12 +36,12 @@ private class PWChrono_LeaveController_Test {
     dto.halfDay = false;
 
     Test.startTest();
-    PWChrono_Leave__c createdLeave = PWChrono_LeaveController.submitLeaveApplication(
+    Leave__c createdLeave = PWChrono_LeaveController.submitLeaveApplication(
       dto,
       String.valueOf(bundle.employee.Id),
       null
     );
-    PWChrono_Leave__c approvedLeave = PWChrono_LeaveController.processLeaveApproval(
+    Leave__c approvedLeave = PWChrono_LeaveController.processLeaveApproval(
       createdLeave.Id,
       'Approve',
       'Looks good',
@@ -64,7 +64,7 @@ private class PWChrono_LeaveController_Test {
   @IsTest
   static void testAddCommentAndRetrieveComments() {
     PWChrono_LeaveTestDataFactory.TestDataBundle bundle = getBundle();
-    PWChrono_Leave__c leaveRecord = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c leaveRecord = PWChrono_LeaveTestDataFactory.createLeave(
       bundle.employee.Id,
       bundle.annualLeave.Id,
       bundle.manager.Id,
@@ -97,7 +97,7 @@ private class PWChrono_LeaveController_Test {
   @IsTest
   static void testUploadLeaveFileAndRetrieveFiles() {
     PWChrono_LeaveTestDataFactory.TestDataBundle bundle = getBundle();
-    PWChrono_Leave__c leaveRecord = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c leaveRecord = PWChrono_LeaveTestDataFactory.createLeave(
       bundle.employee.Id,
       bundle.annualLeave.Id,
       bundle.manager.Id,
@@ -127,9 +127,9 @@ private class PWChrono_LeaveController_Test {
     System.assertEquals(1, files.size());
     System.assertEquals('medical-note.txt', files[0].name);
 
-    PWChrono_Leave__c refreshedLeave = [
+    Leave__c refreshedLeave = [
       SELECT Certificate_Uploaded__c
-      FROM PWChrono_Leave__c
+      FROM Leave__c
       WHERE Id = :leaveRecord.Id
       LIMIT 1
     ];
@@ -139,7 +139,7 @@ private class PWChrono_LeaveController_Test {
   @IsTest
   static void testReadOperationsReturnEmployeeAndManagerData() {
     PWChrono_LeaveTestDataFactory.TestDataBundle bundle = getBundle();
-    PWChrono_Leave__c submittedLeave = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c submittedLeave = PWChrono_LeaveTestDataFactory.createLeave(
       bundle.employee.Id,
       bundle.annualLeave.Id,
       bundle.manager.Id,
@@ -147,7 +147,7 @@ private class PWChrono_LeaveController_Test {
       Date.today().addDays(5),
       'Submitted'
     );
-    PWChrono_Leave__c approvedLeave = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c approvedLeave = PWChrono_LeaveTestDataFactory.createLeave(
       bundle.employee.Id,
       bundle.annualLeave.Id,
       bundle.manager.Id,
@@ -169,30 +169,30 @@ private class PWChrono_LeaveController_Test {
     Test.startTest();
     List<PWChrono_LeaveBalanceService.LeaveBalanceWrapper> balances =
       PWChrono_LeaveController.getMyLeaveBalance(String.valueOf(bundle.employee.Id), null);
-    List<PWChrono_Leave__c> myLeaves = PWChrono_LeaveController.getMyLeaves(
+    List<Leave__c> myLeaves = PWChrono_LeaveController.getMyLeaves(
       'All',
       null,
       null,
       String.valueOf(bundle.employee.Id),
       null
     );
-    PWChrono_Leave__c detail = PWChrono_LeaveController.getLeaveDetail(
+    Leave__c detail = PWChrono_LeaveController.getLeaveDetail(
       submittedLeave.Id,
       String.valueOf(bundle.employee.Id),
       null
     );
-    List<PWChrono_Leave__c> teamPending = PWChrono_LeaveController.getTeamLeavesForApproval(
+    List<Leave__c> teamPending = PWChrono_LeaveController.getTeamLeavesForApproval(
       String.valueOf(bundle.manager.Id),
       null
     );
-    List<PWChrono_Leave__c> teamLeaves = PWChrono_LeaveController.getTeamLeaves(
+    List<Leave__c> teamLeaves = PWChrono_LeaveController.getTeamLeaves(
       'Submitted',
       null,
       null,
       String.valueOf(bundle.manager.Id),
       null
     );
-    List<PWChrono_Leave__c> calendarRows = PWChrono_LeaveController.getLeaveCalendarData(
+    List<Leave__c> calendarRows = PWChrono_LeaveController.getLeaveCalendarData(
       Date.today().addDays(6),
       Date.today().addDays(9),
       String.valueOf(bundle.employee.Id),
@@ -241,7 +241,7 @@ private class PWChrono_LeaveController_Test {
     outsider.Session_Token__c = 'leave_outsider_token';
     outsider.Session_Expires_At__c = System.now().addHours(1);
     update outsider;
-    PWChrono_Leave__c submittedLeave = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c submittedLeave = PWChrono_LeaveTestDataFactory.createLeave(
       bundle.employee.Id,
       bundle.annualLeave.Id,
       bundle.manager.Id,
@@ -315,8 +315,8 @@ private class PWChrono_LeaveController_Test {
       String.valueOf(bundle.admin.Id),
       null
     );
-    PWChrono_Leave__c savedLeave = PWChrono_LeaveController.saveLeaveApplication(
-      new PWChrono_Leave__c(
+    Leave__c savedLeave = PWChrono_LeaveController.saveLeaveApplication(
+      new Leave__c(
         Leave_Type__c = bundle.annualLeave.Id,
         From_Date__c = Date.today().addDays(12),
         To_Date__c = Date.today().addDays(13),
@@ -344,7 +344,7 @@ private class PWChrono_LeaveController_Test {
   @IsTest
   static void testCancelLeave() {
     PWChrono_LeaveTestDataFactory.TestDataBundle bundle = getBundle();
-    PWChrono_Leave__c submittedLeave = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c submittedLeave = PWChrono_LeaveTestDataFactory.createLeave(
       bundle.employee.Id,
       bundle.annualLeave.Id,
       bundle.manager.Id,
@@ -354,7 +354,7 @@ private class PWChrono_LeaveController_Test {
     );
 
     Test.startTest();
-    PWChrono_Leave__c cancelled = PWChrono_LeaveController.cancelLeave(
+    Leave__c cancelled = PWChrono_LeaveController.cancelLeave(
       submittedLeave.Id,
       'Plans changed',
       String.valueOf(bundle.employee.Id),
@@ -369,7 +369,7 @@ private class PWChrono_LeaveController_Test {
   static void testAdditionalCoverageForAdminAndAttachmentGuards() {
     PWChrono_LeaveTestDataFactory.TestDataBundle bundle = getBundle();
     User orphanUser = PWChrono_TestDataFactory.createTestUser('Leave Orphan');
-    PWChrono_Leave__c submittedLeave = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c submittedLeave = PWChrono_LeaveTestDataFactory.createLeave(
       bundle.employee.Id,
       bundle.annualLeave.Id,
       bundle.manager.Id,
@@ -483,7 +483,7 @@ private class PWChrono_LeaveController_Test {
 
       try {
         PWChrono_LeaveController.saveLeaveApplication(
-          new PWChrono_Leave__c(
+          new Leave__c(
             Leave_Type__c = bundle.annualLeave.Id,
             From_Date__c = Date.today().addDays(20),
             To_Date__c = Date.today().addDays(20),

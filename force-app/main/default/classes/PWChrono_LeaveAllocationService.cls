@@ -5,7 +5,7 @@ public without sharing class PWChrono_LeaveAllocationService {
   /**
    * @description Update leave allocation based on approved leaves
    */
-  public static void updateLeaveAllocation(List<PWChrono_Leave__c> leaves) {
+  public static void updateLeaveAllocation(List<Leave__c> leaves) {
     try {
       Set<Id> allocationIds = collectAllocationIds(leaves);
 
@@ -35,9 +35,9 @@ public without sharing class PWChrono_LeaveAllocationService {
     }
   }
 
-  private static Set<Id> collectAllocationIds(List<PWChrono_Leave__c> leaves) {
+  private static Set<Id> collectAllocationIds(List<Leave__c> leaves) {
     Set<Id> allocationIds = new Set<Id>();
-    for (PWChrono_Leave__c leave : leaves) {
+    for (Leave__c leave : leaves) {
       if (leave.Leave_Allocation__c != null) {
         allocationIds.add(leave.Leave_Allocation__c);
       }
@@ -55,7 +55,7 @@ public without sharing class PWChrono_LeaveAllocationService {
 
     List<AggregateResult> results = [
       SELECT Leave_Allocation__c allocationId, SUM(Total_Days__c) used
-      FROM PWChrono_Leave__c
+      FROM Leave__c
       WHERE
         Leave_Allocation__c IN :allocationIds
         AND Status__c = :PWChrono_Constants.STATUS_APPROVED

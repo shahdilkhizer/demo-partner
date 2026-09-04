@@ -147,7 +147,7 @@ export default class PwchronoLeaveApplication extends LightningElement {
     const leaveToSave = {
       ...this.leaveRecord,
       Total_Days__c: this.totalDays,
-      sobjectType: "PWChrono_Leave__c"
+      sobjectType: "Leave__c"
     };
 
     saveLeaveApplication({

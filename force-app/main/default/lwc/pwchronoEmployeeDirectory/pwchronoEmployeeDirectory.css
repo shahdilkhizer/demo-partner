@@ -123,3 +123,88 @@
 .custom-btn-close:hover {
   color: #0f172a;
 }
+/* SmartHR Add Employee Modal Styles */
+.contact-grids-tab .nav-underline {
+  border-bottom: 2px solid #e9ecef;
+  margin-bottom: 0;
+}
+
+.contact-grids-tab .nav-underline .nav-link {
+  border: none !important;
+  border-bottom: 2px solid transparent !important;
+  color: #64748b !important;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 16px;
+  background: transparent !important;
+  border-radius: 0 !important;
+  transition: all 0.2s ease;
+}
+
+.contact-grids-tab .nav-underline .nav-link.active {
+  border-bottom: 2px solid #ff5e3a !important;
+  color: #ff5e3a !important;
+  font-weight: 600;
+}
+
+.contact-grids-tab .nav-underline .nav-link:hover {
+  color: #ff5e3a !important;
+}
+
+.form-check-input:checked {
+  background-color: #ff5e3a !important;
+  border-color: #ff5e3a !important;
+}
+/* Metric Card Icon Circles - Big, Sharp, Responsive */
+.metric-avatar {
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  min-height: 52px !important;
+  max-width: 52px !important;
+  max-height: 52px !important;
+  border-radius: 50% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  overflow: hidden !important;
+}
+
+.metric-avatar i {
+  font-size: 24px !important;
+  width: 24px !important;
+  height: 24px !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+@media (max-width: 991px) {
+  .metric-avatar {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    min-height: 46px !important;
+  }
+  .metric-avatar i {
+    font-size: 22px !important;
+    width: 22px !important;
+    height: 22px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .metric-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+  }
+  .metric-avatar i {
+    font-size: 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+  }
+}

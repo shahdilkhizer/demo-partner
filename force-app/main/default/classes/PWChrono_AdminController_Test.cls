@@ -76,7 +76,7 @@ private class PWChrono_AdminController_Test {
     );
     insert allocation;
 
-    PWChrono_Leave__c leave = new PWChrono_Leave__c(
+    Leave__c leave = new Leave__c(
       Employees__c = employee.Id,
       From_Date__c = Date.today().addDays(3),
       To_Date__c = Date.today().addDays(5),

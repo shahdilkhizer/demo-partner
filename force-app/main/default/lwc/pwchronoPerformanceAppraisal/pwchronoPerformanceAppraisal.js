@@ -421,5 +421,3 @@ export default class PerformanceAppraisal extends LightningElement {
     this.dispatchEvent(new ShowToastEvent({ title, message, variant }));
   }
 }
-
-

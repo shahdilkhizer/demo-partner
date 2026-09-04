@@ -10,9 +10,7 @@
           <nav>
             <ol class="breadcrumb mb-0">
               <li class="breadcrumb-item">
-                <a href="javascript:void(0);"
-                  ><i class="ti ti-home"></i
-                ></a>
+                <a href="javascript:void(0);"><i class="ti ti-home"></i></a>
               </li>
               <li class="breadcrumb-item">Attendance</li>
               <li class="breadcrumb-item active" aria-current="page">
@@ -341,9 +339,15 @@
                         </a>
                         <div class="ms-2">
                           <h6 class="fw-medium">
-                            <a href="javascript:void(0);"
-                              >{record.employeeName}</a
+                            <button
+                              type="button"
+                              class="btn btn-link p-0 fw-medium text-start"
+                              data-employee-id={record.Employees__c}
+                              onclick={handleViewEmployee}
+                              aria-label={record.employeeName}
                             >
+                              {record.employeeName}
+                            </button>
                           </h6>
                           <span class="fs-12 fw-normal">{record.role}</span>
                         </div>
@@ -368,13 +372,17 @@
                     </td>
                     <td>
                       <div class="action-icon d-inline-flex">
-                        <a
-                          href="javascript:void(0);"
-                          class="me-2"
-                          data-id={record.Id}
-                          onclick={handleEdit}
-                          ><i class="ti ti-edit"></i
-                        ></a>
+                        <template if:true={record.hasAttendanceRecord}>
+                          <button
+                            type="button"
+                            class="btn btn-link p-0 me-2"
+                            data-id={record.Id}
+                            onclick={handleEdit}
+                            aria-label="Edit attendance"
+                          >
+                            <i class="ti ti-edit" aria-hidden="true"></i>
+                          </button>
+                        </template>
                       </div>
                     </td>
                   </tr>

@@ -47,7 +47,7 @@ private class PWChrono_DashboardController_Test {
     insert allocation;
 
     // Create Leave Request (Pending Approval)
-    PWChrono_Leave__c leave = new PWChrono_Leave__c(
+    Leave__c leave = new Leave__c(
       Employees__c = employee.Id,
       Leave_Type__c = leaveType.Id,
       From_Date__c = Date.today().addDays(5),
@@ -60,7 +60,7 @@ private class PWChrono_DashboardController_Test {
     insert leave;
 
     // Create Approved Leave for Usage Calculation
-    PWChrono_Leave__c approvedLeave = new PWChrono_Leave__c(
+    Leave__c approvedLeave = new Leave__c(
       Employees__c = employee.Id,
       Leave_Type__c = leaveType.Id,
       From_Date__c = Date.today().addDays(-5),
@@ -95,6 +95,7 @@ private class PWChrono_DashboardController_Test {
 
     // Create Salary Slip
     PWChrono_Salary_Slip__c slip = new PWChrono_Salary_Slip__c(
+      Contact__c = employee.Contact__c,
       Employees__c = employee.Id,
       Payroll_Period__c = Date.today().addMonths(-1),
       Gross_Pay__c = 5000,

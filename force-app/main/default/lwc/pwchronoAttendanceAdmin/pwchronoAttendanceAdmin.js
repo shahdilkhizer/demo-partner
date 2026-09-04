@@ -1,10 +1,13 @@
-import getAllAttendance from "@salesforce/apex/PWChrono_AttendanceController.getAllAttendance";
+import getAttendanceAdminRows from "@salesforce/apex/PWChrono_AttendanceController.getAttendanceAdminRows";
 import { logError } from "c/pwchronoErrorHandler";
 import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
+import { NavigationMixin } from "lightning/navigation";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { LightningElement, track } from "lwc";
 
-export default class PwchronoAttendanceAdmin extends LightningElement {
+export default class PwchronoAttendanceAdmin extends NavigationMixin(
+  LightningElement
+) {
   @track attendanceData = [];
   @track allAttendanceData = [];
   @track isLoading = false;
@@ -109,7 +112,7 @@ export default class PwchronoAttendanceAdmin extends LightningElement {
   async loadAttendance() {
     this.isLoading = true;
     try {
-      const result = await getAllAttendance({
+      const result = await getAttendanceAdminRows({
         dateFilter: this.selectedDate,
         portalUserId: this.employeeId,
         sessionToken: this.sessionToken
@@ -118,14 +121,19 @@ export default class PwchronoAttendanceAdmin extends LightningElement {
       if (result) {
         this.allAttendanceData = result.map((record) => ({
           ...record,
-          employeeName: record.Employees__r
-            ? record.Employees__r.Name
-            : "Unknown",
-          role: record.Employees__r ? record.Employees__r.Role__c : "Employee",
-          statusClass: this.getStatusClass(record.Status__c),
+          Id: record.attendanceRecordId || `employee-${record.employeeId}`,
+          Employees__c: record.employeeId,
+          Attendance_Date__c: record.attendanceDate,
+          From_Time__c: record.checkIn,
+          To_Time__c: record.checkOut,
+          Status__c: record.status,
+          employeeName: record.employeeName || "Unknown",
+          role: record.role || "Employee",
+          hasAttendanceRecord: Boolean(record.attendanceRecordId),
+          statusClass: this.getStatusClass(record.status),
           productionHours: this.calculateProductionHours(
-            record.From_Time__c,
-            record.To_Time__c
+            record.checkIn,
+            record.checkOut
           ),
           overtime: "0h" // Placeholder logic
         }));
@@ -176,7 +184,12 @@ export default class PwchronoAttendanceAdmin extends LightningElement {
       case "Late":
         return badgeClass + "badge-warning-transparent";
       case "On Leave":
+      case "Leave":
         return badgeClass + "badge-info-transparent";
+      case "Holiday":
+      case "Weekend":
+      case "Future":
+        return badgeClass + "badge-light-transparent";
       default:
         return badgeClass + "badge-light-transparent";
     }
@@ -255,6 +268,22 @@ export default class PwchronoAttendanceAdmin extends LightningElement {
     this.selectedRecordId = id;
     this.selectedRecord = this.allAttendanceData.find((r) => r.Id === id);
     this.showModal = true;
+  }
+
+  handleViewEmployee(event) {
+    const employeeId = event.currentTarget.dataset.employeeId;
+    if (!employeeId) {
+      return;
+    }
+    this[NavigationMixin.Navigate]({
+      type: "comm__namedPage",
+      attributes: {
+        name: "Attendance_Employee__c"
+      },
+      state: {
+        c__employeeId: employeeId
+      }
+    });
   }
 
   handleCloseModal() {

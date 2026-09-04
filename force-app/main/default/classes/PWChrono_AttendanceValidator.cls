@@ -164,7 +164,7 @@ public inherited sharing class PWChrono_AttendanceValidator {
    * @description Validates the employee is not on an approved leave on the given date.
    */
   public static String validateNotOnApprovedLeave(Date attendanceDate, Id employeeId) {
-    List<PWChrono_Leave__c> leaves =
+    List<Leave__c> leaves =
       PWChrono_AttendanceSelector.getApprovedLeaveCoveringDate(employeeId, attendanceDate);
     if (!leaves.isEmpty()) {
       return 'You are on approved leave on ' + attendanceDate.format() +

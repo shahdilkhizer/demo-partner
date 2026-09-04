@@ -208,13 +208,13 @@ public inherited sharing class PWChrono_AttendanceSelector {
   /**
    * @description Returns approved leaves that cover the given date for conflict detection.
    */
-  public static List<PWChrono_Leave__c> getApprovedLeaveCoveringDate(
+  public static List<Leave__c> getApprovedLeaveCoveringDate(
     Id employeeId,
     Date attendanceDate
   ) {
     return [
       SELECT Id, Leave_Type__r.Name
-      FROM PWChrono_Leave__c
+      FROM Leave__c
       WHERE
         Employees__c = :employeeId
         AND Status__c = :PWChrono_Constants.STATUS_APPROVED

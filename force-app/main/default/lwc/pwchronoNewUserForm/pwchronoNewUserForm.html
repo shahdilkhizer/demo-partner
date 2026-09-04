@@ -8,6 +8,15 @@
         data-field="Name"
         required
       ></lightning-input>
+
+      <lightning-combobox
+        name="reportingManager"
+        label="Reports To"
+        value={newUser.Reports_To__c}
+        options={managerOptions}
+        onchange={handleManagerChange}
+        field-level-help="Used for approval routing and manager team access. Leave blank only for top-level users."
+      ></lightning-combobox>
       <lightning-input
         label="Email"
         type="email"
@@ -36,22 +45,35 @@
       ></lightning-input>
 
       <div class="pt-4 border-t border-gray-200">
-        <h3 class="text-base font-semibold text-gray-800 mb-4">
-          Initial Feature Access
+        <h3 class="text-base font-semibold text-gray-800 mb-2">
+          Portal User Profile
         </h3>
-        <div class="space-y-3">
-          <template for:each={features} for:item="feature">
-            <lightning-input
-              key={feature.name}
-              type="toggle"
-              label={feature.name}
-              checked={feature.hasAccess}
-              onchange={handleFeatureToggle}
-              data-name={feature.name}
-            >
-            </lightning-input>
+        <p class="text-sm text-gray-500 mb-4">
+          The new user inherits object and field access from this profile.
+        </p>
+        <template if:true={isLoadingProfiles}>
+          <lightning-spinner
+            alternative-text="Loading Portal User Profiles"
+            size="small"
+          ></lightning-spinner>
+        </template>
+        <template if:false={isLoadingProfiles}>
+          <template if:true={profileLoadError}>
+            <div class="slds-text-color_error" role="alert">
+              {profileLoadError}
+            </div>
           </template>
-        </div>
+          <template if:false={profileLoadError}>
+            <lightning-combobox
+              name="portalProfile"
+              label="Portal User Profile"
+              value={selectedProfileId}
+              options={profileOptions}
+              onchange={handleProfileChange}
+              required
+            ></lightning-combobox>
+          </template>
+        </template>
       </div>
     </div>
     <div slot="footer">

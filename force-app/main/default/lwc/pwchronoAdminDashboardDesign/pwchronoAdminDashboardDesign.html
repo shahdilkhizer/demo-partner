@@ -106,16 +106,16 @@
             <div class="d-flex align-items-center mb-3">
               <c-pwchrono-avatar
                 container-class="avatar avatar-xl flex-shrink-0 avatar-rounded"
-                image-url={avatar31Url}
-                name="Admin"
-                alt-text="Admin"
+                image-url={currentUserAvatarUrl}
+                name={currentUserName}
+                alt-text={currentUserName}
                 image-class="rounded-circle"
                 title-class="initial-wrap"
                 fallback-bg-class="bg-secondary"
               ></c-pwchrono-avatar>
               <div class="ms-3">
                 <h3 class="mb-2">
-                  Welcome Back, Admin
+                  Welcome Back, {currentUserName}
                   <a
                     href="javascript:void(0);"
                     class="edit-icon"

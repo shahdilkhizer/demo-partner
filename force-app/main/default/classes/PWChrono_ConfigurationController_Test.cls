@@ -2,28 +2,34 @@
 private class PWChrono_ConfigurationController_Test {
   @TestSetup
   static void makeData() {
-    // Create test data
+    Portal_User_Profile__c adminProfile = new Portal_User_Profile__c();
+    insert adminProfile;
+
+    Portal_Object__c portalUserObject = new Portal_Object__c(
+      Object_API_Name__c = 'Portal_Users__c'
+    );
+    insert portalUserObject;
+    insert new Portal_Object_Permission__c(
+      Portal_User_Profile__c = adminProfile.Id,
+      Portal_Object__c = portalUserObject.Id,
+      Can_View__c = true,
+      Can_Edit__c = true
+    );
+
     List<Portal_Users__c> portalUsers = new List<Portal_Users__c>();
     for (Integer i = 0; i < 5; i++) {
       portalUsers.add(
         new Portal_Users__c(
           Name = 'Test User ' + i,
-          Email__c = 'test' + i + '@test.com'
+          Email__c = 'test' + i + '@test.com',
+          Is_Active__c = true,
+          Portal_User_Profile__c = adminProfile.Id
         )
       );
     }
+    portalUsers[0].Session_Token__c = 'configuration_admin_token';
+    portalUsers[0].Session_Expires_At__c = System.now().addHours(1);
     insert portalUsers;
-
-    List<PWChrono_User_Feature_Access__c> featureAccesses = new List<PWChrono_User_Feature_Access__c>();
-    featureAccesses.add(
-      new PWChrono_User_Feature_Access__c(
-        Portal_User__c = portalUsers[0].Id,
-        Feature_Name__c = 'Dashboard',
-        Access_Level__c = 'Read Write',
-        Is_Active__c = true
-      )
-    );
-    insert featureAccesses;
 
     PWChrono_Feature_Settings__c settings = new PWChrono_Feature_Settings__c(
       Name = 'Default Settings',
@@ -46,179 +52,152 @@ private class PWChrono_ConfigurationController_Test {
       userConfigs.size(),
       'Should return all 5 test users.'
     );
-    // Note: The order is not guaranteed, so we find the user with feature access
+    // The configuration surface now reads access from the assigned profile.
     for (
       PWChrono_ConfigurationController.UserConfiguration config : userConfigs
     ) {
       if (config.userName == 'Test User 0') {
         System.assertEquals(
-          1,
+          0,
           config.featureAccess.size(),
-          'User 0 should have one feature access record.'
+          'Legacy per-user feature records must not drive this component.'
         );
-        System.assertEquals(
-          'Dashboard',
-          config.featureAccess[0].featureName,
-          'Feature name should match.'
-        );
+        System.assertNotEquals(null, config.profileId);
+        System.assertNotEquals('Unassigned', config.profileName);
       }
     }
   }
 
   @isTest
-  static void testGetAvailableFeatures() {
+  static void testGetAvailableProfiles() {
     Test.startTest();
-    List<String> features = PWChrono_ConfigurationController.getAvailableFeatures(
+    List<PWChrono_ConfigurationController.PortalProfileOption> profiles = PWChrono_ConfigurationController.getAvailableProfiles(
       null,
       null
     );
     Test.stopTest();
 
-    System.assert(
-      !features.isEmpty(),
-      'Should return a list of available features.'
-    );
+    System.assertEquals(1, profiles.size());
+    System.assertNotEquals(null, profiles[0].profileId);
+    System.assertNotEquals(null, profiles[0].profileName);
   }
 
   @isTest
-  static void testCheckFeatureAccess() {
-    List<Portal_Users__c> portalUsers = [
-      SELECT Id, User__c
+  static void testAssignUserProfile() {
+    Portal_Users__c targetUser = [
+      SELECT Id
       FROM Portal_Users__c
-      WHERE Name = 'Test User 0'
+      WHERE Name = 'Test User 1'
+      LIMIT 1
     ];
-
-    Profile p = [SELECT Id FROM Profile WHERE Name = 'Standard User'];
-    User u = new User(
-      Alias = 'standt',
-      Email = 'standarduser@testorg.com',
-      EmailEncodingKey = 'UTF-8',
-      LastName = 'Testing',
-      LanguageLocaleKey = 'en_US',
-      LocaleSidKey = 'en_US',
-      ProfileId = p.Id,
-      TimeZoneSidKey = 'America/Los_Angeles',
-      UserName = 'standarduser' + DateTime.now().getTime() + '@testorg.com'
-    );
-    insert u;
-
-    portalUsers[0].User__c = u.Id;
-    update portalUsers[0];
-
-    System.runAs(u) {
-      Test.startTest();
-      PWChrono_ConfigurationController.FeatureAccessResult result = PWChrono_ConfigurationController.checkFeatureAccess(
-        'Dashboard'
-      );
-      Test.stopTest();
-      System.assertEquals(true, result.hasAccess, 'Result should show access');
-    }
-  }
-
-  @isTest
-  static void testSaveUserFeatureAccess() {
-    Portal_Users__c user = [SELECT Id FROM Portal_Users__c LIMIT 1];
-    List<PWChrono_ConfigurationController.FeatureAccessWrapper> features = new List<PWChrono_ConfigurationController.FeatureAccessWrapper>();
-    PWChrono_ConfigurationController.FeatureAccessWrapper feature = new PWChrono_ConfigurationController.FeatureAccessWrapper();
-    feature.featureName = 'Leave Management';
-    feature.accessLevel = 'Read Only';
-    feature.isActive = true;
-    features.add(feature);
+    Portal_User_Profile__c employeeProfile = new Portal_User_Profile__c();
+    insert employeeProfile;
 
     Test.startTest();
-    String result = PWChrono_ConfigurationController.saveUserFeatureAccess(
-      user.Id,
-      features,
+    String result = PWChrono_ConfigurationController.assignUserProfile(
+      targetUser.Id,
+      employeeProfile.Id,
       null,
       null
     );
     Test.stopTest();
 
-    System.assertEquals(
-      'Success',
-      result,
-      'The save operation should be successful.'
-    );
-    List<PWChrono_User_Feature_Access__c> savedFeatures = [
-      SELECT Id
-      FROM PWChrono_User_Feature_Access__c
-      WHERE Portal_User__c = :user.Id AND Feature_Name__c = 'Leave Management'
+    System.assertEquals('Success', result);
+    Portal_Users__c updatedUser = [
+      SELECT Portal_User_Profile__c
+      FROM Portal_Users__c
+      WHERE Id = :targetUser.Id
     ];
-    System.assertEquals(
-      1,
-      savedFeatures.size(),
-      'A new feature access record should have been created.'
-    );
+    System.assertEquals(employeeProfile.Id, updatedUser.Portal_User_Profile__c);
   }
 
   @isTest
-  static void testBulkAssignFeatures() {
-    List<Portal_Users__c> users = [SELECT Id FROM Portal_Users__c LIMIT 2];
-    List<String> userIds = new List<String>();
-    for (Portal_Users__c u : users) {
-      userIds.add(u.Id);
-    }
-
-    List<PWChrono_ConfigurationController.FeatureAccessWrapper> features = new List<PWChrono_ConfigurationController.FeatureAccessWrapper>();
-    PWChrono_ConfigurationController.FeatureAccessWrapper feature = new PWChrono_ConfigurationController.FeatureAccessWrapper();
-    feature.featureName = 'Attendance Management';
-    feature.accessLevel = 'Read Only';
-    feature.isActive = true;
-    features.add(feature);
-
-    Test.startTest();
-    String result = PWChrono_ConfigurationController.bulkAssignFeatures(
-      userIds,
-      features,
-      null,
-      null
-    );
-    Test.stopTest();
-
-    System.assertEquals(
-      'Success: Assigned features to 2 users',
-      result,
-      'Bulk assignment should be successful.'
-    );
-    List<PWChrono_User_Feature_Access__c> savedFeatures = [
+  static void testCreatePortalUserUsesProfile() {
+    Portal_User_Profile__c profile = [
       SELECT Id
-      FROM PWChrono_User_Feature_Access__c
-      WHERE Feature_Name__c = 'Attendance Management'
-    ];
-    System.assertEquals(
-      2,
-      savedFeatures.size(),
-      'Feature should be assigned to two users.'
-    );
-  }
-
-  @isTest
-  static void testDeleteFeatureAccess() {
-    PWChrono_User_Feature_Access__c access = [
-      SELECT Id
-      FROM PWChrono_User_Feature_Access__c
+      FROM Portal_User_Profile__c
       LIMIT 1
     ];
 
     Test.startTest();
-    String result = PWChrono_ConfigurationController.deleteFeatureAccess(
-      access.Id,
+    Id userId = PWChrono_ConfigurationController.createPortalUser(
+      new Portal_Users__c(
+        Name = 'Profile Based User',
+        Email__c = 'profile-based@example.com',
+        Is_Active__c = true
+      ),
+      profile.Id,
       null,
       null
     );
     Test.stopTest();
 
-    System.assertEquals('Success', result, 'Delete should be successful.');
-    List<PWChrono_User_Feature_Access__c> remaining = [
-      SELECT Id
-      FROM PWChrono_User_Feature_Access__c
-      WHERE Id = :access.Id
+    Portal_Users__c createdUser = [
+      SELECT Portal_User_Profile__c
+      FROM Portal_Users__c
+      WHERE Id = :userId
     ];
+    System.assertEquals(profile.Id, createdUser.Portal_User_Profile__c);
     System.assertEquals(
       0,
-      remaining.size(),
-      'The feature access record should be deleted.'
+      [
+        SELECT COUNT()
+        FROM PWChrono_User_Feature_Access__c
+        WHERE Portal_User__c = :userId
+      ],
+      'Profile-based creation must not create per-user feature records.'
     );
+  }
+
+  @isTest
+  static void testGuestProfilePermissionControlsAdministration() {
+    Portal_Users__c adminUser = [
+      SELECT Id
+      FROM Portal_Users__c
+      WHERE Name = 'Test User 0'
+      LIMIT 1
+    ];
+    User guestUser = [SELECT Id FROM User WHERE UserType = 'Guest' LIMIT 1];
+
+    System.runAs(guestUser) {
+      Test.startTest();
+      List<PWChrono_ConfigurationController.PortalProfileOption> profiles = PWChrono_ConfigurationController.getAvailableProfiles(
+        String.valueOf(adminUser.Id),
+        'configuration_admin_token'
+      );
+      Test.stopTest();
+      System.assertEquals(1, profiles.size());
+    }
+  }
+
+  @isTest
+  static void testGuestWithoutProfilePermissionIsRejected() {
+    Portal_User_Profile__c restrictedProfile = new Portal_User_Profile__c();
+    insert restrictedProfile;
+    Portal_Users__c restrictedUser = new Portal_Users__c(
+      Name = 'Restricted Profile User',
+      Email__c = 'restricted-profile@example.com',
+      Is_Active__c = true,
+      Portal_User_Profile__c = restrictedProfile.Id,
+      Session_Token__c = 'restricted_profile_token',
+      Session_Expires_At__c = System.now().addHours(1)
+    );
+    insert restrictedUser;
+    User guestUser = [SELECT Id FROM User WHERE UserType = 'Guest' LIMIT 1];
+
+    System.runAs(guestUser) {
+      Test.startTest();
+      try {
+        PWChrono_ConfigurationController.getAvailableProfiles(
+          String.valueOf(restrictedUser.Id),
+          'restricted_profile_token'
+        );
+        System.assert(false, 'Expected profile administration to be denied.');
+      } catch (AuraHandledException e) {
+        System.assertNotEquals(null, e.getMessage());
+      }
+      Test.stopTest();
+    }
   }
 
   @isTest

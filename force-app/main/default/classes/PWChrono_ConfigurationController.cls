@@ -2,7 +2,8 @@
  * @description Controller for Portal Configuration and Feature Management
  * @author PWChrono Team
  */
-public inherited sharing class PWChrono_ConfigurationController {
+// Explicit guest-session and profile-permission checks protect every guest entry point.
+public without sharing class PWChrono_ConfigurationController {
   // --- Guest portal authorization helpers (Configuration/Admin) ---
   private static void requireAdminSettingsAccessForGuest(
     String callerPortalUserId,
@@ -17,29 +18,35 @@ public inherited sharing class PWChrono_ConfigurationController {
       sessionToken
     );
 
-    Portal_Users__c caller = [
-      SELECT Id, Access_Features__c
+    List<Portal_Users__c> callers = [
+      SELECT Id, Portal_User_Profile__c
       FROM Portal_Users__c
       WHERE Id = :verifiedPortalUserId
       LIMIT 1
     ];
 
-    if (!hasFeature(caller.Access_Features__c, 'Admin Settings')) {
+    if (callers.isEmpty()) {
       throw new AuraHandledException('Unauthorized.');
     }
-  }
+    Portal_Users__c caller = callers[0];
 
-  private static Boolean hasFeature(String accessFeatures, String featureName) {
-    if (String.isBlank(accessFeatures) || String.isBlank(featureName)) {
-      return false;
+    if (caller.Portal_User_Profile__c == null) {
+      throw new AuraHandledException('Unauthorized.');
     }
 
-    for (String part : accessFeatures.split('\\s*;\\s*')) {
-      if (part == featureName) {
-        return true;
-      }
+    List<Portal_Object_Permission__c> profilePermissions = [
+      SELECT Id
+      FROM Portal_Object_Permission__c
+      WHERE
+        Portal_User_Profile__c = :caller.Portal_User_Profile__c
+        AND Portal_Object__r.Object_API_Name__c = 'Portal_Users__c'
+        AND Can_View__c = TRUE
+        AND Can_Edit__c = TRUE
+      LIMIT 1
+    ];
+    if (profilePermissions.isEmpty()) {
+      throw new AuraHandledException('Unauthorized.');
     }
-    return false;
   }
 
   /**
@@ -71,6 +78,9 @@ public inherited sharing class PWChrono_ConfigurationController {
           Email__c,
           Phone__c,
           Role__c,
+          Portal_User_Profile__c,
+          Portal_User_Profile__r.Name,
+          Portal_User_Profile__r.Display_Name__c,
           Department__c,
           Designation__c,
           Is_Active__c,
@@ -93,7 +103,15 @@ public inherited sharing class PWChrono_ConfigurationController {
               pu.User__r.Email != null
               ? pu.User__r.Email
               : '');
-        config.profileName = pu.Role__c != null ? pu.Role__c : 'N/A';
+        config.profileId = pu.Portal_User_Profile__c == null
+          ? null
+          : String.valueOf(pu.Portal_User_Profile__c);
+        config.profileName = pu.Portal_User_Profile__r != null
+          ? (String.isNotBlank(pu.Portal_User_Profile__r.Display_Name__c)
+              ? pu.Portal_User_Profile__r.Display_Name__c
+              : pu.Portal_User_Profile__r.Name)
+          : 'Unassigned';
+        config.roleName = pu.Role__c != null ? pu.Role__c : 'N/A';
         config.designation = pu.Designation__c != null
           ? pu.Designation__c
           : 'N/A';
@@ -105,32 +123,6 @@ public inherited sharing class PWChrono_ConfigurationController {
         userConfigMap.put(pu.Id, config);
       }
 
-      // Get feature access records
-      List<PWChrono_User_Feature_Access__c> accessRecords = [
-        // NOPMD
-        SELECT
-          Id,
-          Portal_User__c,
-          Feature_Name__c,
-          Access_Level__c,
-          Is_Active__c
-        FROM PWChrono_User_Feature_Access__c
-        WHERE Portal_User__c IN :userConfigMap.keySet()
-      ];
-
-      // Map feature access to portal users
-      for (PWChrono_User_Feature_Access__c accessRecord : accessRecords) {
-        if (userConfigMap.containsKey(accessRecord.Portal_User__c)) {
-          FeatureAccessWrapper feature = new FeatureAccessWrapper();
-          feature.featureAccessId = accessRecord.Id;
-          feature.featureName = accessRecord.Feature_Name__c;
-          feature.accessLevel = accessRecord.Access_Level__c;
-          feature.isActive = accessRecord.Is_Active__c;
-          userConfigMap.get(accessRecord.Portal_User__c)
-            .featureAccess.add(feature);
-        }
-      }
-
       return userConfigMap.values();
     } catch (Exception e) {
       PWChrono_Logger.error('Error retrieving user configurations: ');
@@ -139,136 +131,62 @@ public inherited sharing class PWChrono_ConfigurationController {
   }
 
   /**
-   * @description Retrieves available features from the picklist
-   * @return List<String> List of feature names
-   * @throws AuraHandledException if features cannot be retrieved
+   * @description Returns the Portal User Profiles available for assignment.
    */
   @AuraEnabled(cacheable=true)
-  public static List<String> getAvailableFeatures(
+  public static List<PortalProfileOption> getAvailableProfiles(
     String portalUserId,
     String sessionToken
   ) {
     requireAdminSettingsAccessForGuest(portalUserId, sessionToken);
-    return getAvailableFeaturesCore();
-  }
 
-  private static List<String> getAvailableFeaturesCore() {
-    List<String> features = new List<String>();
-    try {
-      Schema.DescribeSObjectResult describeResult = Schema.getGlobalDescribe()
-        .get('PWChrono_User_Feature_Access__c')
-        .getDescribe(); // NOPMD
-      List<Schema.PicklistEntry> picklistValues = new List<Schema.PicklistEntry>();
-      try {
-        // Try to get the picklist values dynamically
-        Map<String, Schema.SObjectField> fieldMap = describeResult.getSObjectType()
-          .getDescribe()
-          .fields.getMap(); // NOPMD
-
-        if (fieldMap == null || !fieldMap.containsKey('Feature_Name__c')) {
-          throw new AuraHandledException(
-            'Feature_Name__c field not found on PWChrono_User_Feature_Access__c object'
-          );
-        }
-
-        Schema.DisplayType dt = fieldMap.get('Feature_Name__c')
-          .getDescribe()
-          .getType();
-        if (dt == Schema.DisplayType.PICKLIST) {
-          picklistValues = fieldMap.get('Feature_Name__c')
-            .getDescribe()
-            .getPicklistValues(); // NOPMD
-        } else {
-          throw new AuraHandledException(
-            'Feature_Name__c is not a picklist field'
-          );
-        }
-      } catch (AuraHandledException ahe) {
-        // Re-throw AuraHandledExceptions
-        throw ahe;
-      } catch (Exception e) {
-        // Log and throw details for schema-related errors
-        String errorMsg = 'Error accessing Feature_Name__c field: ';
-        PWChrono_Logger.error(errorMsg);
-        throw new AuraHandledException(errorMsg);
-      }
-
-      if (picklistValues.isEmpty()) {
-        PWChrono_Logger.warn('Feature_Name__c picklist is empty');
-      }
-
-      for (Schema.PicklistEntry entry : picklistValues) {
-        features.add(entry.getValue());
-      }
-    } catch (AuraHandledException ahe) {
-      // Re-throw AuraHandledExceptions to client
-      throw ahe;
-    } catch (Exception e) {
-      String errorMsg = 'Fatal error fetching available features: ';
-      PWChrono_Logger.error(errorMsg);
-      throw new AuraHandledException(errorMsg);
+    List<PortalProfileOption> options = new List<PortalProfileOption>();
+    for (Portal_User_Profile__c profile : [
+      SELECT Id, Name, Display_Name__c, Is_Active__c, Profile_Type__c
+      FROM Portal_User_Profile__c
+      WHERE Is_Active__c = TRUE OR Is_Active__c = NULL
+      ORDER BY Name
+      LIMIT 1000
+    ]) {
+      PortalProfileOption option = new PortalProfileOption();
+      option.profileId = String.valueOf(profile.Id);
+      option.profileName = String.isNotBlank(profile.Display_Name__c)
+        ? profile.Display_Name__c
+        : profile.Name;
+      option.profileType = profile.Profile_Type__c;
+      options.add(option);
     }
-
-    return features;
+    return options;
   }
 
   /**
-   * @description Checks if the current user has access to a specific feature
-   * @param featureName The name of the feature to check
-   * @return FeatureAccessResult The access result
+   * @description Assigns an existing Portal User Profile to a Portal User.
    */
   @AuraEnabled
-  public static FeatureAccessResult checkFeatureAccess(String featureName) {
-    try {
-      Id currentUserId = UserInfo.getUserId();
-
-      // Security Check
-
-      // Get portal user for current Salesforce user
-      List<Portal_Users__c> portalUsers = [
-        // NOPMD
-        SELECT Id
-        FROM Portal_Users__c
-        WHERE User__c = :currentUserId
-        LIMIT 1
-      ];
-
-      if (portalUsers.isEmpty()) {
-        FeatureAccessResult result = new FeatureAccessResult();
-        result.hasAccess = false;
-        result.accessLevel = 'No Access';
-        result.message = 'No portal user found';
-        return result;
-      }
-
-      List<PWChrono_User_Feature_Access__c> accessRecords = [
-        // NOPMD
-        SELECT Id, Access_Level__c, Is_Active__c
-        FROM PWChrono_User_Feature_Access__c
-        WHERE
-          Portal_User__c = :portalUsers[0].Id
-          AND Feature_Name__c = :featureName
-          AND Is_Active__c = TRUE
-        LIMIT 1
-      ];
-
-      FeatureAccessResult result = new FeatureAccessResult();
-      if (accessRecords.isEmpty()) {
-        result.hasAccess = false;
-        result.accessLevel = 'No Access';
-        result.message = 'Feature not enabled for user';
-      } else {
-        PWChrono_User_Feature_Access__c access = accessRecords[0];
-        result.hasAccess = access.Access_Level__c != 'No Access';
-        result.accessLevel = access.Access_Level__c;
-        result.message = 'Access granted';
-      }
-
-      return result;
-    } catch (Exception e) {
-      PWChrono_Logger.error('An error occurred', e);
-      throw new IllegalArgumentException('Error checking feature access: '); // NOPMD
+  public static String assignUserProfile(
+    Id targetPortalUserId,
+    Id profileId,
+    String callerPortalUserId,
+    String sessionToken
+  ) {
+    requireAdminSettingsAccessForGuest(callerPortalUserId, sessionToken);
+    if (targetPortalUserId == null || profileId == null) {
+      throw new AuraHandledException(
+        'Portal User and Portal User Profile are required.'
+      );
     }
+
+    if (
+      [SELECT COUNT() FROM Portal_User_Profile__c WHERE Id = :profileId] == 0
+    ) {
+      throw new AuraHandledException('Portal User Profile was not found.');
+    }
+
+    update new Portal_Users__c(
+      Id = targetPortalUserId,
+      Portal_User_Profile__c = profileId
+    );
+    return 'Success';
   }
 
   /**
@@ -280,48 +198,39 @@ public inherited sharing class PWChrono_ConfigurationController {
   @AuraEnabled
   public static Id createPortalUser(
     Portal_Users__c userRecord,
-    List<String> featureNames,
+    Id profileId,
     String portalUserId,
     String sessionToken
   ) {
     requireAdminSettingsAccessForGuest(portalUserId, sessionToken);
-    return createPortalUserCore(userRecord, featureNames);
+    return createPortalUserCore(userRecord, profileId);
   }
 
   private static Id createPortalUserCore(
     Portal_Users__c userRecord,
-    List<String> featureNames
+    Id profileId
   ) {
     try {
       // Basic validation
       if (
         userRecord == null ||
         String.isBlank(userRecord.Name) ||
-        String.isBlank(userRecord.Email__c)
+        String.isBlank(userRecord.Email__c) ||
+        profileId == null
       ) {
-        throw new AuraHandledException('User Name and Email are required.');
+        throw new AuraHandledException(
+          'User Name, Email, and Portal User Profile are required.'
+        );
       }
 
-      // Insert the portal user record
+      if (
+        [SELECT COUNT() FROM Portal_User_Profile__c WHERE Id = :profileId] == 0
+      ) {
+        throw new AuraHandledException('Portal User Profile was not found.');
+      }
+
+      userRecord.Portal_User_Profile__c = profileId;
       insert userRecord; // NOPMD - Intentional insert
-
-      // Create feature access records if any are specified
-      if (featureNames != null && !featureNames.isEmpty()) {
-        List<PWChrono_User_Feature_Access__c> accessRecordsToInsert = new List<PWChrono_User_Feature_Access__c>();
-        for (String featureName : featureNames) {
-          accessRecordsToInsert.add(
-            new PWChrono_User_Feature_Access__c(
-              Portal_User__c = userRecord.Id,
-              Feature_Name__c = featureName,
-              Is_Active__c = true,
-              Access_Level__c = 'Read Write' // Default access level
-            )
-          );
-        }
-        if (!accessRecordsToInsert.isEmpty()) {
-          insert accessRecordsToInsert; // NOPMD - Intentional insert
-        }
-      }
 
       return userRecord.Id;
     } catch (Exception e) {
@@ -682,6 +591,10 @@ public inherited sharing class PWChrono_ConfigurationController {
     @AuraEnabled
     public String profileName;
     @AuraEnabled
+    public String profileId;
+    @AuraEnabled
+    public String roleName;
+    @AuraEnabled
     public String designation;
     @AuraEnabled
     public String department;
@@ -693,6 +606,18 @@ public inherited sharing class PWChrono_ConfigurationController {
     public DateTime lastLoginDate;
     @AuraEnabled
     public List<FeatureAccessWrapper> featureAccess;
+  }
+
+  /**
+   * @description Select option for an existing Portal User Profile.
+   */
+  public class PortalProfileOption {
+    @AuraEnabled
+    public String profileId;
+    @AuraEnabled
+    public String profileName;
+    @AuraEnabled
+    public String profileType;
   }
 
   /**

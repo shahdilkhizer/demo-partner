@@ -1,9 +1,9 @@
-public without sharing class PWChrono_AccessController {
+public inherited sharing class PWChrono_AccessController {
   /**
    * @description All available features in the PWChrono Portal.
    *              Salesforce internal users get access to ALL these features.
    */
-  private static final List<String> ALL_FEATURES = new List<String>{
+  public static final List<String> ALL_FEATURES = new List<String>{
     'Dashboard',
     'Leave Management',
     'Attendance Management',
@@ -23,7 +23,9 @@ public without sharing class PWChrono_AccessController {
     'Approvals',
     'Company Policies',
     'Holidays',
-    'Tax Declaration'
+    'Tax Declaration',
+    'Projects',
+    'Reports Dashboard'
   };
 
   /**
@@ -42,7 +44,7 @@ public without sharing class PWChrono_AccessController {
    * @description Get access details for the current user (no parameter version)
    * @return Map containing role and accessible features
    */
-  @AuraEnabled(cacheable=true)
+  @AuraEnabled(cacheable=false)
   public static Map<String, Object> getUserAccess() {
     return getUserAccessImpl(null);
   }
@@ -52,18 +54,19 @@ public without sharing class PWChrono_AccessController {
    * @param employeeId The Portal_Users__c record ID
    * @return Map containing role and accessible features
    */
-  @AuraEnabled(cacheable=true)
+  // Profile assignments are administrator-managed runtime data. Do not let the
+  // Lightning client reuse a stale authorization response after they change.
+  @AuraEnabled(cacheable=false)
   public static Map<String, Object> getUserAccessById(
     Id employeeId,
     String sessionToken
   ) {
     if (UserInfo.getUserType() == 'Guest') {
       if (employeeId != null) {
-        Id verifiedPortalUserId = PWChrono_GuestSession.requireVerifiedPortalUserId(
+        return PWChrono_GuestSession.getVerifiedUserAccess(
           (String) employeeId,
           sessionToken
         );
-        return getUserAccessImpl(verifiedPortalUserId);
       }
       // Allow null employeeId for the pre-login flow.
       return getUserAccessImpl(null);
@@ -73,7 +76,7 @@ public without sharing class PWChrono_AccessController {
   }
 
   /**
-   * @description Check if the given employee has Admin privileges
+   * @description Check if the given employee has Admin feature access
    * @param employeeId The Portal_Users__c record ID
    * @return true if the user is an HR Admin or System Admin
    */
@@ -87,7 +90,7 @@ public without sharing class PWChrono_AccessController {
     }
 
     List<Portal_Users__c> users = [
-      SELECT Role__c
+      SELECT Portal_User_Profile__c
       FROM Portal_Users__c
       WHERE Id = :employeeId
       LIMIT 1
@@ -97,7 +100,14 @@ public without sharing class PWChrono_AccessController {
       return false;
     }
 
-    return users[0].Role__c == 'HR Admin' || users[0].Role__c == 'System Admin';
+    for (
+      String feature : getFeaturesForProfile(users[0].Portal_User_Profile__c)
+    ) {
+      if (feature == 'Admin Settings' || feature == 'Admin') {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -106,13 +116,21 @@ public without sharing class PWChrono_AccessController {
    * @return Map containing role and accessible features
    */
   private static Map<String, Object> getUserAccessImpl(Id employeeId) {
+    return getUserAccessImpl(employeeId, UserInfo.getUserType());
+  }
+
+  @TestVisible
+  private static Map<String, Object> getUserAccessImpl(
+    Id employeeId,
+    String effectiveUserType
+  ) {
     try {
       Id userId = UserInfo.getUserId();
-      String userType = UserInfo.getUserType();
+      String userType = effectiveUserType;
 
       // SALESFORCE INTERNAL USERS: Grant FULL ACCESS to all features
       // This allows Salesforce users to use the portal without any permission restrictions
-      if (isSalesforceInternalUser()) {
+      if (userType == 'Standard' || userType == 'AdminUser') {
         return new Map<String, Object>{
           'hasAccess' => true,
           'role' => 'Salesforce User',
@@ -139,33 +157,7 @@ public without sharing class PWChrono_AccessController {
             Portal_Users__c portalUser = users[0];
             List<String> features = new List<String>();
 
-            // Get features from User Feature Access or Role mapping
-            List<PWChrono_User_Feature_Access__c> accessRecords = [
-              SELECT Feature_Name__c
-              FROM PWChrono_User_Feature_Access__c
-              WHERE
-                Portal_User__c = :portalUser.Id
-                AND Is_Active__c = TRUE
-                AND Access_Level__c != 'No Access'
-            ];
-
-            if (!accessRecords.isEmpty()) {
-              for (PWChrono_User_Feature_Access__c access : accessRecords) {
-                features.add(access.Feature_Name__c);
-              }
-            } else if (portalUser.Role__c != null) {
-              features = getFeaturesForRole(portalUser.Role__c);
-            }
-
-            // If no specific features configured, give basic access
-            if (features.isEmpty()) {
-              features = new List<String>{
-                'Dashboard',
-                'My Profile',
-                'Leave Management',
-                'Attendance Management'
-              };
-            }
+            features = getFeaturesForProfile(portalUser.Portal_User_Profile__c);
 
             return new Map<String, Object>{
               'hasAccess' => true,
@@ -176,12 +168,12 @@ public without sharing class PWChrono_AccessController {
           }
         }
 
-        // No valid employeeId provided - allow access for public guest flow
-        // The portal pages and auth flow need to work for unauthenticated guests
+        // No valid employeeId provided - allow basic access for login flow
+        // The login component and auth flow need to work for unauthenticated guests
         return new Map<String, Object>{
           'hasAccess' => true,
           'role' => 'Guest',
-          'features' => ALL_FEATURES,
+          'features' => new List<String>{ 'Dashboard', 'My Profile' },
           'isSalesforceUser' => false
         };
       }
@@ -189,11 +181,12 @@ public without sharing class PWChrono_AccessController {
       // PORTAL USERS: Enforce permission-based access
       Id portalUserId;
       String userRole;
+      Id profileId;
 
       // If employeeId is provided, use it directly
       if (employeeId != null) {
         List<Portal_Users__c> users = [
-          SELECT Id, Role__c
+          SELECT Id, Role__c, Portal_User_Profile__c
           FROM Portal_Users__c
           WHERE Id = :employeeId
           LIMIT 1
@@ -201,11 +194,12 @@ public without sharing class PWChrono_AccessController {
         if (!users.isEmpty()) {
           portalUserId = users[0].Id;
           userRole = users[0].Role__c;
+          profileId = users[0].Portal_User_Profile__c;
         }
       } else {
         // Look up Portal_Users__c record linked to current Salesforce user
         List<Portal_Users__c> users = [
-          SELECT Id, Role__c
+          SELECT Id, Role__c, Portal_User_Profile__c
           FROM Portal_Users__c
           WHERE User__c = :userId
           LIMIT 1
@@ -213,10 +207,11 @@ public without sharing class PWChrono_AccessController {
         if (!users.isEmpty()) {
           portalUserId = users[0].Id;
           userRole = users[0].Role__c;
+          profileId = users[0].Portal_User_Profile__c;
         }
       }
 
-      if (portalUserId == null || userRole == null) {
+      if (portalUserId == null || profileId == null) {
         return new Map<String, Object>{
           'hasAccess' => false,
           'role' => null,
@@ -227,24 +222,7 @@ public without sharing class PWChrono_AccessController {
 
       List<String> features = new List<String>();
 
-      // 1. Check for User-Specific Feature Access
-      List<PWChrono_User_Feature_Access__c> accessRecords = [
-        SELECT Feature_Name__c
-        FROM PWChrono_User_Feature_Access__c
-        WHERE
-          Portal_User__c = :portalUserId
-          AND Is_Active__c = TRUE
-          AND Access_Level__c != 'No Access'
-      ];
-
-      if (!accessRecords.isEmpty()) {
-        for (PWChrono_User_Feature_Access__c access : accessRecords) {
-          features.add(access.Feature_Name__c);
-        }
-      } else {
-        // 2. Fallback to Role-based defaults if no specific config exists
-        features = getFeaturesForRole(userRole);
-      }
+      features = getFeaturesForProfile(profileId);
 
       return new Map<String, Object>{
         'hasAccess' => !features.isEmpty(),
@@ -262,29 +240,23 @@ public without sharing class PWChrono_AccessController {
   }
 
   /**
-   * @description Get features for a given role from Custom Metadata
-   * @param roleName The role name
-   * @return List of feature names
+   * @description Resolves enabled component features from the user's assigned profile.
    */
-  private static List<String> getFeaturesForRole(String roleName) {
-    Set<String> features = new Set<String>();
-    List<PWChrono_Role_Feature_Mapping__mdt> mappings;
-
-    if (roleName == PWChrono_Constants.ROLE_HR_ADMIN) {
-      // HR Admins get all features
-      mappings = [SELECT Feature__c FROM PWChrono_Role_Feature_Mapping__mdt];
-    } else {
-      mappings = [
-        SELECT Feature__c
-        FROM PWChrono_Role_Feature_Mapping__mdt
-        WHERE Role__c = :roleName
-      ];
+  private static List<String> getFeaturesForProfile(Id profileId) {
+    List<String> features = new List<String>();
+    if (profileId == null) {
+      return features;
     }
-
-    for (PWChrono_Role_Feature_Mapping__mdt mapping : mappings) {
-      features.add(mapping.Feature__c);
+    for (Portal_Profile_Feature__c assignment : [
+      SELECT Feature_Key__c
+      FROM Portal_Profile_Feature__c
+      WHERE Portal_User_Profile__c = :profileId AND Is_Enabled__c = TRUE
+      ORDER BY Feature_Key__c
+    ]) {
+      if (String.isNotBlank(assignment.Feature_Key__c)) {
+        features.add(assignment.Feature_Key__c);
+      }
     }
-
-    return new List<String>(features);
+    return features;
   }
 }

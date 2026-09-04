@@ -12,6 +12,7 @@ private class PWChrono_SalarySlipTriggerHandler_Test {
 
       List<PWChrono_Salary_Slip__c> slips = new List<PWChrono_Salary_Slip__c>{
         new PWChrono_Salary_Slip__c(
+          Contact__c = employee.Contact__c,
           Employees__c = employee.Id,
           Payroll_Period__c = Date.today().addMonths(-1),
           Gross_Pay__c = 5000,
@@ -20,6 +21,7 @@ private class PWChrono_SalarySlipTriggerHandler_Test {
           Status__c = PWChrono_Constants.STATUS_PAID
         ),
         new PWChrono_Salary_Slip__c(
+          Contact__c = employee.Contact__c,
           Employees__c = employee.Id,
           Gross_Pay__c = 6000,
           Total_Deductions__c = 800,
@@ -27,6 +29,7 @@ private class PWChrono_SalarySlipTriggerHandler_Test {
           Status__c = PWChrono_Constants.STATUS_PAID
         ),
         new PWChrono_Salary_Slip__c(
+          Contact__c = employee.Contact__c,
           Employees__c = employee.Id,
           Payroll_Period__c = Date.today().addMonths(-2),
           Gross_Pay__c = 5000,
@@ -35,6 +38,7 @@ private class PWChrono_SalarySlipTriggerHandler_Test {
           Status__c = PWChrono_Constants.STATUS_PAID
         ),
         new PWChrono_Salary_Slip__c(
+          Contact__c = employee.Contact__c,
           Employees__c = employee.Id,
           Payroll_Period__c = Date.today().addMonths(-3),
           Gross_Pay__c = 5000,
@@ -52,6 +56,7 @@ private class PWChrono_SalarySlipTriggerHandler_Test {
     List<PWChrono_Salary_Slip__c> allSlips = [
       SELECT
         Id,
+        Contact__c,
         Employees__c,
         Payroll_Period__c,
         Gross_Pay__c,
@@ -67,6 +72,7 @@ private class PWChrono_SalarySlipTriggerHandler_Test {
     List<PWChrono_Salary_History__c> histories = [
       SELECT
         Id,
+        Contact__c,
         Employee__c,
         Salary_Slip__c,
         Effective_Date__c,
@@ -95,6 +101,11 @@ private class PWChrono_SalarySlipTriggerHandler_Test {
         PWChrono_Constants.getEffectiveCurrencyCode(),
         history.Currency_Code__c,
         'Default currency should be applied.'
+      );
+      System.assertNotEquals(
+        null,
+        history.Contact__c,
+        'Salary history must retain the canonical employee Contact.'
       );
     }
 

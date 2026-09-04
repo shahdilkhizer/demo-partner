@@ -2,9 +2,11 @@ import { LightningElement } from "lwc";
 import { loadScript, loadStyle } from "lightning/platformResourceLoader";
 import smarthrAssets from "@salesforce/resourceUrl/smarthr_assets";
 import Chart from "@salesforce/resourceUrl/chartjs";
+import { getSession, SESSION_CHANGED_EVENT } from "c/pwchronoSession";
 
 export default class PwchronoNewManagerDashboard extends LightningElement {
-  smarthrAssetsAvatar31 = smarthrAssets + "/assets/img/profiles/avatar-31.jpg";
+  userData;
+  sessionChangedHandler;
   smarthrAssetsAvatar24 = smarthrAssets + "/assets/img/profiles/avatar-24.jpg";
   smarthrAssetsAvatar27 = smarthrAssets + "/assets/img/profiles/avatar-27.jpg";
   smarthrAssetsAvatar30 = smarthrAssets + "/assets/img/profiles/avatar-30.jpg";
@@ -86,6 +88,42 @@ export default class PwchronoNewManagerDashboard extends LightningElement {
 
   chartInitialized = false;
   charts = [];
+
+  connectedCallback() {
+    this.refreshUserFromSession();
+    this.sessionChangedHandler = () => this.refreshUserFromSession();
+    try {
+      const w = globalThis?.window ?? globalThis;
+      w?.addEventListener?.(SESSION_CHANGED_EVENT, this.sessionChangedHandler);
+    } catch {
+      // no-op
+    }
+  }
+
+  disconnectedCallback() {
+    try {
+      const w = globalThis?.window ?? globalThis;
+      w?.removeEventListener?.(
+        SESSION_CHANGED_EVENT,
+        this.sessionChangedHandler
+      );
+    } catch {
+      // no-op
+    }
+    this.sessionChangedHandler = null;
+  }
+
+  refreshUserFromSession() {
+    this.userData = getSession()?.user || null;
+  }
+
+  get currentUserName() {
+    return this.userData?.Name || "Manager";
+  }
+
+  get currentUserAvatarUrl() {
+    return this.userData?.Photo_Url__c || null;
+  }
 
   renderedCallback() {
     if (this.chartInitialized) {

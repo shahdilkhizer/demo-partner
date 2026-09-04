@@ -51,7 +51,7 @@ private class PWChrono_LeaveSelector_Test {
     PWChrono_Leave_Type__c leaveType = [
       SELECT Id FROM PWChrono_Leave_Type__c WHERE Name = 'Annual Leave' LIMIT 1
     ];
-    PWChrono_Leave__c submittedLeave = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c submittedLeave = PWChrono_LeaveTestDataFactory.createLeave(
       employee.Id,
       leaveType.Id,
       employee.Reports_To__c,
@@ -59,7 +59,7 @@ private class PWChrono_LeaveSelector_Test {
       Date.today().addDays(6),
       'Submitted'
     );
-    PWChrono_Leave__c approvedLeave = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c approvedLeave = PWChrono_LeaveTestDataFactory.createLeave(
       employee.Id,
       leaveType.Id,
       employee.Reports_To__c,
@@ -69,29 +69,29 @@ private class PWChrono_LeaveSelector_Test {
     );
 
     Test.startTest();
-    PWChrono_Leave__c byId = PWChrono_LeaveSelector.getLeaveById(submittedLeave.Id);
-    List<PWChrono_Leave__c> byEmployee = PWChrono_LeaveSelector.getLeavesByEmployee(
+    Leave__c byId = PWChrono_LeaveSelector.getLeaveById(submittedLeave.Id);
+    List<Leave__c> byEmployee = PWChrono_LeaveSelector.getLeavesByEmployee(
       employee.Id,
       'All',
       null,
       null,
       null
     );
-    List<PWChrono_Leave__c> pendingForManager = PWChrono_LeaveSelector.getTeamPendingLeaves(
+    List<Leave__c> pendingForManager = PWChrono_LeaveSelector.getTeamPendingLeaves(
       employee.Reports_To__c
     );
-    List<PWChrono_Leave__c> managerHistory = PWChrono_LeaveSelector.getTeamLeaves(
+    List<Leave__c> managerHistory = PWChrono_LeaveSelector.getTeamLeaves(
       employee.Reports_To__c,
       'Submitted',
       null,
       null
     );
-    List<PWChrono_Leave__c> calendarRows = PWChrono_LeaveSelector.getLeaveCalendar(
+    List<Leave__c> calendarRows = PWChrono_LeaveSelector.getLeaveCalendar(
       employee.Id,
       Date.today().addDays(7),
       Date.today().addDays(10)
     );
-    List<PWChrono_Leave__c> overlaps = PWChrono_LeaveSelector.getOverlappingLeaves(
+    List<Leave__c> overlaps = PWChrono_LeaveSelector.getOverlappingLeaves(
       employee.Id,
       Date.today().addDays(8),
       Date.today().addDays(9),

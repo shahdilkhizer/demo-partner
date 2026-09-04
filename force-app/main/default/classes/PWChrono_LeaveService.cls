@@ -13,7 +13,7 @@ public inherited sharing class PWChrono_LeaveService {
    * @param employeeId Verified Portal_Users__c Id
    * @return The saved leave record
    */
-  public static PWChrono_Leave__c submitLeave(
+  public static Leave__c submitLeave(
     PWChrono_LeaveValidator.LeaveDTO dto, Id employeeId
   ) {
     // Calculate working days
@@ -28,7 +28,7 @@ public inherited sharing class PWChrono_LeaveService {
     }
 
     // Build the SObject
-    PWChrono_Leave__c leave;
+    Leave__c leave;
     if (dto.leaveId != null) {
       leave = PWChrono_LeaveSelector.getLeaveById(dto.leaveId);
       if (leave == null) {
@@ -39,7 +39,7 @@ public inherited sharing class PWChrono_LeaveService {
         throw new AuraHandledException('Unauthorized access to this leave record.');
       }
     } else {
-      leave = new PWChrono_Leave__c();
+      leave = new Leave__c();
       leave.Employees__c = employeeId;
       leave.Applied_Date__c = Date.today();
     }
@@ -77,7 +77,7 @@ public inherited sharing class PWChrono_LeaveService {
 
     PWChrono_RequestCommentService.addSystemComment(
       leave.Id,
-      'PWChrono_Leave__c',
+      'Leave__c',
       'Leave request submitted for ' + leave.Total_Days__c.setScale(1) + ' day(s).',
       employeeId
     );
@@ -88,12 +88,12 @@ public inherited sharing class PWChrono_LeaveService {
   /**
    * @description Backward-compatible trigger hook for legacy org handlers.
    */
-  public static void validateLeaveBalance(List<PWChrono_Leave__c> leaves) {
+  public static void validateLeaveBalance(List<Leave__c> leaves) {
     if (leaves == null || leaves.isEmpty()) {
       return;
     }
 
-    for (PWChrono_Leave__c leaveRecord : leaves) {
+    for (Leave__c leaveRecord : leaves) {
       if (leaveRecord == null ||
           leaveRecord.Employees__c == null ||
           leaveRecord.Leave_Type__c == null ||
@@ -122,10 +122,10 @@ public inherited sharing class PWChrono_LeaveService {
    * @return Updated leave record
    */
   @SuppressWarnings('PMD.ExcessiveParameterList')
-  public static PWChrono_Leave__c processApproval(
+  public static Leave__c processApproval(
     Id leaveId, String action, String comments, Id approverId
   ) {
-    PWChrono_Leave__c leave = PWChrono_LeaveSelector.getLeaveById(leaveId);
+    Leave__c leave = PWChrono_LeaveSelector.getLeaveById(leaveId);
     if (leave == null) {
       throw new AuraHandledException('Leave record not found.');
     }
@@ -174,7 +174,7 @@ public inherited sharing class PWChrono_LeaveService {
 
       PWChrono_RequestCommentService.addSystemComment(
         leave.Id,
-        'PWChrono_Leave__c',
+        'Leave__c',
         String.isNotBlank(comments)
           ? 'Leave request approved. ' + comments.trim()
           : 'Leave request approved.',
@@ -201,7 +201,7 @@ public inherited sharing class PWChrono_LeaveService {
 
       PWChrono_RequestCommentService.addSystemComment(
         leave.Id,
-        'PWChrono_Leave__c',
+        'Leave__c',
         'Leave request rejected. ' + comments.trim(),
         approverId
       );
@@ -220,10 +220,10 @@ public inherited sharing class PWChrono_LeaveService {
    * @param employeeId The requesting employee
    * @return Updated leave record
    */
-  public static PWChrono_Leave__c cancelLeave(
+  public static Leave__c cancelLeave(
     Id leaveId, String reason, Id employeeId
   ) {
-    PWChrono_Leave__c leave = PWChrono_LeaveSelector.getLeaveById(leaveId);
+    Leave__c leave = PWChrono_LeaveSelector.getLeaveById(leaveId);
     if (leave == null) {
       throw new AuraHandledException('Leave record not found.');
     }
@@ -268,7 +268,7 @@ public inherited sharing class PWChrono_LeaveService {
 
     PWChrono_RequestCommentService.addSystemComment(
       leave.Id,
-      'PWChrono_Leave__c',
+      'Leave__c',
       String.isNotBlank(reason)
         ? 'Leave request cancelled. ' + reason.trim()
         : 'Leave request cancelled.',

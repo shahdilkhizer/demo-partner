@@ -4,7 +4,11 @@ import getProfileWithAccess from "@salesforce/apex/PWChrono_ProfileController.ge
 import updateProfileWithAccess from "@salesforce/apex/PWChrono_ProfileController.updateProfileWithAccess";
 import uploadProfileImageWithAccess from "@salesforce/apex/PWChrono_ProfileController.uploadProfileImageWithAccess";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
-import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
+import {
+  getEmployeeId,
+  getSessionToken,
+  updateSessionUser
+} from "c/pwchronoSession";
 
 export default class PwchronoProfileUpdate extends LightningElement {
   static renderMode = "light";
@@ -127,13 +131,16 @@ export default class PwchronoProfileUpdate extends LightningElement {
       reader.onload = async () => {
         const base64 = reader.result.split(",")[1];
         try {
-          await uploadProfileImageWithAccess({
+          const photoUrl = await uploadProfileImageWithAccess({
             targetEmployeeId: this.targetEmployeeId,
             fileName: file.name,
             base64Data: base64,
             portalUserId: this.portalUserId,
             sessionToken: this.sessionToken
           });
+          if (this.targetEmployeeId === this.portalUserId && photoUrl) {
+            updateSessionUser({ Photo_Url__c: photoUrl });
+          }
           await refreshApex(this.wiredProfileResult);
           this.dispatchEvent(
             new ShowToastEvent({

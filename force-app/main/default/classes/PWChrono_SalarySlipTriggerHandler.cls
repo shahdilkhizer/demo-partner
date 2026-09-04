@@ -39,6 +39,8 @@ public inherited sharing class PWChrono_SalarySlipTriggerHandler {
         !existingHistorySlipIds.contains(slip.Id)
       ) {
         PWChrono_Salary_History__c history = new PWChrono_Salary_History__c();
+        history.Contact__c = slip.Contact__c;
+        // Retained only during the Portal User relationship migration.
         history.Employee__c = slip.Employees__c;
         history.Effective_Date__c = slip.Payroll_Period__c != null
           ? slip.Payroll_Period__c

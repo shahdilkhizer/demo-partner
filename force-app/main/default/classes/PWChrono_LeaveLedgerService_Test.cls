@@ -14,7 +14,7 @@ private class PWChrono_LeaveLedgerService_Test {
     PWChrono_Leave_Type__c annualLeave = [
       SELECT Id FROM PWChrono_Leave_Type__c WHERE Name = 'Annual Leave' LIMIT 1
     ];
-    PWChrono_Leave__c leaveRecord = PWChrono_LeaveTestDataFactory.createLeave(
+    Leave__c leaveRecord = PWChrono_LeaveTestDataFactory.createLeave(
       employee.Id,
       annualLeave.Id,
       employee.Reports_To__c,
