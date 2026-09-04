@@ -1,0 +1,13 @@
+/* Reset nested page-wrapper margins if embedded */
+.page-wrapper .page-wrapper {
+  margin-left: 0 !important;
+  padding-top: 0 !important;
+  min-height: auto !important;
+  width: 100% !important;
+}
+
+.page-wrapper .page-wrapper .content {
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: 100% !important;
+}
