@@ -83,10 +83,12 @@
                             </div>
                             <button
                               type="button"
-                              class="btn btn-light btn-sm"
-                              onclick={handleCancelUpload}
+                              class="btn btn-outline-danger btn-sm"
+                              onclick={handleRemovePhoto}
+                              disabled={isRemoveDisabled}
                             >
-                              Cancel
+                              <template if:true={isRemovingPhoto}>Removing...</template>
+                              <template if:false={isRemovingPhoto}>Remove</template>
                             </button>
                           </div>
                         </div>

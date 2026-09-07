@@ -302,4 +302,112 @@ private class PWChrono_ProfileController_Test {
       );
     }
   }
+
+  @isTest
+  static void testRemoveProfileImageWithAccess() {
+    User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
+    Portal_Users__c employee = [
+      SELECT Id
+      FROM Portal_Users__c
+      WHERE User__c = :testUser.Id
+      LIMIT 1
+    ];
+
+    System.runAs(testUser) {
+      // 1. Upload photo first
+      PWChrono_ProfileController.uploadProfileImageWithAccess(
+        employee.Id,
+        'profile-to-remove.png',
+        EncodingUtil.base64Encode(Blob.valueOf('photo-data')),
+        employee.Id,
+        null
+      );
+
+      Portal_Users__c withPhoto = [
+        SELECT Photo_Url__c, Use_No_Profile_Picture__c
+        FROM Portal_Users__c
+        WHERE Id = :employee.Id
+      ];
+      System.assertNotEquals(null, withPhoto.Photo_Url__c);
+
+      Test.startTest();
+      // 2. Remove photo
+      PWChrono_ProfileController.removeProfileImageWithAccess(
+        employee.Id,
+        employee.Id,
+        null
+      );
+      Test.stopTest();
+
+      Portal_Users__c removed = [
+        SELECT Photo_Url__c, Use_No_Profile_Picture__c
+        FROM Portal_Users__c
+        WHERE Id = :employee.Id
+      ];
+      System.assertEquals(null, removed.Photo_Url__c);
+      System.assertEquals(true, removed.Use_No_Profile_Picture__c);
+
+      List<ContentDocumentLink> links = [
+        SELECT Id
+        FROM ContentDocumentLink
+        WHERE LinkedEntityId = :employee.Id
+      ];
+      System.assertEquals(0, links.size(), 'Attached files should be deleted.');
+    }
+  }
+
+  @isTest
+  static void testLegacyRemoveProfileImage() {
+    User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
+    Portal_Users__c employee = [
+      SELECT Id
+      FROM Portal_Users__c
+      WHERE User__c = :testUser.Id
+      LIMIT 1
+    ];
+
+    System.runAs(testUser) {
+      PWChrono_ProfileController.uploadProfileImage(
+        employee.Id,
+        'legacy-photo.png',
+        EncodingUtil.base64Encode(Blob.valueOf('legacy-photo-data')),
+        employee.Id,
+        null
+      );
+
+      Test.startTest();
+      PWChrono_ProfileController.removeProfileImage(
+        employee.Id,
+        employee.Id,
+        null
+      );
+      Test.stopTest();
+
+      Portal_Users__c removed = [
+        SELECT Photo_Url__c
+        FROM Portal_Users__c
+        WHERE Id = :employee.Id
+      ];
+      System.assertEquals(null, removed.Photo_Url__c);
+    }
+  }
+
+  @isTest
+  static void testGuestContentDistribution() {
+    User guestUser = [SELECT Id FROM User WHERE UserType = 'Guest' AND Profile.Name = 'Pulse Work Chrono Profile' AND IsActive = true LIMIT 1];
+    Portal_Users__c emp = [SELECT Id FROM Portal_Users__c LIMIT 1];
+    System.runAs(guestUser) {
+      try {
+        PWChrono_ProfileController.uploadProfileImage(
+          emp.Id,
+          'guest-test.png',
+          EncodingUtil.base64Encode(Blob.valueOf('test')),
+          emp.Id,
+          null
+        );
+      } catch (Exception e) {
+        System.debug('=== RUNAS GUEST ERROR: ' + e.getMessage());
+      }
+    }
+  }
 }

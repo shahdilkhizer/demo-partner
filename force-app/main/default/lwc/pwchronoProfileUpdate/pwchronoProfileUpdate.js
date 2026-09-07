@@ -3,6 +3,7 @@ import { refreshApex } from "@salesforce/apex";
 import getProfileWithAccess from "@salesforce/apex/PWChrono_ProfileController.getProfileWithAccess";
 import updateProfileWithAccess from "@salesforce/apex/PWChrono_ProfileController.updateProfileWithAccess";
 import uploadProfileImageWithAccess from "@salesforce/apex/PWChrono_ProfileController.uploadProfileImageWithAccess";
+import removeProfileImageWithAccess from "@salesforce/apex/PWChrono_ProfileController.removeProfileImageWithAccess";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { logError } from "c/pwchronoErrorHandler";
 import {
@@ -21,6 +22,7 @@ export default class PwchronoProfileUpdate extends LightningElement {
   @track errorMessage = "";
   @track isLoading = true;
   @track isSaving = false;
+  @track isRemovingPhoto = false;
 
   // Actor portal user (the verified session user). Used to enforce access on the server.
   portalUserId = getEmployeeId();
@@ -162,7 +164,8 @@ export default class PwchronoProfileUpdate extends LightningElement {
   }
 
   async handleImageUpload(event) {
-    const file = event.target.files[0];
+    const fileInput = event?.target;
+    const file = fileInput?.files?.[0];
     if (file) {
       // Validate file size (e.g., 5MB limit)
       if (file.size > 5 * 1024 * 1024) {
@@ -173,7 +176,9 @@ export default class PwchronoProfileUpdate extends LightningElement {
             variant: "error"
           })
         );
-        event.target.value = null;
+        if (fileInput) {
+          fileInput.value = null;
+        }
         return;
       }
 
@@ -191,6 +196,12 @@ export default class PwchronoProfileUpdate extends LightningElement {
           });
           if (this.targetEmployeeId === this.portalUserId && photoUrl) {
             updateSessionUser({ Photo_Url__c: photoUrl });
+          }
+          if (this.profile && photoUrl) {
+            this.profile = {
+              ...this.profile,
+              Photo_Url__c: photoUrl
+            };
           }
           await refreshApex(this.wiredProfileResult);
           this.dispatchEvent(
@@ -211,17 +222,84 @@ export default class PwchronoProfileUpdate extends LightningElement {
         } finally {
           this.isSaving = false;
           // Clear input so same file can be selected again if needed
-          event.target.value = null;
+          if (fileInput) {
+            fileInput.value = null;
+          }
         }
       };
       reader.readAsDataURL(file);
     }
   }
 
+  get hasPhoto() {
+    return !!this.profile?.Photo_Url__c;
+  }
+
+  get isRemoveDisabled() {
+    return this.isRemovingPhoto || this.isSaving || !this.hasPhoto;
+  }
+
   handleCancelUpload() {
-    const fileInput = this.template.querySelector(".image-sign");
+    const fileInput = this.querySelector
+      ? this.querySelector(".image-sign")
+      : this.template?.querySelector?.(".image-sign");
     if (fileInput) {
       fileInput.value = null;
+    }
+  }
+
+  async handleRemovePhoto() {
+    this.handleCancelUpload();
+
+    if (!this.profile?.Photo_Url__c) {
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Info",
+          message: "No profile photo to remove.",
+          variant: "info"
+        })
+      );
+      return;
+    }
+
+    this.isRemovingPhoto = true;
+    try {
+      await removeProfileImageWithAccess({
+        targetEmployeeId: this.targetEmployeeId,
+        portalUserId: this.portalUserId,
+        sessionToken: this.sessionToken
+      });
+
+      if (this.profile) {
+        this.profile = {
+          ...this.profile,
+          Photo_Url__c: null
+        };
+      }
+
+      if (this.targetEmployeeId === this.portalUserId) {
+        updateSessionUser({ Photo_Url__c: null });
+      }
+
+      await refreshApex(this.wiredProfileResult);
+
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Success",
+          message: "Profile photo removed successfully",
+          variant: "success"
+        })
+      );
+    } catch (error) {
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Error removing photo",
+          message: error.body ? error.body.message : error.message,
+          variant: "error"
+        })
+      );
+    } finally {
+      this.isRemovingPhoto = false;
     }
   }
 
