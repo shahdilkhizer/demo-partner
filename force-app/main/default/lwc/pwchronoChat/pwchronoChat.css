@@ -1,52 +1,18 @@
-.chat-wrapper {
-  height: calc(100vh - 165px);
-  min-height: 550px;
-  overflow: hidden;
+.chat-access-card {
+  margin: 1rem;
+  padding: 2rem 1.25rem;
+  background: #fff;
+  border-radius: 0.75rem;
 }
 
-.chat-contact-item {
-  transition: background-color 0.2s ease;
-  cursor: pointer;
-}
-
-.chat-contact-item:hover {
-  background-color: #f8f9fa;
-}
-
-.chat-contact-item.active {
-  background-color: rgba(255, 155, 68, 0.1);
-  border-left: 3px solid #ff9b44;
-}
-
-.online-indicator {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 10px;
-  height: 10px;
-  background-color: #22c55e;
-  border: 2px solid #fff;
-  border-radius: 50%;
-}
-
-.bg-primary-soft {
-  background-color: #fdf3eb !important;
-}
-
-.chat-bubble {
-  max-width: 500px;
-  word-break: break-word;
-}
-
-.btn-icon {
-  width: 36px;
-  height: 36px;
-  padding: 0;
+.chat-access-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-
-.cursor-pointer {
-  cursor: pointer;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  color: #e65f2b;
+  background: #fff1eb;
+  font-size: 1.5rem;
 }

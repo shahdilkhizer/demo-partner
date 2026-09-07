@@ -1,0 +1,22 @@
+.leave-search {
+  max-width: 260px;
+}
+.leave-reason {
+  max-width: 360px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.leave-modal {
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1050;
+  overflow-y: auto;
+}
+@media (max-width: 575.98px) {
+  .leave-search {
+    max-width: none;
+  }
+}
+.alert-warning {
+  color: #854d0e;
+  background-color: #fffbeb;
+}

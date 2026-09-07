@@ -63,6 +63,20 @@ export default class PwchronoRecruitment extends LightningElement {
     return this.activeTab === "pipeline";
   }
 
+  get pageTitle() {
+    return (
+      {
+        pipeline: "Candidates",
+        openings: "Job Openings",
+        requisitions: "Job Requisitions",
+        staffing: "Staffing Plans",
+        interviews: "Interview Scheduler",
+        offers: "Offer Letters",
+        referrals: "Employee Referrals"
+      }[this.activeTab] || "Recruitment"
+    );
+  }
+
   get isOpeningsTab() {
     return this.activeTab === "openings";
   }

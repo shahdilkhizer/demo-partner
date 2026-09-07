@@ -11,13 +11,21 @@ export default class PwchronoHeader extends LightningElement {
   // Branding/logo placeholders (set via parent or Experience Builder)
   @api logoLightUrl;
   @api logoDarkUrl;
-  @api logoAltText;
+  @api logoAltText = "Pulse Work Chrono";
 
   // Optional brand name for logo fallback initials.
   @api brandName = "Pulse Work Chrono";
 
   @track logoLightErrored = false;
   @track logoDarkErrored = false;
+
+  get showLightLogo() {
+    return Boolean(this.logoLightUrl) && !this.logoLightErrored;
+  }
+
+  get showDarkLogo() {
+    return Boolean(this.logoDarkUrl) && !this.logoDarkErrored;
+  }
 
   get brandInitials() {
     const name = (this.brandName || this.logoAltText || "").trim();
@@ -37,17 +45,17 @@ export default class PwchronoHeader extends LightningElement {
   }
 
   // Label placeholders (no hardcoded copy)
-  @api toggleSidebarLabel;
-  @api searchPlaceholder;
-  @api searchAriaLabel;
-  @api searchShortcutText;
+  @api toggleSidebarLabel = "Toggle sidebar";
+  @api searchPlaceholder = "Search in HRMS";
+  @api searchAriaLabel = "Search in HRMS";
+  @api searchShortcutText = "CTRL + /";
   @api exportLabel;
   @api settingsLabel;
   @api quickMenuLabel;
   @api quickMenuTitle;
   @api appsMenuLabel;
   @api appsMenuTitle;
-  @api chatLabel;
+  @api chatLabel = "Chat";
   @api notificationsLabel = "Notifications";
   @api notificationsTitle;
   @api markAllReadLabel = "Mark All Read";

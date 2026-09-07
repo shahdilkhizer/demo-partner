@@ -3,6 +3,7 @@ import getUserAccessById from "@salesforce/apex/PWChrono_AccessController.getUse
 import getJobApplicants from "@salesforce/apex/PWChrono_RecruitmentController.getJobApplicants";
 import updateApplicantStatus from "@salesforce/apex/PWChrono_RecruitmentController.updateApplicantStatus";
 import { logError } from "c/pwchronoErrorHandler";
+import { downloadCsv } from "c/pwchronoCsv";
 import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { LightningElement, track, wire } from "lwc";
@@ -38,6 +39,111 @@ export default class PwchronoRecruitmentPipeline extends LightningElement {
   @track error = null;
   wiredApplicantsResult;
   draggedApplicantId;
+  viewMode = "grid";
+  searchTerm = "";
+  statusFilter = "All";
+  sortOrder = "newest";
+  visibleCount = 12;
+
+  get isGridView() {
+    return this.viewMode === "grid";
+  }
+
+  get viewTitle() {
+    return this.isGridView ? "Candidates Grid" : "Candidates Board";
+  }
+  get isBoardView() {
+    return this.viewMode === "board";
+  }
+  get showBoardContainer() {
+    return this.isLoading || Boolean(this.error) || this.isBoardView;
+  }
+  renderedCallback() {
+    this.querySelectorAll("select[name]").forEach((select) => {
+      const value = this[select.name];
+      if (select.value !== value) select.value = value;
+    });
+  }
+  get gridButtonClass() {
+    return `btn btn-icon btn-sm ${this.isGridView ? "bg-primary text-white" : "btn-white"}`;
+  }
+  get boardButtonClass() {
+    return `btn btn-icon btn-sm ${this.isBoardView ? "bg-primary text-white" : "btn-white"}`;
+  }
+  get statusOptions() {
+    return this.columns.map((c) => ({ label: c.label, value: c.value }));
+  }
+  get filteredCandidates() {
+    const query = this.searchTerm.trim().toLowerCase();
+    const items = this.columns
+      .flatMap((c) => c.applicants)
+      .filter(
+        (a) =>
+          (this.statusFilter === "All" || a.Status__c === this.statusFilter) &&
+          (!query ||
+            `${a.applicantName} ${a.Email__c || ""} ${a.jobTitle}`
+              .toLowerCase()
+              .includes(query))
+      );
+    const colors = {
+      Applied: "purple",
+      Screening: "info",
+      "Interview Scheduled": "pink",
+      Selected: "success",
+      "Offer Extended": "warning",
+      Accepted: "success",
+      Rejected: "danger"
+    };
+    return items
+      .sort((a, b) => {
+        return this.sortOrder === "name"
+          ? a.applicantName.localeCompare(b.applicantName)
+          : new Date(b.CreatedDate || 0) - new Date(a.CreatedDate || 0);
+      })
+      .map((a) => ({
+        ...a,
+        statusBadge: `badge bg-${colors[a.Status__c] || "secondary"}`,
+        emailLabel: a.Email__c || "Email not provided"
+      }));
+  }
+  get visibleCandidates() {
+    return this.filteredCandidates.slice(0, this.visibleCount);
+  }
+  get hasCandidates() {
+    return this.filteredCandidates.length > 0;
+  }
+  get hasMoreCandidates() {
+    return this.filteredCandidates.length > this.visibleCount;
+  }
+  handleCandidateFilter(event) {
+    this[event.currentTarget.name] = event.currentTarget.value;
+    this.visibleCount = 12;
+  }
+  handleCandidateView(event) {
+    this.viewMode = event.currentTarget.dataset.view;
+  }
+  handleLoadMore() {
+    this.visibleCount += 12;
+  }
+  handleExport() {
+    downloadCsv(
+      "candidates.csv",
+      ["Name", "Email", "Applied Role", "Applied Date", "Status"],
+      this.filteredCandidates.map((c) => [
+        c.applicantName,
+        c.Email__c,
+        c.jobTitle,
+        c.formattedDate,
+        c.Status__c
+      ])
+    );
+  }
+  handleResetFilters() {
+    this.searchTerm = "";
+    this.statusFilter = "All";
+    this.sortOrder = "newest";
+    this.visibleCount = 12;
+  }
 
   connectedCallback() {
     this.checkAccess();
@@ -107,7 +213,11 @@ export default class PwchronoRecruitmentPipeline extends LightningElement {
             ? app.Job_Opening__r.Name
             : "General Application",
           formattedDate: app.CreatedDate
-            ? new Date(app.CreatedDate).toLocaleDateString()
+            ? new Date(app.CreatedDate).toLocaleDateString(undefined, {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+              })
             : "N/A"
         });
         column.count++;
@@ -130,7 +240,7 @@ export default class PwchronoRecruitmentPipeline extends LightningElement {
   handleDragEnd(event) {
     const draggable = event.currentTarget;
     draggable?.classList?.remove("dragging");
-    const root = this.template || this;
+    const root = this;
     if (root && root.querySelectorAll) {
       root.querySelectorAll(".drop-zone-active").forEach((el) => {
         el.classList.remove("drop-zone-active");
@@ -157,7 +267,7 @@ export default class PwchronoRecruitmentPipeline extends LightningElement {
     const dropTarget = event.currentTarget;
     dropTarget?.classList?.remove("drop-zone-active");
 
-    const root = this.template || this;
+    const root = this;
     if (root && root.querySelectorAll) {
       root.querySelectorAll(".drop-zone-active").forEach((el) => {
         el.classList.remove("drop-zone-active");
@@ -173,7 +283,10 @@ export default class PwchronoRecruitmentPipeline extends LightningElement {
     let currentStatus = null;
     if (this.columns) {
       for (const col of this.columns) {
-        if (col.applicants && col.applicants.some((a) => a.Id === applicantId)) {
+        if (
+          col.applicants &&
+          col.applicants.some((a) => a.Id === applicantId)
+        ) {
           currentStatus = col.value;
           break;
         }
@@ -192,7 +305,11 @@ export default class PwchronoRecruitmentPipeline extends LightningElement {
       sessionToken: this.sessionToken
     })
       .then(() => {
-        this.showToast("Success", "Candidate status updated to " + newStatus, "success");
+        this.showToast(
+          "Success",
+          "Candidate status updated to " + newStatus,
+          "success"
+        );
         return refreshApex(this.wiredApplicantsResult);
       })
       .catch((error) => {

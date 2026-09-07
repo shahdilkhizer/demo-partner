@@ -4,12 +4,63 @@ import saveLeaveApplication from "@salesforce/apex/PWChrono_LeaveController.save
 import getActiveLeaveTypes from "@salesforce/apex/PWChrono_LeaveController.getActiveLeaveTypes";
 import { getSession, getSessionToken } from "c/pwchronoSession";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
+import { downloadCsv } from "c/pwchronoCsv";
 import { LightningElement, track, wire } from "lwc";
 
 export default class PwchronoLeaveEmployee extends LightningElement {
   @track myLeaves = [];
   @track allMyLeaves = [];
   @track isLoading = false;
+  searchTerm = "";
+  loadError = "";
+  balanceError = "";
+  _leaveRequest = 0;
+
+  get showLeaveTable() {
+    return !this.isLoading && !this.loadError;
+  }
+
+  get visibleLeaves() {
+    const query = this.searchTerm.trim().toLowerCase();
+    return this.myLeaves.filter(
+      (leave) =>
+        !query ||
+        `${leave.leaveTypeName} ${leave.Reason__c || ""} ${leave.Status__c}`
+          .toLowerCase()
+          .includes(query)
+    );
+  }
+  get hasVisibleLeaves() {
+    return this.visibleLeaves.length > 0;
+  }
+  handleSearch(event) {
+    this.searchTerm = event.target.value;
+  }
+  handleStatusSelect(event) {
+    this.statusFilter = event.target.value;
+    this.loadLeaveRequests();
+  }
+  handleResetFilters() {
+    this.searchTerm = "";
+    this.statusFilter = "All";
+    this.startDate = null;
+    this.endDate = null;
+    this.loadLeaveRequests();
+  }
+  handleExport() {
+    downloadCsv(
+      "my-leaves.csv",
+      ["Leave Type", "From", "To", "Days", "Reason", "Status"],
+      this.visibleLeaves.map((l) => [
+        l.leaveTypeName,
+        l.formattedStartDate,
+        l.formattedEndDate,
+        l.totalDays,
+        l.Reason__c,
+        l.Status__c
+      ])
+    );
+  }
 
   // Metrics
   @track annualLeaveCount = 0;
@@ -57,6 +108,18 @@ export default class PwchronoLeaveEmployee extends LightningElement {
   }
 
   renderedCallback() {
+    if (this._focusLeaveForm) {
+      const firstField = this.template.querySelector(
+        'select[name="leaveTypeId"]'
+      );
+      if (firstField) {
+        firstField.focus();
+        this._focusLeaveForm = false;
+      }
+    }
+    const status = this.template.querySelector('[name="statusFilter"]');
+    if (status && status.value !== this.statusFilter)
+      status.value = this.statusFilter;
     if (!this.hasRendered) {
       this.hasRendered = true;
       this._boundCloseDropdowns = this.closeDropdowns.bind(this);
@@ -102,12 +165,16 @@ export default class PwchronoLeaveEmployee extends LightningElement {
   }
 
   async loadLeaveBalance() {
+    this.balanceError = "";
     try {
       const balances = await getMyLeaveBalance({
         employeeId: this.employeeId,
         sessionToken: this.sessionToken
       });
       if (balances) {
+        this.annualLeaveCount = 0;
+        this.medicalLeaveCount = 0;
+        this.otherLeaveCount = 0;
         let totalRemaining = 0;
         balances.forEach((b) => {
           const type = (b.leaveType || "").toLowerCase();
@@ -123,12 +190,18 @@ export default class PwchronoLeaveEmployee extends LightningElement {
         this.remainingLeaveCount = totalRemaining;
       }
     } catch {
-      // Balance load failure is non-critical; leave counts at 0
+      this.balanceError = "Leave balances are unavailable. Please try again.";
+      this.annualLeaveCount = "—";
+      this.medicalLeaveCount = "—";
+      this.otherLeaveCount = "—";
+      this.remainingLeaveCount = "—";
     }
   }
 
   async loadLeaveRequests() {
+    const request = ++this._leaveRequest;
     this.isLoading = true;
+    this.loadError = "";
     try {
       const result = await getMyLeaves({
         statusFilter: this.statusFilter,
@@ -137,8 +210,9 @@ export default class PwchronoLeaveEmployee extends LightningElement {
         employeeId: this.employeeId,
         sessionToken: this.sessionToken
       });
-      if (result) {
-        this.allMyLeaves = result.map((record) => ({
+      if (request !== this._leaveRequest) return;
+      {
+        this.allMyLeaves = (result || []).map((record) => ({
           ...record,
           leaveTypeName: record.Leave_Type__r
             ? record.Leave_Type__r.Name
@@ -146,12 +220,16 @@ export default class PwchronoLeaveEmployee extends LightningElement {
           statusClass: this.getStatusClass(record.Status__c),
           formattedStartDate: record.From_Date__c,
           formattedEndDate: record.To_Date__c,
-          totalDays: record.Total_Days__c || 1
+          totalDays: record.Total_Days__c ?? 0
         }));
         this.myLeaves = [...this.allMyLeaves];
         // Calculate metrics if needed based on data
       }
     } catch (error) {
+      if (request !== this._leaveRequest) return;
+      this.allMyLeaves = [];
+      this.myLeaves = [];
+      this.loadError = "Unable to load leave requests. Please try again.";
       this.showToast(
         "Error",
         "Failed to load leaves: " +
@@ -159,13 +237,20 @@ export default class PwchronoLeaveEmployee extends LightningElement {
         "error"
       );
     } finally {
-      this.isLoading = false;
+      if (request === this._leaveRequest) this.isLoading = false;
     }
   }
 
   getStatusClass(status) {
-    // Map status to badge classes if needed
-    return status;
+    const color =
+      {
+        Approved: "success",
+        Rejected: "danger",
+        Submitted: "warning",
+        Pending: "warning",
+        Cancelled: "secondary"
+      }[status] || "secondary";
+    return `badge bg-${color}-transparent`;
   }
 
   handleStatusFilter(event) {
@@ -176,17 +261,14 @@ export default class PwchronoLeaveEmployee extends LightningElement {
   }
 
   handleDateFilter(event) {
-    const val = event.target.value;
-    if (val) {
-      this.startDate = val;
-    } else {
-      this.startDate = null;
-    }
+    this[event.target.name] = event.target.value || null;
     this.loadLeaveRequests();
   }
 
   handleNewLeaveRequest(event) {
     event?.preventDefault();
+    this._leaveOpener = event?.currentTarget;
+    this._focusLeaveForm = true;
     this.newLeaveForm = {
       leaveTypeId: "",
       fromDate: "",
@@ -198,7 +280,31 @@ export default class PwchronoLeaveEmployee extends LightningElement {
   }
 
   handleCloseLeaveModal() {
+    if (this.isSavingLeave) return;
     this.isNewLeaveModalOpen = false;
+    this._leaveOpener?.focus();
+  }
+
+  handleDialogKeydown(event) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      this.handleCloseLeaveModal();
+    }
+    if (event.key !== "Tab") return;
+    const controls = [
+      ...event.currentTarget.querySelectorAll(
+        "button:not([disabled]), input, select, textarea"
+      )
+    ];
+    const first = controls[0],
+      last = controls[controls.length - 1];
+    if (event.shiftKey && event.target === first) {
+      event.preventDefault();
+      last?.focus();
+    } else if (!event.shiftKey && event.target === last) {
+      event.preventDefault();
+      first?.focus();
+    }
   }
 
   handleNewLeaveFormChange(event) {
@@ -210,7 +316,19 @@ export default class PwchronoLeaveEmployee extends LightningElement {
     this.newLeaveForm = { ...this.newLeaveForm, [field]: value };
   }
 
-  async handleSubmitLeave() {
+  async handleSubmitLeave(event) {
+    event?.preventDefault();
+    if (this.isSavingLeave) return;
+    const form = this.template.querySelector("form");
+    if (form && !form.reportValidity()) return;
+    if (this.newLeaveForm.toDate < this.newLeaveForm.fromDate) {
+      this.showToast(
+        "Validation",
+        "To Date must be on or after From Date.",
+        "warning"
+      );
+      return;
+    }
     if (
       !this.newLeaveForm.leaveTypeId ||
       !this.newLeaveForm.fromDate ||

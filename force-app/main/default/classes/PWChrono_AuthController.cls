@@ -136,6 +136,7 @@ public inherited sharing class PWChrono_AuthController {
     try {
       Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
       mail.setToAddresses(new List<String>{ email });
+      mail.setSaveAsActivity(false);
       mail.setSubject('Your PWChrono Login Code');
       mail.setPlainTextBody(
         'Your one-time password (OTP) for PWChrono Portal login is: ' +
@@ -162,6 +163,12 @@ public inherited sharing class PWChrono_AuthController {
           '</div>'
       );
 
+      // OTP requests originate from the Experience Cloud guest context. Salesforce
+      // blocks guest-user Apex email unless the message explicitly uses a verified
+      // organization-wide sender. The shared helper selects the portal sender (or
+      // the existing profile-wide verified fallback) without hardcoding an org ID.
+      PWChrono_EmailHandler.applyOrgWideEmailAddress(mail);
+
       Messaging.SendEmailResult[] results = Messaging.sendEmail(
         new List<Messaging.SingleEmailMessage>{ mail }
       );
@@ -171,12 +178,26 @@ public inherited sharing class PWChrono_AuthController {
         PWChrono_Logger.info('OTP email sent successfully.');
       } else {
         for (Messaging.SendEmailError err : results[0].getErrors()) {
+          // The portal guest user intentionally does not have the optional
+          // PWChrono logging permission. Emit only Salesforce's error category
+          // so a temporary trace can diagnose delivery failures without writing
+          // the OTP, recipient address, or provider message to a debug log.
+          System.debug(
+            LoggingLevel.WARN,
+            '[PWChrono][OTP_DELIVERY] SEND_RESULT status=' +
+              String.valueOf(err.getStatusCode())
+          );
           PWChrono_Logger.warn(
             'OTP email error: ' + err.getStatusCode() + ' - ' + err.getMessage()
           );
         }
       }
     } catch (Exception emailEx) {
+      // Keep the diagnostic deliberately non-sensitive for guest-user traces.
+      System.debug(
+        LoggingLevel.WARN,
+        '[PWChrono][OTP_DELIVERY] EXCEPTION type=' + emailEx.getTypeName()
+      );
       PWChrono_Logger.error('OTP email send exception.', emailEx);
     }
     return emailSent;

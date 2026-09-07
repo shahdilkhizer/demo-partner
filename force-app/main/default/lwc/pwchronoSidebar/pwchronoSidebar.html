@@ -18,7 +18,12 @@
     <div class="sidebar-logo" data-region="sidebarLogo">
       <a href={communityHomeHref} class="logo logo-normal">
         <template if:false={logoLightErrored}>
-          <img src={logoLightUrl} alt="Logo" data-variant="light" onerror={handleLogoError} />
+          <img
+            src={logoLightUrl}
+            alt="Logo"
+            data-variant="light"
+            onerror={handleLogoError}
+          />
         </template>
         <template if:true={logoLightErrored}>
           <span class="logo-fallback" aria-label="Logo">{brandInitials}</span>
@@ -26,7 +31,12 @@
       </a>
       <a href={communityHomeHref} class="logo-small">
         <template if:false={logoSmallErrored}>
-          <img src={logoSmallUrl} alt="Logo" data-variant="small" onerror={handleLogoError} />
+          <img
+            src={logoSmallUrl}
+            alt="Logo"
+            data-variant="small"
+            onerror={handleLogoError}
+          />
         </template>
         <template if:true={logoSmallErrored}>
           <span class="logo-fallback logo-small-fallback" aria-label="Logo"
@@ -36,7 +46,12 @@
       </a>
       <a href={communityHomeHref} class="logo-white">
         <template if:false={logoDarkErrored}>
-          <img src={logoDarkUrl} alt="Logo" data-variant="dark" onerror={handleLogoError} />
+          <img
+            src={logoDarkUrl}
+            alt="Logo"
+            data-variant="dark"
+            onerror={handleLogoError}
+          />
         </template>
         <template if:true={logoDarkErrored}>
           <span class="logo-fallback" aria-label="Logo">{brandInitials}</span>
@@ -46,6 +61,18 @@
 
     <!-- Profile blocks (optional; uses existing template classes) -->
     <div class="modern-profile p-3 pb-0" data-region="sidebarProfile">
+      <div class="text-center rounded bg-light p-3 mb-4 user-profile">
+        <c-pwchrono-avatar
+          container-class="avatar avatar-lg online mb-3"
+          image-url={userAvatarUrl}
+          name={userName}
+          alt-text={userAvatarAlt}
+          image-class="img-fluid rounded-circle"
+          title-class="avatar-title rounded-circle"
+        ></c-pwchrono-avatar>
+        <h6 class="fs-12 fw-normal mb-1">{userName}</h6>
+        <p class="fs-10">{userRole}</p>
+      </div>
       <div class="sidebar-nav mb-3">
         <ul
           class="nav nav-tabs nav-tabs-solid nav-tabs-rounded nav-justified bg-transparent"
@@ -81,18 +108,6 @@
             </button>
           </li>
         </ul>
-      </div>
-      <div class="text-center rounded bg-light p-3 mb-4 user-profile">
-        <c-pwchrono-avatar
-          container-class="avatar avatar-lg online mb-3"
-          image-url={userAvatarUrl}
-          name={userName}
-          alt-text={userAvatarAlt}
-          image-class="img-fluid rounded-circle"
-          title-class="avatar-title rounded-circle"
-        ></c-pwchrono-avatar>
-        <h6 class="fs-12 fw-normal mb-1">{userName}</h6>
-        <p class="fs-10">{userRole}</p>
       </div>
     </div>
 
@@ -225,11 +240,7 @@
 
     <template if:true={isChatTab}>
       <div class="sidebar-inner slimscroll" data-region="sidebarChat">
-        <div class="p-3">
-          <output class="alert alert-info mb-0 block">
-            Chat is coming soon.
-          </output>
-        </div>
+        <c-pwchrono-chat></c-pwchrono-chat>
       </div>
     </template>
 

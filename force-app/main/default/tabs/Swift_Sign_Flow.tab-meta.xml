@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Multi-step flow for e-signatures: Upload, Add Recipients, Review and Send</description>
+    <flexiPage>Swift_Sign_Flow</flexiPage>
+    <label>SwiftSign: 3-Step Flow</label>
+    <motif>Custom59: Can</motif>
+</CustomTab>

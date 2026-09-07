@@ -1,36 +1,222 @@
 <template lwc:render-mode="light">
   <div class="recruitment-pipeline-container">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <div>
-        <h5 class="mb-0 fw-bold text-dark">Candidate Pipeline</h5>
-        <small class="text-muted">Drag and drop candidates across hiring stages</small>
+    <!-- Access Denied -->
+    <template if:false={hasAccess}>
+      <div
+        class="d-flex align-items-center justify-content-center"
+        style="min-height: 60vh"
+      >
+        <div class="card text-center" style="max-width: 420px; width: 100%">
+          <div class="card-body p-5">
+            <div class="avatar avatar-xl bg-soft-danger mx-auto mb-3">
+              <i class="ti ti-lock fs-1 text-danger"></i>
+            </div>
+            <h4 class="mb-2">Access Denied</h4>
+            <p class="text-muted mb-0">
+              You do not have permission to view the Recruitment Pipeline.
+            </p>
+          </div>
+        </div>
       </div>
-      <button class="btn btn-sm btn-outline-primary d-flex align-items-center gap-2" onclick={handleRefresh}>
-        <i class="fa-solid fa-rotate"></i> Refresh
-      </button>
-    </div>
+    </template>
 
-      <!-- Access Denied -->
-      <template if:false={hasAccess}>
-        <div class="d-flex align-items-center justify-content-center" style="min-height: 60vh;">
-          <div class="card text-center" style="max-width: 420px; width: 100%;">
-            <div class="card-body p-5">
-              <div class="avatar avatar-xl bg-soft-danger mx-auto mb-3">
-                <i class="ti ti-lock fs-1 text-danger"></i>
-              </div>
-              <h4 class="mb-2">Access Denied</h4>
-              <p class="text-muted mb-0">
-                You do not have permission to view the Recruitment Pipeline.
-              </p>
+    <template if:true={hasAccess}>
+      <div class="card">
+        <div
+          class="card-body d-flex align-items-center justify-content-between flex-wrap gap-3"
+        >
+          <h5 class="mb-0">
+            {viewTitle}
+            <span class="badge bg-primary-transparent ms-2"
+              >{filteredCandidates.length}</span
+            >
+          </h5>
+          <div
+            class="d-flex flex-wrap align-items-center gap-2 candidate-filters"
+          >
+            <button
+              type="button"
+              class="btn btn-white"
+              onclick={handleRefresh}
+              disabled={isLoading}
+              aria-label="Refresh candidates"
+              title="Refresh candidates"
+            >
+              <i class="ti ti-refresh" aria-hidden="true"></i>
+            </button>
+            <input
+              type="search"
+              class="form-control"
+              name="searchTerm"
+              value={searchTerm}
+              oninput={handleCandidateFilter}
+              placeholder="Search candidates"
+              aria-label="Search candidates"
+            />
+            <select
+              class="form-select"
+              name="statusFilter"
+              onchange={handleCandidateFilter}
+              aria-label="Candidate status"
+            >
+              <option value="All">All statuses</option>
+              <template for:each={statusOptions} for:item="option"
+                ><option key={option.value} value={option.value}>
+                  {option.label}
+                </option></template
+              >
+            </select>
+            <select
+              class="form-select"
+              name="sortOrder"
+              onchange={handleCandidateFilter}
+              aria-label="Sort candidates"
+            >
+              <option value="newest">Newest first</option>
+              <option value="name">Name A–Z</option>
+            </select>
+            <button
+              class="btn btn-white"
+              type="button"
+              onclick={handleResetFilters}
+            >
+              Reset
+            </button>
+            <button
+              class="btn btn-white"
+              type="button"
+              onclick={handleExport}
+              disabled={isLoading}
+            >
+              Export CSV
+            </button>
+            <div
+              class="d-flex border rounded p-1 gap-1"
+              aria-label="Candidate view"
+            >
+              <button
+                type="button"
+                class={gridButtonClass}
+                aria-label="Candidates grid"
+                aria-pressed={isGridView}
+                data-view="grid"
+                onclick={handleCandidateView}
+              >
+                <i class="ti ti-layout-grid" aria-hidden="true"></i>
+              </button>
+              <button
+                type="button"
+                class={boardButtonClass}
+                aria-label="Candidates board"
+                aria-pressed={isBoardView}
+                data-view="board"
+                onclick={handleCandidateView}
+              >
+                <i class="ti ti-layout-kanban" aria-hidden="true"></i>
+              </button>
             </div>
           </div>
         </div>
+      </div>
+      <template if:true={isGridView}>
+        <template if:false={isLoading}>
+          <template if:false={error}>
+            <div class="row">
+              <template for:each={visibleCandidates} for:item="candidate">
+                <div
+                  key={candidate.Id}
+                  class="col-12 col-md-6 col-xl-4 col-xxl-3 d-flex"
+                >
+                  <article class="card flex-fill candidate-card">
+                    <div class="card-body">
+                      <div class="d-flex align-items-center mb-3 gap-2">
+                        <c-pwchrono-avatar
+                          name={candidate.applicantName}
+                          container-class="avatar avatar-lg flex-shrink-0"
+                          title-class="avatar-title rounded"
+                        ></c-pwchrono-avatar>
+                        <div class="candidate-identity">
+                          <h6
+                            class="mb-1 text-truncate"
+                            title={candidate.applicantName}
+                          >
+                            {candidate.applicantName}
+                          </h6>
+                          <p
+                            class="mb-0 text-truncate"
+                            title={candidate.emailLabel}
+                          >
+                            {candidate.emailLabel}
+                          </p>
+                        </div>
+                      </div>
+                      <dl class="bg-light rounded p-2 mb-0">
+                        <div class="d-flex justify-content-between gap-2 mb-2">
+                          <dt class="fw-normal">Applied Role</dt>
+                          <dd
+                            class="text-dark fw-medium text-end text-truncate mb-0"
+                            title={candidate.jobTitle}
+                          >
+                            {candidate.jobTitle}
+                          </dd>
+                        </div>
+                        <div class="d-flex justify-content-between gap-2 mb-2">
+                          <dt class="fw-normal">Applied Date</dt>
+                          <dd class="text-dark fw-medium mb-0">
+                            {candidate.formattedDate}
+                          </dd>
+                        </div>
+                        <div class="d-flex justify-content-between gap-2">
+                          <dt class="fw-normal">Status</dt>
+                          <dd class="mb-0">
+                            <span class={candidate.statusBadge}
+                              ><span aria-hidden="true">• </span
+                              >{candidate.Status__c}</span
+                            >
+                          </dd>
+                        </div>
+                      </dl>
+                    </div>
+                  </article>
+                </div>
+              </template>
+            </div>
+            <template if:false={hasCandidates}
+              ><div class="card">
+                <div class="card-body text-center py-5">
+                  <i
+                    class="ti ti-users fs-32 text-muted"
+                    aria-hidden="true"
+                  ></i>
+                  <h5 class="mt-3">No candidates found</h5>
+                  <p>Try another search or reset the filters.</p>
+                  <button
+                    type="button"
+                    class="btn btn-white"
+                    onclick={handleResetFilters}
+                  >
+                    Reset filters
+                  </button>
+                </div>
+              </div></template
+            >
+            <template if:true={hasMoreCandidates}
+              ><div class="text-center mb-4">
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  onclick={handleLoadMore}
+                >
+                  Load more candidates
+                </button>
+              </div></template
+            >
+          </template>
+        </template>
       </template>
-
-      <template if:true={hasAccess}>
+      <template if:true={showBoardContainer}>
         <div class="card">
           <div class="card-body">
-
             <!-- Loading -->
             <template if:true={isLoading}>
               <div class="d-flex align-items-center justify-content-center p-5">
@@ -42,7 +228,10 @@
 
             <!-- Error -->
             <template if:true={error}>
-              <div class="alert alert-danger d-flex align-items-center gap-3" role="alert">
+              <div
+                class="alert alert-danger d-flex align-items-center gap-3"
+                role="alert"
+              >
                 <i class="ti ti-alert-circle fs-4 flex-shrink-0"></i>
                 <div>
                   <strong>Error loading recruitment pipeline</strong>
@@ -53,76 +242,96 @@
 
             <!-- Kanban Board -->
             <template if:false={isLoading}>
-              <div class="kanban-wrapper">
-                <template for:each={columns} for:item="column">
-                  <div
-                    key={column.value}
-                    class="kanban-column-wrap"
-                    data-status={column.value}
-                    ondragover={handleDragOver}
-                    ondragleave={handleDragLeave}
-                    ondrop={handleDrop}
-                  >
-                    <!-- Column Header -->
-                    <div class="kanban-col-header d-flex align-items-center justify-content-between mb-2 px-1">
-                      <span class="fw-semibold text-dark">{column.label}</span>
-                      <span class="badge bg-primary rounded-pill">{column.count}</span>
-                    </div>
-                    <!-- Column Cards -->
-                    <ul
-                      class="kanban-col-body list-unstyled m-0 p-0"
+              <template if:true={isBoardView}>
+                <div class="kanban-wrapper">
+                  <template for:each={columns} for:item="column">
+                    <div
+                      key={column.value}
+                      class="kanban-column-wrap"
                       data-status={column.value}
-                      aria-label={column.label}
                       ondragover={handleDragOver}
                       ondragleave={handleDragLeave}
                       ondrop={handleDrop}
                     >
-                      <template for:each={column.applicants} for:item="applicant">
-                        <li key={applicant.Id} class="kanban-card-item">
+                      <!-- Column Header -->
+                      <div
+                        class="kanban-col-header d-flex align-items-center justify-content-between mb-2 px-1"
+                      >
+                        <span class="fw-semibold text-dark"
+                          >{column.label}</span
+                        >
+                        <span class="badge bg-primary rounded-pill"
+                          >{column.count}</span
+                        >
+                      </div>
+                      <!-- Column Cards -->
+                      <ul
+                        class="kanban-col-body list-unstyled m-0 p-0"
+                        data-status={column.value}
+                        aria-label={column.label}
+                        ondragover={handleDragOver}
+                        ondragleave={handleDragLeave}
+                        ondrop={handleDrop}
+                      >
+                        <template
+                          for:each={column.applicants}
+                          for:item="applicant"
+                        >
+                          <li key={applicant.Id} class="kanban-card-item">
+                            <button
+                              type="button"
+                              class="kanban-card w-100 text-start"
+                              draggable="true"
+                              data-id={applicant.Id}
+                              data-status={column.value}
+                              ondragstart={handleDragStart}
+                              ondragend={handleDragEnd}
+                              ondragover={handleDragOver}
+                              ondragleave={handleDragLeave}
+                              ondrop={handleDrop}
+                            >
+                              <h6 class="mb-1 text-dark fw-bold">
+                                {applicant.applicantName}
+                              </h6>
+                              <p class="mb-1 text-muted small">
+                                {applicant.jobTitle}
+                              </p>
+                              <p class="mb-2 text-muted small">
+                                <i class="fa-solid fa-calendar me-1"></i
+                                >{applicant.formattedDate}
+                              </p>
+                              <div
+                                class="d-flex align-items-center justify-content-between"
+                              >
+                                <span class="badge bg-soft-info text-info"
+                                  >{applicant.Status__c}</span
+                                >
+                              </div>
+                            </button>
+                          </li>
+                        </template>
+                        <!-- Drop target for empty columns -->
+                        <li>
                           <button
                             type="button"
-                            class="kanban-card w-100 text-start"
-                            draggable="true"
-                            data-id={applicant.Id}
+                            class="kanban-drop-target w-100 bg-transparent border-0 p-2"
                             data-status={column.value}
-                            ondragstart={handleDragStart}
-                            ondragend={handleDragEnd}
                             ondragover={handleDragOver}
                             ondragleave={handleDragLeave}
                             ondrop={handleDrop}
                           >
-                            <h6 class="mb-1 text-dark fw-bold">{applicant.applicantName}</h6>
-                            <p class="mb-1 text-muted small">{applicant.jobTitle}</p>
-                            <p class="mb-2 text-muted small">
-                              <i class="fa-solid fa-calendar me-1"></i>{applicant.formattedDate}
-                            </p>
-                            <div class="d-flex align-items-center justify-content-between">
-                              <span class="badge bg-soft-info text-info">{applicant.Status__c}</span>
-                            </div>
+                            <span class="visually-hidden">Drop here</span>
                           </button>
                         </li>
-                      </template>
-                      <!-- Drop target for empty columns -->
-                      <li>
-                        <button
-                          type="button"
-                          class="kanban-drop-target w-100 bg-transparent border-0 p-2"
-                          data-status={column.value}
-                          ondragover={handleDragOver}
-                          ondragleave={handleDragLeave}
-                          ondrop={handleDrop}
-                        >
-                          <span class="visually-hidden">Drop here</span>
-                        </button>
-                      </li>
-                    </ul>
-                  </div>
-                </template>
-              </div>
+                      </ul>
+                    </div>
+                  </template>
+                </div>
+              </template>
             </template>
-
           </div>
         </div>
       </template>
+    </template>
   </div>
 </template>

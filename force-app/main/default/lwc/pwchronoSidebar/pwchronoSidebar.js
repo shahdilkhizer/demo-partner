@@ -278,7 +278,6 @@ export default class PwchronoSidebar extends NavigationMixin(LightningElement) {
 
     if (tab === "chat") {
       this.activeSidebarTab = tab;
-      navigateTo("chat");
       return;
     }
 

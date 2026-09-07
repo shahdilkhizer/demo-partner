@@ -1,63 +1,63 @@
-/* Kanban wrapper — horizontal scrollable row of columns */
+.candidate-filters .form-control {
+  width: 210px;
+}
+.candidate-filters .form-select {
+  width: auto;
+  min-width: 140px;
+}
+.candidate-identity {
+  min-width: 0;
+  flex: 1;
+}
+.candidate-identity h6 {
+  font-size: 16px;
+  line-height: 1.2;
+}
+.candidate-card .badge {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 5px 8px;
+}
+.candidate-card dt {
+  flex-shrink: 0;
+}
+.candidate-card dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .kanban-wrapper {
   display: flex;
-  gap: 1rem;
+  gap: 20px;
   overflow-x: auto;
-  padding-bottom: 0.5rem;
-  min-height: 60vh;
-  align-items: flex-start;
+  padding-bottom: 12px;
 }
-
 .kanban-column-wrap {
   flex: 0 0 260px;
-  min-width: 260px;
-  background-color: #f8f9fa;
-  border-radius: 0.5rem;
-  padding: 0.75rem;
+  min-width: 0;
 }
-
-.kanban-col-header {
-  min-height: 32px;
-}
-
 .kanban-col-body {
-  min-height: 80px;
+  min-height: 160px;
+  border-radius: 5px;
+  background: #f8f9fa;
 }
-
 .kanban-card {
-  display: block;
+  border: 1px solid #e5e7eb;
+  border-radius: 5px;
+  padding: 16px;
   background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  padding: 0.75rem;
-  margin-bottom: 0.5rem;
-  cursor: grab;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  margin-bottom: 12px;
 }
-
-.kanban-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
+.drop-zone-active {
+  outline: 2px dashed #f26522;
+  outline-offset: -2px;
 }
-
-.kanban-card:active {
-  cursor: grabbing;
-}
-
-.kanban-card.dragging {
-  opacity: 0.5;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-.kanban-col-body.drag-over,
-.kanban-col-body.drop-zone-active,
-.kanban-column-wrap.drop-zone-active {
-  background-color: #e8f4fd;
-  outline: 2px dashed #0d6efd;
-  border-radius: 0.5rem;
-}
-
-.kanban-drop-target {
-  min-height: 40px;
+@media (max-width: 575.98px) {
+  .candidate-filters > button:first-child {
+    order: 1;
+  }
+  .candidate-filters,
+  .candidate-filters .form-control,
+  .candidate-filters .form-select {
+    width: 100%;
+  }
 }

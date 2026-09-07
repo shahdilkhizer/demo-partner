@@ -23,11 +23,11 @@
 }
 
 .nav-pills .nav-link {
-  color: #475569;
-  border-radius: 0.5rem;
-  padding: 0.5rem 1rem;
+  color: #6b7280;
+  border-radius: 5px;
+  padding: 8px 12px;
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 14px;
   transition: all 0.15s ease-in-out;
   border: 1px solid transparent;
 }
@@ -39,11 +39,36 @@
 }
 
 .nav-pills .nav-link.active {
-  background-color: #ff6b35 !important;
+  background-color: #f26522 !important;
   color: #ffffff !important;
-  box-shadow: 0 2px 6px rgba(255, 107, 53, 0.3);
+  box-shadow: none;
 }
 
 .card {
-  border-radius: 0.75rem;
+  border-radius: 5px;
+}
+
+.recruitment-navigation .nav {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+.recruitment-navigation .nav-link {
+  white-space: nowrap;
+}
+.recruitment-summary > summary {
+  display: list-item;
+  width: fit-content;
+  margin-left: auto;
+}
+.recruitment-summary:not([open]) {
+  margin-top: -60px;
+  min-height: 44px;
+}
+@media (max-width: 767.98px) {
+  .recruitment-summary:not([open]) {
+    margin-top: 0;
+  }
+  .recruitment-summary > summary {
+    margin-left: 0;
+  }
 }

@@ -30,13 +30,13 @@
 
   <template if:true={hasAccess}>
     <div class="page-wrapper">
-      <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <div class="content">
         <!-- Breadcrumb -->
         <div
           class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3"
         >
           <div class="my-auto mb-2">
-            <h2 class="mb-1">Attendance Employee</h2>
+            <h2 class="mb-1">Employee Attendance</h2>
             <nav>
               <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item">
@@ -61,6 +61,7 @@
                 <a
                   href="javascript:void(0);"
                   class={listViewButtonClass}
+                  aria-label="List view"
                   onclick={handleViewChange}
                   data-view="list"
                 >
@@ -69,6 +70,7 @@
                 <a
                   href="javascript:void(0);"
                   class={calendarViewButtonClass}
+                  aria-label="Calendar view"
                   onclick={handleViewChange}
                   data-view="calendar"
                 >
@@ -172,13 +174,12 @@
                   <span class="progress-right">
                     <span class="progress-bar border-success"></span>
                   </span>
-                  <div class="avatar avatar-xxl avatar-rounded">
-                    <span
-                      class="avatar avatar-md border avatar-rounded d-inline-flex align-items-center justify-content-center"
-                    >
-                      <i class="ti ti-user"></i>
-                    </span>
-                  </div>
+                  <c-pwchrono-avatar
+                    name={userName}
+                    alt-text={userName}
+                    container-class="avatar avatar-xxl avatar-rounded"
+                    title-class="avatar-title rounded-circle fs-24"
+                  ></c-pwchrono-avatar>
                 </div>
 
                 <div class="text-center">
@@ -214,16 +215,7 @@
                       </h2>
                       <p class="fw-medium text-truncate">Total Present</p>
                     </div>
-                    <div>
-                      <p class="d-flex align-items-center fs-13">
-                        <span
-                          class="avatar avatar-xs rounded-circle bg-success flex-shrink-0 me-2"
-                        >
-                          <i class="ti ti-arrow-up fs-12"></i>
-                        </span>
-                        <span>+2% vs last month</span>
-                      </p>
-                    </div>
+                    <p class="fs-13 text-muted">Selected period</p>
                   </div>
                 </div>
               </div>
@@ -241,16 +233,7 @@
                       </h2>
                       <p class="fw-medium text-truncate">Total Late</p>
                     </div>
-                    <div>
-                      <p class="d-flex align-items-center fs-13">
-                        <span
-                          class="avatar avatar-xs rounded-circle bg-success flex-shrink-0 me-2"
-                        >
-                          <i class="ti ti-arrow-up fs-12"></i>
-                        </span>
-                        <span>-1% vs last month</span>
-                      </p>
-                    </div>
+                    <p class="fs-13 text-muted">Selected period</p>
                   </div>
                 </div>
               </div>
@@ -268,16 +251,7 @@
                       </h2>
                       <p class="fw-medium text-truncate">Total Absent</p>
                     </div>
-                    <div>
-                      <p class="d-flex align-items-center fs-13 text-truncate">
-                        <span
-                          class="avatar avatar-xs rounded-circle bg-danger flex-shrink-0 me-2"
-                        >
-                          <i class="ti ti-arrow-down fs-12"></i>
-                        </span>
-                        <span>+0.4%</span>
-                      </p>
-                    </div>
+                    <p class="fs-13 text-muted">Selected period</p>
                   </div>
                 </div>
               </div>
@@ -295,16 +269,7 @@
                       </h2>
                       <p class="fw-medium text-truncate">Total Leaves</p>
                     </div>
-                    <div>
-                      <p class="d-flex align-items-center fs-13 text-truncate">
-                        <span
-                          class="avatar avatar-xs rounded-circle bg-danger flex-shrink-0 me-2"
-                        >
-                          <i class="ti ti-arrow-down fs-12"></i>
-                        </span>
-                        <span>+0%</span>
-                      </p>
-                    </div>
+                    <p class="fs-13 text-muted">Selected period</p>
                   </div>
                 </div>
               </div>
@@ -319,7 +284,7 @@
                             <i
                               class="ti ti-point-filled text-dark-transparent me-1"
                             ></i
-                            >Total Working Days
+                            >Attendance Records
                           </p>
                           <h3>{recordCount}</h3>
                         </div>
@@ -337,97 +302,25 @@
                         <div class="mb-3">
                           <p class="d-flex align-items-center mb-1">
                             <i class="ti ti-point-filled text-warning me-1"></i
-                            >Deepavali Festival
+                            >Leaves
                           </p>
-                          <h3>1</h3>
+                          <h3>{stats.leaves}</h3>
                         </div>
                       </div>
                       <div class="col-xl-3">
                         <div class="mb-3">
                           <p class="d-flex align-items-center mb-1">
                             <i class="ti ti-point-filled text-info me-1"></i
-                            >Pending Work
+                            >Late
                           </p>
                           <h3>{stats.late}</h3>
                         </div>
                       </div>
                     </div>
 
-                    <div class="row">
-                      <div class="col-md-12">
-                        <div
-                          class="progress bg-transparent-dark mb-3"
-                          style="height: 24px"
-                        >
-                          <div
-                            class="progress-bar bg-white rounded"
-                            role="progressbar"
-                          ></div>
-                          <div
-                            class="progress-bar bg-success rounded me-2"
-                            role="progressbar"
-                            style="width: 40%"
-                          ></div>
-                          <div
-                            class="progress-bar bg-warning rounded me-2"
-                            role="progressbar"
-                            style="width: 20%"
-                          ></div>
-                          <div
-                            class="progress-bar bg-success rounded me-2"
-                            role="progressbar"
-                            style="width: 10%"
-                          ></div>
-                          <div
-                            class="progress-bar bg-warning rounded me-2"
-                            role="progressbar"
-                            style="width: 5%"
-                          ></div>
-                          <div
-                            class="progress-bar bg-success rounded me-2"
-                            role="progressbar"
-                            style="width: 15%"
-                          ></div>
-                          <div
-                            class="progress-bar bg-warning rounded me-2"
-                            role="progressbar"
-                            style="width: 5%"
-                          ></div>
-                          <div
-                            class="progress-bar bg-info rounded me-2"
-                            role="progressbar"
-                            style="width: 5%"
-                          ></div>
-                          <div
-                            class="progress-bar bg-info rounded"
-                            role="progressbar"
-                          ></div>
-                          <div
-                            class="progress-bar bg-white rounded"
-                            role="progressbar"
-                          ></div>
-                        </div>
-                      </div>
-
-                      <div class="co-md-12">
-                        <div
-                          class="d-flex align-items-center justify-content-between flex-wrap row-gap-2"
-                        >
-                          <!-- Simple timeline labels for now -->
-                          <span class="fs-10">06:00</span>
-                          <span class="fs-10">07:00</span>
-                          <span class="fs-10">08:00</span>
-                          <span class="fs-10">09:00</span>
-                          <span class="fs-10">10:00</span>
-                          <span class="fs-10">11:00</span>
-                          <span class="fs-10">12:00</span>
-                          <span class="fs-10">01:00</span>
-                          <span class="fs-10">02:00</span>
-                          <span class="fs-10">03:00</span>
-                          <span class="fs-10">04:00</span>
-                          <span class="fs-10">05:00</span>
-                        </div>
-                      </div>
+                    <div class="rounded bg-light p-3 text-muted fs-13">
+                      Summary of the selected attendance records. Check-in,
+                      check-out and shift times are shown in the list below.
                     </div>
                   </div>
                 </div>
@@ -622,6 +515,14 @@
                   </tr>
                 </thead>
                 <tbody>
+                  <template if:false={recordCount}>
+                    <tr>
+                      <td colspan="8" class="text-center py-5 text-muted">
+                        No attendance records match the selected period and
+                        status.
+                      </td>
+                    </tr>
+                  </template>
                   <template for:each={attendanceData} for:item="day">
                     <tr key={day.id} class={day.rowClass}>
                       <td>{day.formattedDate}</td>

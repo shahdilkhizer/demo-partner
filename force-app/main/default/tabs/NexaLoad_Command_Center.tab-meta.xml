@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>NexaLoad command center landing page</description>
+    <flexiPage>NexaLoad_Command_Center</flexiPage>
+    <label>NexaLoad Command Center</label>
+    <motif>Custom17: Sack</motif>
+</CustomTab>

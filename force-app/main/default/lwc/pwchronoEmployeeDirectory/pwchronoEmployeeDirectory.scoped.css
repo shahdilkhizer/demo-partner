@@ -1,0 +1,45 @@
+.employee-identity {
+  min-width: 0;
+}
+.employee-name {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  color: #111827;
+  text-align: left;
+}
+.employee-name:hover {
+  color: #f26522;
+}
+.employee-grid-card dt {
+  flex-shrink: 0;
+}
+.employee-grid-card dd {
+  overflow-wrap: anywhere;
+}
+.employee-grid-card .card-body {
+  padding: 20px;
+}
+.card-header select,
+.card-header input {
+  max-width: 100%;
+}
+@media (max-width: 575.98px) {
+  .card-header .right-content {
+    gap: 12px;
+    width: 100%;
+  }
+}
+.directory-empty-icon {
+  float: none;
+  margin-inline: auto;
+}
+.alert-warning {
+  color: #854d0e;
+  background-color: #fffbeb;
+}
+.avatar > i {
+  /* Bundled icon and utility rules otherwise shrink these metric glyphs. */
+  font-size: 24px !important;
+}

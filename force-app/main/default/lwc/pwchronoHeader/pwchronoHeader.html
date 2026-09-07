@@ -4,7 +4,7 @@
       <div class="main-header">
         <div class="header-left">
           <a href={communityHomeHref} class="logo">
-            <template if:false={logoLightErrored}>
+            <template if:true={showLightLogo}>
               <img
                 src={logoLightUrl}
                 alt={logoAltText}
@@ -12,7 +12,7 @@
                 onerror={handleLogoError}
               />
             </template>
-            <template if:true={logoLightErrored}>
+            <template if:false={showLightLogo}>
               <span class="logo-fallback" aria-label={logoAltText}
                 >{brandInitials}</span
               >
@@ -20,7 +20,7 @@
             <span class="status-indicator">Pulse Work Chrono</span>
           </a>
           <a href={communityHomeHref} class="dark-logo">
-            <template if:false={logoDarkErrored}>
+            <template if:true={showDarkLogo}>
               <img
                 src={logoDarkUrl}
                 alt={logoAltText}
@@ -28,7 +28,7 @@
                 onerror={handleLogoError}
               />
             </template>
-            <template if:true={logoDarkErrored}>
+            <template if:false={showDarkLogo}>
               <span class="logo-fallback" aria-label={logoAltText}
                 >{brandInitials}</span
               >
@@ -56,16 +56,16 @@
               <button
                 type="button"
                 id="toggle_btn"
-                class="btn btn-menubar me-1"
+                class="btn btn-menubar me-2"
                 data-action="toggleSidebar"
                 onclick={handleActionClick}
               >
-                <i class="fa-solid fa-bars" aria-hidden="true"></i>
+                <i class="ti ti-arrow-bar-to-left" aria-hidden="true"></i>
                 <span class="visually-hidden">{toggleSidebarLabel}</span>
               </button>
 
               <div
-                class="input-group input-group-flat d-inline-flex me-1"
+                class="input-group input-group-flat d-inline-flex me-2"
                 data-region="search"
               >
                 <span class="input-icon-addon" aria-hidden="true">

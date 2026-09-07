@@ -1,4 +1,5 @@
 import smarthrAssets from "@salesforce/resourceUrl/smarthr_assets";
+import pwchronoShell from "@salesforce/resourceUrl/pwchronoShell";
 import { logError } from "c/pwchronoErrorHandler";
 import { loadStyle } from "lightning/platformResourceLoader";
 import { LightningElement } from "lwc";
@@ -38,7 +39,8 @@ export default class PwchronoUiAssets extends LightningElement {
         `${smarthrAssets}/assets/plugins/tabler-icons/tabler-icons.min.css`,
         `${smarthrAssets}/assets/plugins/icons/feather/feather.css`,
         `${smarthrAssets}/assets/css/bootstrap.min.css`,
-        `${smarthrAssets}/assets/css/style.css`
+        `${smarthrAssets}/assets/css/style.css`,
+        pwchronoShell
       ];
 
       globalThis[GLOBAL_PROMISE_KEY] = cssUrls
@@ -59,12 +61,10 @@ export default class PwchronoUiAssets extends LightningElement {
 
     // Always chain onto the in-flight promise so THIS instance fires assetsready
     // once loading completes — even if another instance started the load.
-    globalThis[GLOBAL_PROMISE_KEY]
-      .then(() => {
-        this.notifyReady();
-      })
-      .catch(() => {
-        this.notifyReady();
-      });
+    globalThis[GLOBAL_PROMISE_KEY].then(() => {
+      this.notifyReady();
+    }).catch(() => {
+      this.notifyReady();
+    });
   }
 }

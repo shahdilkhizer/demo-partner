@@ -36,35 +36,56 @@ public inherited sharing class PWChrono_EmailHandler {
    *              sender on the given message. Falls back to any profile-wide OWA if the
    *              named address is not found. Logs a warning and continues if none exists.
    */
-  public static void applyOrgWideEmailAddress(
+  public static Boolean applyOrgWideEmailAddress(
     Messaging.SingleEmailMessage mail
   ) {
     try {
-      List<OrgWideEmailAddress> owas = [
-        SELECT Id
-        FROM OrgWideEmailAddress
-        WHERE DisplayName = 'Pulse Work Chrono'
-        LIMIT 1
-      ];
-      if (owas.isEmpty()) {
-        owas = [
-          SELECT Id
-          FROM OrgWideEmailAddress
-          WHERE IsAllowAllProfiles = TRUE
-          LIMIT 1
-        ];
-      }
-      if (!owas.isEmpty()) {
-        mail.setOrgWideEmailAddressId(owas[0].Id);
+      Id senderId = new OrgWideEmailAddressLookup().findVerifiedSenderId();
+      if (senderId != null) {
+        mail.setOrgWideEmailAddressId(senderId);
+        return true;
       } else {
         PWChrono_Logger.warn(
-          'No org-wide email address found. Email may be sent from system address.'
+          'No verified profile-wide org-wide email address was found.'
         );
+        return false;
       }
     } catch (Exception ex) {
       PWChrono_Logger.warn(
         'Could not apply org-wide email address: ' + ex.getMessage()
       );
+      return false;
+    }
+  }
+
+  /**
+   * The public handler inherits the caller's sharing mode. Resolve the sender
+   * in a deliberately narrow system-context helper so Experience Cloud guest
+   * requests can use a verified profile-wide org-wide email address without
+   * broadening access to any portal business records.
+   */
+  private without sharing class OrgWideEmailAddressLookup {
+    Id findVerifiedSenderId() {
+      List<OrgWideEmailAddress> portalSenders = [
+        SELECT Id
+        FROM OrgWideEmailAddress
+        WHERE
+          DisplayName = 'Pulse Work Chrono'
+          AND IsAllowAllProfiles = TRUE
+          AND IsVerified = TRUE
+        LIMIT 1
+      ];
+      if (!portalSenders.isEmpty()) {
+        return portalSenders[0].Id;
+      }
+
+      List<OrgWideEmailAddress> fallbackSenders = [
+        SELECT Id
+        FROM OrgWideEmailAddress
+        WHERE IsAllowAllProfiles = TRUE AND IsVerified = TRUE
+        LIMIT 1
+      ];
+      return fallbackSenders.isEmpty() ? null : fallbackSenders[0].Id;
     }
   }
 

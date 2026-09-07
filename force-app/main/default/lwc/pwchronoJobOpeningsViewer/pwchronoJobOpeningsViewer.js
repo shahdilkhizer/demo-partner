@@ -9,6 +9,24 @@ export default class PwchronoJobOpeningsViewer extends LightningElement {
   @track jobs;
   @track error;
   @track isLoading = true;
+  searchTerm = "";
+  isSaving = false;
+  get filteredJobs() {
+    const query = this.searchTerm.trim().toLowerCase();
+    return (this.jobs || []).filter(
+      (job) =>
+        !query ||
+        `${job.designationName} ${job.departmentName} ${job.Job_Description__c || ""}`
+          .toLowerCase()
+          .includes(query)
+    );
+  }
+  handleSearch(event) {
+    this.searchTerm = event.target.value;
+  }
+  handleResetSearch() {
+    this.searchTerm = "";
+  }
 
   @track isModalOpen = false;
   @track selectedJobId;
@@ -35,18 +53,26 @@ export default class PwchronoJobOpeningsViewer extends LightningElement {
       }));
       this.error = undefined;
     } else if (error) {
-      this.error = error.body.message;
+      this.error =
+        error?.body?.message ||
+        error?.message ||
+        "Unable to load job openings.";
       this.jobs = undefined;
     }
   }
 
   get hasJobs() {
-    return this.jobs && this.jobs.length > 0;
+    return this.filteredJobs.length > 0;
+  }
+  get showEmptyState() {
+    return !this.error && !this.hasJobs;
   }
 
   handleRefer(event) {
-    this.selectedJobId = event.target.dataset.id;
-    this.selectedJobTitle = event.target.dataset.title;
+    this._referralOpener = event.currentTarget;
+    this._focusReferral = true;
+    this.selectedJobId = event.currentTarget.dataset.id;
+    this.selectedJobTitle = event.currentTarget.dataset.title;
     this.referral = {
       firstName: "",
       lastName: "",
@@ -62,10 +88,11 @@ export default class PwchronoJobOpeningsViewer extends LightningElement {
   }
 
   handleSubmit() {
+    if (this.isSaving) return;
     // Validate Light-DOM-safely
-    const root = this.template || this;
+    const root = this;
     const inputs = root.querySelectorAll
-      ? [...root.querySelectorAll("lightning-input")]
+      ? [...root.querySelectorAll("input")]
       : [];
     const allValid = inputs.reduce((validSoFar, inputCmp) => {
       inputCmp.reportValidity();
@@ -73,6 +100,7 @@ export default class PwchronoJobOpeningsViewer extends LightningElement {
     }, true);
 
     if (!allValid) return;
+    this.isSaving = true;
 
     referCandidate({
       jobId: this.selectedJobId,
@@ -104,10 +132,44 @@ export default class PwchronoJobOpeningsViewer extends LightningElement {
             variant: "error"
           })
         );
+      })
+      .finally(() => {
+        this.isSaving = false;
       });
   }
 
   closeModal() {
+    if (this.isSaving) return;
     this.isModalOpen = false;
+    this._referralOpener?.focus();
+  }
+
+  renderedCallback() {
+    if (this._focusReferral && this.isModalOpen) {
+      this.querySelector('input[name="firstName"]')?.focus();
+      this._focusReferral = false;
+    }
+  }
+
+  handleModalKeydown(event) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      this.closeModal();
+    } else if (event.key === "Tab") {
+      const controls = [
+        ...this.querySelectorAll(
+          ".modal button:not(:disabled), .modal input:not(:disabled)"
+        )
+      ];
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && event.target === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && event.target === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    }
   }
 }

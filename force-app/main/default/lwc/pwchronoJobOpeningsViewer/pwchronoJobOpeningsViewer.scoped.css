@@ -1,0 +1,20 @@
+.job-opening-title {
+  min-width: 0;
+  padding-right: 8px;
+  overflow-wrap: anywhere;
+}
+.job-opening-card .card-title {
+  font-size: 16px;
+  line-height: 1.4;
+}
+.job-opening-card .badge {
+  white-space: normal;
+}
+.job-openings-container .modal {
+  z-index: 1060;
+}
+@media (max-width: 575.98px) {
+  .job-openings-container > .card .card-body > .d-flex {
+    width: 100%;
+  }
+}

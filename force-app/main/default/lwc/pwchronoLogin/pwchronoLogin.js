@@ -198,11 +198,11 @@ export default class PwchronoLogin extends NavigationMixin(LightningElement) {
         this.showOtpScreen = true;
         this.startCountdown();
       } else if (result === "Success_NoEmail") {
-        // Email failed but OTP is stored - proceed to OTP screen
+        // Keep the request recoverable without exposing an OTP through logs.
         this.showOtpScreen = true;
         this.startCountdown();
         this.errorMessage =
-          "Email delivery may have failed. Check debug logs for OTP code.";
+          "We couldn't deliver your code. Please wait a moment and use Resend OTP. If this continues, contact HR support.";
       }
     } catch (error) {
       const serverMessage = error.body?.message;
@@ -252,9 +252,7 @@ export default class PwchronoLogin extends NavigationMixin(LightningElement) {
 
     // Auto-focus next input
     if (value && index < 5) {
-      const nextInput = this.querySelector(
-        `[data-index="${index + 1}"]`
-      );
+      const nextInput = this.querySelector(`[data-index="${index + 1}"]`);
       if (nextInput) {
         nextInput.focus();
       }
@@ -286,9 +284,7 @@ export default class PwchronoLogin extends NavigationMixin(LightningElement) {
 
     // Focus the next empty input or the last input
     const nextEmptyIndex = digitArray.length < 6 ? digitArray.length : 5;
-    const targetInput = this.querySelector(
-      `[data-index="${nextEmptyIndex}"]`
-    );
+    const targetInput = this.querySelector(`[data-index="${nextEmptyIndex}"]`);
     if (targetInput) {
       targetInput.focus();
     }
@@ -303,9 +299,7 @@ export default class PwchronoLogin extends NavigationMixin(LightningElement) {
     if (event.key === "Backspace") {
       if (!this.otpDigits[index].value && index > 0) {
         // Move to previous input if current is empty
-        const prevInput = this.querySelector(
-          `[data-index="${index - 1}"]`
-        );
+        const prevInput = this.querySelector(`[data-index="${index - 1}"]`);
         if (prevInput) {
           prevInput.focus();
           prevInput.select();
@@ -337,9 +331,7 @@ export default class PwchronoLogin extends NavigationMixin(LightningElement) {
     // This avoids edge cases where the last keystroke isn't reflected in tracked state yet.
     let otp = "";
     try {
-      const inputs = Array.from(
-        this.querySelectorAll("input[data-index]")
-      );
+      const inputs = Array.from(this.querySelectorAll("input[data-index]"));
       inputs.sort((a, b) => {
         const ai = Number.parseInt(a.dataset.index, 10);
         const bi = Number.parseInt(b.dataset.index, 10);
@@ -436,7 +428,7 @@ export default class PwchronoLogin extends NavigationMixin(LightningElement) {
         this.otpDigits = this.otpDigits.map((d) => ({ ...d, value: "" }));
         this.startCountdown();
         this.errorMessage =
-          "Email delivery may have failed. Check debug logs for OTP code.";
+          "We couldn't deliver your code. Please wait a moment and try Resend OTP again. If this continues, contact HR support.";
       }
     } catch (error) {
       this.errorMessage =

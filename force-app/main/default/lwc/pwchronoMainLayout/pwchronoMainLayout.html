@@ -76,7 +76,13 @@
   </div>
 
   <!-- Main Wrapper: Rendered invisibly until CSS assets & authentication are ready -->
-  <div class="main-wrapper" style={mainWrapperStyle}>
+  <div
+    class="main-wrapper pwchrono-shell"
+    data-layout="modern"
+    data-sidebar="darkgreen"
+    data-card="shadow"
+    style={mainWrapperStyle}
+  >
     <template if:true={shouldRenderPortalChrome}>
       <c-pwchrono-header
         onlogout={handleLogout}

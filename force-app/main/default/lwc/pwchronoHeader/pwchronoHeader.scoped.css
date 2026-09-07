@@ -7,7 +7,7 @@
   line-height: 1;
   border-radius: 6px;
   padding: 6px 10px;
-  background: var(--bs-primary, #0d6efd);
+  background: var(--pwchrono-primary, #f26522);
   color: #fff;
 }
 
@@ -17,24 +17,23 @@
   padding: 0;
 }
 
-/* Shared portal chrome: a soft brand tint keeps the header distinct without
-   competing with page content. */
+/* Neutral SmartHR header. Orange is reserved for primary actions and focus. */
 [data-region="header"].header,
 [data-region="header"] .main-header,
 [data-region="header"] .header-left,
 [data-region="header"] .header-user,
 [data-region="header"] .user-menu {
-  background: linear-gradient(90deg, #fff8f4 0%, #ffeadf 100%);
+  background: #fff;
 }
 
 [data-region="header"].header {
-  border-bottom-color: #f6cbb5;
-  box-shadow: 0 2px 12px rgba(154, 52, 18, 0.08);
+  border-bottom-color: #e5e7eb;
+  box-shadow: none;
 }
 
 [data-region="header"] .btn-menubar,
 [data-region="header"] .mobile-user-menu .nav-link {
-  color: #9a3412;
+  color: #6b7280;
 }
 
 [data-region="header"] .btn-menubar:hover,
@@ -43,8 +42,8 @@
 [data-region="header"] .btn-menubar.show,
 [data-region="header"] .mobile-user-menu .nav-link:hover,
 [data-region="header"] .mobile-user-menu .nav-link:focus-visible {
-  background-color: #fbdac9;
-  color: #7c2d12;
+  background-color: #e8e9ea;
+  color: #111827;
 }
 
 [data-region="header"] .btn-menubar:focus-visible,
@@ -55,15 +54,21 @@
 }
 
 [data-region="header"] .bar-icon span {
-  background-color: #9a3412;
+  background-color: #6b7280;
+}
+
+[data-region="header"] .mobile_btn {
+  border: 0;
+  padding: 0;
+  background: transparent;
 }
 
 [data-region="header"] [data-region="search"].input-group {
   overflow: hidden;
-  border: 1px solid #f4c3aa;
-  border-radius: 8px;
-  background-color: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 1px 4px rgba(124, 45, 18, 0.06);
+  border: 1px solid #e5e7eb;
+  border-radius: 5px;
+  background-color: #fff;
+  box-shadow: none;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease,
@@ -77,17 +82,17 @@
 }
 
 [data-region="header"] [data-region="search"] .input-icon-addon {
-  color: #b54716;
+  color: #6b7280;
 }
 
 [data-region="header"] [data-region="search"] .form-control {
   border: 0 !important;
   background-color: transparent;
-  color: #431407;
+  color: #111827;
 }
 
 [data-region="header"] [data-region="search"] .form-control::placeholder {
-  color: #8b5e4b;
+  color: #6b7280;
   opacity: 1;
 }
 
@@ -101,22 +106,36 @@
 }
 
 [data-region="header"] [data-region="search"] kbd {
-  border: 1px solid #f4c3aa;
-  background-color: #fff1e8;
-  color: #7c2d12;
+  border: 1px solid #e5e7eb;
+  background-color: #f8f9fa;
+  color: #111827;
 }
 
 [data-region="header"] .profile-dropdown > .dropdown-toggle {
   border-radius: 50%;
-  box-shadow: 0 0 0 2px rgba(242, 101, 34, 0.42);
+  box-shadow: none;
 }
 
 [data-region="header"] .profile-dropdown .avatar img {
-  border-color: #f26522;
+  border-color: #fff;
 }
 
 [data-region="header"] .notification-status-dot {
-  border: 2px solid #fff3ec;
+  border: 2px solid #fff;
+}
+
+[data-region="header"] .status-indicator {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Bootstrap's d-inline-flex would otherwise override the vendor breakpoint. */
+@media (max-width: 1199.98px) {
+  [data-region="header"] [data-region="search"].input-group {
+    display: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

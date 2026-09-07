@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <applicationVisibilities>
+        <application>TLG_SwiftSign</application>
+        <visible>true</visible>
+    </applicationVisibilities>
+    <description>Supplements SwiftSign_User. Grants TLG SwiftSign app visibility and CRUD on TLG_Document_Template__c and TLG_Template_Mapping__c. Assign alongside SwiftSign_User for TLG template management. Do NOT assign alone.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>TLG SwiftSign User</label>
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <object>TLG_Document_Template__c</object>
+        <viewAllRecords>false</viewAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <object>TLG_Template_Mapping__c</object>
+        <viewAllRecords>false</viewAllRecords>
+    </objectPermissions>
+    <tabSettings>
+        <tab>TLG_Document_Template__c</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
+        <tab>TLG_Template_Mapping__c</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+</PermissionSet>

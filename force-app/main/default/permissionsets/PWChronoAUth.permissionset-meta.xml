@@ -213,7 +213,6 @@
         <allowRead>true</allowRead>
         <modifyAllRecords>false</modifyAllRecords>
         <object>Portal_Users__c</object>
-        <viewAllFields>true</viewAllFields>
         <viewAllRecords>false</viewAllRecords>
     </objectPermissions>
 </PermissionSet>
