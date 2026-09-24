@@ -38,8 +38,9 @@ public without sharing class PWChrono_EmployeeLifecycleService {
   /**
    * @description Applies a new department, designation and reporting manager
    *              to an employee. A null argument leaves that value unchanged.
-   *              Updates both the portal record and the linked Contact so the
-   *              directory, access scope and approvals stay consistent.
+   *              Updates both the portal record and the linked Contact
+   *              (department, title and reporting manager) so the directory,
+   *              access scope and approvals stay consistent.
    */
   public static void applyAssignmentChange(
     Id employeeId,
@@ -84,7 +85,7 @@ public without sharing class PWChrono_EmployeeLifecycleService {
         );
       }
       List<Portal_Users__c> managers = [
-        SELECT Id
+        SELECT Id, Contact__c
         FROM Portal_Users__c
         WHERE Id = :newReportsToId AND Is_Active__c = TRUE
         LIMIT 1
@@ -95,6 +96,15 @@ public without sharing class PWChrono_EmployeeLifecycleService {
         );
       }
       employee.Reports_To__c = newReportsToId;
+      // The directory shows the manager from Contact.ReportsTo. Point it at the
+      // new manager's Contact, or clear it so the old manager is not shown.
+      if (linkedContact != null) {
+        Id managerContactId = managers[0].Contact__c;
+        linkedContact.ReportsToId = managerContactId == employee.Contact__c
+          ? null
+          : managerContactId;
+        contactChanged = true;
+      }
     }
 
     update employee;

@@ -19,17 +19,30 @@ private class PWChrono_EmployeeReferralController_Test {
       );
       insert desig;
 
+      // Real employees hold a portal profile, which grants their default
+      // features (such as Dashboard) within the Employee role ceiling.
+      Portal_User_Profile__c employeeProfile = new Portal_User_Profile__c(
+        Display_Name__c = 'Employee',
+        Is_Active__c = true
+      );
+      insert employeeProfile;
+
       Portal_Users__c employee = new Portal_Users__c(
         Name = 'Test Employee',
+        Portal_User_Profile__c = employeeProfile.Id,
         Email__c = 'employee@test.com',
-        Role__c = 'Employee'
+        Role__c = 'Employee',
+        // Portal users must be active; an inactive user is not found by the
+        // access check, which then falls back to the running admin user.
+        Is_Active__c = true
       );
       insert employee;
 
       Portal_Users__c hrAdmin = new Portal_Users__c(
         Name = 'HR Admin User',
         Email__c = 'hradmin@test.com',
-        Role__c = PWChrono_Constants.ROLE_HR_ADMIN
+        Role__c = PWChrono_Constants.ROLE_HR_ADMIN,
+        Is_Active__c = true
       );
       insert hrAdmin;
 
@@ -382,14 +395,17 @@ private class PWChrono_EmployeeReferralController_Test {
     PWChrono_GuestSession.testNowOverride = System.now();
     try {
       Test.startTest();
-      List<PWChrono_Employee_Referral__c> results =
-        PWChrono_EmployeeReferralController.getReferrals(
-          'All',
-          String.valueOf(hr.Id),
-          'guest_referral_token'
-        );
+      List<PWChrono_Employee_Referral__c> results = PWChrono_EmployeeReferralController.getReferrals(
+        'All',
+        String.valueOf(hr.Id),
+        'guest_referral_token'
+      );
       Test.stopTest();
-      System.assertEquals(1, results.size(), 'Guest HR should see referral records.');
+      System.assertEquals(
+        1,
+        results.size(),
+        'Guest HR should see referral records.'
+      );
     } finally {
       PWChrono_GuestSession.testUserTypeOverride = null;
       PWChrono_GuestSession.testNowOverride = null;

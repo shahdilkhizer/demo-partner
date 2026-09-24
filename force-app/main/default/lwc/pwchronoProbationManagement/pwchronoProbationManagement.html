@@ -1,405 +1,1181 @@
-﻿<template>
-  <c-pwchrono-main-layout>
-    <div slot="main-content">
-<div class="page-wrapper">
-    <!-- Start Content -->
-    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
-
-      <!-- Breadcrumb -->
-      <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
-        <div class="my-auto mb-2">
-          <h2 class="mb-1">Probation Management</h2>
-          <nav>
-            <ol class="breadcrumb mb-0">
-              <li class="breadcrumb-item">
-                <a href="javascript:void(0);"><i class="ti ti-smart-home"></i></a>
-              </li>
-              <li class="breadcrumb-item">
-                HRM
-              </li>
-              <li class="breadcrumb-item active" aria-current="page">Probation Management</li>
-            </ol>
-          </nav>
-        </div>
-        <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
-          <div class="mb-2 me-2 position-relative">
-            <button type="button" class="btn btn-white d-inline-flex align-items-center border" onclick={toggleExportDropdown}>
-              <i class="ti ti-file-export me-1"></i>Export
-            </button>
-            <template if:true={isExportOpen}>
-              <ul class="dropdown-menu dropdown-menu-end p-2 show sort-menu-custom">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1" onclick={exportPDF}><i class="ti ti-file-type-pdf me-1"></i>Export as PDF</a>
+<template>
+  <div class="pwchrono-lifecycle-page">
+    <div class="page-wrapper">
+      <!-- Start Content -->
+      <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+        <!-- Breadcrumb -->
+        <div
+          class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3"
+        >
+          <div class="my-auto mb-2">
+            <h2 class="mb-1">Probation Management</h2>
+            <nav>
+              <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                  <a href="javascript:void(0);"
+                    ><i class="ti ti-smart-home"></i
+                  ></a>
                 </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1" onclick={exportExcel}><i class="ti ti-file-type-xls me-1"></i>Export as Excel</a>
+                <li class="breadcrumb-item">HRM</li>
+                <li class="breadcrumb-item active" aria-current="page">
+                  Probation Management
                 </li>
-              </ul>
-            </template>
+              </ol>
+            </nav>
           </div>
-          <div class="mb-2">
-            <button type="button" class="btn btn-primary d-flex align-items-center" onclick={openAddModal}>
-              <i class="ti ti-circle-plus me-2"></i>Add New Employee
-            </button>
-          </div>
-          <div class="head-icons ms-2">
-            <a href="javascript:void(0);" class="btn-collapse" onclick={toggleCollapse} title="Collapse">
-              <i class={collapseIcon}></i>
-            </a>
+          <div
+            class="d-flex my-xl-auto right-content align-items-center flex-wrap"
+          >
+            <div class="mb-2 me-2 position-relative">
+              <button
+                type="button"
+                class="btn btn-white d-inline-flex align-items-center border"
+                onclick={toggleExportDropdown}
+              >
+                <i class="ti ti-file-export me-1"></i>Export
+              </button>
+              <template lwc:if={isExportOpen}>
+                <ul
+                  class="dropdown-menu dropdown-menu-end p-2 show sort-menu-custom"
+                >
+                  <li>
+                    <a
+                      href="javascript:void(0);"
+                      class="dropdown-item rounded-1"
+                      data-export="pdf"
+                      onclick={exportPDF}
+                      ><i class="ti ti-file-type-pdf me-1"></i>Export as PDF</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="javascript:void(0);"
+                      class="dropdown-item rounded-1"
+                      data-export="excel"
+                      onclick={exportExcel}
+                      ><i class="ti ti-file-type-xls me-1"></i>Export as
+                      Excel</a
+                    >
+                  </li>
+                </ul>
+              </template>
+            </div>
+            <div class="mb-2">
+              <button
+                type="button"
+                class="btn btn-primary d-flex align-items-center"
+                data-id="add-probation"
+                disabled={addDisabled}
+                onclick={openAddModal}
+              >
+                <i class="ti ti-circle-plus me-2"></i>Add Probation
+              </button>
+            </div>
+            <div class="head-icons ms-2">
+              <a
+                href="javascript:void(0);"
+                class="btn-collapse"
+                onclick={toggleCollapse}
+                title="Collapse"
+              >
+                <i class={collapseIcon}></i>
+              </a>
+            </div>
           </div>
         </div>
-      </div>
-      <!-- /Breadcrumb -->
+        <!-- /Breadcrumb -->
 
-      <template if:false={isCollapsed}>
-        <!-- Card -->
-        <div class="card">
-          <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-            <h5>Probation Management</h5>
-            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-              <div class="me-3">
-                <div class="input-icon position-relative">
-                  <span class="input-icon-addon">
-                    <i class="ti ti-calendar text-gray-9"></i>
-                  </span>
-                  <input type="text" class="form-control" placeholder="Search by name, ID..." value={searchKeyword} oninput={handleSearch}>
+        <template lwc:if={isExpanded}>
+          <!-- Card -->
+          <div class="card">
+            <div
+              class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3"
+            >
+              <h5>Probation Management</h5>
+              <div
+                class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3"
+              >
+                <template lwc:if={showBulkDelete}>
+                  <div class="me-3">
+                    <button
+                      type="button"
+                      class="btn btn-danger d-inline-flex align-items-center"
+                      data-id="bulk-delete"
+                      onclick={openBulkDeleteModal}
+                    >
+                      <i class="ti ti-trash me-1"></i>Delete selected
+                      ({selectedCount})
+                    </button>
+                  </div>
+                </template>
+                <div class="me-3">
+                  <div class="input-icon position-relative">
+                    <span class="input-icon-addon">
+                      <i class="ti ti-search text-gray-9"></i>
+                    </span>
+                    <input
+                      type="text"
+                      class="form-control"
+                      placeholder="Search by name, ID, reviewer..."
+                      aria-label="Search probations"
+                      data-id="search"
+                      value={searchKeyword}
+                      oninput={handleSearch}
+                    />
+                  </div>
+                </div>
+                <div class="position-relative me-3">
+                  <button
+                    type="button"
+                    class="btn btn-white d-inline-flex align-items-center border"
+                    onclick={toggleDesigDropdown}
+                  >
+                    {selectedDesignationLabel}
+                    <i class="ti ti-chevron-down ms-1"></i>
+                  </button>
+                  <template lwc:if={isDesigOpen}>
+                    <ul
+                      class="dropdown-menu dropdown-menu-end p-2 show sort-menu-custom scroll-menu"
+                    >
+                      <li>
+                        <a
+                          href="javascript:void(0);"
+                          class="dropdown-item rounded-1"
+                          data-desig=""
+                          onclick={selectDesignation}
+                          >All Designations</a
+                        >
+                      </li>
+                      <template for:each={designationOptions} for:item="opt">
+                        <li key={opt}>
+                          <a
+                            href="javascript:void(0);"
+                            class="dropdown-item rounded-1"
+                            data-desig={opt}
+                            onclick={selectDesignation}
+                            >{opt}</a
+                          >
+                        </li>
+                      </template>
+                    </ul>
+                  </template>
+                </div>
+                <div class="position-relative">
+                  <button
+                    type="button"
+                    class="btn btn-white d-inline-flex align-items-center border"
+                    onclick={toggleSortDropdown}
+                  >
+                    Sort By : {currentSortLabel}
+                    <i class="ti ti-chevron-down ms-1"></i>
+                  </button>
+                  <template lwc:if={isSortOpen}>
+                    <ul
+                      class="dropdown-menu dropdown-menu-end p-2 show sort-menu-custom"
+                    >
+                      <template for:each={sortOptions} for:item="opt">
+                        <li key={opt.value}>
+                          <a
+                            href="javascript:void(0);"
+                            class="dropdown-item rounded-1"
+                            data-sort={opt.value}
+                            onclick={selectSort}
+                            >{opt.label}</a
+                          >
+                        </li>
+                      </template>
+                    </ul>
+                  </template>
                 </div>
               </div>
-              <div class="position-relative me-3">
-                <button type="button" class="btn btn-white d-inline-flex align-items-center border" onclick={toggleDesigDropdown}>
-                  {selectedDesignationLabel} <i class="ti ti-chevron-down ms-1"></i>
-                </button>
-                <template if:true={isDesigOpen}>
-                  <ul class="dropdown-menu dropdown-menu-end p-2 show sort-menu-custom" style="max-height: 250px; overflow-y: auto;">
-                    <li>
-                      <a href="javascript:void(0);" class="dropdown-item rounded-1" data-desig="" onclick={selectDesignation}>All Designations</a>
-                    </li>
-                    <template for:each={designationOptions} for:item="opt">
-                      <li key={opt}>
-                        <a href="javascript:void(0);" class="dropdown-item rounded-1" data-desig={opt} onclick={selectDesignation}>{opt}</a>
-                      </li>
+            </div>
+
+            <div class="card-body p-0">
+              <template lwc:if={isLoading}>
+                <div class="state-panel" data-id="loading">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <p class="mb-0 mt-2 text-muted">
+                    Loading probation records...
+                  </p>
+                </div>
+              </template>
+
+              <template lwc:if={hasLoadError}>
+                <div class="state-panel" data-id="load-error">
+                  <i class="ti ti-alert-triangle state-icon text-danger"></i>
+                  <p class="fw-medium text-dark mb-1">
+                    Probation records could not be loaded.
+                  </p>
+                  <p class="text-muted mb-3">{loadError}</p>
+                  <button
+                    type="button"
+                    class="btn btn-white border"
+                    onclick={loadAll}
+                  >
+                    <i class="ti ti-refresh me-1"></i>Try again
+                  </button>
+                </div>
+              </template>
+
+              <template lwc:if={showNoRecords}>
+                <div class="state-panel" data-id="empty">
+                  <i class="ti ti-user-check state-icon"></i>
+                  <p class="fw-medium text-dark mb-1">
+                    No probation records yet
+                  </p>
+                  <p class="text-muted mb-3">
+                    Add a probation to start tracking an employee's review
+                    period.
+                  </p>
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    onclick={openAddModal}
+                  >
+                    <i class="ti ti-circle-plus me-1"></i>Add Probation
+                  </button>
+                </div>
+              </template>
+
+              <template lwc:if={showNoMatches}>
+                <div class="state-panel" data-id="no-matches">
+                  <i class="ti ti-filter-off state-icon"></i>
+                  <p class="fw-medium text-dark mb-1">
+                    No probations match your search or filter.
+                  </p>
+                </div>
+              </template>
+
+              <template lwc:if={showTable}>
+                <div class="table-responsive">
+                  <table class="table datatable">
+                    <thead class="thead-light">
+                      <tr>
+                        <template lwc:if={isAdmin}>
+                          <th class="no-sort col-check">
+                            <div class="form-check form-check-md">
+                              <input
+                                class="form-check-input"
+                                type="checkbox"
+                                aria-label="Select all deletable probations on this page"
+                                data-id="select-all"
+                                checked={isAllSelected}
+                                disabled={selectAllDisabled}
+                                onchange={handleSelectAll}
+                              />
+                            </div>
+                          </th>
+                        </template>
+                        <th>Probation ID</th>
+                        <th>Name</th>
+                        <th>Designation</th>
+                        <th>Start Date</th>
+                        <th>Probation End Date</th>
+                        <th>Reviewer</th>
+                        <th>Status</th>
+                        <th class="text-end">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <template for:each={displayedRecords} for:item="row">
+                        <tr key={row.id} data-row={row.id}>
+                          <template lwc:if={isAdmin}>
+                            <td>
+                              <div class="form-check form-check-md">
+                                <input
+                                  class="form-check-input"
+                                  type="checkbox"
+                                  aria-label="Select row"
+                                  title="Only pending or in-review probations can be deleted"
+                                  checked={row.selected}
+                                  disabled={row.selectDisabled}
+                                  data-id={row.id}
+                                  data-select="row"
+                                  onchange={handleSelectRow}
+                                />
+                              </div>
+                            </td>
+                          </template>
+                          <td>
+                            <a
+                              href="javascript:void(0);"
+                              class="fw-medium text-primary"
+                              data-id={row.id}
+                              onclick={openDetails}
+                              >{row.probationNumber}</a
+                            >
+                          </td>
+                          <td>
+                            <div
+                              class="d-flex align-items-center file-name-icon"
+                            >
+                              <a
+                                href="javascript:void(0);"
+                                class="avatar avatar-md border avatar-rounded me-2"
+                                data-id={row.id}
+                                onclick={openDetails}
+                              >
+                                <img
+                                  src={row.avatarUrl}
+                                  class="img-fluid rounded-circle avatar-img"
+                                  alt={row.employeeName}
+                                />
+                              </a>
+                              <div>
+                                <a
+                                  href="javascript:void(0);"
+                                  class="fw-medium fs-14 text-dark"
+                                  data-id={row.id}
+                                  onclick={openDetails}
+                                  >{row.employeeName}</a
+                                >
+                                <span class="d-block fs-12 text-muted"
+                                  >{row.department}</span
+                                >
+                              </div>
+                            </div>
+                          </td>
+                          <td>{row.designation}</td>
+                          <td>{row.startDateLabel}</td>
+                          <td>
+                            {row.endDateLabel}
+                            <span class={row.remainingClass}
+                              >{row.remainingLabel}</span
+                            >
+                          </td>
+                          <td>
+                            <template lwc:if={row.reviewerName}>
+                              <div
+                                class="d-flex align-items-center file-name-icon"
+                              >
+                                <div
+                                  class="avatar avatar-md border avatar-rounded me-2"
+                                >
+                                  <img
+                                    src={row.reviewerAvatarUrl}
+                                    class="img-fluid rounded-circle avatar-img"
+                                    alt={row.reviewerName}
+                                  />
+                                </div>
+                                <div>
+                                  <span class="fw-medium fs-14 text-dark"
+                                    >{row.reviewerName}</span
+                                  >
+                                </div>
+                              </div>
+                            </template>
+                            <template lwc:else>
+                              <span class="text-muted">Not assigned</span>
+                            </template>
+                          </td>
+                          <td>
+                            <span class={row.badgeClass}>
+                              <i class="ti ti-point-filled me-1"></i
+                              >{row.status}
+                            </span>
+                          </td>
+                          <td class="text-end">
+                            <div class="action-icon d-inline-flex gap-1">
+                              <a
+                                href="javascript:void(0);"
+                                class="action-btn"
+                                data-id={row.id}
+                                data-action="view"
+                                onclick={openDetails}
+                                title="View Details"
+                              >
+                                <i class="ti ti-eye"></i>
+                              </a>
+                              <template lwc:if={row.showEdit}>
+                                <a
+                                  href="javascript:void(0);"
+                                  class="action-btn"
+                                  data-id={row.id}
+                                  data-action="edit"
+                                  onclick={openEditModal}
+                                  title="Edit"
+                                >
+                                  <i class="ti ti-edit"></i>
+                                </a>
+                              </template>
+                              <template lwc:if={row.showDelete}>
+                                <a
+                                  href="javascript:void(0);"
+                                  class="action-btn text-danger"
+                                  data-id={row.id}
+                                  data-action="delete"
+                                  onclick={openDeleteModal}
+                                  title="Delete"
+                                >
+                                  <i class="ti ti-trash"></i>
+                                </a>
+                              </template>
+                            </div>
+                          </td>
+                        </tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div
+                  class="d-flex justify-content-between align-items-center p-3 border-top"
+                >
+                  <span class="fs-13 text-muted"
+                    >Showing {pageStart} to {pageEnd} of {filteredCount}
+                    entries</span
+                  >
+                  <div class="btn-group btn-group-sm">
+                    <button
+                      type="button"
+                      class={prevButtonClass}
+                      disabled={isFirstPage}
+                      aria-label="Previous page"
+                      onclick={previousPage}
+                    >
+                      &lt;
+                    </button>
+                    <button type="button" class="btn btn-primary">
+                      {currentPage}
+                    </button>
+                    <button
+                      type="button"
+                      class={nextButtonClass}
+                      disabled={isLastPage}
+                      aria-label="Next page"
+                      onclick={nextPage}
+                    >
+                      &gt;
+                    </button>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Offcanvas Details -->
+    <template lwc:if={isDetailsOpen}>
+      <div class="modal-backdrop-custom" onclick={closeDetails}></div>
+      <div
+        class="offcanvas-custom"
+        role="dialog"
+        aria-label="Probation details"
+        data-id="details"
+      >
+        <div
+          class="offcanvas-header border-bottom d-flex align-items-center justify-content-between p-3"
+        >
+          <h4 class="mb-0 fs-16 fw-semibold">Probation Details</h4>
+          <button
+            type="button"
+            class="custom-btn-close"
+            aria-label="Close"
+            onclick={closeDetails}
+          >
+            <i class="ti ti-x"></i>
+          </button>
+        </div>
+        <template lwc:if={activeRecord}>
+          <div class="offcanvas-body p-3">
+            <div class="card bg-light border-0 mb-4">
+              <div class="card-body p-3">
+                <div class="d-flex align-items-center">
+                  <span class="avatar avatar-lg rounded-circle me-3">
+                    <img
+                      src={activeRecord.avatarUrl}
+                      class="rounded-circle avatar-img-lg"
+                      alt={activeRecord.employeeName}
+                    />
+                  </span>
+                  <div>
+                    <p class="mb-0 text-dark fw-semibold fs-15">
+                      {activeRecord.employeeName}
+                    </p>
+                    <template lwc:if={activeRecord.designation}>
+                      <span
+                        class="badge badge-soft-dark text-dark d-inline-flex align-items-center badge-xs mt-1"
+                      >
+                        <i class="ti ti-point-filled me-1"></i
+                        >{activeRecord.designation}
+                      </span>
                     </template>
-                  </ul>
-                </template>
+                  </div>
+                </div>
               </div>
-              <div class="position-relative">
-                <button type="button" class="btn btn-white d-inline-flex align-items-center border" onclick={toggleSortDropdown}>
-                  Sort By : {currentSort} <i class="ti ti-chevron-down ms-1"></i>
+            </div>
+
+            <div class="mb-4 pb-3 border-bottom">
+              <div class="fs-14 fw-semibold text-dark mb-3">
+                Basic Information
+              </div>
+              <div
+                class="d-flex align-items-center justify-content-between mb-3"
+              >
+                <span class="text-muted"
+                  ><i class="ti ti-id me-1"></i>Probation ID</span
+                >
+                <p class="fs-13 text-dark mb-0 fw-medium">
+                  {activeRecord.probationNumber}
+                </p>
+              </div>
+              <div
+                class="d-flex align-items-center justify-content-between mb-3"
+              >
+                <span class="text-muted"
+                  ><i class="ti ti-star me-1"></i>Department</span
+                >
+                <p class="fs-13 text-dark mb-0 fw-medium" data-id="department">
+                  {activeRecord.department}
+                </p>
+              </div>
+              <div
+                class="d-flex align-items-center justify-content-between mb-0"
+              >
+                <span class="text-muted"
+                  ><i class="ti ti-calendar-check me-1"></i>Date of Join</span
+                >
+                <p class="fs-13 text-dark mb-0 fw-medium">
+                  {activeRecord.joiningDateLabel}
+                </p>
+              </div>
+            </div>
+
+            <div class="mb-4 pb-3 border-bottom">
+              <div class="fs-14 fw-semibold text-dark mb-3">
+                Probation Period
+              </div>
+              <div
+                class="d-flex align-items-center justify-content-between mb-3"
+              >
+                <span class="text-muted"
+                  ><i class="ti ti-calendar me-1"></i>Probation Start Date</span
+                >
+                <p class="fs-13 text-dark mb-0 fw-medium">
+                  {activeRecord.startDateLabel}
+                </p>
+              </div>
+              <div
+                class="d-flex align-items-center justify-content-between mb-3"
+              >
+                <span class="text-muted"
+                  ><i class="ti ti-calendar me-1"></i>Probation End Date</span
+                >
+                <p class="fs-13 text-dark mb-0 fw-medium">
+                  {activeRecord.endDateLabel}
+                </p>
+              </div>
+              <template lwc:if={activeRecord.originalEndDateLabel}>
+                <div
+                  class="d-flex align-items-center justify-content-between mb-3"
+                >
+                  <span class="text-muted"
+                    ><i class="ti ti-calendar-time me-1"></i>Original End
+                    Date</span
+                  >
+                  <p class="fs-13 text-dark mb-0 fw-medium">
+                    {activeRecord.originalEndDateLabel}
+                  </p>
+                </div>
+              </template>
+              <template lwc:if={activeRecord.remainingLabel}>
+                <div
+                  class="d-flex align-items-center justify-content-between mb-3"
+                >
+                  <span class="text-muted"
+                    ><i class="ti ti-hourglass me-1"></i>Time Remaining</span
+                  >
+                  <p class="fs-13 text-dark mb-0 fw-medium">
+                    {activeRecord.remainingLabel}
+                  </p>
+                </div>
+              </template>
+              <div
+                class="d-flex align-items-center justify-content-between mb-3"
+              >
+                <span class="text-muted"
+                  ><i class="ti ti-calendar-stats me-1"></i>Reviewer</span
+                >
+                <p class="fs-13 text-dark mb-0 fw-medium">
+                  <template lwc:if={activeRecord.reviewerName}
+                    >{activeRecord.reviewerName}</template
+                  >
+                  <template lwc:else>Not assigned</template>
+                </p>
+              </div>
+              <template lwc:if={activeRecord.confirmationDateLabel}>
+                <div
+                  class="d-flex align-items-center justify-content-between mb-3"
+                >
+                  <span class="text-muted"
+                    ><i class="ti ti-rosette-discount-check me-1"></i
+                    >Confirmation Date</span
+                  >
+                  <p class="fs-13 text-dark mb-0 fw-medium">
+                    {activeRecord.confirmationDateLabel}
+                  </p>
+                </div>
+              </template>
+              <div
+                class="d-flex align-items-center justify-content-between mb-0"
+              >
+                <span class="text-muted"
+                  ><i class="ti ti-user-edit me-1"></i>Probation Status</span
+                >
+                <span class={activeRecord.badgeClass}
+                  >{activeRecord.status}</span
+                >
+              </div>
+            </div>
+
+            <template lwc:if={activeRecord.notes}>
+              <div class="mb-4 pb-3 border-bottom">
+                <div class="fs-14 fw-semibold text-dark mb-2">Review Notes</div>
+                <p class="fs-13 text-dark mb-0 notes-text">
+                  {activeRecord.notes}
+                </p>
+              </div>
+            </template>
+
+            <template lwc:if={activeCanEdit}>
+              <div class="d-flex flex-wrap gap-2 mb-3">
+                <button
+                  type="button"
+                  class="btn btn-white border"
+                  data-id={activeRecord.id}
+                  onclick={openEditModal}
+                >
+                  <i class="ti ti-edit me-1"></i>Edit
                 </button>
-                <template if:true={isSortOpen}>
-                  <ul class="dropdown-menu dropdown-menu-end p-2 show sort-menu-custom">
-                    <li><a href="javascript:void(0);" class="dropdown-item rounded-1" data-sort="Recently Added" onclick={selectSort}>Recently Added</a></li>
-                    <li><a href="javascript:void(0);" class="dropdown-item rounded-1" data-sort="Ascending" onclick={selectSort}>Ascending</a></li>
-                    <li><a href="javascript:void(0);" class="dropdown-item rounded-1" data-sort="Descending" onclick={selectSort}>Descending</a></li>
-                    <li><a href="javascript:void(0);" class="dropdown-item rounded-1" data-sort="Last Month" onclick={selectSort}>Last Month</a></li>
-                    <li><a href="javascript:void(0);" class="dropdown-item rounded-1" data-sort="Last 7 Days" onclick={selectSort}>Last 7 Days</a></li>
-                  </ul>
+              </div>
+            </template>
+
+            <template lwc:if={showStatusActions}>
+              <div data-id="status-actions">
+                <div class="fs-14 fw-semibold text-dark mb-2">Decision</div>
+                <div class="d-flex flex-wrap gap-2">
+                  <template lwc:if={activeRecord.canStartReview}>
+                    <button
+                      type="button"
+                      class="btn btn-white border"
+                      data-action="review"
+                      onclick={openStatusModal}
+                    >
+                      <i class="ti ti-player-play me-1"></i>Start Review
+                    </button>
+                  </template>
+                  <button
+                    type="button"
+                    class="btn btn-white border"
+                    data-action="extend"
+                    onclick={openStatusModal}
+                  >
+                    <i class="ti ti-calendar-plus me-1"></i>Extend
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-success"
+                    data-action="confirm"
+                    onclick={openStatusModal}
+                  >
+                    <i class="ti ti-circle-check me-1"></i>Confirm
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-danger"
+                    data-action="fail"
+                    onclick={openStatusModal}
+                  >
+                    <i class="ti ti-circle-x me-1"></i>Mark Failed
+                  </button>
+                </div>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+    </template>
+
+    <!-- Add Modal -->
+    <template lwc:if={isAddModalOpen}>
+      <div class="modal-backdrop-custom">
+        <div
+          class="modal-dialog modal-dialog-centered modal-md modal-shell"
+          role="dialog"
+          aria-label="Add probation"
+          data-id="add-modal"
+        >
+          <div class="modal-content shadow-lg border-0 rounded-3 bg-white">
+            <div
+              class="modal-header border-bottom p-3 d-flex justify-content-between align-items-center"
+            >
+              <h4 class="modal-title fs-16 fw-semibold">Add Probation</h4>
+              <button
+                type="button"
+                class="custom-btn-close"
+                aria-label="Close"
+                onclick={closeAddModal}
+              >
+                <i class="ti ti-x"></i>
+              </button>
+            </div>
+            <div class="modal-body p-3">
+              <div class="row g-3">
+                <div class="col-md-12">
+                  <label class="form-label" for="add-employee"
+                    >Employee <span class="text-danger">*</span></label
+                  >
+                  <select
+                    id="add-employee"
+                    class="form-select"
+                    data-field="employeeId"
+                    onchange={handleAddEmployeeChange}
+                  >
+                    <option value="">Select employee</option>
+                    <template for:each={addEmployeeOptions} for:item="opt">
+                      <option
+                        key={opt.value}
+                        value={opt.value}
+                        selected={opt.selected}
+                      >
+                        {opt.label}
+                      </option>
+                    </template>
+                  </select>
+                  <template lwc:if={noAddEmployeeOptions}>
+                    <small class="text-muted d-block mt-1"
+                      >Every active employee already has an open
+                      probation.</small
+                    >
+                  </template>
+                  <template lwc:if={addSelectedEmployee}>
+                    <small class="text-muted d-block mt-1"
+                      >Department: {addEmployeeDepartment} · Joined:
+                      {addEmployeeJoiningLabel}</small
+                    >
+                  </template>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="add-start"
+                    >Probation Start Date
+                    <span class="text-danger">*</span></label
+                  >
+                  <input
+                    id="add-start"
+                    type="date"
+                    class="form-control"
+                    data-field="startDate"
+                    value={addForm.startDate}
+                    onchange={handleAddFormChange}
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="add-end"
+                    >Probation End Date
+                    <span class="text-danger">*</span></label
+                  >
+                  <input
+                    id="add-end"
+                    type="date"
+                    class="form-control"
+                    data-field="endDate"
+                    min={addForm.startDate}
+                    value={addForm.endDate}
+                    onchange={handleAddFormChange}
+                  />
+                </div>
+                <div class="col-md-12">
+                  <label class="form-label" for="add-reviewer">Reviewer</label>
+                  <select
+                    id="add-reviewer"
+                    class="form-select"
+                    data-field="reviewerId"
+                    onchange={handleAddFormChange}
+                  >
+                    <option value="">No reviewer</option>
+                    <template for:each={addReviewerOptions} for:item="opt">
+                      <option
+                        key={opt.value}
+                        value={opt.value}
+                        selected={opt.selected}
+                      >
+                        {opt.label}
+                      </option>
+                    </template>
+                  </select>
+                  <template lwc:if={addReviewerHint}>
+                    <small class="text-muted d-block mt-1"
+                      >{addReviewerHint}</small
+                    >
+                  </template>
+                </div>
+                <div class="col-md-12">
+                  <label class="form-label" for="add-notes">Notes</label>
+                  <textarea
+                    id="add-notes"
+                    class="form-control"
+                    rows="3"
+                    maxlength="5000"
+                    data-field="notes"
+                    oninput={handleAddFormChange}
+                  ></textarea>
+                  <small class="text-muted d-block mt-1"
+                    >New probations start as Pending.</small
+                  >
+                </div>
+              </div>
+            </div>
+            <div
+              class="modal-footer border-top p-3 d-flex justify-content-end gap-2"
+            >
+              <button
+                type="button"
+                class="btn btn-light"
+                disabled={isSaving}
+                onclick={closeAddModal}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                data-id="save-add"
+                disabled={isSaving}
+                onclick={saveNewProbation}
+              >
+                <template lwc:if={isSaving}>
+                  <span
+                    class="spinner-border spinner-border-sm me-1"
+                    role="status"
+                  ></span>
                 </template>
-              </div>
-            </div>
-          </div>
-
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table datatable">
-                <thead class="thead-light">
-                  <tr>
-                    <th class="no-sort" style="width: 40px;">
-                      <div class="form-check form-check-md">
-                        <input class="form-check-input" type="checkbox" checked={isAllSelected} onchange={handleSelectAll}>
-                      </div>
-                    </th>
-                    <th>Emp ID</th>
-                    <th>Name</th>
-                    <th>Designation</th>
-                    <th>Joining Date</th>
-                    <th>Probation End Date</th>
-                    <th>Reviewer</th>
-                    <th>Status</th>
-                    <th style="text-align: right;">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <template for:each={displayedRecords} for:item="row">
-                    <tr key={row.id}>
-                      <td>
-                        <div class="form-check form-check-md">
-                          <input class="form-check-input" type="checkbox" checked={row.selected} data-id={row.id} onchange={handleSelectRow}>
-                        </div>
-                      </td>
-                      <td>
-                        <a href="javascript:void(0);" class="fw-medium text-primary" data-id={row.id} onclick={openDetails}>{row.empId}</a>
-                      </td>
-                      <td>
-                        <div class="d-flex align-items-center file-name-icon">
-                          <a href="javascript:void(0);" class="avatar avatar-md border avatar-rounded me-2" data-id={row.id} onclick={openDetails}>
-                            <img src={row.avatarUrl} class="img-fluid rounded-circle" alt="img" style="width: 38px; height: 38px; object-fit: cover;">
-                          </a>
-                          <div>
-                            <a href="javascript:void(0);" class="fw-medium fs-14 text-dark" data-id={row.id} onclick={openDetails}>{row.name}</a>
-                          </div>
-                        </div>
-                      </td>
-                      <td>{row.designation}</td>
-                      <td>{row.joiningDate}</td>
-                      <td>{row.endDate}</td>
-                      <td>
-                        <div class="d-flex align-items-center file-name-icon">
-                          <div class="avatar avatar-md border avatar-rounded me-2">
-                            <img src={row.reviewerAvatarUrl} class="img-fluid rounded-circle" alt="img" style="width: 38px; height: 38px; object-fit: cover;">
-                          </div>
-                          <div>
-                            <span class="fw-medium fs-14 text-dark">{row.reviewerName}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <span class={row.badgeClass}>
-                          <i class="ti ti-point-filled me-1"></i>{row.status}
-                        </span>
-                      </td>
-                      <td style="text-align: right;">
-                        <div class="action-icon d-inline-flex gap-1">
-                          <a href="javascript:void(0);" class="action-btn" data-id={row.id} onclick={openDetails} title="View Details">
-                            <i class="ti ti-eye"></i>
-                          </a>
-                          <a href="javascript:void(0);" class="action-btn" data-id={row.id} onclick={openEditModal} title="Edit">
-                            <i class="ti ti-edit"></i>
-                          </a>
-                          <a href="javascript:void(0);" class="action-btn text-danger" data-id={row.id} onclick={openDeleteModal} title="Delete">
-                            <i class="ti ti-trash"></i>
-                          </a>
-                        </div>
-                      </td>
-                    </tr>
-                  </template>
-                </tbody>
-              </table>
-            </div>
-            
-            <div class="d-flex justify-content-between align-items-center p-3 border-top">
-              <span class="fs-13 text-muted">Showing 1 to {displayedCount} of {displayedCount} entries</span>
-              <div class="btn-group btn-group-sm">
-                <button type="button" class="btn btn-white border disabled">&lt;</button>
-                <button type="button" class="btn btn-primary">1</button>
-                <button type="button" class="btn btn-white border disabled">&gt;</button>
-              </div>
+                Add Probation
+              </button>
             </div>
           </div>
         </div>
-      </template>
-
-    </div>
-  </div>
-
-  <!-- Offcanvas Details -->
-  <template if:true={isDetailsOpen}>
-    <div class="modal-backdrop-custom" onclick={closeDetails}></div>
-    <div class="offcanvas-custom">
-      <div class="offcanvas-header border-bottom d-flex align-items-center justify-content-between p-3">
-        <h4 class="mb-0 fs-16 fw-semibold">Employee Details</h4>
-        <button type="button" class="custom-btn-close" onclick={closeDetails}>
-          <i class="ti ti-x"></i>
-        </button>
       </div>
-      <div class="offcanvas-body p-3" if:true={activeRecord}>
-        <div class="card bg-light border-0 mb-4">
-          <div class="card-body p-3">
-            <div class="d-flex align-items-center">
-              <span class="avatar avatar-lg rounded-circle me-3">
-                <img src={activeRecord.avatarUrl} class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;" alt="Img">
+    </template>
+
+    <!-- Edit Modal -->
+    <template lwc:if={isEditModalOpen}>
+      <div class="modal-backdrop-custom">
+        <div
+          class="modal-dialog modal-dialog-centered modal-md modal-shell"
+          role="dialog"
+          aria-label="Edit probation"
+          data-id="edit-modal"
+        >
+          <div class="modal-content shadow-lg border-0 rounded-3 bg-white">
+            <div
+              class="modal-header border-bottom p-3 d-flex justify-content-between align-items-center"
+            >
+              <h4 class="modal-title fs-16 fw-semibold">
+                Edit Probation {editForm.probationNumber}
+              </h4>
+              <button
+                type="button"
+                class="custom-btn-close"
+                aria-label="Close"
+                onclick={closeEditModal}
+              >
+                <i class="ti ti-x"></i>
+              </button>
+            </div>
+            <div class="modal-body p-3">
+              <div class="row g-3">
+                <div class="col-md-12">
+                  <label class="form-label" for="edit-employee">Employee</label>
+                  <input
+                    id="edit-employee"
+                    type="text"
+                    class="form-control"
+                    value={editForm.employeeName}
+                    disabled
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="edit-start"
+                    >Probation Start Date
+                    <span class="text-danger">*</span></label
+                  >
+                  <input
+                    id="edit-start"
+                    type="date"
+                    class="form-control"
+                    data-field="startDate"
+                    value={editForm.startDate}
+                    onchange={handleEditFormChange}
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="edit-end"
+                    >Probation End Date
+                    <span class="text-danger">*</span></label
+                  >
+                  <input
+                    id="edit-end"
+                    type="date"
+                    class="form-control"
+                    data-field="endDate"
+                    min={editForm.startDate}
+                    value={editForm.endDate}
+                    onchange={handleEditFormChange}
+                  />
+                </div>
+                <div class="col-md-12">
+                  <label class="form-label" for="edit-reviewer">Reviewer</label>
+                  <select
+                    id="edit-reviewer"
+                    class="form-select"
+                    data-field="reviewerId"
+                    onchange={handleEditFormChange}
+                  >
+                    <option value="">No reviewer</option>
+                    <template lwc:if={editReviewerMissing}>
+                      <option value={editForm.reviewerId} selected>
+                        {editForm.reviewerName} (inactive)
+                      </option>
+                    </template>
+                    <template for:each={editReviewerOptions} for:item="opt">
+                      <option
+                        key={opt.value}
+                        value={opt.value}
+                        selected={opt.selected}
+                      >
+                        {opt.label}
+                      </option>
+                    </template>
+                  </select>
+                </div>
+                <div class="col-md-12">
+                  <template lwc:if={editReplacesNotes}>
+                    <label class="form-label" for="edit-notes">Notes</label>
+                    <textarea
+                      id="edit-notes"
+                      class="form-control"
+                      rows="4"
+                      maxlength="5000"
+                      data-field="notes"
+                      oninput={handleEditFormChange}
+                    ></textarea>
+                    <small class="text-muted d-block mt-1"
+                      >Status changes are made from the probation
+                      details.</small
+                    >
+                  </template>
+                  <template lwc:else>
+                    <template lwc:if={editExistingNotes}>
+                      <span class="form-label d-block">Review Notes</span>
+                      <p
+                        class="fs-13 text-dark mb-3 notes-text notes-history"
+                        data-id="edit-existing-notes"
+                      >
+                        {editExistingNotes}
+                      </p>
+                    </template>
+                    <label class="form-label" for="edit-new-note"
+                      >Add a Note</label
+                    >
+                    <textarea
+                      id="edit-new-note"
+                      class="form-control"
+                      rows="3"
+                      maxlength="5000"
+                      data-field="newNote"
+                      oninput={handleEditFormChange}
+                    ></textarea>
+                    <small class="text-muted d-block mt-1"
+                      >Your note is added to the review history with today's
+                      date. Status changes are made by an HR
+                      administrator.</small
+                    >
+                  </template>
+                </div>
+              </div>
+            </div>
+            <div
+              class="modal-footer border-top p-3 d-flex justify-content-end gap-2"
+            >
+              <button
+                type="button"
+                class="btn btn-light"
+                disabled={isSaving}
+                onclick={closeEditModal}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                data-id="save-edit"
+                disabled={isSaving}
+                onclick={saveEditProbation}
+              >
+                <template lwc:if={isSaving}>
+                  <span
+                    class="spinner-border spinner-border-sm me-1"
+                    role="status"
+                  ></span>
+                </template>
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Status Modal -->
+    <template lwc:if={isStatusModalOpen}>
+      <div class="modal-backdrop-custom">
+        <div
+          class="modal-dialog modal-dialog-centered modal-md modal-shell"
+          role="dialog"
+          aria-label={statusForm.title}
+          data-id="status-modal"
+        >
+          <div class="modal-content shadow-lg border-0 rounded-3 bg-white">
+            <div
+              class="modal-header border-bottom p-3 d-flex justify-content-between align-items-center"
+            >
+              <h4 class="modal-title fs-16 fw-semibold">{statusForm.title}</h4>
+              <button
+                type="button"
+                class="custom-btn-close"
+                aria-label="Close"
+                onclick={closeStatusModal}
+              >
+                <i class="ti ti-x"></i>
+              </button>
+            </div>
+            <div class="modal-body p-3">
+              <p class="mb-3 text-dark fw-medium">
+                {statusForm.employeeName} · {statusForm.probationNumber}
+              </p>
+              <p class="mb-3 text-muted fs-13">{statusForm.message}</p>
+              <div class="row g-3">
+                <template lwc:if={statusNeedsEndDate}>
+                  <div class="col-md-6">
+                    <span class="form-label d-block">Current End Date</span>
+                    <p class="mb-0 fw-medium">
+                      {statusForm.currentEndDateLabel}
+                    </p>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="status-end"
+                      >New End Date <span class="text-danger">*</span></label
+                    >
+                    <input
+                      id="status-end"
+                      type="date"
+                      class="form-control"
+                      data-field="newEndDate"
+                      min={statusMinEndDate}
+                      value={statusForm.newEndDate}
+                      onchange={handleStatusFormChange}
+                    />
+                  </div>
+                </template>
+                <div class="col-md-12">
+                  <label class="form-label" for="status-notes"
+                    >Decision Notes</label
+                  >
+                  <textarea
+                    id="status-notes"
+                    class="form-control"
+                    rows="3"
+                    maxlength="5000"
+                    data-field="notes"
+                    oninput={handleStatusFormChange}
+                  ></textarea>
+                  <small class="text-muted d-block mt-1"
+                    >Notes are added to the review notes history.</small
+                  >
+                </div>
+              </div>
+            </div>
+            <div
+              class="modal-footer border-top p-3 d-flex justify-content-end gap-2"
+            >
+              <button
+                type="button"
+                class="btn btn-light"
+                disabled={isSaving}
+                onclick={closeStatusModal}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                class={statusForm.buttonClass}
+                data-id="confirm-status"
+                disabled={isSaving}
+                onclick={confirmStatusChange}
+              >
+                <template lwc:if={isSaving}>
+                  <span
+                    class="spinner-border spinner-border-sm me-1"
+                    role="status"
+                  ></span>
+                </template>
+                {statusForm.confirmLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Delete Modal -->
+    <template lwc:if={isDeleteModalOpen}>
+      <div
+        class="modal-backdrop-custom d-flex align-items-center justify-content-center"
+      >
+        <div
+          class="modal-dialog modal-dialog-centered delete-shell"
+          role="dialog"
+          aria-label="Confirm delete"
+          data-id="delete-modal"
+        >
+          <div
+            class="modal-content shadow-lg border-0 rounded-3 bg-white p-4 text-center"
+          >
+            <div class="modal-body text-center p-0">
+              <span
+                class="avatar avatar-xl bg-transparent-danger text-danger mb-3 d-inline-flex align-items-center justify-content-center rounded-circle delete-icon"
+              >
+                <i class="ti ti-trash-x text-danger"></i>
               </span>
-              <div>
-                <p class="mb-0 text-dark fw-semibold fs-15">{activeRecord.name}</p>
-                <span class="badge badge-soft-dark text-dark d-inline-flex align-items-center badge-xs mt-1">
-                  <i class="ti ti-point-filled me-1"></i>{activeRecord.designation}
-                </span>
+              <h4 class="mb-2 fs-18 fw-bold">Confirm Delete</h4>
+              <p class="mb-4 text-muted fs-14">{deleteMessage}</p>
+              <div class="d-flex justify-content-center gap-3">
+                <button
+                  type="button"
+                  class="btn btn-light px-4"
+                  disabled={isSaving}
+                  onclick={closeDeleteModal}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-danger px-4"
+                  data-id="confirm-delete"
+                  disabled={isSaving}
+                  onclick={confirmDelete}
+                >
+                  Yes, Delete
+                </button>
               </div>
             </div>
           </div>
         </div>
-
-        <div class="mb-4 pb-3 border-bottom">
-          <div class="fs-14 fw-semibold text-dark mb-3">Basic Information</div>
-          <div class="d-flex align-items-center justify-content-between mb-3">
-            <span class="text-muted"><i class="ti ti-id me-1"></i>Employee ID</span>
-            <p class="fs-13 text-dark mb-0 fw-medium">{activeRecord.empId}</p>
-          </div>
-          <div class="d-flex align-items-center justify-content-between mb-3">
-            <span class="text-muted"><i class="ti ti-star me-1"></i>Team</span>
-            <p class="fs-13 text-dark mb-0 fw-medium">{activeRecord.team}</p>
-          </div>
-          <div class="d-flex align-items-center justify-content-between mb-0">
-            <span class="text-muted"><i class="ti ti-calendar-check me-1"></i>Date of Join</span>
-            <p class="fs-13 text-dark mb-0 fw-medium">{activeRecord.joiningDate}</p>
-          </div>
-        </div>
-
-        <div>
-          <div class="fs-14 fw-semibold text-dark mb-3">Probation Period</div>
-          <div class="d-flex align-items-center justify-content-between mb-3">
-            <span class="text-muted"><i class="ti ti-calendar me-1"></i>Probation Start Date</span>
-            <p class="fs-13 text-dark mb-0 fw-medium">{activeRecord.joiningDate}</p>
-          </div>
-          <div class="d-flex align-items-center justify-content-between mb-3">
-            <span class="text-muted"><i class="ti ti-calendar me-1"></i>Probation End Date</span>
-            <p class="fs-13 text-dark mb-0 fw-medium">{activeRecord.endDate}</p>
-          </div>
-          <div class="d-flex align-items-center justify-content-between mb-3">
-            <span class="text-muted"><i class="ti ti-calendar-stats me-1"></i>Reviewer</span>
-            <p class="fs-13 text-dark mb-0 fw-medium">{activeRecord.reviewerName}</p>
-          </div>
-          <div class="d-flex align-items-center justify-content-between mb-0">
-            <span class="text-muted"><i class="ti ti-user-edit me-1"></i>Probation Status</span>
-            <span class={activeRecord.badgeClass}>{activeRecord.status}</span>
-          </div>
-        </div>
       </div>
-    </div>
-  </template>
-
-  <!-- Add Modal -->
-  <template if:true={isAddModalOpen}>
-    <div class="modal-backdrop-custom">
-      <div class="modal-dialog modal-dialog-centered modal-md" style="margin: 3rem auto; max-width: 600px;">
-        <div class="modal-content shadow-lg border-0 rounded-3 bg-white">
-          <div class="modal-header border-bottom p-3 d-flex justify-content-between align-items-center">
-            <h4 class="modal-title fs-16 fw-semibold">Add Employee</h4>
-            <button type="button" class="custom-btn-close" onclick={closeAddModal}><i class="ti ti-x"></i></button>
-          </div>
-          <div class="modal-body p-3">
-            <div class="row g-3">
-              <div class="col-md-12">
-                <label class="form-label">Employee Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" data-field="name" value={addForm.name} oninput={handleAddFormChange} placeholder="e.g. John Doe">
-              </div>
-              <div class="col-md-12">
-                <label class="form-label">Designation <span class="text-danger">*</span></label>
-                <select class="form-select" data-field="designation" onchange={handleAddFormChange}>
-                  <option value="">Select</option>
-                  <template for:each={designationOptions} for:item="d">
-                    <option key={d} value={d}>{d}</option>
-                  </template>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Joining Date <span class="text-danger">*</span></label>
-                <input type="date" class="form-control" data-field="joiningDate" oninput={handleAddFormChange}>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Probation End Date <span class="text-danger">*</span></label>
-                <input type="date" class="form-control" data-field="endDate" oninput={handleAddFormChange}>
-              </div>
-              <div class="col-md-12">
-                <label class="form-label">Reviewer <span class="text-danger">*</span></label>
-                <select class="form-select" data-field="reviewerName" onchange={handleAddFormChange}>
-                  <option value="">Select</option>
-                  <template for:each={reviewerOptions} for:item="r">
-                    <option key={r} value={r}>{r}</option>
-                  </template>
-                </select>
-              </div>
-              <div class="col-md-12">
-                <label class="form-label">Status</label>
-                <select class="form-select" data-field="status" onchange={handleAddFormChange}>
-                  <option value="Pending">Pending</option>
-                  <option value="In Review">In Review</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Extended">Extended</option>
-                  <option value="Failed">Failed</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer border-top p-3 d-flex justify-content-end gap-2">
-            <button type="button" class="btn btn-light" onclick={closeAddModal}>Cancel</button>
-            <button type="button" class="btn btn-primary" onclick={saveNewEmployee}>Add Employee</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </template>
-
-  <!-- Edit Modal -->
-  <template if:true={isEditModalOpen}>
-    <div class="modal-backdrop-custom">
-      <div class="modal-dialog modal-dialog-centered modal-md" style="margin: 3rem auto; max-width: 600px;">
-        <div class="modal-content shadow-lg border-0 rounded-3 bg-white">
-          <div class="modal-header border-bottom p-3 d-flex justify-content-between align-items-center">
-            <h4 class="modal-title fs-16 fw-semibold">Edit Employee</h4>
-            <button type="button" class="custom-btn-close" onclick={closeEditModal}><i class="ti ti-x"></i></button>
-          </div>
-          <div class="modal-body p-3">
-            <div class="row g-3">
-              <div class="col-md-12">
-                <label class="form-label">Employee Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" data-field="name" value={editForm.name} oninput={handleEditFormChange}>
-              </div>
-              <div class="col-md-12">
-                <label class="form-label">Designation <span class="text-danger">*</span></label>
-                <select class="form-select" data-field="designation" onchange={handleEditFormChange}>
-                  <template for:each={designationOptions} for:item="d">
-                    <option key={d} value={d}>{d}</option>
-                  </template>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Joining Date <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" data-field="joiningDate" value={editForm.joiningDate} oninput={handleEditFormChange}>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Probation End Date <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" data-field="endDate" value={editForm.endDate} oninput={handleEditFormChange}>
-              </div>
-              <div class="col-md-12">
-                <label class="form-label">Reviewer <span class="text-danger">*</span></label>
-                <select class="form-select" data-field="reviewerName" onchange={handleEditFormChange}>
-                  <template for:each={reviewerOptions} for:item="r">
-                    <option key={r} value={r}>{r}</option>
-                  </template>
-                </select>
-              </div>
-              <div class="col-md-12">
-                <label class="form-label">Status</label>
-                <select class="form-select" data-field="status" onchange={handleEditFormChange}>
-                  <option value="Pending">Pending</option>
-                  <option value="In Review">In Review</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Extended">Extended</option>
-                  <option value="Failed">Failed</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer border-top p-3 d-flex justify-content-end gap-2">
-            <button type="button" class="btn btn-light" onclick={closeEditModal}>Cancel</button>
-            <button type="button" class="btn btn-primary" onclick={saveEditEmployee}>Save Changes</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </template>
-
-  <!-- Delete Modal -->
-  <template if:true={isDeleteModalOpen}>
-    <div class="modal-backdrop-custom d-flex align-items-center justify-content-center">
-      <div class="modal-dialog modal-dialog-centered" style="max-width: 450px; width: 100%;">
-        <div class="modal-content shadow-lg border-0 rounded-3 bg-white p-4 text-center">
-          <div class="modal-body text-center p-0">
-            <span class="avatar avatar-xl bg-transparent-danger text-danger mb-3 d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 60px; height: 60px; background: rgba(239, 68, 68, 0.1);">
-              <i class="ti ti-trash-x fs-36 text-danger" style="font-size: 32px;"></i>
-            </span>
-            <h4 class="mb-2 fs-18 fw-bold">Confirm Delete</h4>
-            <p class="mb-4 text-muted fs-14">You want to delete all the marked items, this cant be undone once you delete.</p>
-            <div class="d-flex justify-content-center gap-3">
-              <button type="button" class="btn btn-light px-4" onclick={closeDeleteModal}>Cancel</button>
-              <button type="button" class="btn btn-danger px-4" onclick={confirmDelete}>Yes, Delete</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </template>
-    </div>
-  </c-pwchrono-main-layout>
+    </template>
+  </div>
 </template>

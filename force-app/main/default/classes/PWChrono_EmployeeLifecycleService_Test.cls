@@ -38,7 +38,10 @@ private class PWChrono_EmployeeLifecycleService_Test {
     );
     insert employee;
 
-    insert new PWChrono_Department__c(Name = 'Engineering', Is_Active__c = true);
+    insert new PWChrono_Department__c(
+      Name = 'Engineering',
+      Is_Active__c = true
+    );
     insert new PWChrono_Designation__c(
       Name = 'Senior Developer',
       Is_Active__c = true
@@ -90,12 +93,50 @@ private class PWChrono_EmployeeLifecycleService_Test {
     Assert.areEqual(managerId, updated.Reports_To__c);
 
     Contact updatedContact = [
-      SELECT Department, Title
+      SELECT Department, Title, ReportsToId
       FROM Contact
       WHERE Id = :employee.Contact__c
     ];
     Assert.areEqual('Engineering', updatedContact.Department);
     Assert.areEqual('Senior Developer', updatedContact.Title);
+    Assert.isNull(
+      updatedContact.ReportsToId,
+      'A manager without a Contact clears the directory manager'
+    );
+  }
+
+  @isTest
+  static void applyAssignmentChangeUpdatesDirectoryManager() {
+    Portal_Users__c employee = getEmployee();
+    Contact oldManagerContact = new Contact(LastName = 'Old Manager');
+    Contact newManagerContact = new Contact(LastName = 'New Manager');
+    insert new List<Contact>{ oldManagerContact, newManagerContact };
+    update new Contact(
+      Id = employee.Contact__c,
+      ReportsToId = oldManagerContact.Id
+    );
+    Portal_Users__c manager = [
+      SELECT Id
+      FROM Portal_Users__c
+      WHERE Email__c = 'lifecycle.manager@test.com'
+    ];
+    manager.Contact__c = newManagerContact.Id;
+    update manager;
+
+    PWChrono_EmployeeLifecycleService.applyAssignmentChange(
+      employee.Id,
+      null,
+      null,
+      manager.Id
+    );
+
+    Assert.areEqual(manager.Id, getEmployee().Reports_To__c);
+    Assert.areEqual(
+      newManagerContact.Id,
+      [SELECT ReportsToId FROM Contact WHERE Id = :employee.Contact__c]
+      .ReportsToId,
+      'The directory shows the new manager'
+    );
   }
 
   @isTest
@@ -182,8 +223,16 @@ private class PWChrono_EmployeeLifecycleService_Test {
   @isTest
   static void applyAssignmentChangeRejectsUnknownDepartmentAndDesignation() {
     Portal_Users__c employee = getEmployee();
-    PWChrono_Department__c department = [SELECT Id FROM PWChrono_Department__c LIMIT 1];
-    PWChrono_Designation__c designation = [SELECT Id FROM PWChrono_Designation__c LIMIT 1];
+    PWChrono_Department__c department = [
+      SELECT Id
+      FROM PWChrono_Department__c
+      LIMIT 1
+    ];
+    PWChrono_Designation__c designation = [
+      SELECT Id
+      FROM PWChrono_Designation__c
+      LIMIT 1
+    ];
     Id departmentId = department.Id;
     Id designationId = designation.Id;
     delete department;
@@ -246,7 +295,9 @@ private class PWChrono_EmployeeLifecycleService_Test {
       );
       Assert.fail('A future effective date must be rejected.');
     } catch (PWChrono_EmployeeLifecycleService.LifecycleException e) {
-      Assert.isTrue(e.getMessage().startsWith('This promotion takes effect on'));
+      Assert.isTrue(
+        e.getMessage().startsWith('This promotion takes effect on')
+      );
     }
   }
 
@@ -295,7 +346,11 @@ private class PWChrono_EmployeeLifecycleService_Test {
     Test.stopTest();
 
     Assert.areEqual(2, created);
-    Assert.areEqual(0, createdAgain, 'Existing checklists must not be duplicated.');
+    Assert.areEqual(
+      0,
+      createdAgain,
+      'Existing checklists must not be duplicated.'
+    );
 
     List<PWChrono_Separation_Checklist__c> items = [
       SELECT Name, Assigned_To__c, Is_Required__c, Status__c, Notes__c
@@ -314,7 +369,10 @@ private class PWChrono_EmployeeLifecycleService_Test {
 
     Assert.areEqual(
       0,
-      PWChrono_EmployeeLifecycleService.createChecklistFromTemplate(null, template.Id)
+      PWChrono_EmployeeLifecycleService.createChecklistFromTemplate(
+        null,
+        template.Id
+      )
     );
   }
 }

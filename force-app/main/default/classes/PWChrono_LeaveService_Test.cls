@@ -477,18 +477,23 @@ private class PWChrono_LeaveService_Test {
     );
 
     Test.startTest();
+    Boolean blocked = false;
     try {
       PWChrono_LeaveService.cancelLeave(leave.Id, 'Not my leave', otherEmp.Id);
-      // Note: Since test user is internal (isAdmin=true by default),
-      // this may succeed. The guard is meaningful for guest users.
-      // We still verify the call path is exercised.
     } catch (AuraHandledException e) {
-      System.assert(
-        e.getMessage().contains('Unauthorized'),
-        'Should block unauthorized cancel'
-      );
+      // In Apex, AuraHandledException.getMessage() returns
+      // 'Script-thrown exception' unless setMessage() is called, so assert
+      // on the outcome rather than on the message text.
+      blocked = true;
     }
     Test.stopTest();
+
+    System.assert(blocked, 'Another employee must not cancel this leave');
+    System.assertEquals(
+      'Submitted',
+      [SELECT Status__c FROM Leave__c WHERE Id = :leave.Id].Status__c,
+      'The leave must remain Submitted'
+    );
   }
 
   // ── Admin Operations Tests ──

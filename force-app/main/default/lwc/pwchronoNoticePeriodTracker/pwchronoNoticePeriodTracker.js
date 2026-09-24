@@ -1,61 +1,320 @@
-﻿import { LightningElement, track } from "lwc";
+import { LightningElement } from "lwc";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
-import smarthrAssets from "@salesforce/resourceUrl/smarthr_assets";
+import { NavigationMixin } from "lightning/navigation";
+import getNoticeRecords from "@salesforce/apex/PWChrono_NoticePeriodController.getNoticeRecords";
+import getNoticeOptions from "@salesforce/apex/PWChrono_NoticePeriodController.getNoticeOptions";
+import saveNotice from "@salesforce/apex/PWChrono_NoticePeriodController.saveNotice";
+import withdrawNotices from "@salesforce/apex/PWChrono_NoticePeriodController.withdrawNotices";
+import { getSession, getSessionToken } from "c/pwchronoSession";
+import { downloadCsv } from "c/pwchronoCsv";
 import {
-  INITIAL_NOTICE_RECORDS,
-  DESIGNATION_OPTIONS
+  ADMIN_ROLES,
+  BADGE_CLASSES,
+  CSV_HEADERS,
+  DEFAULT_NOTICE_DAYS,
+  PAGE_SIZE,
+  REASON_MAX_LENGTH,
+  SORT_OPTIONS
 } from "./pwchronoNoticeConstants";
 
-export default class PwchronoNoticePeriodTracker extends LightningElement {
-  @track records = [];
-  @track searchKeyword = "";
-  @track selectedDesignation = "";
-  @track currentSort = "Last 7 Days";
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec"
+];
 
-  @track isExportOpen = false;
-  @track isDesigOpen = false;
-  @track isSortOpen = false;
-  @track isCollapsed = false;
+function pad(value) {
+  return String(value).padStart(2, "0");
+}
 
-  @track isDetailsOpen = false;
-  @track isAddModalOpen = false;
-  @track isEditModalOpen = false;
-  @track isDeleteModalOpen = false;
+function toIsoDate(date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
 
-  @track activeRecord = null;
-  @track deletingId = null;
-  @track addForm = {};
-  @track editForm = {};
+function parseIsoDate(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value || "");
+  return match
+    ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+    : null;
+}
+
+function todayIso() {
+  return toIsoDate(new Date());
+}
+
+function addDaysIso(value, days) {
+  const date = parseIsoDate(value);
+  if (!date) {
+    return "";
+  }
+  date.setDate(date.getDate() + days);
+  return toIsoDate(date);
+}
+
+function formatDate(value) {
+  const date = parseIsoDate(value);
+  return date
+    ? `${pad(date.getDate())} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`
+    : "-";
+}
+
+function numberLabel(value) {
+  return value === null || value === undefined ? "-" : String(value);
+}
+
+function initialsOf(name) {
+  return (
+    String(name || "")
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join("") || "?"
+  );
+}
+
+function reduceError(error, fallback) {
+  const body = error?.body;
+  if (Array.isArray(body)) {
+    const text = body
+      .map((item) => item?.message)
+      .filter(Boolean)
+      .join("; ");
+    return text || fallback;
+  }
+  return (
+    body?.message ||
+    body?.pageErrors?.[0]?.message ||
+    error?.message ||
+    fallback
+  );
+}
+
+// Nulls always sort last, whatever the direction.
+function compareNullable(a, b, direction) {
+  const aMissing = a === null || a === undefined || a === "";
+  const bMissing = b === null || b === undefined || b === "";
+  if (aMissing || bMissing) {
+    return Number(aMissing) - Number(bMissing);
+  }
+  if (a === b) {
+    return 0;
+  }
+  return (a < b ? -1 : 1) * direction;
+}
+
+const byName = (a, b) => a.employeeName.localeCompare(b.employeeName);
+
+const isFinished = (record) => record.noticeStatus === "Completed";
+
+// Current notices first, soonest last working day first; finished notices
+// after them, most recent last working day first. Old history therefore never
+// pushes the notices people are still serving off the first page.
+function byLastWorkingDay(a, b) {
+  const aFinished = isFinished(a);
+  const group = Number(aFinished) - Number(isFinished(b));
+  if (group !== 0) {
+    return group;
+  }
+  return (
+    compareNullable(a.endDate, b.endDate, aFinished ? -1 : 1) ||
+    compareNullable(a.startDate, b.startDate, aFinished ? -1 : 1) ||
+    byName(a, b)
+  );
+}
+
+const SORTERS = {
+  lastWorkingDay: byLastWorkingDay,
+  startDesc: (a, b) =>
+    compareNullable(a.startDate, b.startDate, -1) || byName(a, b),
+  progressDesc: (a, b) =>
+    compareNullable(a.progress, b.progress, -1) ||
+    compareNullable(a.endDate, b.endDate, 1) ||
+    byName(a, b),
+  nameAsc: (a, b) => byName(a, b),
+  nameDesc: (a, b) => byName(b, a)
+};
+
+export default class PwchronoNoticePeriodTracker extends NavigationMixin(
+  LightningElement
+) {
+  portalUserId = null;
+  sessionToken = null;
+  role = "";
+
+  records = [];
+  isLoading = true;
+  loadError = null;
+  isSaving = false;
+
+  searchKeyword = "";
+  selectedDesignation = "";
+  currentSort = "lastWorkingDay";
+  currentPage = 1;
+  selectedIds = [];
+
+  isExportOpen = false;
+  isDesigOpen = false;
+  isSortOpen = false;
+  isCollapsed = false;
+
+  isDetailsOpen = false;
+  isAddModalOpen = false;
+  isEditModalOpen = false;
+  isWithdrawModalOpen = false;
+
+  activeRecord = null;
+  withdrawIds = [];
+
+  addForm = {};
+  endDateTouched = false;
+  employeeOptions = [];
+  isOptionsLoading = false;
+  optionsError = null;
+
+  editForm = {};
+  pendingReason = null;
 
   connectedCallback() {
-    this.records = INITIAL_NOTICE_RECORDS.map((r) => {
-      const total = parseInt(r.totalDays, 10) || 90;
-      const done = parseInt(r.completedDays, 10) || 0;
-      const pct = Math.min(100, Math.round((done / (total || 1)) * 100));
-      return {
-        ...r,
-        selected: false,
-        team: this.resolveTeam(r.designation),
-        avatarUrl: `${smarthrAssets}/assets/img/users/${r.img || "user-11.jpg"}`,
-        badgeClass: this.resolveBadgeClass(r.status),
-        progressStyle: `width: ${pct}%;`
-      };
-    });
+    this.readSession();
+    this.loadRecords();
   }
 
-  resolveTeam(designation) {
-    if (!designation) return "Operations";
-    if (designation.includes("Developer") || designation.includes("Technician")) return "Engineering";
-    if (designation.includes("Account")) return "Finance";
-    if (designation.includes("Sales") || designation.includes("SEO")) return "Marketing";
-    return "HR & Admin";
+  // A textarea's content is a DOM property, not an attribute, so the edit
+  // modal's reason is written once the freshly rendered field exists.
+  renderedCallback() {
+    if (this.pendingReason === null) {
+      return;
+    }
+    const area = this.template.querySelector('textarea[data-field="reason"]');
+    if (area) {
+      area.value = this.pendingReason;
+      this.pendingReason = null;
+    }
   }
 
-  resolveBadgeClass(status) {
-    const s = (status || "").toLowerCase();
-    if (s === "completed") return "badge badge-soft-dark text-dark d-inline-flex align-items-center badge-xs";
-    if (s === "closing soon") return "badge badge-soft-danger d-inline-flex align-items-center badge-xs";
-    return "badge badge-soft-success d-inline-flex align-items-center badge-xs";
+  readSession() {
+    const session = getSession() || {};
+    const user = session.user || {};
+    this.portalUserId = user.Id || session.portalUserId || null;
+    this.role = user.Role__c || user.role || session.role || "";
+    this.sessionToken = getSessionToken();
+  }
+
+  get sessionParams() {
+    return {
+      portalUserId: this.portalUserId,
+      sessionToken: this.sessionToken
+    };
+  }
+
+  get isAdmin() {
+    return ADMIN_ROLES.includes(this.role);
+  }
+
+  // ─── Data ──────────────────────────────────────────────────────────────
+
+  async loadRecords() {
+    this.isLoading = true;
+    this.loadError = null;
+    try {
+      const data = await getNoticeRecords(this.sessionParams);
+      this.records = (data || []).map((record) => this.decorate(record));
+      // Keep only selections that can still be withdrawn: a row completed
+      // elsewhere in the meantime is disabled and could not be unticked.
+      const withdrawable = new Set(
+        this.records
+          .filter((record) => record.canWithdraw)
+          .map((record) => record.id)
+      );
+      this.selectedIds = this.selectedIds.filter((id) => withdrawable.has(id));
+      // Refresh the details panel only when it is on screen.
+      if (this.isDetailsOpen && this.activeRecord) {
+        this.activeRecord = this.findRecord(this.activeRecord.id);
+        this.isDetailsOpen = Boolean(this.activeRecord);
+      } else {
+        this.activeRecord = null;
+      }
+    } catch (error) {
+      this.records = [];
+      this.loadError = reduceError(
+        error,
+        "Notice periods could not be loaded."
+      );
+      this.showToast("Error", this.loadError, "error");
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  decorate(record) {
+    const progress = Math.min(
+      100,
+      Math.max(0, Number(record.progressPercent) || 0)
+    );
+    const employeeName = record.employeeName || "Unknown employee";
+    const isOpen = record.isOpen === true;
+    return {
+      ...record,
+      employeeName,
+      initials: initialsOf(employeeName),
+      hasPhoto: Boolean(record.photoUrl),
+      designationLabel: record.designation || "-",
+      departmentLabel: record.department || "-",
+      startDateLabel: formatDate(record.startDate),
+      endDateLabel: formatDate(record.endDate),
+      totalDaysLabel: numberLabel(record.totalDays),
+      completedDaysLabel: numberLabel(record.completedDays),
+      remainingDaysLabel: numberLabel(record.remainingDays),
+      reasonLabel: record.reason || "Not recorded",
+      separationStatusLabel: record.separationStatus || "-",
+      noticeStatus: record.noticeStatus || "Active",
+      badgeClass: BADGE_CLASSES[record.noticeStatus] || BADGE_CLASSES.Active,
+      progress,
+      progressLabel: `${progress}%`,
+      progressStyle: `width: ${progress}%;`,
+      canEdit: isOpen,
+      canWithdraw: isOpen && this.isAdmin,
+      selectDisabled: !isOpen,
+      searchText: [
+        employeeName,
+        record.recordNumber,
+        record.designation,
+        record.department
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+    };
+  }
+
+  // ─── Derived view state ────────────────────────────────────────────────
+
+  get hasRecords() {
+    return this.records.length > 0;
+  }
+
+  // Refreshes after a save keep the table on screen; only the first load
+  // (or a reload with nothing to show) replaces it with the loading state.
+  get showLoading() {
+    return this.isLoading && !this.hasRecords;
+  }
+
+  get showEmptyState() {
+    return !this.isLoading && !this.loadError && !this.hasRecords;
+  }
+
+  get isExpanded() {
+    return !this.isCollapsed;
   }
 
   get collapseIcon() {
@@ -63,43 +322,107 @@ export default class PwchronoNoticePeriodTracker extends LightningElement {
   }
 
   get designationOptions() {
-    return DESIGNATION_OPTIONS;
+    const names = new Set(
+      this.records.map((record) => record.designation).filter(Boolean)
+    );
+    return [...names].sort((a, b) => a.localeCompare(b));
   }
 
   get selectedDesignationLabel() {
     return this.selectedDesignation || "Designation";
   }
 
-  get displayedRecords() {
-    let list = [...this.records];
-    if (this.searchKeyword && this.searchKeyword.trim()) {
-      const q = this.searchKeyword.toLowerCase().trim();
-      list = list.filter(
-        (r) =>
-          r.name.toLowerCase().includes(q) ||
-          r.empId.toLowerCase().includes(q) ||
-          r.designation.toLowerCase().includes(q)
-      );
-    }
-    if (this.selectedDesignation) {
-      list = list.filter((r) => r.designation === this.selectedDesignation);
-    }
-    if (this.currentSort === "Ascending") {
-      list.sort((a, b) => a.name.localeCompare(b.name));
-    } else if (this.currentSort === "Descending") {
-      list.sort((a, b) => b.name.localeCompare(a.name));
-    }
-    return list;
+  get sortOptions() {
+    return SORT_OPTIONS;
   }
 
-  get displayedCount() {
-    return this.displayedRecords.length;
+  get currentSortLabel() {
+    return (
+      SORT_OPTIONS.find((option) => option.value === this.currentSort)?.label ||
+      SORT_OPTIONS[0].label
+    );
+  }
+
+  get filteredRecords() {
+    const query = (this.searchKeyword || "").trim().toLowerCase();
+    let list = this.records;
+    if (query) {
+      list = list.filter((record) => record.searchText.includes(query));
+    }
+    if (this.selectedDesignation) {
+      list = list.filter(
+        (record) => record.designation === this.selectedDesignation
+      );
+    }
+    return [...list].sort(SORTERS[this.currentSort] || byLastWorkingDay);
+  }
+
+  get filteredCount() {
+    return this.filteredRecords.length;
+  }
+
+  get hasFilteredRecords() {
+    return this.filteredCount > 0;
+  }
+
+  get totalPages() {
+    return Math.max(1, Math.ceil(this.filteredCount / PAGE_SIZE));
+  }
+
+  get pageNumber() {
+    return Math.min(Math.max(1, this.currentPage), this.totalPages);
+  }
+
+  get displayedRecords() {
+    const start = (this.pageNumber - 1) * PAGE_SIZE;
+    const selected = new Set(this.selectedIds);
+    return this.filteredRecords
+      .slice(start, start + PAGE_SIZE)
+      .map((record) => ({ ...record, selected: selected.has(record.id) }));
+  }
+
+  get pageStart() {
+    return this.filteredCount === 0 ? 0 : (this.pageNumber - 1) * PAGE_SIZE + 1;
+  }
+
+  get pageEnd() {
+    return Math.min(this.pageNumber * PAGE_SIZE, this.filteredCount);
+  }
+
+  get isFirstPage() {
+    return this.pageNumber <= 1;
+  }
+
+  get isLastPage() {
+    return this.pageNumber >= this.totalPages;
+  }
+
+  get selectableOnPage() {
+    return this.displayedRecords.filter((record) => record.canWithdraw);
   }
 
   get isAllSelected() {
-    const list = this.displayedRecords;
-    return list.length > 0 && list.every((r) => r.selected);
+    const selectable = this.selectableOnPage;
+    return selectable.length > 0 && selectable.every((row) => row.selected);
   }
+
+  get isSelectAllDisabled() {
+    return this.selectableOnPage.length === 0;
+  }
+
+  get selectedCount() {
+    return this.selectedIds.length;
+  }
+
+  get showBulkWithdraw() {
+    return this.isAdmin && this.selectedCount > 0;
+  }
+
+  get tableColumnCount() {
+    return this.isAdmin ? 11 : 10;
+  }
+
+  // ─── Toolbar ───────────────────────────────────────────────────────────
 
   toggleCollapse() {
     this.isCollapsed = !this.isCollapsed;
@@ -107,48 +430,115 @@ export default class PwchronoNoticePeriodTracker extends LightningElement {
 
   toggleExportDropdown() {
     this.isExportOpen = !this.isExportOpen;
+    this.isDesigOpen = false;
+    this.isSortOpen = false;
   }
 
   toggleDesigDropdown() {
     this.isDesigOpen = !this.isDesigOpen;
+    this.isExportOpen = false;
+    this.isSortOpen = false;
   }
 
   toggleSortDropdown() {
     this.isSortOpen = !this.isSortOpen;
-  }
-
-  selectDesignation(e) {
-    this.selectedDesignation = e.currentTarget.dataset.desig;
+    this.isExportOpen = false;
     this.isDesigOpen = false;
   }
 
-  selectSort(e) {
-    this.currentSort = e.currentTarget.dataset.sort;
+  selectDesignation(event) {
+    this.selectedDesignation = event.currentTarget.dataset.desig || "";
+    this.isDesigOpen = false;
+    this.currentPage = 1;
+  }
+
+  selectSort(event) {
+    this.currentSort = event.currentTarget.dataset.sort;
     this.isSortOpen = false;
+    this.currentPage = 1;
   }
 
-  handleSearch(e) {
-    this.searchKeyword = e.target.value;
+  handleSearch(event) {
+    this.searchKeyword = event.target.value;
+    this.currentPage = 1;
   }
 
-  handleSelectAll(e) {
-    const isChecked = e.target.checked;
-    this.records = this.records.map((r) => ({ ...r, selected: isChecked }));
+  clearFilters() {
+    this.searchKeyword = "";
+    this.selectedDesignation = "";
+    this.currentPage = 1;
   }
 
-  handleSelectRow(e) {
-    const id = e.target.dataset.id;
-    const isChecked = e.target.checked;
-    this.records = this.records.map((r) =>
-      r.id === id ? { ...r, selected: isChecked } : r
-    );
+  handlePreviousPage() {
+    if (!this.isFirstPage) {
+      this.currentPage = this.pageNumber - 1;
+    }
   }
 
-  openDetails(e) {
-    const id = e.currentTarget.dataset.id;
-    const item = this.records.find((r) => r.id === id);
-    if (item) {
-      this.activeRecord = item;
+  handleNextPage() {
+    if (!this.isLastPage) {
+      this.currentPage = this.pageNumber + 1;
+    }
+  }
+
+  handleRetry() {
+    this.loadRecords();
+  }
+
+  handleImageError(event) {
+    const id = event.target.dataset.id;
+    this.records = this.records.map((record) => {
+      return record.id === id ? { ...record, hasPhoto: false } : record;
+    });
+    if (this.activeRecord?.id === id) {
+      this.activeRecord = { ...this.activeRecord, hasPhoto: false };
+    }
+  }
+
+  goToSeparations() {
+    this[NavigationMixin.Navigate]({
+      type: "comm__namedPage",
+      attributes: { name: "Separations__c" }
+    });
+  }
+
+  // ─── Selection ─────────────────────────────────────────────────────────
+
+  handleSelectAll(event) {
+    const pageIds = this.selectableOnPage.map((record) => record.id);
+    const current = new Set(this.selectedIds);
+    const checked = event.target.checked;
+    pageIds.forEach((id) => {
+      if (checked) {
+        current.add(id);
+      } else {
+        current.delete(id);
+      }
+    });
+    this.selectedIds = [...current];
+  }
+
+  handleSelectRow(event) {
+    const id = event.target.dataset.id;
+    const current = new Set(this.selectedIds);
+    if (event.target.checked) {
+      current.add(id);
+    } else {
+      current.delete(id);
+    }
+    this.selectedIds = [...current];
+  }
+
+  // ─── Details ───────────────────────────────────────────────────────────
+
+  findRecord(id) {
+    return this.records.find((record) => record.id === id) || null;
+  }
+
+  openDetails(event) {
+    const record = this.findRecord(event.currentTarget.dataset.id);
+    if (record) {
+      this.activeRecord = record;
       this.isDetailsOpen = true;
     }
   }
@@ -158,128 +548,283 @@ export default class PwchronoNoticePeriodTracker extends LightningElement {
     this.activeRecord = null;
   }
 
-  openAddModal() {
+  // ─── Add notice ────────────────────────────────────────────────────────
+
+  get employeeSelectOptions() {
+    return this.employeeOptions.map((option) => ({
+      value: option.id,
+      label: option.designation
+        ? `${option.name} - ${option.designation}`
+        : option.name,
+      selected: option.id === this.addForm.employeeId
+    }));
+  }
+
+  get hasEmployeeOptions() {
+    return this.employeeOptions.length > 0;
+  }
+
+  get showNoEmployeeOptions() {
+    return (
+      !this.isOptionsLoading && !this.optionsError && !this.hasEmployeeOptions
+    );
+  }
+
+  get isAddSaveDisabled() {
+    return this.isSaving || this.isOptionsLoading || !this.hasEmployeeOptions;
+  }
+
+  get selectedEmployeeOption() {
+    return (
+      this.employeeOptions.find(
+        (option) => option.id === this.addForm.employeeId
+      ) || null
+    );
+  }
+
+  get reasonMaxLength() {
+    return REASON_MAX_LENGTH;
+  }
+
+  async openAddModal() {
+    const start = todayIso();
     this.addForm = {
-      name: "",
-      designation: "Accountant",
-      startDate: new Date().toISOString().split("T")[0],
-      endDate: new Date(Date.now() + 90 * 86400000).toISOString().split("T")[0],
-      totalDays: 90,
-      completedDays: 0,
-      status: "Active"
+      employeeId: "",
+      startDate: start,
+      endDate: addDaysIso(start, DEFAULT_NOTICE_DAYS),
+      reason: ""
     };
+    this.endDateTouched = false;
     this.isAddModalOpen = true;
+    await this.loadEmployeeOptions();
+  }
+
+  async loadEmployeeOptions() {
+    this.isOptionsLoading = true;
+    this.optionsError = null;
+    try {
+      this.employeeOptions = (await getNoticeOptions(this.sessionParams)) || [];
+    } catch (error) {
+      this.employeeOptions = [];
+      this.optionsError = reduceError(error, "Employees could not be loaded.");
+      this.showToast("Error", this.optionsError, "error");
+    } finally {
+      this.isOptionsLoading = false;
+    }
   }
 
   closeAddModal() {
-    this.isAddModalOpen = false;
+    if (!this.isSaving) {
+      this.isAddModalOpen = false;
+    }
   }
 
-  handleAddFormChange(e) {
-    const field = e.target.dataset.field;
-    this.addForm[field] = e.target.value;
+  handleAddFormChange(event) {
+    const field = event.target.dataset.field;
+    const value = event.target.value;
+    const next = { ...this.addForm, [field]: value };
+    if (field === "endDate") {
+      this.endDateTouched = true;
+    }
+    if (field === "startDate" && !this.endDateTouched && value) {
+      next.endDate = addDaysIso(value, DEFAULT_NOTICE_DAYS);
+    }
+    this.addForm = next;
   }
 
-  saveNewEmployee() {
-    if (!this.addForm.name) {
-      this.showToast("Required", "Please enter Employee Name", "error");
+  async saveNewNotice() {
+    const form = this.addForm;
+    const problem = !form.employeeId
+      ? "Select the employee who is serving notice."
+      : this.validateNoticeForm(form);
+    if (problem) {
+      this.showToast("Check the form", problem, "error");
       return;
     }
-    const nextIdx = this.records.length + 1;
-    const total = parseInt(this.addForm.totalDays, 10) || 90;
-    const done = parseInt(this.addForm.completedDays, 10) || 0;
-    const remain = Math.max(0, total - done);
-    const pct = Math.min(100, Math.round((done / total) * 100));
-
-    const newRecord = {
-      id: "emp-" + Date.now(),
-      empId: "Emp-" + String(nextIdx).padStart(3, "0"),
-      name: this.addForm.name,
-      img: "user-11.jpg",
-      avatarUrl: `${smarthrAssets}/assets/img/users/user-11.jpg`,
-      designation: this.addForm.designation || "Accountant",
-      team: this.resolveTeam(this.addForm.designation),
-      startDate: this.addForm.startDate,
-      endDate: this.addForm.endDate,
-      totalDays: String(total),
-      completedDays: String(done),
-      remainingDays: String(remain),
-      status: this.addForm.status || "Active",
-      badgeClass: this.resolveBadgeClass(this.addForm.status || "Active"),
-      progressStyle: `width: ${pct}%;`,
-      selected: false
-    };
-    this.records = [newRecord, ...this.records];
-    this.isAddModalOpen = false;
-    this.showToast("Success", "Employee added to Notice Period Tracker", "success");
+    const saved = await this.persist(
+      {
+        noticeId: null,
+        employeeId: form.employeeId,
+        startDate: form.startDate,
+        endDate: form.endDate,
+        reason: (form.reason || "").trim() || null
+      },
+      "Notice recorded. A pending separation was started for the employee."
+    );
+    if (saved) {
+      this.isAddModalOpen = false;
+    }
   }
 
-  openEditModal(e) {
-    const id = e.currentTarget.dataset.id;
-    const item = this.records.find((r) => r.id === id);
-    if (item) {
-      this.editForm = { ...item };
-      this.isEditModalOpen = true;
+  // ─── Edit notice ───────────────────────────────────────────────────────
+
+  openEditModal(event) {
+    const record = this.findRecord(event.currentTarget.dataset.id);
+    if (!record) {
+      return;
     }
+    if (!record.canEdit) {
+      this.showToast(
+        "Not editable",
+        `${record.recordNumber} is ${String(record.separationStatus).toLowerCase()} and can no longer be edited.`,
+        "warning"
+      );
+      return;
+    }
+    this.editForm = {
+      id: record.id,
+      employeeId: record.employeeId,
+      employeeName: record.employeeName,
+      recordNumber: record.recordNumber,
+      startDate: record.startDate || "",
+      endDate: record.endDate || "",
+      reason: record.reason || ""
+    };
+    this.pendingReason = this.editForm.reason;
+    this.closeDetails();
+    this.isEditModalOpen = true;
   }
 
   closeEditModal() {
-    this.isEditModalOpen = false;
-  }
-
-  handleEditFormChange(e) {
-    const field = e.target.dataset.field;
-    this.editForm[field] = e.target.value;
-  }
-
-  saveEditEmployee() {
-    const total = parseInt(this.editForm.totalDays, 10) || 90;
-    const done = parseInt(this.editForm.completedDays, 10) || 0;
-    const remain = Math.max(0, total - done);
-    const pct = Math.min(100, Math.round((done / total) * 100));
-
-    this.records = this.records.map((r) => {
-      if (r.id === this.editForm.id) {
-        return {
-          ...r,
-          name: this.editForm.name,
-          designation: this.editForm.designation,
-          startDate: this.editForm.startDate,
-          endDate: this.editForm.endDate,
-          totalDays: String(total),
-          completedDays: String(done),
-          remainingDays: String(remain),
-          status: this.editForm.status,
-          badgeClass: this.resolveBadgeClass(this.editForm.status),
-          progressStyle: `width: ${pct}%;`
-        };
-      }
-      return r;
-    });
-    this.isEditModalOpen = false;
-    this.showToast("Success", "Employee notice record updated", "success");
-  }
-
-  openDeleteModal(e) {
-    this.deletingId = e.currentTarget.dataset.id;
-    this.isDeleteModalOpen = true;
-  }
-
-  closeDeleteModal() {
-    this.isDeleteModalOpen = false;
-    this.deletingId = null;
-  }
-
-  confirmDelete() {
-    if (this.deletingId) {
-      this.records = this.records.filter((r) => r.id !== this.deletingId);
-    } else {
-      this.records = this.records.filter((r) => !r.selected);
+    if (!this.isSaving) {
+      this.isEditModalOpen = false;
     }
-    this.isDeleteModalOpen = false;
-    this.deletingId = null;
-    this.showToast("Success", "Record deleted successfully", "success");
   }
+
+  handleEditFormChange(event) {
+    const field = event.target.dataset.field;
+    this.editForm = { ...this.editForm, [field]: event.target.value };
+  }
+
+  async saveEditNotice() {
+    const form = this.editForm;
+    const problem = this.validateNoticeForm(form);
+    if (problem) {
+      this.showToast("Check the form", problem, "error");
+      return;
+    }
+    const saved = await this.persist(
+      {
+        noticeId: form.id,
+        employeeId: form.employeeId || null,
+        startDate: form.startDate,
+        endDate: form.endDate,
+        reason: (form.reason || "").trim() || null
+      },
+      "Notice period updated."
+    );
+    if (saved) {
+      this.isEditModalOpen = false;
+    }
+  }
+
+  validateNoticeForm(form) {
+    if (!form.startDate || !form.endDate) {
+      return "Enter both the notice start date and the last working day.";
+    }
+    if (form.endDate < form.startDate) {
+      return "The last working day cannot be before the notice start date.";
+    }
+    if ((form.reason || "").trim().length > REASON_MAX_LENGTH) {
+      return `The reason must be ${REASON_MAX_LENGTH} characters or fewer.`;
+    }
+    return null;
+  }
+
+  async persist(params, successMessage) {
+    this.isSaving = true;
+    try {
+      await saveNotice({ ...params, ...this.sessionParams });
+      this.showToast("Saved", successMessage, "success");
+      await this.loadRecords();
+      return true;
+    } catch (error) {
+      this.showToast(
+        "Could not save",
+        reduceError(error, "The notice could not be saved."),
+        "error"
+      );
+      return false;
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  // ─── Withdraw (administrators) ─────────────────────────────────────────
+
+  get withdrawSummary() {
+    if (this.withdrawIds.length === 1) {
+      const record = this.findRecord(this.withdrawIds[0]);
+      return record
+        ? `${record.employeeName} (${record.recordNumber})`
+        : "this notice";
+    }
+    return `${this.withdrawIds.length} selected notices`;
+  }
+
+  get withdrawButtonLabel() {
+    return this.isSaving ? "Withdrawing..." : "Yes, withdraw";
+  }
+
+  openWithdrawModal(event) {
+    const record = this.findRecord(event.currentTarget.dataset.id);
+    if (!record || !record.canWithdraw) {
+      return;
+    }
+    this.withdrawIds = [record.id];
+    this.closeDetails();
+    this.isWithdrawModalOpen = true;
+  }
+
+  openBulkWithdraw() {
+    if (!this.isAdmin || this.selectedIds.length === 0) {
+      return;
+    }
+    this.withdrawIds = [...this.selectedIds];
+    this.isWithdrawModalOpen = true;
+  }
+
+  closeWithdrawModal() {
+    if (!this.isSaving) {
+      this.isWithdrawModalOpen = false;
+      this.withdrawIds = [];
+    }
+  }
+
+  async confirmWithdraw() {
+    if (!this.isAdmin || this.withdrawIds.length === 0) {
+      return;
+    }
+    this.isSaving = true;
+    try {
+      const count = await withdrawNotices({
+        noticeIds: this.withdrawIds,
+        ...this.sessionParams
+      });
+      const withdrawn = new Set(this.withdrawIds);
+      this.selectedIds = this.selectedIds.filter((id) => !withdrawn.has(id));
+      this.isWithdrawModalOpen = false;
+      this.withdrawIds = [];
+      this.showToast(
+        "Notice withdrawn",
+        count === 1
+          ? "1 notice was withdrawn and its separation cancelled."
+          : `${count || 0} notices were withdrawn and their separations cancelled.`,
+        "success"
+      );
+      await this.loadRecords();
+    } catch (error) {
+      this.showToast(
+        "Could not withdraw",
+        reduceError(error, "The notice could not be withdrawn."),
+        "error"
+      );
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  // ─── Export ────────────────────────────────────────────────────────────
 
   exportPDF() {
     this.isExportOpen = false;
@@ -288,7 +833,30 @@ export default class PwchronoNoticePeriodTracker extends LightningElement {
 
   exportExcel() {
     this.isExportOpen = false;
-    this.showToast("Export", "Export to Excel started", "info");
+    const rows = this.filteredRecords.map((record) => [
+      record.recordNumber,
+      record.employeeName,
+      record.designation || "",
+      record.department || "",
+      record.startDate || "",
+      record.endDate || "",
+      record.totalDays ?? "",
+      record.completedDays ?? "",
+      record.remainingDays ?? "",
+      record.progress,
+      record.noticeStatus,
+      record.separationStatus || "",
+      record.reason || ""
+    ]);
+    if (rows.length === 0) {
+      this.showToast(
+        "Nothing to export",
+        "No notice periods match the current filters.",
+        "info"
+      );
+      return;
+    }
+    downloadCsv(`notice-period-tracker-${todayIso()}.csv`, CSV_HEADERS, rows);
   }
 
   showToast(title, message, variant) {

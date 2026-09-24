@@ -1,149 +1,78 @@
-﻿export const INITIAL_PROBATION_RECORDS = [
-    {
-        "id":  "emp-001",
-        "empId":  "Emp-001",
-        "name":  "Anthony Lewis",
-        "img":  "user-11.jpg",
-        "designation":  "Accountant",
-        "joiningDate":  "14 Jun 2025",
-        "endDate":  "12 Sep 2025",
-        "reviewerName":  "William Parsons",
-        "reviewerImg":  "user-01.jpg",
-        "status":  "Pending"
-    },
-    {
-        "id":  "emp-002",
-        "empId":  "Emp-002",
-        "name":  "Brian Villalobos",
-        "img":  "user-13.jpg",
-        "designation":  "App Developer",
-        "joiningDate":  "25 May 2025",
-        "endDate":  "24 Jul 2025",
-        "reviewerName":  "Lucille Tomberlin",
-        "reviewerImg":  "user-02.jpg",
-        "status":  "Completed"
-    },
-    {
-        "id":  "emp-003",
-        "empId":  "Emp-003",
-        "name":  "Harvey Smith",
-        "img":  "user-12.jpg",
-        "designation":  "Technician",
-        "joiningDate":  "10 May 2025",
-        "endDate":  "08 Aug 2025",
-        "reviewerName":  "Frederick Johnson",
-        "reviewerImg":  "user-03.jpg",
-        "status":  "In Review"
-    },
-    {
-        "id":  "emp-004",
-        "empId":  "Emp-004",
-        "name":  "Stephan Peralt",
-        "img":  "user-16.jpg",
-        "designation":  "Web Developer",
-        "joiningDate":  "28 Apr 2025",
-        "endDate":  "27 Jul 2025",
-        "reviewerName":  "Sarah Henry",
-        "reviewerImg":  "user-04.jpg",
-        "status":  "Failed"
-    },
-    {
-        "id":  "emp-005",
-        "empId":  "Emp-005",
-        "name":  "Doglas Martini",
-        "img":  "user-15.jpg",
-        "designation":  "Sales Executive Officer",
-        "joiningDate":  "15 Apr 2025",
-        "endDate":  "14 Jun 2025",
-        "reviewerName":  "Thomas Miller",
-        "reviewerImg":  "user-05.jpg",
-        "status":  "Extended"
-    },
-    {
-        "id":  "emp-006",
-        "empId":  "Emp-006",
-        "name":  "Linda Ray",
-        "img":  "user-14.jpg",
-        "designation":  "Designer",
-        "joiningDate":  "20 Mar 2025",
-        "endDate":  "18 Jun 2025",
-        "reviewerName":  "Melissa Shelton",
-        "reviewerImg":  "user-06.jpg",
-        "status":  "Completed"
-    },
-    {
-        "id":  "emp-007",
-        "empId":  "Emp-007",
-        "name":  "Elliot Murray",
-        "img":  "user-17.jpg",
-        "designation":  "Account Manager",
-        "joiningDate":  "10 Mar 2025",
-        "endDate":  "08 Jun 2025",
-        "reviewerName":  "James Rodriguez",
-        "reviewerImg":  "user-07.jpg",
-        "status":  "In Review"
-    },
-    {
-        "id":  "emp-008",
-        "empId":  "Emp-008",
-        "name":  "Rebecca Smtih",
-        "img":  "user-18.jpg",
-        "designation":  "SEO Analyst",
-        "joiningDate":  "17 Feb 2025",
-        "endDate":  "18 Apr 2025",
-        "reviewerName":  "Regina Chavez",
-        "reviewerImg":  "user-08.jpg",
-        "status":  "Completed"
-    },
-    {
-        "id":  "emp-009",
-        "empId":  "Emp-009",
-        "name":  "Connie Waters",
-        "img":  "user-20.jpg",
-        "designation":  "Admin",
-        "joiningDate":  "02 Feb 2025",
-        "endDate":  "03 Apr 2025",
-        "reviewerName":  "Joshua Dillon",
-        "reviewerImg":  "user-09.jpg",
-        "status":  "Failed"
-    },
-    {
-        "id":  "emp-010",
-        "empId":  "Emp-010",
-        "name":  "Lori Broaddus",
-        "img":  "user-19.jpg",
-        "designation":  "Business Analyst",
-        "joiningDate":  "24 Jan 2025",
-        "endDate":  "24 Apr 2025",
-        "reviewerName":  "Diana Riddle",
-        "reviewerImg":  "user-10.jpg",
-        "status":  "Pending"
-    }
-]
-;
+// Option constants for Probation Management. Records, employees and reviewers
+// always come from PWChrono_ProbationController; nothing here is sample data.
 
-export const DESIGNATION_OPTIONS = [
-  "Accountant",
-  "App Developer",
-  "Technician",
-  "Web Developer",
-  "Sales Executive Officer",
-  "Designer",
-  "Account Manager",
-  "SEO Analyst",
-  "Admin",
-  "Business Analyst"
+export const STATUS = {
+  PENDING: "Pending",
+  IN_REVIEW: "In Review",
+  EXTENDED: "Extended",
+  COMPLETED: "Completed",
+  FAILED: "Failed"
+};
+
+/** Stages that can still be edited or decided. */
+export const OPEN_STATUSES = [
+  STATUS.PENDING,
+  STATUS.IN_REVIEW,
+  STATUS.EXTENDED
 ];
 
-export const REVIEWER_OPTIONS = [
-  "William Parsons",
-  "Lucille Tomberlin",
-  "Frederick Johnson",
-  "Sarah Henry",
-  "Thomas Miller",
-  "Melissa Shelton",
-  "James Rodriguez",
-  "Regina Chavez",
-  "Joshua Dillon",
-  "Diana Riddle"
+/** Stages an administrator may delete. */
+export const DELETABLE_STATUSES = [STATUS.PENDING, STATUS.IN_REVIEW];
+
+/** Portal roles treated as administrators in the UI (the server decides). */
+export const ADMIN_ROLES = ["HR Admin", "System Administrator", "System Admin"];
+
+const BADGE_BASE = "d-inline-flex align-items-center badge-xs badge";
+export const STATUS_BADGE_CLASSES = {
+  [STATUS.PENDING]: `${BADGE_BASE} badge-soft-info`,
+  [STATUS.IN_REVIEW]: `${BADGE_BASE} badge-soft-warning`,
+  [STATUS.EXTENDED]: `${BADGE_BASE} badge-soft-secondary`,
+  [STATUS.COMPLETED]: `${BADGE_BASE} badge-soft-success`,
+  [STATUS.FAILED]: `${BADGE_BASE} badge-soft-danger`
+};
+
+export const SORT_OPTIONS = [
+  { value: "endAsc", label: "End date (soonest)" },
+  { value: "nameAsc", label: "Name A-Z" },
+  { value: "nameDesc", label: "Name Z-A" }
 ];
+
+/** Administrator decisions offered for an open probation. */
+export const STATUS_ACTIONS = {
+  review: {
+    status: STATUS.IN_REVIEW,
+    title: "Start Review",
+    message: "Move this probation to In Review.",
+    confirmLabel: "Start Review",
+    buttonClass: "btn btn-primary"
+  },
+  extend: {
+    status: STATUS.EXTENDED,
+    title: "Extend Probation",
+    message: "Choose a new end date later than the current one.",
+    confirmLabel: "Extend",
+    buttonClass: "btn btn-primary",
+    needsEndDate: true
+  },
+  confirm: {
+    status: STATUS.COMPLETED,
+    title: "Confirm Employee",
+    message:
+      "Mark the probation as completed. The confirmation date is set to today and the record can no longer be changed.",
+    confirmLabel: "Confirm",
+    buttonClass: "btn btn-success"
+  },
+  fail: {
+    status: STATUS.FAILED,
+    title: "Mark Probation Failed",
+    message:
+      "Mark the probation as failed. The record can no longer be changed.",
+    confirmLabel: "Mark Failed",
+    buttonClass: "btn btn-danger"
+  }
+};
+
+export const EMPLOYEE_AVATAR_PATH = "/assets/img/users/user-11.jpg";
+export const REVIEWER_AVATAR_PATH = "/assets/img/users/user-01.jpg";
+export const DEFAULT_PROBATION_DAYS = 90;
+export const PAGE_SIZE = 10;
