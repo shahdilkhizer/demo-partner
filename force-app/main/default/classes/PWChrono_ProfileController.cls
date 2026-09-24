@@ -3,7 +3,7 @@
  * @author PWChrono Team
  */
 @SuppressWarnings('PMD.ApexCRUDViolation')
-public without sharing class PWChrono_ProfileController {
+public inherited sharing class PWChrono_ProfileController {
   /**
    * @description Resolve the target employee record Id for a profile operation.
    *              - Guest: portalUserId+sessionToken identify the actor; targetEmployeeId can be another employee only if actor is admin.
@@ -324,9 +324,9 @@ public without sharing class PWChrono_ProfileController {
     } catch (Exception e) {
       PWChrono_Logger.error('Error uploading profile image (with access)', e);
       AuraHandledException ahe = new AuraHandledException(
-        'Error uploading profile image: ' + e.getMessage()
+        'Error uploading profile image.'
       );
-      ahe.setMessage('Error uploading profile image: ' + e.getMessage());
+      ahe.setMessage('Error uploading profile image.');
       throw ahe;
     }
   }
@@ -365,110 +365,10 @@ public without sharing class PWChrono_ProfileController {
     } catch (Exception e) {
       PWChrono_Logger.error('Error uploading profile image', e);
       AuraHandledException ahe = new AuraHandledException(
-        'Error uploading profile image: ' + e.getMessage()
+        'Error uploading profile image: '
       );
-      ahe.setMessage('Error uploading profile image: ' + e.getMessage());
+      ahe.setMessage('Error uploading profile image: ');
       throw ahe;
-    }
-  }
-
-  /**
-   * @description Remove profile image with access enforcement.
-   *              Clears Photo_Url__c and deletes ContentDocument records.
-   */
-  @AuraEnabled
-  public static void removeProfileImageWithAccess(
-    String targetEmployeeId,
-    String portalUserId,
-    String sessionToken
-  ) {
-    try {
-      Id resolvedId = resolveTargetEmployeeId(
-        targetEmployeeId,
-        portalUserId,
-        sessionToken
-      );
-      if (resolvedId == null) {
-        throw new AuraHandledException('Employee record not found');
-      }
-
-      deleteProfileImage(resolvedId);
-    } catch (Exception e) {
-      PWChrono_Logger.error('Error removing profile image (with access)', e);
-      AuraHandledException ahe = new AuraHandledException(
-        'Error removing profile image: ' + e.getMessage()
-      );
-      ahe.setMessage('Error removing profile image: ' + e.getMessage());
-      throw ahe;
-    }
-  }
-
-  /**
-   * @description Remove profile image (legacy method).
-   */
-  @AuraEnabled
-  public static void removeProfileImage(
-    String employeeId,
-    String portalUserId,
-    String sessionToken
-  ) {
-    try {
-      String idCandidate = String.isNotBlank(employeeId)
-        ? employeeId
-        : portalUserId;
-      Id targetEmployeeId = resolveTargetEmployeeId(
-        idCandidate,
-        portalUserId,
-        sessionToken
-      );
-
-      if (targetEmployeeId == null) {
-        throw new AuraHandledException('Employee record not found');
-      }
-
-      deleteProfileImage(targetEmployeeId);
-    } catch (Exception e) {
-      PWChrono_Logger.error('Error removing profile image', e);
-      AuraHandledException ahe = new AuraHandledException(
-        'Error removing profile image: ' + e.getMessage()
-      );
-      ahe.setMessage('Error removing profile image: ' + e.getMessage());
-      throw ahe;
-    }
-  }
-
-  private static void deleteProfileImage(Id employeeId) {
-    // 1. Clear Photo_Url__c and set Use_No_Profile_Picture__c to true
-    update new Portal_Users__c(
-      Id = employeeId,
-      Photo_Url__c = null,
-      Use_No_Profile_Picture__c = true
-    );
-
-    // 2. Query and delete linked ContentDocument(s) if user permissions allow
-    try {
-      List<ContentDocumentLink> links = [
-        SELECT ContentDocumentId
-        FROM ContentDocumentLink
-        WHERE LinkedEntityId = :employeeId
-      ];
-
-      if (!links.isEmpty()) {
-        Set<Id> docIds = new Set<Id>();
-        for (ContentDocumentLink lk : links) {
-          docIds.add(lk.ContentDocumentId);
-        }
-        List<ContentDocument> docs = [
-          SELECT Id
-          FROM ContentDocument
-          WHERE Id IN :docIds
-        ];
-        if (!docs.isEmpty()) {
-          delete docs;
-        }
-      }
-    } catch (Exception ex) {
-      PWChrono_Logger.warn('Unable to delete ContentDocument in current execution context: ' + ex.getMessage());
     }
   }
 
@@ -480,52 +380,32 @@ public without sharing class PWChrono_ProfileController {
     ContentVersion cv = new ContentVersion(
       VersionData = EncodingUtil.base64Decode(base64Data),
       Title = fileName,
-      PathOnClient = '/' + fileName
+      PathOnClient = fileName,
+      FirstPublishLocationId = employeeId
     );
-    try {
-      cv.FirstPublishLocationId = employeeId;
-      insert cv;
-    } catch (Exception cvEx) {
-      cv = new ContentVersion(
-        VersionData = EncodingUtil.base64Decode(base64Data),
-        Title = fileName,
-        PathOnClient = '/' + fileName
-      );
-      insert cv;
-    }
+    insert cv;
 
-    String downloadUrl = '/sfc/servlet.shepherd/version/download/' + cv.Id;
-    try {
-      ContentDistribution cd = new ContentDistribution(
-        Name = fileName,
-        ContentVersionId = cv.Id,
-        PreferencesAllowViewInBrowser = true,
-        PreferencesLinkLatestVersion = true,
-        PreferencesNotifyOnVisit = false,
-        PreferencesPasswordRequired = false,
-        PreferencesAllowOriginalDownload = true
-      );
-      insert cd;
+    ContentDistribution cd = new ContentDistribution(
+      Name = fileName,
+      ContentVersionId = cv.Id,
+      PreferencesAllowViewInBrowser = true,
+      PreferencesLinkLatestVersion = true,
+      PreferencesNotifyOnVisit = false,
+      PreferencesPasswordRequired = false,
+      PreferencesAllowOriginalDownload = true
+    );
+    insert cd;
 
-      cd = [
-        SELECT ContentDownloadUrl
-        FROM ContentDistribution
-        WHERE Id = :cd.Id
-      ];
-      if (String.isNotBlank(cd.ContentDownloadUrl)) {
-        downloadUrl = cd.ContentDownloadUrl;
-      }
-    } catch (Exception cdEx) {
-      PWChrono_Logger.warn(
-        'ContentDistribution not permitted in current context: ' + cdEx.getMessage()
-      );
-    }
+    cd = [
+      SELECT ContentDownloadUrl
+      FROM ContentDistribution
+      WHERE Id = :cd.Id
+    ];
 
     update new Portal_Users__c(
       Id = employeeId,
-      Photo_Url__c = downloadUrl,
-      Use_No_Profile_Picture__c = false
+      Photo_Url__c = cd.ContentDownloadUrl
     );
-    return downloadUrl;
+    return cd.ContentDownloadUrl;
   }
 }

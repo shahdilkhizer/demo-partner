@@ -1,0 +1,35 @@
+:host {
+  display: block;
+}
+.section-heading {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+}
+.field-name {
+  font-family: monospace;
+  font-size: 0.82rem;
+}
+.system-label {
+  background: #f2f4f7;
+  border-radius: 999px;
+  color: #475467;
+  font-size: 0.68rem;
+  margin-left: 0.5rem;
+  padding: 0.2rem 0.45rem;
+}
+.loading-panel {
+  min-height: 8rem;
+  position: relative;
+}
+.empty-state {
+  color: #667085;
+  padding: 2rem 0;
+  text-align: center;
+}

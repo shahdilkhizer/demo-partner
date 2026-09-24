@@ -6,7 +6,6 @@
 @SuppressWarnings('PMD.MethodNamingConventions,PMD.ExcessiveParameterList')
 @IsTest
 private class PWChrono_LeaveService_Test {
-
   @TestSetup
   static void setupTestData() {
     PWChrono_LeaveTestDataFactory.setupStandardTestData();
@@ -15,8 +14,7 @@ private class PWChrono_LeaveService_Test {
   // ── Helpers ──
 
   static PWChrono_LeaveTestDataFactory.TestDataBundle getBundle() {
-    PWChrono_LeaveTestDataFactory.TestDataBundle bundle =
-      new PWChrono_LeaveTestDataFactory.TestDataBundle();
+    PWChrono_LeaveTestDataFactory.TestDataBundle bundle = new PWChrono_LeaveTestDataFactory.TestDataBundle();
 
     bundle.employee = [
       SELECT Id, Name, Reports_To__c
@@ -51,14 +49,16 @@ private class PWChrono_LeaveService_Test {
     bundle.annualAllocation = [
       SELECT Id, Total_Leaves_Allocated__c, Total_Leaves_Used__c
       FROM PWChrono_Leave_Allocation__c
-      WHERE Employees__c = :bundle.employee.Id
+      WHERE
+        Employees__c = :bundle.employee.Id
         AND Leave_Type__c = :bundle.annualLeave.Id
       LIMIT 1
     ];
     bundle.sickAllocation = [
       SELECT Id
       FROM PWChrono_Leave_Allocation__c
-      WHERE Employees__c = :bundle.employee.Id
+      WHERE
+        Employees__c = :bundle.employee.Id
         AND Leave_Type__c = :bundle.sickLeave.Id
       LIMIT 1
     ];
@@ -67,7 +67,10 @@ private class PWChrono_LeaveService_Test {
   }
 
   static PWChrono_LeaveValidator.LeaveDTO buildDTO(
-    Id leaveTypeId, Date fromDate, Date toDate, String reason
+    Id leaveTypeId,
+    Date fromDate,
+    Date toDate,
+    String reason
   ) {
     PWChrono_LeaveValidator.LeaveDTO dto = new PWChrono_LeaveValidator.LeaveDTO();
     dto.leaveTypeId = leaveTypeId;
@@ -97,9 +100,21 @@ private class PWChrono_LeaveService_Test {
     Test.stopTest();
 
     System.assertNotEquals(null, result.Id, 'Leave should be created');
-    System.assertEquals('Submitted', result.Status__c, 'Status should be Submitted');
-    System.assertEquals(b.annualLeave.Id, result.Leave_Type__c, 'Leave type should match');
-    System.assertEquals(b.employee.Id, result.Employees__c, 'Employee should match');
+    System.assertEquals(
+      'Submitted',
+      result.Status__c,
+      'Status should be Submitted'
+    );
+    System.assertEquals(
+      b.annualLeave.Id,
+      result.Leave_Type__c,
+      'Leave type should match'
+    );
+    System.assertEquals(
+      b.employee.Id,
+      result.Employees__c,
+      'Employee should match'
+    );
   }
 
   @IsTest
@@ -119,7 +134,11 @@ private class PWChrono_LeaveService_Test {
     Test.stopTest();
 
     System.assertEquals(0.5, result.Total_Days__c, 'Half day should be 0.5');
-    System.assertEquals(true, result.Half_Day__c, 'Half day flag should be true');
+    System.assertEquals(
+      true,
+      result.Half_Day__c,
+      'Half day flag should be true'
+    );
   }
 
   @IsTest
@@ -127,7 +146,10 @@ private class PWChrono_LeaveService_Test {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
     PWChrono_LeaveValidator.LeaveDTO dto = buildDTO(
-      b.annualLeave.Id, null, null, 'Bad request'
+      b.annualLeave.Id,
+      null,
+      null,
+      'Bad request'
     );
 
     Test.startTest();
@@ -135,7 +157,11 @@ private class PWChrono_LeaveService_Test {
       PWChrono_LeaveService.submitLeave(dto, b.employee.Id);
       System.assert(false, 'Should have thrown exception');
     } catch (AuraHandledException e) {
-      System.assertNotEquals(null, e, 'Missing dates should raise an exception');
+      System.assertNotEquals(
+        null,
+        e,
+        'Missing dates should raise an exception'
+      );
     }
     Test.stopTest();
   }
@@ -156,7 +182,11 @@ private class PWChrono_LeaveService_Test {
       PWChrono_LeaveService.submitLeave(dto, b.employee.Id);
       System.assert(false, 'Should have thrown exception');
     } catch (AuraHandledException e) {
-      System.assertNotEquals(null, e, 'Invalid date range should raise an exception');
+      System.assertNotEquals(
+        null,
+        e,
+        'Invalid date range should raise an exception'
+      );
     }
     Test.stopTest();
   }
@@ -168,18 +198,29 @@ private class PWChrono_LeaveService_Test {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
     Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
-      b.employee.Id, b.annualLeave.Id, b.manager.Id,
-      Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
+      b.employee.Id,
+      b.annualLeave.Id,
+      b.manager.Id,
+      Date.today().addDays(5),
+      Date.today().addDays(7),
+      'Submitted'
     );
 
     Test.startTest();
     Leave__c result = PWChrono_LeaveService.processApproval(
-      leave.Id, 'Approve', null, b.manager.Id
+      leave.Id,
+      'Approve',
+      null,
+      b.manager.Id
     );
     Test.stopTest();
 
     System.assertEquals('Approved', result.Status__c, 'Should be Approved');
-    System.assertNotEquals(null, result.Approval_Date__c, 'Approval date should be set');
+    System.assertNotEquals(
+      null,
+      result.Approval_Date__c,
+      'Approval date should be set'
+    );
 
     // Verify balance deduction
     PWChrono_Leave_Allocation__c alloc = [
@@ -198,13 +239,20 @@ private class PWChrono_LeaveService_Test {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
     Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
-      b.employee.Id, b.annualLeave.Id, b.manager.Id,
-      Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
+      b.employee.Id,
+      b.annualLeave.Id,
+      b.manager.Id,
+      Date.today().addDays(5),
+      Date.today().addDays(7),
+      'Submitted'
     );
 
     Test.startTest();
     Leave__c result = PWChrono_LeaveService.processApproval(
-      leave.Id, 'Reject', 'Insufficient staff coverage', b.manager.Id
+      leave.Id,
+      'Reject',
+      'Insufficient staff coverage',
+      b.manager.Id
     );
     Test.stopTest();
 
@@ -221,16 +269,29 @@ private class PWChrono_LeaveService_Test {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
     Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
-      b.employee.Id, b.annualLeave.Id, b.manager.Id,
-      Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
+      b.employee.Id,
+      b.annualLeave.Id,
+      b.manager.Id,
+      Date.today().addDays(5),
+      Date.today().addDays(7),
+      'Submitted'
     );
 
     Test.startTest();
     try {
-      PWChrono_LeaveService.processApproval(leave.Id, 'Reject', '', b.manager.Id);
+      PWChrono_LeaveService.processApproval(
+        leave.Id,
+        'Reject',
+        '',
+        b.manager.Id
+      );
       System.assert(false, 'Should have thrown exception');
     } catch (AuraHandledException e) {
-      System.assertNotEquals(null, e, 'Reject without reason should raise an exception');
+      System.assertNotEquals(
+        null,
+        e,
+        'Reject without reason should raise an exception'
+      );
     }
     Test.stopTest();
   }
@@ -241,16 +302,29 @@ private class PWChrono_LeaveService_Test {
 
     // Create an already-approved leave
     Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
-      b.employee.Id, b.annualLeave.Id, b.manager.Id,
-      Date.today().addDays(5), Date.today().addDays(7), 'Approved'
+      b.employee.Id,
+      b.annualLeave.Id,
+      b.manager.Id,
+      Date.today().addDays(5),
+      Date.today().addDays(7),
+      'Approved'
     );
 
     Test.startTest();
     try {
-      PWChrono_LeaveService.processApproval(leave.Id, 'Approve', null, b.manager.Id);
+      PWChrono_LeaveService.processApproval(
+        leave.Id,
+        'Approve',
+        null,
+        b.manager.Id
+      );
       System.assert(false, 'Should have thrown exception');
     } catch (AuraHandledException e) {
-      System.assertNotEquals(null, e, 'Invalid status should raise an exception');
+      System.assertNotEquals(
+        null,
+        e,
+        'Invalid status should raise an exception'
+      );
     }
     Test.stopTest();
   }
@@ -260,16 +334,29 @@ private class PWChrono_LeaveService_Test {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
     Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
-      b.employee.Id, b.annualLeave.Id, b.manager.Id,
-      Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
+      b.employee.Id,
+      b.annualLeave.Id,
+      b.manager.Id,
+      Date.today().addDays(5),
+      Date.today().addDays(7),
+      'Submitted'
     );
 
     Test.startTest();
     try {
-      PWChrono_LeaveService.processApproval(leave.Id, 'InvalidAction', null, b.manager.Id);
+      PWChrono_LeaveService.processApproval(
+        leave.Id,
+        'InvalidAction',
+        null,
+        b.manager.Id
+      );
       System.assert(false, 'Should have thrown exception');
     } catch (AuraHandledException e) {
-      System.assertNotEquals(null, e, 'Invalid approval action should raise an exception');
+      System.assertNotEquals(
+        null,
+        e,
+        'Invalid approval action should raise an exception'
+      );
     }
     Test.stopTest();
   }
@@ -281,13 +368,19 @@ private class PWChrono_LeaveService_Test {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
     Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
-      b.employee.Id, b.annualLeave.Id, b.manager.Id,
-      Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
+      b.employee.Id,
+      b.annualLeave.Id,
+      b.manager.Id,
+      Date.today().addDays(5),
+      Date.today().addDays(7),
+      'Submitted'
     );
 
     Test.startTest();
     Leave__c result = PWChrono_LeaveService.cancelLeave(
-      leave.Id, 'Change of plans', b.employee.Id
+      leave.Id,
+      'Change of plans',
+      b.employee.Id
     );
     Test.stopTest();
 
@@ -299,8 +392,12 @@ private class PWChrono_LeaveService_Test {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
     Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
-      b.employee.Id, b.annualLeave.Id, b.manager.Id,
-      Date.today().addDays(5), Date.today().addDays(7), 'Approved'
+      b.employee.Id,
+      b.annualLeave.Id,
+      b.manager.Id,
+      Date.today().addDays(5),
+      Date.today().addDays(7),
+      'Approved'
     );
 
     // Simulate prior balance deduction
@@ -309,7 +406,9 @@ private class PWChrono_LeaveService_Test {
 
     Test.startTest();
     Leave__c result = PWChrono_LeaveService.cancelLeave(
-      leave.Id, 'Emergency resolved', b.employee.Id
+      leave.Id,
+      'Emergency resolved',
+      b.employee.Id
     );
     Test.stopTest();
 
@@ -322,7 +421,8 @@ private class PWChrono_LeaveService_Test {
       WHERE Id = :b.annualAllocation.Id
     ];
     System.assertEquals(
-      0, alloc.Total_Leaves_Used__c,
+      0,
+      alloc.Total_Leaves_Used__c,
       'Balance should be reversed after cancel of approved leave'
     );
   }
@@ -332,16 +432,28 @@ private class PWChrono_LeaveService_Test {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
     Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
-      b.employee.Id, b.annualLeave.Id, b.manager.Id,
-      Date.today().addDays(5), Date.today().addDays(7), 'Rejected'
+      b.employee.Id,
+      b.annualLeave.Id,
+      b.manager.Id,
+      Date.today().addDays(5),
+      Date.today().addDays(7),
+      'Rejected'
     );
 
     Test.startTest();
     try {
-      PWChrono_LeaveService.cancelLeave(leave.Id, 'Trying to cancel', b.employee.Id);
+      PWChrono_LeaveService.cancelLeave(
+        leave.Id,
+        'Trying to cancel',
+        b.employee.Id
+      );
       System.assert(false, 'Should have thrown exception');
     } catch (AuraHandledException e) {
-      System.assertNotEquals(null, e, 'Rejected leave should not be cancellable');
+      System.assertNotEquals(
+        null,
+        e,
+        'Rejected leave should not be cancellable'
+      );
     }
     Test.stopTest();
   }
@@ -351,12 +463,17 @@ private class PWChrono_LeaveService_Test {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
     Portal_Users__c otherEmp = PWChrono_LeaveTestDataFactory.createEmployee(
-      'Other Employee', true
+      'Other Employee',
+      true
     );
 
     Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
-      b.employee.Id, b.annualLeave.Id, b.manager.Id,
-      Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
+      b.employee.Id,
+      b.annualLeave.Id,
+      b.manager.Id,
+      Date.today().addDays(5),
+      Date.today().addDays(7),
+      'Submitted'
     );
 
     Test.startTest();
@@ -389,7 +506,8 @@ private class PWChrono_LeaveService_Test {
 
     Test.startTest();
     PWChrono_Leave_Type__c result = PWChrono_LeaveService.createLeaveType(
-      newType, b.admin.Id
+      newType,
+      b.admin.Id
     );
     Test.stopTest();
 
@@ -405,11 +523,16 @@ private class PWChrono_LeaveService_Test {
 
     Test.startTest();
     PWChrono_Leave_Type__c result = PWChrono_LeaveService.updateLeaveType(
-      b.annualLeave, b.admin.Id
+      b.annualLeave,
+      b.admin.Id
     );
     Test.stopTest();
 
-    System.assertEquals(25, result.Max_Days_Allowed__c, 'Max days should be updated');
+    System.assertEquals(
+      25,
+      result.Max_Days_Allowed__c,
+      'Max days should be updated'
+    );
   }
 
   @IsTest
@@ -418,7 +541,11 @@ private class PWChrono_LeaveService_Test {
 
     Test.startTest();
     PWChrono_LeaveService.adjustLeaveBalance(
-      b.employee.Id, b.annualLeave.Id, 5, 'Extra allocation', b.admin.Id
+      b.employee.Id,
+      b.annualLeave.Id,
+      5,
+      'Extra allocation',
+      b.admin.Id
     );
     Test.stopTest();
 
@@ -427,7 +554,11 @@ private class PWChrono_LeaveService_Test {
       FROM PWChrono_Leave_Allocation__c
       WHERE Id = :b.annualAllocation.Id
     ];
-    System.assertEquals(25, alloc.Total_Leaves_Allocated__c, 'Should add 5 to 20');
+    System.assertEquals(
+      25,
+      alloc.Total_Leaves_Allocated__c,
+      'Should add 5 to 20'
+    );
   }
 
   @IsTest
@@ -437,11 +568,19 @@ private class PWChrono_LeaveService_Test {
     Test.startTest();
     try {
       PWChrono_LeaveService.adjustLeaveBalance(
-        b.employee.Id, b.annualLeave.Id, 0, 'No adjustment', b.admin.Id
+        b.employee.Id,
+        b.annualLeave.Id,
+        0,
+        'No adjustment',
+        b.admin.Id
       );
       System.assert(false, 'Should have thrown exception');
     } catch (AuraHandledException e) {
-      System.assertNotEquals(null, e, 'Zero-day adjustment should raise an exception');
+      System.assertNotEquals(
+        null,
+        e,
+        'Zero-day adjustment should raise an exception'
+      );
     }
     Test.stopTest();
   }
@@ -453,15 +592,20 @@ private class PWChrono_LeaveService_Test {
     // Monday to Friday of next week (5 weekdays)
     Date monday = Date.today();
     // Find next Monday
-    while (DateTime.newInstance(monday.year(), monday.month(), monday.day())
-      .format('EEEE') != 'Monday') {
+    while (
+      DateTime.newInstance(monday.year(), monday.month(), monday.day())
+        .format('EEEE') != 'Monday'
+    ) {
       monday = monday.addDays(1);
     }
     Date friday = monday.addDays(4);
 
     Test.startTest();
     Decimal days = PWChrono_LeaveService.calculateWorkingDays(
-      monday, friday, false, null
+      monday,
+      friday,
+      false,
+      null
     );
     Test.stopTest();
 
@@ -472,7 +616,10 @@ private class PWChrono_LeaveService_Test {
   static void testCalculateWorkingDays_HalfDay() {
     Test.startTest();
     Decimal days = PWChrono_LeaveService.calculateWorkingDays(
-      Date.today(), Date.today(), true, null
+      Date.today(),
+      Date.today(),
+      true,
+      null
     );
     Test.stopTest();
 
@@ -483,7 +630,10 @@ private class PWChrono_LeaveService_Test {
   static void testCalculateWorkingDays_NullDates() {
     Test.startTest();
     Decimal days = PWChrono_LeaveService.calculateWorkingDays(
-      null, null, false, null
+      null,
+      null,
+      false,
+      null
     );
     Test.stopTest();
 
@@ -497,10 +647,10 @@ private class PWChrono_LeaveService_Test {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
     Test.startTest();
-    List<PWChrono_LeaveBalanceService.LeaveBalanceWrapper> balances =
-      PWChrono_LeaveController.getMyLeaveBalance(
-        String.valueOf(b.employee.Id), null
-      );
+    List<PWChrono_LeaveBalanceService.LeaveBalanceWrapper> balances = PWChrono_LeaveController.getMyLeaveBalance(
+      String.valueOf(b.employee.Id),
+      null
+    );
     Test.stopTest();
 
     System.assert(balances.size() >= 2, 'Should have at least 2 leave types');
@@ -511,13 +661,21 @@ private class PWChrono_LeaveService_Test {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
     PWChrono_LeaveTestDataFactory.createLeave(
-      b.employee.Id, b.annualLeave.Id, b.manager.Id,
-      Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
+      b.employee.Id,
+      b.annualLeave.Id,
+      b.manager.Id,
+      Date.today().addDays(5),
+      Date.today().addDays(7),
+      'Submitted'
     );
 
     Test.startTest();
     List<Leave__c> leaves = PWChrono_LeaveController.getMyLeaves(
-      null, null, null, String.valueOf(b.employee.Id), null
+      null,
+      null,
+      null,
+      String.valueOf(b.employee.Id),
+      null
     );
     Test.stopTest();
 
@@ -529,13 +687,19 @@ private class PWChrono_LeaveService_Test {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
     Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
-      b.employee.Id, b.annualLeave.Id, b.manager.Id,
-      Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
+      b.employee.Id,
+      b.annualLeave.Id,
+      b.manager.Id,
+      Date.today().addDays(5),
+      Date.today().addDays(7),
+      'Submitted'
     );
 
     Test.startTest();
     Leave__c detail = PWChrono_LeaveController.getLeaveDetail(
-      leave.Id, String.valueOf(b.employee.Id), null
+      leave.Id,
+      String.valueOf(b.employee.Id),
+      null
     );
     Test.stopTest();
 
@@ -551,7 +715,10 @@ private class PWChrono_LeaveService_Test {
     List<PWChrono_Leave_Type__c> types = PWChrono_LeaveController.getActiveLeaveTypes();
     Test.stopTest();
 
-    System.assert(types.size() >= 2, 'Should have at least 2 active leave types');
+    System.assert(
+      types.size() >= 2,
+      'Should have at least 2 active leave types'
+    );
   }
 
   @IsTest
@@ -567,11 +734,17 @@ private class PWChrono_LeaveService_Test {
 
     Test.startTest();
     Leave__c result = PWChrono_LeaveController.submitLeaveApplication(
-      dto, String.valueOf(b.employee.Id), null
+      dto,
+      String.valueOf(b.employee.Id),
+      null
     );
     Test.stopTest();
 
-    System.assertNotEquals(null, result.Id, 'Leave should be created via controller');
+    System.assertNotEquals(
+      null,
+      result.Id,
+      'Leave should be created via controller'
+    );
     System.assertEquals('Submitted', result.Status__c);
   }
 
@@ -580,14 +753,21 @@ private class PWChrono_LeaveService_Test {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
     Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
-      b.employee.Id, b.annualLeave.Id, b.manager.Id,
-      Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
+      b.employee.Id,
+      b.annualLeave.Id,
+      b.manager.Id,
+      Date.today().addDays(5),
+      Date.today().addDays(7),
+      'Submitted'
     );
 
     Test.startTest();
     Leave__c result = PWChrono_LeaveController.processLeaveApproval(
-      leave.Id, 'Approve', null,
-      String.valueOf(b.manager.Id), null
+      leave.Id,
+      'Approve',
+      null,
+      String.valueOf(b.manager.Id),
+      null
     );
     Test.stopTest();
 
@@ -599,14 +779,20 @@ private class PWChrono_LeaveService_Test {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
     Leave__c leave = PWChrono_LeaveTestDataFactory.createLeave(
-      b.employee.Id, b.annualLeave.Id, b.manager.Id,
-      Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
+      b.employee.Id,
+      b.annualLeave.Id,
+      b.manager.Id,
+      Date.today().addDays(5),
+      Date.today().addDays(7),
+      'Submitted'
     );
 
     Test.startTest();
     Leave__c result = PWChrono_LeaveController.cancelLeave(
-      leave.Id, 'Changed mind',
-      String.valueOf(b.employee.Id), null
+      leave.Id,
+      'Changed mind',
+      String.valueOf(b.employee.Id),
+      null
     );
     Test.stopTest();
 
@@ -616,14 +802,19 @@ private class PWChrono_LeaveService_Test {
   @IsTest
   static void testController_CalculateWorkingDays() {
     Date monday = Date.today();
-    while (DateTime.newInstance(monday.year(), monday.month(), monday.day())
-      .format('EEEE') != 'Monday') {
+    while (
+      DateTime.newInstance(monday.year(), monday.month(), monday.day())
+        .format('EEEE') != 'Monday'
+    ) {
       monday = monday.addDays(1);
     }
 
     Test.startTest();
     Decimal days = PWChrono_LeaveController.calculateWorkingDays(
-      monday, monday.addDays(4), false, null
+      monday,
+      monday.addDays(4),
+      false,
+      null
     );
     Test.stopTest();
 
@@ -635,16 +826,24 @@ private class PWChrono_LeaveService_Test {
     PWChrono_LeaveTestDataFactory.TestDataBundle b = getBundle();
 
     PWChrono_LeaveTestDataFactory.createLeave(
-      b.employee.Id, b.annualLeave.Id, b.manager.Id,
-      Date.today().addDays(5), Date.today().addDays(7), 'Submitted'
+      b.employee.Id,
+      b.annualLeave.Id,
+      b.manager.Id,
+      Date.today().addDays(5),
+      Date.today().addDays(7),
+      'Submitted'
     );
 
     Test.startTest();
     List<Leave__c> pending = PWChrono_LeaveController.getTeamLeavesForApproval(
-      String.valueOf(b.manager.Id), null
+      String.valueOf(b.manager.Id),
+      null
     );
     Test.stopTest();
 
-    System.assert(pending.size() >= 1, 'Should find pending leaves for approval');
+    System.assert(
+      pending.size() >= 1,
+      'Should find pending leaves for approval'
+    );
   }
 }

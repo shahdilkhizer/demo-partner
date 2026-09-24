@@ -1,11 +1,171 @@
 <template lwc:render-mode="light">
-    <div class="page-wrapper">
-        <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
-            <lightning-card title="Approvals" icon-name="standard:approval">
-                <div class="slds-p-around_medium">
-                    <p>Approvals component content goes here.</p>
-                </div>
-            </lightning-card>
+  <div class="page-wrapper">
+    <div class="content container-fluid approvals-content">
+      <div
+        class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-4"
+      >
+        <div>
+          <h2>My approval queue</h2>
+          <p class="text-muted mb-0">
+            Review submitted requests assigned to you.
+          </p>
         </div>
+        <button
+          type="button"
+          class="btn btn-white"
+          onclick={loadRequests}
+          disabled={busy}
+        >
+          Refresh
+        </button>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <label class="form-label" for="approval-type">Request type</label
+          ><select
+            id="approval-type"
+            class="form-select"
+            onchange={handleTypeChange}
+            disabled={busy}
+          >
+            <option value="leave">Leave requests</option>
+            <option value="attendance">Attendance requests</option>
+          </select>
+        </div>
+        <template if:true={successMessage}
+          ><div class="alert alert-success m-3" role="status">
+            {successMessage}
+          </div></template
+        >
+        <template if:true={errorMessage}
+          ><div class="alert alert-danger m-3" role="alert">
+            {errorMessage}
+          </div></template
+        >
+        <template if:true={isLoading}
+          ><p class="p-4" role="status">Loading requests…</p></template
+        >
+        <template if:true={showEmpty}
+          ><div class="p-4">
+            <h5>You're all caught up</h5>
+            <p class="text-muted mb-0">
+              No submitted requests of this type are assigned to you.
+            </p>
+          </div></template
+        >
+        <template if:true={hasRows}
+          ><div class="table-responsive">
+            <table class="table mb-0">
+              <thead>
+                <tr>
+                  <th scope="col">Employee / request</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">From</th>
+                  <th scope="col">To</th>
+                  <th scope="col">Reason</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template for:each={rows} for:item="row"
+                  ><tr key={row.id}>
+                    <td>
+                      <strong>{row.employee}</strong>
+                      <div class="text-muted">{row.name}</div>
+                    </td>
+                    <td>{row.type}</td>
+                    <td>
+                      <lightning-formatted-date-time
+                        value={row.start}
+                        time-zone="UTC"
+                      ></lightning-formatted-date-time>
+                    </td>
+                    <td>
+                      <lightning-formatted-date-time
+                        value={row.end}
+                        time-zone="UTC"
+                      ></lightning-formatted-date-time>
+                    </td>
+                    <td>{row.reason}</td>
+                    <td>
+                      <div class="d-flex gap-2">
+                        <button
+                          type="button"
+                          class="btn btn-success btn-sm"
+                          data-id={row.id}
+                          data-action="Approve"
+                          onclick={handleAction}
+                          disabled={busy}
+                        >
+                          Approve</button
+                        ><button
+                          type="button"
+                          class="btn btn-outline-danger btn-sm"
+                          data-id={row.id}
+                          data-action="Reject"
+                          onclick={handleAction}
+                          disabled={busy}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr></template
+                >
+              </tbody>
+            </table>
+          </div></template
+        >
+      </div>
+      <template if:true={selected}
+        ><section
+          role="dialog"
+          onkeydown={handleDialogKeydown}
+          aria-modal="true"
+          aria-label={modalTitle}
+          class="approval-overlay"
+        >
+          <div class="card approval-dialog">
+            <div class="card-header"><h3>{modalTitle}</h3></div>
+            <div class="card-body">
+              <p>{selected.employee} · {selected.type} · {selected.name}</p>
+              <label for="approval-comment" class="form-label"
+                >Comments (required for rejection)</label
+              ><textarea
+                id="approval-comment"
+                class="form-control"
+                rows="3"
+                maxlength="2000"
+                onchange={handleComments}
+                disabled={isSaving}
+              >
+{comments}</textarea
+              ><template if:true={errorMessage}
+                ><p class="text-danger mt-2" role="alert">
+                  {errorMessage}
+                </p></template
+              >
+            </div>
+            <div class="card-footer d-flex justify-content-end gap-2">
+              <button
+                type="button"
+                class="btn btn-white"
+                onclick={closeModal}
+                disabled={isSaving}
+              >
+                Cancel</button
+              ><button
+                type="button"
+                class="btn btn-primary"
+                onclick={confirmAction}
+                disabled={isSaving}
+              >
+                {action}
+              </button>
+            </div>
+          </div>
+        </section></template
+      >
     </div>
+  </div>
 </template>

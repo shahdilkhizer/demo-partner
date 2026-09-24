@@ -1,6 +1,5 @@
 @IsTest
 private class PWChrono_LeaveLedgerService_Test {
-
   @TestSetup
   static void setupTestData() {
     PWChrono_LeaveTestDataFactory.setupStandardTestData();
@@ -9,10 +8,16 @@ private class PWChrono_LeaveLedgerService_Test {
   @IsTest
   static void testRecordLeaveUsedCreatesLedgerEntry() {
     Portal_Users__c employee = [
-      SELECT Id, Reports_To__c FROM Portal_Users__c WHERE Name = 'Test Employee' LIMIT 1
+      SELECT Id, Reports_To__c
+      FROM Portal_Users__c
+      WHERE Name = 'Test Employee'
+      LIMIT 1
     ];
     PWChrono_Leave_Type__c annualLeave = [
-      SELECT Id FROM PWChrono_Leave_Type__c WHERE Name = 'Annual Leave' LIMIT 1
+      SELECT Id
+      FROM PWChrono_Leave_Type__c
+      WHERE Name = 'Annual Leave'
+      LIMIT 1
     ];
     Leave__c leaveRecord = PWChrono_LeaveTestDataFactory.createLeave(
       employee.Id,
@@ -24,12 +29,20 @@ private class PWChrono_LeaveLedgerService_Test {
     );
 
     Test.startTest();
-    PWChrono_LeaveBalanceService.deductBalance(employee.Id, annualLeave.Id, leaveRecord.Total_Days__c);
-    PWChrono_LeaveLedgerService.recordLeaveUsed(leaveRecord, employee.Reports_To__c);
+    PWChrono_LeaveBalanceService.deductBalance(
+      employee.Id,
+      annualLeave.Id,
+      leaveRecord.Total_Days__c
+    );
+    PWChrono_LeaveLedgerService.recordLeaveUsed(
+      leaveRecord,
+      employee.Reports_To__c
+    );
     Test.stopTest();
 
-    List<PWChrono_LeaveLedgerService.LedgerEntryDTO> entries =
-      PWChrono_LeaveLedgerService.getLedgerHistoryByLeave(leaveRecord.Id);
+    List<PWChrono_LeaveLedgerService.LedgerEntryDTO> entries = PWChrono_LeaveLedgerService.getLedgerHistoryByLeave(
+      leaveRecord.Id
+    );
 
     System.assertEquals(1, entries.size());
     System.assertEquals('Used', entries[0].transactionType);
@@ -39,21 +52,38 @@ private class PWChrono_LeaveLedgerService_Test {
   @IsTest
   static void testRecordAdjustmentCreatesLedgerEntry() {
     Portal_Users__c employee = [
-      SELECT Id FROM Portal_Users__c WHERE Name = 'Test Employee' LIMIT 1
+      SELECT Id
+      FROM Portal_Users__c
+      WHERE Name = 'Test Employee'
+      LIMIT 1
     ];
     Portal_Users__c admin = [
-      SELECT Id FROM Portal_Users__c WHERE Name = 'Test HRAdmin' LIMIT 1
+      SELECT Id
+      FROM Portal_Users__c
+      WHERE Name = 'Test HRAdmin'
+      LIMIT 1
     ];
     PWChrono_Leave_Type__c annualLeave = [
-      SELECT Id FROM PWChrono_Leave_Type__c WHERE Name = 'Annual Leave' LIMIT 1
+      SELECT Id
+      FROM PWChrono_Leave_Type__c
+      WHERE Name = 'Annual Leave'
+      LIMIT 1
     ];
 
     Test.startTest();
-    PWChrono_LeaveService.adjustLeaveBalance(employee.Id, annualLeave.Id, 2, 'Manual credit', admin.Id);
+    PWChrono_LeaveService.adjustLeaveBalance(
+      employee.Id,
+      annualLeave.Id,
+      2,
+      'Manual credit',
+      admin.Id
+    );
     Test.stopTest();
 
-    List<PWChrono_LeaveLedgerService.LedgerEntryDTO> entries =
-      PWChrono_LeaveLedgerService.getLedgerHistory(employee.Id, annualLeave.Id);
+    List<PWChrono_LeaveLedgerService.LedgerEntryDTO> entries = PWChrono_LeaveLedgerService.getLedgerHistory(
+      employee.Id,
+      annualLeave.Id
+    );
 
     System.assertEquals(false, entries.isEmpty());
     System.assertEquals('Adjustment', entries[0].transactionType);

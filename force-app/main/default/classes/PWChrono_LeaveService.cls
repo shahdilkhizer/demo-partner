@@ -6,7 +6,6 @@
  */
 @SuppressWarnings('PMD.ApexCRUDViolation')
 public inherited sharing class PWChrono_LeaveService {
-
   /**
    * @description Submit a new leave application or update a draft.
    * @param dto Leave data from the LWC form
@@ -14,11 +13,15 @@ public inherited sharing class PWChrono_LeaveService {
    * @return The saved leave record
    */
   public static Leave__c submitLeave(
-    PWChrono_LeaveValidator.LeaveDTO dto, Id employeeId
+    PWChrono_LeaveValidator.LeaveDTO dto,
+    Id employeeId
   ) {
     // Calculate working days
     dto.totalDays = calculateWorkingDays(
-      dto.fromDate, dto.toDate, dto.halfDay, dto.leaveTypeId
+      dto.fromDate,
+      dto.toDate,
+      dto.halfDay,
+      dto.leaveTypeId
     );
 
     // Validate
@@ -36,7 +39,9 @@ public inherited sharing class PWChrono_LeaveService {
       }
       // Ownership check
       if (leave.Employees__c != employeeId) {
-        throw new AuraHandledException('Unauthorized access to this leave record.');
+        throw new AuraHandledException(
+          'Unauthorized access to this leave record.'
+        );
       }
     } else {
       leave = new Leave__c();
@@ -70,15 +75,21 @@ public inherited sharing class PWChrono_LeaveService {
     if (leave.Approvers__c != null) {
       String empName = PWChrono_RequestService.getEmployeeName(employeeId);
       PWChrono_RequestService.sendNotification(
-        leave.Approvers__c, 'Leave', leave.Name,
-        'Submitted', empName, leave.Id
+        leave.Approvers__c,
+        'Leave',
+        leave.Name,
+        'Submitted',
+        empName,
+        leave.Id
       );
     }
 
     PWChrono_RequestCommentService.addSystemComment(
       leave.Id,
       'Leave__c',
-      'Leave request submitted for ' + leave.Total_Days__c.setScale(1) + ' day(s).',
+      'Leave request submitted for ' +
+        leave.Total_Days__c.setScale(1) +
+        ' day(s).',
       employeeId
     );
 
@@ -94,10 +105,12 @@ public inherited sharing class PWChrono_LeaveService {
     }
 
     for (Leave__c leaveRecord : leaves) {
-      if (leaveRecord == null ||
-          leaveRecord.Employees__c == null ||
-          leaveRecord.Leave_Type__c == null ||
-          leaveRecord.Total_Days__c == null) {
+      if (
+        leaveRecord == null ||
+        leaveRecord.Employees__c == null ||
+        leaveRecord.Leave_Type__c == null ||
+        leaveRecord.Total_Days__c == null
+      ) {
         continue;
       }
 
@@ -123,7 +136,10 @@ public inherited sharing class PWChrono_LeaveService {
    */
   @SuppressWarnings('PMD.ExcessiveParameterList')
   public static Leave__c processApproval(
-    Id leaveId, String action, String comments, Id approverId
+    Id leaveId,
+    String action,
+    String comments,
+    Id approverId
   ) {
     Leave__c leave = PWChrono_LeaveSelector.getLeaveById(leaveId);
     if (leave == null) {
@@ -131,15 +147,20 @@ public inherited sharing class PWChrono_LeaveService {
     }
 
     // Security: must be the assigned approver or an admin
-    if (leave.Approvers__c != approverId &&
-        !PWChrono_RequestValidator.isCurrentUserAdmin(approverId)) {
-      throw new AuraHandledException('Access denied: Not authorized to process this request.');
+    if (
+      leave.Approvers__c != approverId &&
+      !PWChrono_RequestValidator.isCurrentUserAdmin(approverId)
+    ) {
+      throw new AuraHandledException(
+        'Access denied: Not authorized to process this request.'
+      );
     }
 
     // Validate status transition
     if (leave.Status__c != PWChrono_Constants.STATUS_SUBMITTED) {
       throw new AuraHandledException(
-        'Only submitted requests can be approved/rejected. Current status: ' + leave.Status__c
+        'Only submitted requests can be approved/rejected. Current status: ' +
+        leave.Status__c
       );
     }
 
@@ -154,13 +175,17 @@ public inherited sharing class PWChrono_LeaveService {
     if (normalizedAction == 'Approve') {
       leave.Status__c = PWChrono_Constants.STATUS_APPROVED;
       leave.Approval_Date__c = Date.today();
-      leave.Approver_Comments__c = String.isNotBlank(comments) ? comments.trim() : null;
+      leave.Approver_Comments__c = String.isNotBlank(comments)
+        ? comments.trim()
+        : null;
 
       update leave;
 
       // Deduct balance
       PWChrono_LeaveBalanceService.deductBalance(
-        leave.Employees__c, leave.Leave_Type__c, leave.Total_Days__c
+        leave.Employees__c,
+        leave.Leave_Type__c,
+        leave.Total_Days__c
       );
 
       // Create ledger entry
@@ -168,8 +193,12 @@ public inherited sharing class PWChrono_LeaveService {
 
       // Notify employee
       PWChrono_RequestService.sendNotification(
-        leave.Employees__c, 'Leave', leave.Name,
-        'Approved', approverName, leave.Id
+        leave.Employees__c,
+        'Leave',
+        leave.Name,
+        'Approved',
+        approverName,
+        leave.Id
       );
 
       PWChrono_RequestCommentService.addSystemComment(
@@ -180,7 +209,6 @@ public inherited sharing class PWChrono_LeaveService {
           : 'Leave request approved.',
         approverId
       );
-
     } else if (normalizedAction == 'Reject') {
       if (String.isBlank(comments)) {
         throw new AuraHandledException('Rejection reason is required.');
@@ -195,8 +223,12 @@ public inherited sharing class PWChrono_LeaveService {
 
       // Notify employee
       PWChrono_RequestService.sendNotification(
-        leave.Employees__c, 'Leave', leave.Name,
-        'Rejected', approverName, leave.Id
+        leave.Employees__c,
+        'Leave',
+        leave.Name,
+        'Rejected',
+        approverName,
+        leave.Id
       );
 
       PWChrono_RequestCommentService.addSystemComment(
@@ -205,9 +237,10 @@ public inherited sharing class PWChrono_LeaveService {
         'Leave request rejected. ' + comments.trim(),
         approverId
       );
-
     } else {
-      throw new AuraHandledException('Invalid action. Must be Approve or Reject.');
+      throw new AuraHandledException(
+        'Invalid action. Must be Approve or Reject.'
+      );
     }
 
     return PWChrono_LeaveSelector.getLeaveById(leave.Id);
@@ -220,23 +253,26 @@ public inherited sharing class PWChrono_LeaveService {
    * @param employeeId The requesting employee
    * @return Updated leave record
    */
-  public static Leave__c cancelLeave(
-    Id leaveId, String reason, Id employeeId
-  ) {
+  public static Leave__c cancelLeave(Id leaveId, String reason, Id employeeId) {
     Leave__c leave = PWChrono_LeaveSelector.getLeaveById(leaveId);
     if (leave == null) {
       throw new AuraHandledException('Leave record not found.');
     }
 
     // Ownership check
-    if (leave.Employees__c != employeeId &&
-        !PWChrono_RequestValidator.isCurrentUserAdmin(employeeId)) {
-      throw new AuraHandledException('Unauthorized: Can only cancel your own requests.');
+    if (
+      leave.Employees__c != employeeId &&
+      !PWChrono_RequestValidator.isCurrentUserAdmin(employeeId)
+    ) {
+      throw new AuraHandledException(
+        'Unauthorized: Can only cancel your own requests.'
+      );
     }
 
     // Only Submitted or Approved can be cancelled
     String error = PWChrono_RequestValidator.validateStatusTransition(
-      leave.Status__c, 'Cancelled'
+      leave.Status__c,
+      'Cancelled'
     );
     if (error != null) {
       throw new AuraHandledException(error);
@@ -252,7 +288,9 @@ public inherited sharing class PWChrono_LeaveService {
     // If was approved, reverse the balance deduction
     if (wasApproved) {
       PWChrono_LeaveBalanceService.reverseBalance(
-        leave.Employees__c, leave.Leave_Type__c, leave.Total_Days__c
+        leave.Employees__c,
+        leave.Leave_Type__c,
+        leave.Total_Days__c
       );
       PWChrono_LeaveLedgerService.recordLeaveCancelled(leave, employeeId);
     }
@@ -261,8 +299,12 @@ public inherited sharing class PWChrono_LeaveService {
     if (leave.Approvers__c != null) {
       String empName = PWChrono_RequestService.getEmployeeName(employeeId);
       PWChrono_RequestService.sendNotification(
-        leave.Approvers__c, 'Leave', leave.Name,
-        'Cancelled', empName, leave.Id
+        leave.Approvers__c,
+        'Leave',
+        leave.Name,
+        'Cancelled',
+        empName,
+        leave.Id
       );
     }
 
@@ -284,10 +326,13 @@ public inherited sharing class PWChrono_LeaveService {
    * @description Create a new leave type (admin only).
    */
   public static PWChrono_Leave_Type__c createLeaveType(
-    PWChrono_Leave_Type__c leaveType, Id adminId
+    PWChrono_Leave_Type__c leaveType,
+    Id adminId
   ) {
     if (!PWChrono_RequestValidator.isCurrentUserAdmin(adminId)) {
-      throw new AuraHandledException('Access denied: Admin privileges required.');
+      throw new AuraHandledException(
+        'Access denied: Admin privileges required.'
+      );
     }
 
     PWChrono_Logger.info('Creating leave type: ' + leaveType.Name);
@@ -299,10 +344,13 @@ public inherited sharing class PWChrono_LeaveService {
    * @description Update an existing leave type (admin only).
    */
   public static PWChrono_Leave_Type__c updateLeaveType(
-    PWChrono_Leave_Type__c leaveType, Id adminId
+    PWChrono_Leave_Type__c leaveType,
+    Id adminId
   ) {
     if (!PWChrono_RequestValidator.isCurrentUserAdmin(adminId)) {
-      throw new AuraHandledException('Access denied: Admin privileges required.');
+      throw new AuraHandledException(
+        'Access denied: Admin privileges required.'
+      );
     }
 
     PWChrono_Logger.info('Updating leave type: ' + leaveType.Id);
@@ -320,34 +368,49 @@ public inherited sharing class PWChrono_LeaveService {
    */
   @SuppressWarnings('PMD.ExcessiveParameterList')
   public static void adjustLeaveBalance(
-    Id employeeId, Id leaveTypeId, Decimal days, String reason, Id adminId
+    Id employeeId,
+    Id leaveTypeId,
+    Decimal days,
+    String reason,
+    Id adminId
   ) {
     if (days == null || days == 0) {
       throw new AuraHandledException('Adjustment days must be non-zero.');
     }
 
     if (!PWChrono_RequestValidator.isCurrentUserAdmin(adminId)) {
-      throw new AuraHandledException('Access denied: Admin privileges required.');
+      throw new AuraHandledException(
+        'Access denied: Admin privileges required.'
+      );
     }
 
     // Get current allocation
-    List<PWChrono_Leave_Allocation__c> allocations =
-      PWChrono_LeaveSelector.getAllocationsByEmployee(employeeId, leaveTypeId);
+    List<PWChrono_Leave_Allocation__c> allocations = PWChrono_LeaveSelector.getAllocationsByEmployee(
+      employeeId,
+      leaveTypeId
+    );
 
     if (allocations.isEmpty()) {
-      throw new AuraHandledException('No allocation found for this employee/leave type.');
+      throw new AuraHandledException(
+        'No allocation found for this employee/leave type.'
+      );
     }
 
     PWChrono_Leave_Allocation__c alloc = allocations[0];
     Decimal currentAllocated = alloc.Total_Leaves_Allocated__c != null
-      ? alloc.Total_Leaves_Allocated__c : 0;
+      ? alloc.Total_Leaves_Allocated__c
+      : 0;
 
     alloc.Total_Leaves_Allocated__c = currentAllocated + days;
     update alloc;
 
     // Ledger entry
     PWChrono_LeaveLedgerService.recordAdjustment(
-      employeeId, leaveTypeId, days, reason, adminId
+      employeeId,
+      leaveTypeId,
+      days,
+      reason,
+      adminId
     );
   }
 
@@ -365,7 +428,10 @@ public inherited sharing class PWChrono_LeaveService {
    */
   @SuppressWarnings('PMD.ExcessiveParameterList')
   public static Decimal calculateWorkingDays(
-    Date startDate, Date endDate, Boolean isHalfDay, Id leaveTypeId
+    Date startDate,
+    Date endDate,
+    Boolean isHalfDay,
+    Id leaveTypeId
   ) {
     if (startDate == null || endDate == null) {
       return 0;
@@ -378,7 +444,9 @@ public inherited sharing class PWChrono_LeaveService {
     Boolean includeWeekends = false;
     Boolean includeHolidays = false;
     if (leaveTypeId != null) {
-      PWChrono_Leave_Type__c leaveType = PWChrono_LeaveSelector.getLeaveTypeById(leaveTypeId);
+      PWChrono_Leave_Type__c leaveType = PWChrono_LeaveSelector.getLeaveTypeById(
+        leaveTypeId
+      );
       if (leaveType != null) {
         includeWeekends = leaveType.Include_Weekends__c == true;
         includeHolidays = leaveType.Include_Holidays__c == true;
@@ -391,7 +459,10 @@ public inherited sharing class PWChrono_LeaveService {
     String weekend2 = weekendDays[1];
 
     // Get holidays in range
-    Set<Date> holidayDates = PWChrono_LeaveSelector.getHolidayDateSet(startDate, endDate);
+    Set<Date> holidayDates = PWChrono_LeaveSelector.getHolidayDateSet(
+      startDate,
+      endDate
+    );
 
     Integer days = 0;
     Date d = startDate;

@@ -1,0 +1,39 @@
+<template lwc:render-mode="light">
+  <aside class="sidebar" aria-label="PWChrono application navigation">
+    <div class="sidebar-logo">
+      <a href="#dashboard" aria-label="Pulse Work Chrono dashboard">
+        <template if:false={logoErrored}>
+          <img
+            src={logoUrl}
+            alt="Pulse Work Chrono"
+            onerror={handleLogoError}
+          />
+        </template>
+        <template if:true={logoErrored}>
+          <span class="brand-fallback" aria-hidden="true">PW</span>
+          <span class="brand-name">Pulse Work Chrono</span>
+        </template>
+      </a>
+    </div>
+    <div class="sidebar-inner">
+      <div class="sidebar-menu">
+        <ul>
+          <li class="menu-title"><span>MAIN MENU</span></li>
+          <template for:each={items} for:item="item">
+            <li key={item.route}>
+              <a
+                href={item.href}
+                class={item.linkClass}
+                data-route={item.route}
+                onclick={handleNavigate}
+              >
+                <i class={item.iconClass} aria-hidden="true"></i>
+                <span>{item.label}</span>
+              </a>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </div>
+  </aside>
+</template>

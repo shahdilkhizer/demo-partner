@@ -1,0 +1,19 @@
+.workspace-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999999;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #4b5563;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.main-wrapper {
+  position: relative;
+  min-height: 100vh;
+  transition: opacity 0.2s ease-in-out;
+}

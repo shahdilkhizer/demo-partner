@@ -25,50 +25,18 @@ public without sharing class PWChrono_RecruitmentController {
     String portalUserId,
     String sessionToken
   ) {
-    if (UserInfo.getUserType() != 'Guest' && !forceGuestCheckForTest) {
-      return;
-    }
-
-    if (String.isBlank(portalUserId)) {
-      return;
-    }
-
-    Id verifiedPortalUserId;
-    try {
-      verifiedPortalUserId = (Id) portalUserId;
-    } catch (Exception e) {
-      return;
-    }
-
-    List<Portal_Users__c> users = [
-      SELECT
-        Id,
-        Access_Features__c,
-        Role__c,
-        Is_Active__c
-      FROM Portal_Users__c
-      WHERE Id = :verifiedPortalUserId
-      LIMIT 1
-    ];
-
-    if (users.isEmpty()) {
-      return;
-    }
-
-    Portal_Users__c pu = users[0];
-    if (pu.Is_Active__c == false) {
-      throw new AuraHandledException('Account is inactive.');
-    }
-
-    if (
-      pu.Role__c == 'HR Admin' ||
-      pu.Role__c == 'System Admin' ||
-      hasFeature(pu.Access_Features__c, 'Recruitment')
-    ) {
-      return;
-    }
-
-    throw new AuraHandledException('Unauthorized.');
+    Id actorId = UserInfo.getUserType() == 'Guest'
+      ? PWChrono_GuestSession.requireVerifiedPortalUserId(
+          portalUserId,
+          sessionToken
+        )
+      : (String.isBlank(portalUserId)
+          ? null
+          : PWChrono_RequestValidator.resolveEmployeeId(
+              portalUserId,
+              sessionToken
+            ));
+    PWChrono_AccessController.requireFeature(actorId, 'Recruitment');
   }
 
   /**

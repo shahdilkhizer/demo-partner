@@ -27,6 +27,11 @@
                 <label>HR Admin</label>
             </value>
             <value>
+                <fullName>HR Manager</fullName>
+                <default>false</default>
+                <label>HR Manager</label>
+            </value>
+            <value>
                 <fullName>Project Manager</fullName>
                 <default>false</default>
                 <label>Project Manager</label>

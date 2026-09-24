@@ -1,0 +1,97 @@
+<template lwc:render-mode="light">
+  <c-pwchrono-ui-assets
+    onassetsready={handleAssetsReady}
+  ></c-pwchrono-ui-assets>
+
+  <div class="workspace-loader" style={loaderStyle} role="status">
+    <span class="spinner-border text-primary" aria-hidden="true"></span>
+    <span>Loading Pulse Work Chrono...</span>
+  </div>
+
+  <div class="main-wrapper" style={workspaceStyle}>
+    <c-pwchrono-header onnavigate={handleHeaderNavigate}></c-pwchrono-header>
+    <c-pwchrono-application-sidebar
+      current-route={currentRoute}
+      features={features}
+      onroutechange={handleRouteChange}
+    ></c-pwchrono-application-sidebar>
+
+    <main aria-live="polite">
+      <template if:true={isAccessDenied}>
+        <section class="page-wrapper" aria-labelledby="access-denied-title">
+          <div class="content container-fluid">
+            <div class="card border-0 shadow-sm">
+              <div class="card-body text-center py-5">
+                <i
+                  class="fa-solid fa-lock fs-1 text-primary mb-3"
+                  aria-hidden="true"
+                ></i>
+                <h1 id="access-denied-title" class="h4">Access restricted</h1>
+                <p class="text-muted mb-0">
+                  Your PWChrono profile does not allow this module. Choose an
+                  available item from the menu.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </template>
+      <template if:true={isRouteVisible}>
+        <template if:true={isDashboard}>
+          <c-pwchrono-dashboard></c-pwchrono-dashboard>
+        </template>
+        <template if:true={isProfile}>
+          <c-pwchrono-profile-update></c-pwchrono-profile-update>
+        </template>
+        <template if:true={isAttendance}>
+          <c-pwchrono-attendance-management></c-pwchrono-attendance-management>
+        </template>
+        <template if:true={isLeave}>
+          <c-pwchrono-leave-management></c-pwchrono-leave-management>
+        </template>
+        <template if:true={isHolidays}>
+          <c-pwchrono-holiday-calendar></c-pwchrono-holiday-calendar>
+        </template>
+        <template if:true={isDirectory}>
+          <c-pwchrono-employee-directory></c-pwchrono-employee-directory>
+        </template>
+        <template if:true={isRecruitment}>
+          <c-pwchrono-recruitment-pipeline></c-pwchrono-recruitment-pipeline>
+        </template>
+        <template if:true={isOnboarding}>
+          <c-pwchrono-onboarding-checklist></c-pwchrono-onboarding-checklist>
+        </template>
+        <template if:true={isPerformance}>
+          <c-pwchrono-appraisal-form></c-pwchrono-appraisal-form>
+        </template>
+        <template if:true={isGoals}>
+          <c-pwchrono-goal-management></c-pwchrono-goal-management>
+        </template>
+        <template if:true={isTraining}>
+          <c-pwchrono-training-registration></c-pwchrono-training-registration>
+        </template>
+        <template if:true={isProjects}>
+          <c-pwchrono-projects-grid></c-pwchrono-projects-grid>
+        </template>
+        <template if:true={isExpenses}>
+          <c-pwchrono-expense-claim-portal></c-pwchrono-expense-claim-portal>
+        </template>
+        <template if:true={isPayroll}>
+          <c-pwchrono-salary-slip-viewer></c-pwchrono-salary-slip-viewer>
+        </template>
+        <template if:true={isApprovals}>
+          <c-pwchrono-approvals></c-pwchrono-approvals>
+        </template>
+        <template if:true={isPolicies}>
+          <c-pwchrono-company-policies></c-pwchrono-company-policies>
+        </template>
+        <template if:true={isReports}>
+          <c-pwchrono-admin-dashboard-reports></c-pwchrono-admin-dashboard-reports>
+        </template>
+        <template if:true={isConfiguration}>
+          <c-pwchrono-configuration-center></c-pwchrono-configuration-center>
+        </template>
+      </template>
+    </main>
+  </div>
+</template>

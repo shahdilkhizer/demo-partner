@@ -89,18 +89,13 @@
                 </a>
                 <ul class={exportDropdownClass}>
                   <li>
-                    <a
-                      href="javascript:void(0);"
+                    <button
+                      type="button"
                       class="dropdown-item rounded-1"
-                      ><i class="ti ti-file-type-pdf me-1"></i>PDF</a
+                      onclick={handleExportCsv}
                     >
-                  </li>
-                  <li>
-                    <a
-                      href="javascript:void(0);"
-                      class="dropdown-item rounded-1"
-                      ><i class="ti ti-file-type-xls me-1"></i>Excel</a
-                    >
+                      <i class="ti ti-file-type-csv me-1"></i>Download CSV
+                    </button>
                   </li>
                 </ul>
               </div>
@@ -131,8 +126,7 @@
               <a
                 href="javascript:void(0);"
                 class="btn btn-primary d-flex align-items-center"
-                data-bs-toggle="modal"
-                data-bs-target="#attendance_report"
+                onclick={openReport}
               >
                 <i class="ti ti-file-analytics me-2"></i>Attendance Report
               </a>
@@ -192,7 +186,10 @@
                     <i class="ti ti-fingerprint text-primary me-1"></i>
                     Attendance {presentPercentage}%
                   </h6>
-                  <a href="javascript:void(0);" class="btn btn-dark w-100"
+                  <a
+                    href="javascript:void(0);"
+                    class="btn btn-dark w-100"
+                    onclick={openReport}
                     >Details</a
                   >
                 </div>
@@ -471,31 +468,15 @@
                 </ul>
               </div>
 
-              <div class="dropdown">
-                <a
-                  href="javascript:void(0);"
-                  class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                  data-bs-toggle="dropdown"
+              <label class="d-flex align-items-center gap-2"
+                >Sort by date<select
+                  class="form-select"
+                  onchange={handleDateSort}
                 >
-                  Sort By
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end p-3">
-                  <li>
-                    <a
-                      href="javascript:void(0);"
-                      class="dropdown-item rounded-1"
-                      >Date Ascending</a
-                    >
-                  </li>
-                  <li>
-                    <a
-                      href="javascript:void(0);"
-                      class="dropdown-item rounded-1"
-                      >Date Descending</a
-                    >
-                  </li>
-                </ul>
-              </div>
+                  <option value="desc">Newest first</option>
+                  <option value="asc">Oldest first</option>
+                </select></label
+              >
             </div>
           </div>
 
@@ -562,182 +543,203 @@
           <a href="javascript:void(0);" class="text-primary">PWChrono Team</a>
         </p>
       </div>
+
+      <c-pwchrono-attendance-modal
+        is-open={showModal}
+        record-id={selectedRecordId}
+        record={selectedRecord}
+        employee-options={employeeOptions}
+        onclose={handleCloseModal}
+        onsave={handleSaveSuccess}
+      ></c-pwchrono-attendance-modal>
     </div>
   </template>
 
-  <div class="modal fade" id="attendance_report">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title">Attendance</h4>
-          <button
-            type="button"
-            class="btn-close custom-btn-close"
-            data-bs-dismiss="modal"
-            aria-label="Close"
-          >
-            <i class="ti ti-x"></i>
-          </button>
-        </div>
-        <div class="modal-body">
-          <template if:true={reportData}>
-            <div class="card shadow-none bg-transparent-light">
-              <div class="card-body pb-1">
-                <div class="row">
-                  <div class="col-sm-3">
-                    <div class="mb-3">
-                      <span>Date</span>
-                      <p class="text-gray-9 fw-medium">
-                        {reportData.dateLabel}
-                      </p>
+  <template if:true={showReport}
+    ><div
+      class="modal show d-block"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Attendance report"
+      id="attendance_report"
+    >
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Attendance</h4>
+            <button
+              type="button"
+              class="btn-close custom-btn-close"
+              onclick={closeReport}
+              aria-label="Close"
+            >
+              <i class="ti ti-x"></i>
+            </button>
+          </div>
+          <div class="modal-body">
+            <template if:true={reportData}>
+              <div class="card shadow-none bg-transparent-light">
+                <div class="card-body pb-1">
+                  <div class="row">
+                    <div class="col-sm-3">
+                      <div class="mb-3">
+                        <span>Date</span>
+                        <p class="text-gray-9 fw-medium">
+                          {reportData.dateLabel}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div class="col-sm-3">
-                    <div class="mb-3">
-                      <span>Punch in at</span>
-                      <p class="text-gray-9 fw-medium">{reportData.punchIn}</p>
+                    <div class="col-sm-3">
+                      <div class="mb-3">
+                        <span>Punch in at</span>
+                        <p class="text-gray-9 fw-medium">
+                          {reportData.punchIn}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div class="col-sm-3">
-                    <div class="mb-3">
-                      <span>Punch out at</span>
-                      <p class="text-gray-9 fw-medium">{reportData.punchOut}</p>
+                    <div class="col-sm-3">
+                      <div class="mb-3">
+                        <span>Punch out at</span>
+                        <p class="text-gray-9 fw-medium">
+                          {reportData.punchOut}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div class="col-sm-3">
-                    <div class="mb-3">
-                      <span>Status</span>
-                      <p class="text-gray-9 fw-medium">{reportData.status}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="card shadow-none border mb-0">
-              <div class="card-body">
-                <div class="row">
-                  <div class="col-xl-3">
-                    <div class="mb-4">
-                      <p class="d-flex align-items-center mb-1">
-                        <i
-                          class="ti ti-point-filled text-dark-transparent me-1"
-                        ></i
-                        >Total Working hours
-                      </p>
-                      <h3>{reportData.totalWorking}</h3>
-                    </div>
-                  </div>
-                  <div class="col-xl-3">
-                    <div class="mb-4">
-                      <p class="d-flex align-items-center mb-1">
-                        <i class="ti ti-point-filled text-success me-1"></i
-                        >Productive Hours
-                      </p>
-                      <h3>{reportData.productive}</h3>
-                    </div>
-                  </div>
-                  <div class="col-xl-3">
-                    <div class="mb-4">
-                      <p class="d-flex align-items-center mb-1">
-                        <i class="ti ti-point-filled text-warning me-1"></i
-                        >Break hours
-                      </p>
-                      <h3>{reportData.breakHours}</h3>
-                    </div>
-                  </div>
-                  <div class="col-xl-3">
-                    <div class="mb-4">
-                      <p class="d-flex align-items-center mb-1">
-                        <i class="ti ti-point-filled text-info me-1"></i
-                        >Overtime
-                      </p>
-                      <h3>{reportData.overtime}</h3>
-                    </div>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col-md-8 mx-auto">
-                    <div
-                      class="progress bg-transparent-dark mb-3"
-                      style="height: 24px"
-                    >
-                      <div
-                        class="progress-bar bg-success rounded me-2"
-                        role="progressbar"
-                        style="width: 18%"
-                      ></div>
-                      <div
-                        class="progress-bar bg-warning rounded me-2"
-                        role="progressbar"
-                        style="width: 5%"
-                      ></div>
-                      <div
-                        class="progress-bar bg-success rounded me-2"
-                        role="progressbar"
-                        style="width: 28%"
-                      ></div>
-                      <div
-                        class="progress-bar bg-warning rounded me-2"
-                        role="progressbar"
-                        style="width: 17%"
-                      ></div>
-                      <div
-                        class="progress-bar bg-success rounded me-2"
-                        role="progressbar"
-                        style="width: 22%"
-                      ></div>
-                      <div
-                        class="progress-bar bg-warning rounded me-2"
-                        role="progressbar"
-                        style="width: 5%"
-                      ></div>
-                      <div
-                        class="progress-bar bg-info rounded me-2"
-                        role="progressbar"
-                        style="width: 3%"
-                      ></div>
-                      <div
-                        class="progress-bar bg-info rounded"
-                        role="progressbar"
-                        style="width: 2%"
-                      ></div>
-                    </div>
-                  </div>
-                  <div class="co-md-12">
-                    <div
-                      class="d-flex align-items-center justify-content-between"
-                    >
-                      <span class="fs-10">06:00</span>
-                      <span class="fs-10">07:00</span>
-                      <span class="fs-10">08:00</span>
-                      <span class="fs-10">09:00</span>
-                      <span class="fs-10">10:00</span>
-                      <span class="fs-10">11:00</span>
-                      <span class="fs-10">12:00</span>
-                      <span class="fs-10">01:00</span>
-                      <span class="fs-10">02:00</span>
-                      <span class="fs-10">03:00</span>
-                      <span class="fs-10">04:00</span>
-                      <span class="fs-10">05:00</span>
-                      <span class="fs-10">06:00</span>
-                      <span class="fs-10">07:00</span>
-                      <span class="fs-10">08:00</span>
-                      <span class="fs-10">09:00</span>
-                      <span class="fs-10">10:00</span>
-                      <span class="fs-10">11:00</span>
+                    <div class="col-sm-3">
+                      <div class="mb-3">
+                        <span>Status</span>
+                        <p class="text-gray-9 fw-medium">{reportData.status}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </template>
-          <template if:false={reportData}>
-            <div class="alert alert-info mb-0" role="status">
-              No attendance data available for the report.
-            </div>
-          </template>
+              <div class="card shadow-none border mb-0">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-xl-3">
+                      <div class="mb-4">
+                        <p class="d-flex align-items-center mb-1">
+                          <i
+                            class="ti ti-point-filled text-dark-transparent me-1"
+                          ></i
+                          >Total Working hours
+                        </p>
+                        <h3>{reportData.totalWorking}</h3>
+                      </div>
+                    </div>
+                    <div class="col-xl-3">
+                      <div class="mb-4">
+                        <p class="d-flex align-items-center mb-1">
+                          <i class="ti ti-point-filled text-success me-1"></i
+                          >Productive Hours
+                        </p>
+                        <h3>{reportData.productive}</h3>
+                      </div>
+                    </div>
+                    <div class="col-xl-3">
+                      <div class="mb-4">
+                        <p class="d-flex align-items-center mb-1">
+                          <i class="ti ti-point-filled text-warning me-1"></i
+                          >Break hours
+                        </p>
+                        <h3>{reportData.breakHours}</h3>
+                      </div>
+                    </div>
+                    <div class="col-xl-3">
+                      <div class="mb-4">
+                        <p class="d-flex align-items-center mb-1">
+                          <i class="ti ti-point-filled text-info me-1"></i
+                          >Overtime
+                        </p>
+                        <h3>{reportData.overtime}</h3>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-8 mx-auto">
+                      <div
+                        class="progress bg-transparent-dark mb-3"
+                        style="height: 24px"
+                      >
+                        <div
+                          class="progress-bar bg-success rounded me-2"
+                          role="progressbar"
+                          style="width: 18%"
+                        ></div>
+                        <div
+                          class="progress-bar bg-warning rounded me-2"
+                          role="progressbar"
+                          style="width: 5%"
+                        ></div>
+                        <div
+                          class="progress-bar bg-success rounded me-2"
+                          role="progressbar"
+                          style="width: 28%"
+                        ></div>
+                        <div
+                          class="progress-bar bg-warning rounded me-2"
+                          role="progressbar"
+                          style="width: 17%"
+                        ></div>
+                        <div
+                          class="progress-bar bg-success rounded me-2"
+                          role="progressbar"
+                          style="width: 22%"
+                        ></div>
+                        <div
+                          class="progress-bar bg-warning rounded me-2"
+                          role="progressbar"
+                          style="width: 5%"
+                        ></div>
+                        <div
+                          class="progress-bar bg-info rounded me-2"
+                          role="progressbar"
+                          style="width: 3%"
+                        ></div>
+                        <div
+                          class="progress-bar bg-info rounded"
+                          role="progressbar"
+                          style="width: 2%"
+                        ></div>
+                      </div>
+                    </div>
+                    <div class="co-md-12">
+                      <div
+                        class="d-flex align-items-center justify-content-between"
+                      >
+                        <span class="fs-10">06:00</span>
+                        <span class="fs-10">07:00</span>
+                        <span class="fs-10">08:00</span>
+                        <span class="fs-10">09:00</span>
+                        <span class="fs-10">10:00</span>
+                        <span class="fs-10">11:00</span>
+                        <span class="fs-10">12:00</span>
+                        <span class="fs-10">01:00</span>
+                        <span class="fs-10">02:00</span>
+                        <span class="fs-10">03:00</span>
+                        <span class="fs-10">04:00</span>
+                        <span class="fs-10">05:00</span>
+                        <span class="fs-10">06:00</span>
+                        <span class="fs-10">07:00</span>
+                        <span class="fs-10">08:00</span>
+                        <span class="fs-10">09:00</span>
+                        <span class="fs-10">10:00</span>
+                        <span class="fs-10">11:00</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+            <template if:false={reportData}>
+              <div class="alert alert-info mb-0" role="status">
+                No attendance data available for the report.
+              </div>
+            </template>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </template>
 </template>

@@ -180,6 +180,10 @@
         <apexClass>PWChrono_Utils</apexClass>
         <enabled>true</enabled>
     </classAccesses>
+    <classAccesses>
+        <apexClass>PWChrono_WorkLogController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <description>Provides authenticated portal users access to all Pulse Work Chrono Apex controllers and objects.</description>
     <hasActivationRequired>false</hasActivationRequired>
     <label>PWChrono Portal User Access</label>

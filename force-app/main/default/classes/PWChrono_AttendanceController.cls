@@ -185,6 +185,10 @@ public inherited sharing class PWChrono_AttendanceController {
         employeeId,
         sessionToken
       );
+      PWChrono_AccessController.requireFeature(
+        empId,
+        PWChrono_AccessController.FEATURE_ATTENDANCE_TEAM
+      );
       return PWChrono_AttendanceSelector.getTeamRequestsForApproval(empId);
     } catch (AuraHandledException ahe) {
       throw ahe;
@@ -209,6 +213,10 @@ public inherited sharing class PWChrono_AttendanceController {
       Id empId = PWChrono_RequestValidator.resolveEmployeeId(
         employeeId,
         sessionToken
+      );
+      PWChrono_AccessController.requireFeature(
+        empId,
+        PWChrono_AccessController.FEATURE_ATTENDANCE_TEAM
       );
       return PWChrono_AttendanceSelector.getTeamRequests(empId, statusFilter);
     } catch (AuraHandledException ahe) {
@@ -236,6 +244,10 @@ public inherited sharing class PWChrono_AttendanceController {
       Id empId = PWChrono_RequestValidator.resolveEmployeeId(
         employeeId,
         sessionToken
+      );
+      PWChrono_AccessController.requireFeature(
+        empId,
+        PWChrono_AccessController.FEATURE_ATTENDANCE_TEAM
       );
       return PWChrono_AttendanceService.processApproval(
         requestId,
@@ -762,6 +774,10 @@ public inherited sharing class PWChrono_AttendanceController {
         employeeId,
         sessionToken
       );
+      PWChrono_AccessController.requireFeature(
+        empId,
+        PWChrono_AccessController.FEATURE_ATTENDANCE_TEAM
+      );
       List<Portal_Users__c> team = [
         SELECT Id
         FROM Portal_Users__c
@@ -829,6 +845,10 @@ public inherited sharing class PWChrono_AttendanceController {
     public String status;
     @AuraEnabled
     public Boolean isLate;
+    @AuraEnabled
+    public String requestStatus;
+    @AuraEnabled
+    public String correctionType;
   }
 
   /**
@@ -842,8 +862,16 @@ public inherited sharing class PWChrono_AttendanceController {
     String sessionToken
   ) {
     try {
-      if (UserInfo.getUserType() == 'Guest') {
-        requireAttendanceAdminAccess(portalUserId, sessionToken);
+      Id actorEmployeeId = PWChrono_RequestValidator.resolveEmployeeId(
+        portalUserId,
+        sessionToken
+      );
+      requireAttendanceTeamOrAdminAccess(actorEmployeeId);
+      Set<Id> visibleEmployeeIds = PWChrono_AccessController.getVisibleEmployeeIds(
+        actorEmployeeId
+      );
+      if (visibleEmployeeIds.isEmpty()) {
+        return new List<AttendanceAdminRow>();
       }
 
       Date targetDate = dateFilter != null ? dateFilter : Date.today();
@@ -858,7 +886,7 @@ public inherited sharing class PWChrono_AttendanceController {
           Contact__r.Title,
           Contact__r.Department
         FROM Portal_Users__c
-        WHERE Is_Active__c = TRUE
+        WHERE Is_Active__c = TRUE AND Id IN :visibleEmployeeIds
         ORDER BY Name ASC
       ];
       Set<Id> employeeIds = new Map<Id, Portal_Users__c>(employees).keySet();
@@ -992,6 +1020,11 @@ public inherited sharing class PWChrono_AttendanceController {
         row.checkOut = day.checkOut;
         row.status = day.status;
         row.isLate = day.isLate;
+        PWChrono_Attendance_Request__c sourceRequest = employeeRequests.get(
+          targetDate
+        );
+        row.requestStatus = sourceRequest?.Status__c;
+        row.correctionType = sourceRequest?.Correction_Type__c;
         rows.add(row);
       }
       return rows;
@@ -1016,8 +1049,16 @@ public inherited sharing class PWChrono_AttendanceController {
     String sessionToken
   ) {
     try {
-      if (UserInfo.getUserType() == 'Guest') {
-        requireAttendanceAdminAccess(portalUserId, sessionToken);
+      Id actorEmployeeId = PWChrono_RequestValidator.resolveEmployeeId(
+        portalUserId,
+        sessionToken
+      );
+      requireAttendanceTeamOrAdminAccess(actorEmployeeId);
+      Set<Id> visibleEmployeeIds = PWChrono_AccessController.getVisibleEmployeeIds(
+        actorEmployeeId
+      );
+      if (visibleEmployeeIds.isEmpty()) {
+        return new List<PWChrono_Attendance_Request__c>();
       }
       Date targetDate = dateFilter != null ? dateFilter : Date.today();
       return Database.query(
@@ -1025,7 +1066,7 @@ public inherited sharing class PWChrono_AttendanceController {
           'Attendance_Date__c, From_Time__c, To_Time__c, Status__c, ' +
           'Correction_Type__c, Reason__c ' +
           'FROM PWChrono_Attendance_Request__c ' +
-          'WHERE Attendance_Date__c = :targetDate ' +
+          'WHERE Attendance_Date__c = :targetDate AND Employees__c IN :visibleEmployeeIds ' +
           'ORDER BY Employees__r.Name ASC'
       );
     } catch (AuraHandledException ahe) {
@@ -1048,9 +1089,14 @@ public inherited sharing class PWChrono_AttendanceController {
     String sessionToken
   ) {
     try {
-      if (UserInfo.getUserType() == 'Guest') {
-        requireAttendanceAdminAccess(portalUserId, sessionToken);
-      }
+      Id actorEmployeeId = PWChrono_RequestValidator.resolveEmployeeId(
+        portalUserId,
+        sessionToken
+      );
+      PWChrono_AccessController.requireFeature(
+        actorEmployeeId,
+        PWChrono_AccessController.FEATURE_ATTENDANCE_ADMIN
+      );
       insert shiftType;
       return shiftType;
     } catch (AuraHandledException ahe) {
@@ -1073,9 +1119,14 @@ public inherited sharing class PWChrono_AttendanceController {
     String sessionToken
   ) {
     try {
-      if (UserInfo.getUserType() == 'Guest') {
-        requireAttendanceAdminAccess(portalUserId, sessionToken);
-      }
+      Id actorEmployeeId = PWChrono_RequestValidator.resolveEmployeeId(
+        portalUserId,
+        sessionToken
+      );
+      PWChrono_AccessController.requireFeature(
+        actorEmployeeId,
+        PWChrono_AccessController.FEATURE_ATTENDANCE_ADMIN
+      );
       update shiftType;
       return shiftType;
     } catch (AuraHandledException ahe) {
@@ -1139,7 +1190,22 @@ public inherited sharing class PWChrono_AttendanceController {
         portalUserId,
         sessionToken
       );
-      attendanceRequest.Employees__c = empId;
+      Id requestedEmployeeId = attendanceRequest.Employees__c;
+      if (requestedEmployeeId != null && requestedEmployeeId != empId) {
+        PWChrono_AccessController.requireFeature(
+          empId,
+          PWChrono_AccessController.FEATURE_ATTENDANCE_ADMIN
+        );
+        if (
+          !PWChrono_AccessController.canViewEmployee(empId, requestedEmployeeId)
+        ) {
+          throw new AuraHandledException(
+            'Access denied: Employee is outside your attendance scope.'
+          );
+        }
+      } else {
+        attendanceRequest.Employees__c = empId;
+      }
       upsert attendanceRequest;
       return PWChrono_AttendanceSelector.getRequestById(attendanceRequest.Id);
     } catch (AuraHandledException ahe) {
@@ -1194,6 +1260,10 @@ public inherited sharing class PWChrono_AttendanceController {
         employeeId,
         sessionToken
       );
+      PWChrono_AccessController.requireFeature(
+        empId,
+        PWChrono_AccessController.FEATURE_ATTENDANCE_TEAM
+      );
       return PWChrono_AttendanceSelector.getTeamRequestsForApproval(empId);
     } catch (AuraHandledException ahe) {
       throw ahe;
@@ -1245,11 +1315,14 @@ public inherited sharing class PWChrono_AttendanceController {
       return actorEmployeeId;
     }
 
-    if (UserInfo.getUserType() == 'Guest') {
-      requireAttendanceAdminAccess((String) actorEmployeeId, sessionToken);
-    } else if (!PWChrono_RequestValidator.isCurrentUserAdmin(actorEmployeeId)) {
+    if (
+      !PWChrono_AccessController.hasFeature(
+        actorEmployeeId,
+        PWChrono_AccessController.FEATURE_ATTENDANCE_TEAM
+      ) || !PWChrono_AccessController.canViewEmployee(actorEmployeeId, targetId)
+    ) {
       throw new AuraHandledException(
-        'Access denied: Admin privileges required.'
+        'Access denied: You cannot view this employee attendance.'
       );
     }
 
@@ -1265,34 +1338,19 @@ public inherited sharing class PWChrono_AttendanceController {
     return targets[0].Id;
   }
 
-  /**
-   * @description Verifies the guest session holder has HR Admin or System Admin role,
-   *              or the "Admin Settings" feature access bit.
-   */
-  private static void requireAttendanceAdminAccess(
-    String portalUserId,
-    String sessionToken
-  ) {
-    Id verifiedId = PWChrono_GuestSession.requireVerifiedPortalUserId(
-      portalUserId,
-      sessionToken
-    );
-    Portal_Users__c pu = [
-      SELECT Id, Is_Active__c, Role__c, Access_Features__c
-      FROM Portal_Users__c
-      WHERE Id = :verifiedId
-      LIMIT 1
-    ];
-    if (pu == null || pu.Is_Active__c != true) {
-      throw new AuraHandledException('Unauthorized.');
-    }
-    Boolean isAdmin = pu.Role__c == 'HR Admin' || pu.Role__c == 'System Admin';
-    Boolean hasFeature =
-      String.isNotBlank(pu.Access_Features__c) &&
-      pu.Access_Features__c.contains('Admin Settings');
-    if (!isAdmin && !hasFeature) {
+  private static void requireAttendanceTeamOrAdminAccess(Id actorEmployeeId) {
+    if (
+      !PWChrono_AccessController.hasFeature(
+        actorEmployeeId,
+        PWChrono_AccessController.FEATURE_ATTENDANCE_TEAM
+      ) &&
+      !PWChrono_AccessController.hasFeature(
+        actorEmployeeId,
+        PWChrono_AccessController.FEATURE_ATTENDANCE_ADMIN
+      )
+    ) {
       throw new AuraHandledException(
-        'Access denied: Admin privileges required.'
+        'Access denied: Team attendance access is required.'
       );
     }
   }

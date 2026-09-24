@@ -1,52 +1,38 @@
-<template>
+<template lwc:render-mode="light">
   <div class="page-wrapper" style="min-height: 732px">
-    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+    <div class="content container-fluid pwchrono-dashboard-content">
       <!-- Page Header -->
       <div
         class="d-md-flex d-block align-items-center justify-content-between mb-3"
       >
         <div class="my-auto mb-2">
-          <h2 class="mb-1">Employee Dashboard</h2>
+          <h2 class="mb-1">{dashboardTitle}</h2>
           <nav>
             <ol class="breadcrumb mb-0">
               <li class="breadcrumb-item">
-                <a href="javascript:void(0);"
-                  ><i class="fa-solid fa-house"></i
-                ></a>
+                <span aria-label="Home"
+                  ><i class="fa-solid fa-house" aria-hidden="true"></i
+                ></span>
               </li>
               <li class="breadcrumb-item">Dashboard</li>
               <li class="breadcrumb-item active" aria-current="page">
-                Employee Dashboard
+                {dashboardTitle}
               </li>
             </ol>
           </nav>
         </div>
-        <div
-          class="d-flex my-xl-auto right-content align-items-center flex-wrap"
-        >
-          <div class="me-2 mb-2">
-            <div class="dropdown">
-              <a
-                href="javascript:void(0);"
-                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown"
-              >
-                <i class="fa-solid fa-file-export me-1"></i>Export
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1"
-                    ><i class="fa-solid fa-file-pdf me-1"></i>Export as PDF</a
-                  >
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1"
-                    ><i class="fa-solid fa-file-excel me-1"></i>Export as Excel
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button
+            type="button"
+            class="btn btn-white"
+            onclick={loadDashboard}
+            disabled={isLoading}
+          >
+            Refresh
+          </button>
+          <button type="button" class="btn btn-white" onclick={handlePrint}>
+            Print / Save PDF
+          </button>
         </div>
       </div>
       <!-- /Page Header -->
@@ -59,7 +45,19 @@
         </div>
       </template>
 
-      <template if:false={isLoading}>
+      <template if:true={errorMessage}>
+        <div class="alert alert-danger" role="alert">
+          Dashboard could not be loaded: {errorMessage}
+          <button
+            type="button"
+            class="btn btn-white ms-2"
+            onclick={loadDashboard}
+          >
+            Retry
+          </button>
+        </div>
+      </template>
+      <template if:true={hasData}>
         <!-- Welcome Wrap -->
         <div class="card border-0">
           <div
@@ -96,9 +94,9 @@
 
         <div class="row">
           <!-- Widget Info -->
-          <div class="col-xxl-8 d-flex">
+          <div class="col-xl-8 d-flex">
             <div class="row flex-fill">
-              <div class="col-md-3 d-flex">
+              <div class="col-sm-6 col-lg-3 d-flex">
                 <div class="card flex-fill">
                   <div class="card-body">
                     <span class="avatar rounded-circle bg-primary mb-2">
@@ -117,7 +115,7 @@
                   </div>
                 </div>
               </div>
-              <div class="col-md-3 d-flex">
+              <div class="col-sm-6 col-lg-3 d-flex">
                 <div class="card flex-fill">
                   <div class="card-body">
                     <span class="avatar rounded-circle bg-secondary mb-2">
@@ -136,7 +134,7 @@
                   </div>
                 </div>
               </div>
-              <div class="col-md-3 d-flex">
+              <div class="col-sm-6 col-lg-3 d-flex">
                 <div class="card flex-fill">
                   <div class="card-body">
                     <span class="avatar rounded-circle bg-info mb-2">
@@ -155,7 +153,7 @@
                   </div>
                 </div>
               </div>
-              <div class="col-md-3 d-flex">
+              <div class="col-sm-6 col-lg-3 d-flex">
                 <div class="card flex-fill">
                   <div class="card-body">
                     <span class="avatar rounded-circle bg-pink mb-2">
@@ -179,21 +177,19 @@
           <!-- /Widget Info -->
 
           <!-- Clock-In/Out -->
-          <div class="col-xxl-4 col-xl-6 d-flex">
+          <div class="col-xl-4 d-flex">
             <div class="card flex-fill">
               <div
                 class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
               >
                 <h5 class="mb-2">Today's Attendance</h5>
-                <div class="dropdown mb-2">
-                  <a
-                    href="javascript:void(0);"
-                    class="btn btn-white border btn-sm d-inline-flex align-items-center"
-                    data-bs-toggle="dropdown"
-                  >
-                    <i class="fa-solid fa-calendar-days me-1"></i>Today
-                  </a>
-                </div>
+                <button
+                  type="button"
+                  class="btn btn-white btn-sm"
+                  onclick={navigateToShifts}
+                >
+                  View attendance
+                </button>
               </div>
               <div class="card-body">
                 <div
@@ -248,7 +244,7 @@
 
         <div class="row">
           <!-- Upcoming Shifts -->
-          <div class="col-xxl-8 d-flex">
+          <div class="col-xl-8 d-flex">
             <div class="card flex-fill">
               <div
                 class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
@@ -307,14 +303,27 @@
           <!-- /Upcoming Shifts -->
 
           <!-- Leave Balance -->
-          <div class="col-xxl-4 d-flex">
+          <div class="col-xl-4 d-flex">
             <div class="card flex-fill">
               <div
                 class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
               >
                 <h5 class="mb-2">Leave Balance</h5>
+                <button
+                  type="button"
+                  class="btn btn-white btn-sm"
+                  onclick={navigateToLeave}
+                >
+                  My leave
+                </button>
               </div>
               <div class="card-body">
+                <template if:false={hasLeaveBalance}
+                  ><p class="text-muted mb-0">
+                    No current leave allocation. Contact HR to confirm your
+                    entitlement.
+                  </p></template
+                >
                 <template for:each={leaveBalance} for:item="leave">
                   <div
                     key={leave.leaveType}
@@ -346,6 +355,13 @@
                 class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap"
               >
                 <h5 class="mb-2">Recent Salary Slips</h5>
+                <button
+                  type="button"
+                  class="btn btn-white btn-sm"
+                  onclick={navigateToPayroll}
+                >
+                  View payslips
+                </button>
               </div>
               <div class="card-body p-0">
                 <div class="table-responsive">

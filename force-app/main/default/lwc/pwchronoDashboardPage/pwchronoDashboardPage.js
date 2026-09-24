@@ -1,5 +1,5 @@
-import getDashboardSummaryForPortal from "@salesforce/apex/PWChrono_DashboardController.getDashboardSummaryForPortal";
-import { logError } from "c/pwchronoErrorHandler";
+import getDashboardSummaryForPortal from "@salesforce/apex/PWChrono_PortalApi.getDashboardSummaryForPortal";
+import { logError, getErrorMessage } from "c/pwchronoErrorHandler";
 import {
   getEmployeeId,
   getSession,
@@ -7,12 +7,15 @@ import {
   SESSION_CHANGED_EVENT
 } from "c/pwchronoSession";
 import { NavigationMixin } from "lightning/navigation";
-import { LightningElement, track } from "lwc";
+import { LightningElement, track, api } from "lwc";
 
 export default class PwchronoDashboardPage extends NavigationMixin(
   LightningElement
 ) {
   static renderMode = "light";
+  @api dashboardTitle = "Employee Dashboard";
+  errorMessage = "";
+  requestVersion = 0;
   @track isLoading = true;
   @track dashboardData = {};
 
@@ -41,6 +44,7 @@ export default class PwchronoDashboardPage extends NavigationMixin(
   }
 
   disconnectedCallback() {
+    this.requestVersion++;
     try {
       const w = globalThis?.window ?? globalThis;
       w?.removeEventListener?.(
@@ -68,20 +72,34 @@ export default class PwchronoDashboardPage extends NavigationMixin(
   }
 
   async loadDashboard() {
+    const version = ++this.requestVersion;
     this.isLoading = true;
+    this.errorMessage = "";
+    this.dashboardData = {};
     try {
       const data = await getDashboardSummaryForPortal({
         portalUserId: this.employeeId,
         sessionToken: this.sessionToken
       });
+      if (version !== this.requestVersion) return;
       this.dashboardData = data || {};
     } catch (error) {
-      // Keep UI alive (show empty sections) rather than hard-crashing.
+      if (version !== this.requestVersion) return;
       logError("pwchronoDashboardPage.loadDashboard", error);
-      this.dashboardData = {};
+      this.errorMessage = getErrorMessage(error);
     } finally {
-      this.isLoading = false;
+      if (version === this.requestVersion) this.isLoading = false;
     }
+  }
+
+  get hasData() {
+    return !this.isLoading && !this.errorMessage;
+  }
+  get hasLeaveBalance() {
+    return this.leaveBalance.length > 0;
+  }
+  handlePrint() {
+    globalThis.window?.print();
   }
 
   get leaveBalance() {
@@ -117,7 +135,8 @@ export default class PwchronoDashboardPage extends NavigationMixin(
   }
 
   get pendingApprovalsCount() {
-    return this.dashboardData.pendingApprovals?.total || 0;
+    const pending = this.dashboardData.pendingApprovals || {};
+    return (pending.leaves || 0) + (pending.attendance || 0);
   }
 
   get todayAttendance() {
@@ -160,14 +179,14 @@ export default class PwchronoDashboardPage extends NavigationMixin(
   navigateToAppraisals() {
     this[NavigationMixin.Navigate]({
       type: "standard__webPage",
-      attributes: { url: this._communityUrl("/performance") }
+      attributes: { url: this._communityUrl("/appraisals") }
     });
   }
 
   navigateToApprovals() {
     this[NavigationMixin.Navigate]({
       type: "standard__webPage",
-      attributes: { url: this._communityUrl("/leaves") }
+      attributes: { url: this._communityUrl("/approvals") }
     });
   }
 

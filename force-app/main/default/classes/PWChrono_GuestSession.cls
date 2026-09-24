@@ -9,6 +9,34 @@ public without sharing class PWChrono_GuestSession {
   @TestVisible
   private static Datetime testNowOverride;
 
+  /** Revoke only the presented token, never a newer session issued after it. */
+  public static void revokeSession(String portalUserId, String sessionToken) {
+    if (String.isBlank(portalUserId) || String.isBlank(sessionToken))
+      return;
+    Id pid;
+    try {
+      pid = (Id) portalUserId;
+    } catch (Exception e) {
+      throw handledException('Session invalid.');
+    }
+    List<Portal_Users__c> users = [
+      SELECT Id, Session_Token__c, Session_Expires_At__c
+      FROM Portal_Users__c
+      WHERE Id = :pid
+      LIMIT 1
+      FOR UPDATE
+    ];
+    if (
+      users.isEmpty() ||
+      users[0].Session_Token__c == null ||
+      !users[0].Session_Token__c.equals(sessionToken)
+    )
+      return;
+    users[0].Session_Token__c = null;
+    users[0].Session_Expires_At__c = null;
+    update users[0];
+  }
+
   /**
    * @description Resolve the effective portal user Id for the current context.
    *              - Non-Guest: uses provided portalUserId if present, otherwise maps current Salesforce user.
@@ -110,35 +138,9 @@ public without sharing class PWChrono_GuestSession {
       sessionToken
     );
 
-    Portal_Users__c portalUser = [
-      SELECT Id, Role__c, Portal_User_Profile__c
-      FROM Portal_Users__c
-      WHERE Id = :verifiedPortalUserId AND Is_Active__c = TRUE
-      LIMIT 1
-    ];
-
-    List<String> features = new List<String>();
-    if (portalUser.Portal_User_Profile__c != null) {
-      for (Portal_Profile_Feature__c assignment : [
-        SELECT Feature_Key__c
-        FROM Portal_Profile_Feature__c
-        WHERE
-          Portal_User_Profile__c = :portalUser.Portal_User_Profile__c
-          AND Is_Enabled__c = TRUE
-        ORDER BY Feature_Key__c
-      ]) {
-        if (String.isNotBlank(assignment.Feature_Key__c)) {
-          features.add(assignment.Feature_Key__c);
-        }
-      }
-    }
-
-    return new Map<String, Object>{
-      'hasAccess' => true,
-      'role' => portalUser.Role__c,
-      'features' => features,
-      'isSalesforceUser' => false
-    };
+    return PWChrono_AccessController.getVerifiedPortalUserAccess(
+      verifiedPortalUserId
+    );
   }
 
   @TestVisible

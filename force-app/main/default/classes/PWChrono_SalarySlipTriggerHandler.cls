@@ -45,11 +45,18 @@ public inherited sharing class PWChrono_SalarySlipTriggerHandler {
         history.Effective_Date__c = slip.Payroll_Period__c != null
           ? slip.Payroll_Period__c
           : Date.today();
-        history.Basic_Salary__c = slip.Gross_Pay__c; // Use Gross as Basic not available
+        history.Basic_Salary__c = slip.Basic_Pay__c == null
+          ? slip.Gross_Pay__c
+          : slip.Basic_Pay__c;
         history.Gross_Salary__c = slip.Gross_Pay__c;
         history.Net_Salary__c = slip.Net_Pay__c;
-        history.Total_Deductions__c = 0; // Calculate from details if needed
-        history.Total_Allowances__c = 0; // Calculate from details if needed
+        history.Total_Deductions__c = slip.Total_Deductions__c == null
+          ? 0
+          : slip.Total_Deductions__c;
+        history.Total_Allowances__c = slip.Gross_Pay__c == null ||
+          history.Basic_Salary__c == null
+          ? 0
+          : slip.Gross_Pay__c - history.Basic_Salary__c;
         history.Currency_Code__c = PWChrono_Constants.getEffectiveCurrencyCode();
         history.Change_Reason__c = 'Salary Slip Generated';
         history.Salary_Slip__c = slip.Id;

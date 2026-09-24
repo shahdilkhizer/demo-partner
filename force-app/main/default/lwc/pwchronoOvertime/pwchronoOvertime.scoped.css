@@ -1,0 +1,1 @@
+.native-menu { position:relative; }.native-menu summary { cursor:pointer; list-style:none; }.native-menu-list { position:absolute; right:0; z-index:100; min-width:190px; background:white; border:1px solid #e9edf4; box-shadow:0 4px 12px #10182820; list-style:none; border-radius:6px; }

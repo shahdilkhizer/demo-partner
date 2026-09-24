@@ -78,4 +78,114 @@ private class PWChrono_NotificationController_Test {
       'All notifications should be marked as read'
     );
   }
+
+  @isTest
+  static void testGuestNotificationsRequireMatchingToken() {
+    Portal_User_Profile__c profile = new Portal_User_Profile__c();
+    insert profile;
+    Portal_Users__c employee = new Portal_Users__c(
+      Name = 'Notification Owner',
+      Email__c = 'notification@example.com',
+      Is_Active__c = true,
+      Portal_User_Profile__c = profile.Id,
+      User__c = UserInfo.getUserId(),
+      Session_Token__c = 'notification-token',
+      Session_Expires_At__c = System.now().addHours(1)
+    );
+    insert employee;
+    TLG_Task_Notifications__c notification = new TLG_Task_Notifications__c(
+      TLG_Notification_Title__c = 'Private notification',
+      TLG_Notified__c = false,
+      OwnerId = UserInfo.getUserId()
+    );
+    insert notification;
+    PWChrono_NotificationController.testUserTypeOverride = 'Guest';
+    PWChrono_GuestSession.testUserTypeOverride = 'Guest';
+    try {
+      System.assertEquals(
+        1,
+        PWChrono_NotificationController.getRecentNotifications(
+            String.valueOf(employee.Id),
+            'notification-token'
+          )
+          .size()
+      );
+      Boolean rejected = false;
+      try {
+        PWChrono_NotificationController.markAllAsRead(
+          String.valueOf(employee.Id),
+          'wrong-token'
+        );
+      } catch (AuraHandledException expected) {
+        rejected = true;
+      }
+      System.assert(
+        rejected,
+        'Invalid credentials must not update notifications'
+      );
+      notification = [
+        SELECT TLG_Notified__c
+        FROM TLG_Task_Notifications__c
+        WHERE Id = :notification.Id
+      ];
+      System.assertEquals(false, notification.TLG_Notified__c);
+      PWChrono_NotificationController.markAsRead(
+        String.valueOf(notification.Id),
+        String.valueOf(employee.Id),
+        'notification-token'
+      );
+      notification = [
+        SELECT TLG_Notified__c
+        FROM TLG_Task_Notifications__c
+        WHERE Id = :notification.Id
+      ];
+      System.assertEquals(true, notification.TLG_Notified__c);
+    } finally {
+      PWChrono_NotificationController.testUserTypeOverride = null;
+      PWChrono_GuestSession.testUserTypeOverride = null;
+    }
+  }
+
+  @isTest
+  static void testNotificationOwnershipIsolation() {
+    PWChrono_TestDataFactory.createTestUsers();
+    User otherUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
+    System.runAs(new User(Id = UserInfo.getUserId())) {
+      TLG_Task_Notifications__c mine = new TLG_Task_Notifications__c(
+        TLG_Notification_Title__c = 'Mine',
+        TLG_Notified__c = false,
+        OwnerId = UserInfo.getUserId()
+      );
+      TLG_Task_Notifications__c other = new TLG_Task_Notifications__c(
+        TLG_Notification_Title__c = 'Other',
+        TLG_Notified__c = false,
+        OwnerId = otherUser.Id
+      );
+      insert new List<TLG_Task_Notifications__c>{ mine, other };
+      List<PWChrono_NotificationController.NotificationWrapper> visible = PWChrono_NotificationController.getRecentNotifications(
+        null,
+        null
+      );
+      System.assertEquals(1, visible.size());
+      System.assertEquals(mine.Id, visible[0].Id);
+      Boolean denied = false;
+      try {
+        PWChrono_NotificationController.markAsRead(
+          String.valueOf(other.Id),
+          null,
+          null
+        );
+      } catch (QueryException expected) {
+        denied = true;
+      }
+      System.assert(denied, 'Cannot mark another owner notification as read');
+      PWChrono_NotificationController.markAllAsRead(null, null);
+      other = [
+        SELECT TLG_Notified__c
+        FROM TLG_Task_Notifications__c
+        WHERE Id = :other.Id
+      ];
+      System.assertEquals(false, other.TLG_Notified__c);
+    }
+  }
 }

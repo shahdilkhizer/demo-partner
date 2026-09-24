@@ -1,6 +1,6 @@
-import createShiftType from "@salesforce/apex/PWChrono_AttendanceController.createShiftType";
+import createShiftType from "@salesforce/apex/PWChrono_PortalApi.createShiftType";
 import getActiveShiftTypes from "@salesforce/apex/PWChrono_AttendanceController.getActiveShiftTypes";
-import updateShiftType from "@salesforce/apex/PWChrono_AttendanceController.updateShiftType";
+import updateShiftType from "@salesforce/apex/PWChrono_PortalApi.updateShiftType";
 import { logError } from "c/pwchronoErrorHandler";
 import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";

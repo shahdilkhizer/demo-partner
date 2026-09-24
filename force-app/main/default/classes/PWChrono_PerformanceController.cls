@@ -17,30 +17,14 @@ public inherited sharing class PWChrono_PerformanceController {
     String sessionToken
   ) {
     try {
-      Id targetEmployeeId;
-      if (UserInfo.getUserType() == 'Guest') {
-        targetEmployeeId = PWChrono_GuestSession.requireVerifiedPortalUserId(
-          employeeId,
-          sessionToken
-        );
-      } else if (String.isNotBlank(employeeId)) {
-        Id currentEmployeeId = PWChrono_Utils.getCurrentEmployeeId(
-          UserInfo.getUserId()
-        );
-        if (currentEmployeeId != null && employeeId != currentEmployeeId) {
-          if (PWChrono_AccessController.isAdmin(currentEmployeeId)) {
-            targetEmployeeId = (Id) employeeId;
-          } else {
-            targetEmployeeId = currentEmployeeId;
-          }
-        } else {
-          targetEmployeeId = (Id) employeeId;
-        }
-      } else {
-        targetEmployeeId = PWChrono_Utils.getCurrentEmployeeId(
-          UserInfo.getUserId()
-        );
-      }
+      Id targetEmployeeId = PWChrono_RequestValidator.resolveEmployeeId(
+        employeeId,
+        sessionToken
+      );
+      PWChrono_AccessController.requireFeature(
+        targetEmployeeId,
+        'Performance Management'
+      );
 
       if (targetEmployeeId == null) {
         AuraHandledException ahe = new AuraHandledException(
@@ -85,17 +69,15 @@ public inherited sharing class PWChrono_PerformanceController {
    */
   @AuraEnabled(cacheable=true)
   public static List<PWChrono_Appraisal__c> getTeamAppraisalsForReview(
-    String employeeId
+    String employeeId,
+    String sessionToken
   ) {
     try {
-      Id targetEmployeeId;
-      if (String.isNotBlank(employeeId)) {
-        targetEmployeeId = (Id) employeeId;
-      } else {
-        targetEmployeeId = PWChrono_Utils.getCurrentEmployeeId(
-          UserInfo.getUserId()
-        );
-      }
+      Id targetEmployeeId = PWChrono_RequestValidator.resolveEmployeeId(
+        employeeId,
+        sessionToken
+      );
+      PWChrono_AccessController.requireFeature(targetEmployeeId, 'Approvals');
 
       if (targetEmployeeId == null) {
         AuraHandledException ahe = new AuraHandledException(
@@ -149,29 +131,15 @@ public inherited sharing class PWChrono_PerformanceController {
     String sessionToken
   ) {
     try {
-      Id targetEmployeeId;
-      Id actorEmployeeId;
-
-      if (UserInfo.getUserType() == 'Guest') {
-        targetEmployeeId = PWChrono_GuestSession.requireVerifiedPortalUserId(
-          portalUserId,
-          sessionToken
-        );
-        actorEmployeeId = targetEmployeeId;
-      } else {
-        actorEmployeeId = PWChrono_Utils.getCurrentEmployeeId(
-          UserInfo.getUserId()
-        );
-        targetEmployeeId = actorEmployeeId;
-        if (
-          String.isNotBlank(portalUserId) &&
-          actorEmployeeId != null &&
-          portalUserId != actorEmployeeId &&
-          PWChrono_AccessController.isAdmin(actorEmployeeId)
-        ) {
-          targetEmployeeId = (Id) portalUserId;
-        }
-      }
+      Id actorEmployeeId = PWChrono_RequestValidator.resolveEmployeeId(
+        portalUserId,
+        sessionToken
+      );
+      Id targetEmployeeId = actorEmployeeId;
+      PWChrono_AccessController.requireFeature(
+        actorEmployeeId,
+        'Performance Management'
+      );
 
       if (targetEmployeeId == null) {
         throw new AuraHandledException(
@@ -244,30 +212,11 @@ public inherited sharing class PWChrono_PerformanceController {
     String sessionToken
   ) {
     try {
-      Id targetEmployeeId;
-      if (UserInfo.getUserType() == 'Guest') {
-        targetEmployeeId = PWChrono_GuestSession.requireVerifiedPortalUserId(
-          employeeId,
-          sessionToken
-        );
-      } else if (String.isNotBlank(employeeId)) {
-        Id currentEmployeeId = PWChrono_Utils.getCurrentEmployeeId(
-          UserInfo.getUserId()
-        );
-        if (currentEmployeeId != null && employeeId != currentEmployeeId) {
-          if (PWChrono_AccessController.isAdmin(currentEmployeeId)) {
-            targetEmployeeId = (Id) employeeId;
-          } else {
-            targetEmployeeId = currentEmployeeId;
-          }
-        } else {
-          targetEmployeeId = (Id) employeeId;
-        }
-      } else {
-        targetEmployeeId = PWChrono_Utils.getCurrentEmployeeId(
-          UserInfo.getUserId()
-        );
-      }
+      Id targetEmployeeId = PWChrono_RequestValidator.resolveEmployeeId(
+        employeeId,
+        sessionToken
+      );
+      PWChrono_AccessController.requireFeature(targetEmployeeId, 'Goals');
 
       if (targetEmployeeId == null) {
         AuraHandledException ahe = new AuraHandledException(
@@ -315,29 +264,12 @@ public inherited sharing class PWChrono_PerformanceController {
     String sessionToken
   ) {
     try {
-      Id targetEmployeeId;
-      Id actorEmployeeId;
-
-      if (UserInfo.getUserType() == 'Guest') {
-        targetEmployeeId = PWChrono_GuestSession.requireVerifiedPortalUserId(
-          portalUserId,
-          sessionToken
-        );
-        actorEmployeeId = targetEmployeeId;
-      } else {
-        actorEmployeeId = PWChrono_Utils.getCurrentEmployeeId(
-          UserInfo.getUserId()
-        );
-        targetEmployeeId = actorEmployeeId;
-        if (
-          String.isNotBlank(portalUserId) &&
-          actorEmployeeId != null &&
-          portalUserId != actorEmployeeId &&
-          PWChrono_AccessController.isAdmin(actorEmployeeId)
-        ) {
-          targetEmployeeId = (Id) portalUserId;
-        }
-      }
+      Id actorEmployeeId = PWChrono_RequestValidator.resolveEmployeeId(
+        portalUserId,
+        sessionToken
+      );
+      Id targetEmployeeId = actorEmployeeId;
+      PWChrono_AccessController.requireFeature(actorEmployeeId, 'Goals');
 
       if (targetEmployeeId == null) {
         throw new AuraHandledException(
@@ -409,29 +341,12 @@ public inherited sharing class PWChrono_PerformanceController {
     String sessionToken
   ) {
     try {
-      Id targetEmployeeId;
-      Id actorEmployeeId;
-
-      if (UserInfo.getUserType() == 'Guest') {
-        targetEmployeeId = PWChrono_GuestSession.requireVerifiedPortalUserId(
-          portalUserId,
-          sessionToken
-        );
-        actorEmployeeId = targetEmployeeId;
-      } else {
-        actorEmployeeId = PWChrono_Utils.getCurrentEmployeeId(
-          UserInfo.getUserId()
-        );
-        targetEmployeeId = actorEmployeeId;
-        if (
-          String.isNotBlank(portalUserId) &&
-          actorEmployeeId != null &&
-          portalUserId != actorEmployeeId &&
-          PWChrono_AccessController.isAdmin(actorEmployeeId)
-        ) {
-          targetEmployeeId = (Id) portalUserId;
-        }
-      }
+      Id actorEmployeeId = PWChrono_RequestValidator.resolveEmployeeId(
+        portalUserId,
+        sessionToken
+      );
+      Id targetEmployeeId = actorEmployeeId;
+      PWChrono_AccessController.requireFeature(actorEmployeeId, 'Goals');
 
       PWChrono_Goal__c goal = [
         SELECT Id, Employees__c, Progress__c, Status__c

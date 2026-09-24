@@ -1,11 +1,21 @@
-import createLeaveType from "@salesforce/apex/PWChrono_LeaveController.createLeaveType";
+import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
+import createLeaveType from "@salesforce/apex/PWChrono_PortalApi.createLeaveType";
 import getActiveLeaveTypes from "@salesforce/apex/PWChrono_LeaveController.getActiveLeaveTypes";
-import updateLeaveType from "@salesforce/apex/PWChrono_LeaveController.updateLeaveType";
-import { logError } from "c/pwchronoErrorHandler";
+import updateLeaveType from "@salesforce/apex/PWChrono_PortalApi.updateLeaveType";
+import { logError, getErrorMessage } from "c/pwchronoErrorHandler";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { LightningElement, track } from "lwc";
 
 export default class PwchronoLeaveSettings extends LightningElement {
+  static renderMode = "light";
+  errorMessage = "";
+  successMessage = "";
+  get sessionParams() {
+    return { employeeId: getEmployeeId(), sessionToken: getSessionToken() };
+  }
+  get hasLeaveTypes() {
+    return this.leaveTypes.length > 0;
+  }
   @track leaveTypes = [];
   @track isLoading = true;
   @track showSettingsModal = false;
@@ -35,9 +45,12 @@ export default class PwchronoLeaveSettings extends LightningElement {
   async loadLeaveTypes() {
     this.isLoading = true;
     try {
-      const result = await getActiveLeaveTypes();
+      const result = await getActiveLeaveTypes({ includeInactive: true });
       this.leaveTypes = result.map((type) => ({
         ...type,
+        carryForwardLimit: type.Is_Carry_Forward__c
+          ? (type.Max_Carry_Forward_Days__c ?? "Not configured")
+          : "Not allowed",
         statusLabel: type.Is_Active__c ? "Active" : "Inactive",
         statusClass: type.Is_Active__c
           ? "px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"
@@ -91,6 +104,7 @@ export default class PwchronoLeaveSettings extends LightningElement {
   }
 
   async createLeaveType() {
+    if (!this.validateForm()) return;
     if (!this.newLeaveType.Name) {
       this.showToast("Error", "Leave Type Name is required", "error");
       return;
@@ -98,7 +112,10 @@ export default class PwchronoLeaveSettings extends LightningElement {
 
     this.isLoading = true;
     try {
-      await createLeaveType({ leaveType: this.newLeaveType });
+      await createLeaveType({
+        leaveType: this.newLeaveType,
+        ...this.sessionParams
+      });
       this.showToast("Success", "Leave Type created successfully", "success");
       this.closeCreateModal();
       await this.loadLeaveTypes();
@@ -150,11 +167,14 @@ export default class PwchronoLeaveSettings extends LightningElement {
   }
 
   async saveSettings() {
+    if (!this.validateForm()) return;
     this.isLoading = true;
     try {
       // Prepare record for update
       const recordToUpdate = {
         Id: this.selectedLeaveType.Id,
+        Name: this.selectedLeaveType.Name,
+        Is_Active__c: this.selectedLeaveType.Is_Active__c,
         Max_Days_Allowed__c: this.selectedLeaveType.Max_Days_Allowed__c,
         Is_Carry_Forward__c: this.selectedLeaveType.Is_Carry_Forward__c,
         Max_Carry_Forward_Days__c:
@@ -163,7 +183,10 @@ export default class PwchronoLeaveSettings extends LightningElement {
         Requires_Certificate__c: this.selectedLeaveType.Requires_Certificate__c
       };
 
-      await updateLeaveType({ leaveType: recordToUpdate });
+      await updateLeaveType({
+        leaveType: recordToUpdate,
+        ...this.sessionParams
+      });
 
       this.showToast(
         "Success",
@@ -184,14 +207,17 @@ export default class PwchronoLeaveSettings extends LightningElement {
     }
   }
 
-  handleToggleActive(event) {
-    const id = event.target.dataset.id;
-    const checked = event.target.checked;
-    this.showToast("Info", `Toggle Active for ${id}: ${checked}`, "info");
-    // Here we would call Apex to update the record
+  validateForm() {
+    this.errorMessage = "";
+    return [...this.querySelectorAll("input")].reduce(
+      (valid, input) => input.reportValidity() && valid,
+      true
+    );
   }
 
   showToast(title, message, variant) {
+    this.errorMessage = variant === "error" ? getErrorMessage({ message }) : "";
+    this.successMessage = variant === "success" ? message : "";
     this.dispatchEvent(new ShowToastEvent({ title, message, variant }));
   }
 }

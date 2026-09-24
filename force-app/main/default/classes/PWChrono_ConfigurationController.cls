@@ -9,44 +9,18 @@ public without sharing class PWChrono_ConfigurationController {
     String callerPortalUserId,
     String sessionToken
   ) {
-    if (UserInfo.getUserType() != 'Guest') {
-      return;
-    }
-
-    Id verifiedPortalUserId = PWChrono_GuestSession.requireVerifiedPortalUserId(
-      callerPortalUserId,
-      sessionToken
-    );
-
-    List<Portal_Users__c> callers = [
-      SELECT Id, Portal_User_Profile__c
-      FROM Portal_Users__c
-      WHERE Id = :verifiedPortalUserId
-      LIMIT 1
-    ];
-
-    if (callers.isEmpty()) {
-      throw new AuraHandledException('Unauthorized.');
-    }
-    Portal_Users__c caller = callers[0];
-
-    if (caller.Portal_User_Profile__c == null) {
-      throw new AuraHandledException('Unauthorized.');
-    }
-
-    List<Portal_Object_Permission__c> profilePermissions = [
-      SELECT Id
-      FROM Portal_Object_Permission__c
-      WHERE
-        Portal_User_Profile__c = :caller.Portal_User_Profile__c
-        AND Portal_Object__r.Object_API_Name__c = 'Portal_Users__c'
-        AND Can_View__c = TRUE
-        AND Can_Edit__c = TRUE
-      LIMIT 1
-    ];
-    if (profilePermissions.isEmpty()) {
-      throw new AuraHandledException('Unauthorized.');
-    }
+    Id actorEmployeeId = UserInfo.getUserType() == 'Guest'
+      ? PWChrono_GuestSession.requireVerifiedPortalUserId(
+          callerPortalUserId,
+          sessionToken
+        )
+      : (String.isBlank(callerPortalUserId)
+          ? null
+          : PWChrono_RequestValidator.resolveEmployeeId(
+              callerPortalUserId,
+              sessionToken
+            ));
+    PWChrono_AccessController.requireFeature(actorEmployeeId, 'Configuration');
   }
 
   /**
@@ -654,6 +628,7 @@ public without sharing class PWChrono_ConfigurationController {
    */
   @AuraEnabled
   public static String toggleUserActiveStatus(String userId, Boolean isActive) {
+    PWChrono_AccessController.requireFeature(null, 'Configuration');
     try {
       // Security Check
 
@@ -679,6 +654,7 @@ public without sharing class PWChrono_ConfigurationController {
     List<String> userIds,
     Boolean isActive
   ) {
+    PWChrono_AccessController.requireFeature(null, 'Configuration');
     try {
       // Security Check
 
@@ -717,6 +693,7 @@ public without sharing class PWChrono_ConfigurationController {
     String department,
     String designation
   ) {
+    PWChrono_AccessController.requireFeature(null, 'Configuration');
     try {
       // Security Check
 

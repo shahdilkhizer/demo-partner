@@ -32,6 +32,28 @@
             <div class="row">
               <div class="col-md-12">
                 <div class="mb-3">
+                  <label class="form-label" for="attendance-employee"
+                    >Employee <span class="text-danger">*</span></label
+                  >
+                  <select
+                    id="attendance-employee"
+                    class="form-select"
+                    value={selectedEmployeeId}
+                    disabled={isEmployeeLocked}
+                    required
+                    onchange={handleEmployeeChange}
+                  >
+                    <option value="">Select employee</option>
+                    <template for:each={employeeOptions} for:item="employee">
+                      <option key={employee.value} value={employee.value}>
+                        {employee.label}
+                      </option>
+                    </template>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-12">
+                <div class="mb-3">
                   <label class="form-label w-100"
                     >Date
                     <div class="input-icon position-relative w-100 me-2 mt-1">
@@ -39,6 +61,7 @@
                         type="date"
                         class="form-control ps-3"
                         value={attendanceDate}
+                        required
                         onchange={handleDateChange}
                       />
                       <span class="input-icon-addon">
@@ -60,6 +83,7 @@
                         type="time"
                         class="form-control ps-3"
                         value={fromTime}
+                        required
                         onchange={handleFromTimeChange}
                       />
                       <span class="input-icon-addon">
@@ -78,6 +102,7 @@
                         type="time"
                         class="form-control ps-3"
                         value={toTime}
+                        required
                         onchange={handleToTimeChange}
                       />
                       <span class="input-icon-addon">
@@ -134,20 +159,64 @@
               <div class="col-md-12">
                 <div class="mb-3">
                   <label class="form-label w-100"
-                    >Status
+                    >Request status
                     <select
                       class="form-select mt-1"
+                      value={status}
+                      required
                       onchange={handleStatusChange}
                     >
-                      <option value="Present" selected={isPresent}>
-                        Present
+                      <option value="Draft" selected={isDraft}>Draft</option>
+                      <option value="Submitted" selected={isSubmitted}>
+                        Submitted
                       </option>
-                      <option value="Absent" selected={isAbsent}>Absent</option>
-                      <option value="Late" selected={isLate}>Late</option>
-                      <option value="On Leave" selected={isOnLeave}>
-                        On Leave
+                      <option value="Approved" selected={isApproved}>
+                        Approved
+                      </option>
+                      <option value="Rejected" selected={isRejected}>
+                        Rejected
+                      </option>
+                      <option value="Cancelled" selected={isCancelled}>
+                        Cancelled
                       </option>
                     </select>
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label w-100"
+                    >Adjustment type
+                    <select
+                      class="form-select mt-1"
+                      value={correctionType}
+                      required
+                      onchange={handleCorrectionTypeChange}
+                    >
+                      <option value="Check-In Missing">Check-in missing</option>
+                      <option value="Check-Out Missing">
+                        Check-out missing
+                      </option>
+                      <option value="Both Missing">Both missing</option>
+                      <option value="Wrong Time">Wrong time</option>
+                      <option value="Incorrect">Incorrect</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label w-100"
+                    >Reason
+                    <textarea
+                      class="form-control mt-1"
+                      rows="2"
+                      maxlength="1000"
+                      value={reason}
+                      required
+                      onchange={handleReasonChange}
+                    ></textarea>
                   </label>
                 </div>
               </div>
@@ -161,8 +230,13 @@
             >
               Cancel
             </button>
-            <button type="button" class="btn btn-primary" onclick={handleSave}>
-              Save
+            <button
+              type="button"
+              class="btn btn-primary"
+              disabled={isSaving}
+              onclick={handleSave}
+            >
+              {saveButtonLabel}
             </button>
           </div>
         </div>

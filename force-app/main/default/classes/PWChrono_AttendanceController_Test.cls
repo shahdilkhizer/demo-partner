@@ -416,7 +416,7 @@ private class PWChrono_AttendanceController_Test {
     ];
 
     Test.startTest();
-    List<PWChrono_AttendanceController.AttendanceDayWrapper> result = PWChrono_AttendanceController.getAttendanceTrackerDataForEmployee(
+    List<PWChrono_AttendanceController.AttendanceDayWrapper> result = PWChrono_PortalApi.getAttendanceTrackerDataForEmployee(
       Date.today().addDays(-2),
       Date.today(),
       employee.Id,
@@ -444,7 +444,7 @@ private class PWChrono_AttendanceController_Test {
 
     Test.startTest();
     try {
-      PWChrono_AttendanceController.getAttendanceTrackerDataForEmployee(
+      PWChrono_PortalApi.getAttendanceTrackerDataForEmployee(
         Date.today(),
         Date.today(),
         inactiveEmployee.Id,
@@ -460,6 +460,12 @@ private class PWChrono_AttendanceController_Test {
 
   @IsTest
   static void testGetAttendanceAdminRows_listsEveryActiveEmployee() {
+    Portal_Users__c admin = [
+      SELECT Id
+      FROM Portal_Users__c
+      WHERE Role__c = 'HR Admin'
+      LIMIT 1
+    ];
     Integer activeEmployeeCount = [
       SELECT COUNT()
       FROM Portal_Users__c
@@ -468,9 +474,9 @@ private class PWChrono_AttendanceController_Test {
     Date attendanceDate = Date.today().addDays(-10);
 
     Test.startTest();
-    List<PWChrono_AttendanceController.AttendanceAdminRow> rows = PWChrono_AttendanceController.getAttendanceAdminRows(
+    List<PWChrono_AttendanceController.AttendanceAdminRow> rows = PWChrono_PortalApi.getAttendanceAdminRows(
       attendanceDate,
-      null,
+      admin.Id,
       null
     );
     Test.stopTest();
@@ -510,7 +516,8 @@ private class PWChrono_AttendanceController_Test {
       Time.newInstance(18, 0, 0, 0)
     );
 
-    Date saturday = Date.today().addDays(-7);
+    // Avoid setup requests at today minus 3/10 colliding with the weekend.
+    Date saturday = Date.today().addDays(-21);
     while (
       DateTime.newInstance(saturday.year(), saturday.month(), saturday.day())
         .format('EEEE') != 'Saturday'
@@ -605,7 +612,7 @@ private class PWChrono_AttendanceController_Test {
     );
 
     Test.startTest();
-    PWChrono_Attendance_Request__c result = PWChrono_AttendanceController.saveAttendanceRequest(
+    PWChrono_Attendance_Request__c result = PWChrono_PortalApi.saveAttendanceRequest(
       req,
       emp.Id,
       null
@@ -745,7 +752,7 @@ private class PWChrono_AttendanceController_Test {
     ];
 
     Test.startTest();
-    List<PWChrono_Shift_Assignment__c> result = PWChrono_AttendanceController.getMyShiftAssignments(
+    List<PWChrono_Shift_Assignment__c> result = PWChrono_PortalApi.getMyShiftAssignments(
       Date.today().addDays(-5),
       Date.today().addDays(5),
       emp.Id,
@@ -797,12 +804,18 @@ private class PWChrono_AttendanceController_Test {
       WHERE Role__c = 'Manager'
       LIMIT 1
     ];
+    Portal_Users__c admin = [
+      SELECT Id
+      FROM Portal_Users__c
+      WHERE Role__c = 'HR Admin'
+      LIMIT 1
+    ];
     Date targetDate = Date.today().addDays(-3);
 
     Test.startTest();
     List<PWChrono_Attendance_Request__c> allRows = PWChrono_AttendanceController.getAllAttendance(
       targetDate,
-      null,
+      admin.Id,
       null
     );
     List<PWChrono_Attendance_Request__c> mine = PWChrono_AttendanceController.getMyAttendanceRequests(
@@ -812,7 +825,7 @@ private class PWChrono_AttendanceController_Test {
       emp.Id,
       null
     );
-    List<PWChrono_Attendance_Request__c> approvals = PWChrono_AttendanceController.getTeamAttendanceForApproval(
+    List<PWChrono_Attendance_Request__c> approvals = PWChrono_PortalApi.getTeamAttendanceForApproval(
       mgr.Id,
       null
     );
@@ -831,6 +844,12 @@ private class PWChrono_AttendanceController_Test {
 
   @IsTest
   static void testCreateAndUpdateShiftType_adminFlow() {
+    Portal_Users__c admin = [
+      SELECT Id
+      FROM Portal_Users__c
+      WHERE Role__c = 'HR Admin'
+      LIMIT 1
+    ];
     PWChrono_Shift_Type__c shiftType = new PWChrono_Shift_Type__c(
       Name = 'Night Shift',
       Start_Time__c = Time.newInstance(22, 0, 0, 0),
@@ -841,15 +860,15 @@ private class PWChrono_AttendanceController_Test {
     );
 
     Test.startTest();
-    PWChrono_Shift_Type__c created = PWChrono_AttendanceController.createShiftType(
+    PWChrono_Shift_Type__c created = PWChrono_PortalApi.createShiftType(
       shiftType,
-      null,
+      admin.Id,
       null
     );
     created.Grace_Period_Minutes__c = 20;
-    PWChrono_Shift_Type__c updated = PWChrono_AttendanceController.updateShiftType(
+    PWChrono_Shift_Type__c updated = PWChrono_PortalApi.updateShiftType(
       created,
-      null,
+      admin.Id,
       null
     );
     Test.stopTest();
@@ -886,7 +905,7 @@ private class PWChrono_AttendanceController_Test {
     insert req;
 
     Test.startTest();
-    PWChrono_Attendance_Request__c result = PWChrono_AttendanceController.processAttendanceApproval(
+    PWChrono_Attendance_Request__c result = PWChrono_PortalApi.processAttendanceApproval(
       req.Id,
       'Reject',
       'Needs better evidence',
@@ -991,7 +1010,7 @@ private class PWChrono_AttendanceController_Test {
       }
 
       try {
-        PWChrono_AttendanceController.getMyShiftAssignments(
+        PWChrono_PortalApi.getMyShiftAssignments(
           Date.today().addDays(-3),
           Date.today(),
           null,
@@ -1003,7 +1022,7 @@ private class PWChrono_AttendanceController_Test {
       }
 
       try {
-        PWChrono_AttendanceController.processAttendanceApproval(
+        PWChrono_PortalApi.processAttendanceApproval(
           req.Id,
           'Approve',
           'No access',
@@ -1106,14 +1125,14 @@ private class PWChrono_AttendanceController_Test {
       }
 
       try {
-        PWChrono_AttendanceController.getTeamAttendanceForApproval(null, null);
+        PWChrono_PortalApi.getTeamAttendanceForApproval(null, null);
         System.assert(false, 'Missing employee context should throw.');
       } catch (AuraHandledException e) {
         System.assertNotEquals(null, e.getMessage());
       }
 
       try {
-        PWChrono_AttendanceController.saveAttendanceRequest(
+        PWChrono_PortalApi.saveAttendanceRequest(
           new PWChrono_Attendance_Request__c(
             Attendance_Date__c = Date.today().addDays(-1),
             Correction_Type__c = 'Wrong Time',
@@ -1223,7 +1242,7 @@ private class PWChrono_AttendanceController_Test {
         }
 
         try {
-          PWChrono_AttendanceController.createShiftType(
+          PWChrono_PortalApi.createShiftType(
             new PWChrono_Shift_Type__c(
               Name = 'Denied Guest Shift',
               Start_Time__c = Time.newInstance(8, 0, 0, 0),

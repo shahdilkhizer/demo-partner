@@ -32,7 +32,7 @@ export default class PwchronoHRDashboard extends LightningElement {
     };
     try {
       window.addEventListener(SESSION_CHANGED_EVENT, this._sessionChangedHandler);
-    } catch (e) {
+    } catch {
       // ignore
     }
     this.loadSummary();
@@ -630,7 +630,7 @@ export default class PwchronoHRDashboard extends LightningElement {
         SESSION_CHANGED_EVENT,
         this._sessionChangedHandler
       );
-    } catch (e) {
+    } catch {
       // ignore
     }
     this._sessionChangedHandler = null;

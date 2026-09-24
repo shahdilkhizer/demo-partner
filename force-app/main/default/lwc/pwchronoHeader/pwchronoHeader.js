@@ -1,8 +1,7 @@
-import {
-  clearSession,
-  getSession,
-  SESSION_CHANGED_EVENT
-} from "c/pwchronoSession";
+import getRecentNotifications from "@salesforce/apex/PWChrono_NotificationController.getRecentNotifications";
+import markAsRead from "@salesforce/apex/PWChrono_NotificationController.markAsRead";
+import markAllAsRead from "@salesforce/apex/PWChrono_NotificationController.markAllAsRead";
+import { getSession, SESSION_CHANGED_EVENT } from "c/pwchronoSession";
 import { api, LightningElement, track } from "lwc";
 
 export default class PwchronoHeader extends LightningElement {
@@ -46,8 +45,9 @@ export default class PwchronoHeader extends LightningElement {
 
   // Label placeholders (no hardcoded copy)
   @api toggleSidebarLabel = "Toggle sidebar";
-  @api searchPlaceholder = "Search in HRMS";
-  @api searchAriaLabel = "Search in HRMS";
+  @api searchTerm = "";
+  @api searchPlaceholder = "Find a page";
+  @api searchAriaLabel = "Find a page";
   @api searchShortcutText = "CTRL + /";
   @api exportLabel;
   @api settingsLabel;
@@ -57,7 +57,7 @@ export default class PwchronoHeader extends LightningElement {
   @api appsMenuTitle;
   @api chatLabel = "Chat";
   @api notificationsLabel = "Notifications";
-  @api notificationsTitle;
+  @api notificationsTitle = "Recent notifications";
   @api markAllReadLabel = "Mark All Read";
   @api notificationFilterLabel;
   @api cancelLabel = "Cancel";
@@ -65,6 +65,10 @@ export default class PwchronoHeader extends LightningElement {
   @api mobileMenuLabel;
   // Provide a sensible default so the avatar menu always shows a readable action.
   @api logoutLabel = "Log Out";
+  @api logoutPending = false;
+  get displayedLogoutLabel() {
+    return this.logoutPending ? "Signing out…" : this.logoutLabel;
+  }
   @api yearPickerAriaLabel;
 
   // Data-driven dropdown lists
@@ -82,6 +86,113 @@ export default class PwchronoHeader extends LightningElement {
   @track showMobileMenu = false;
   @track showNotificationFilter = false;
   @track userData = null;
+  liveNotifications = [];
+  notificationError = "";
+  notificationsLoading = false;
+  notificationsUpdating = false;
+  showAllNotifications = false;
+  notificationRequestVersion = 0;
+
+  get visibleNotifications() {
+    return this.showAllNotifications
+      ? this.liveNotifications
+      : this.liveNotifications.slice(0, 5);
+  }
+  get hasMoreNotifications() {
+    return !this.showAllNotifications && this.liveNotifications.length > 5;
+  }
+  get notificationsEmpty() {
+    return (
+      !this.notificationsLoading &&
+      !this.notificationError &&
+      !this.liveNotifications.length
+    );
+  }
+  get markAllDisabled() {
+    return (
+      this.notificationsLoading ||
+      this.notificationsUpdating ||
+      !this.notificationCount
+    );
+  }
+  async loadNotifications() {
+    const requestVersion = ++this.notificationRequestVersion;
+    const session = getSession();
+    if (!session.isLoggedIn) {
+      this.liveNotifications = [];
+      this.notificationsLoading = false;
+      return;
+    }
+    this.notificationsLoading = true;
+    this.notificationError = "";
+    try {
+      const rows = await getRecentNotifications({
+        portalUserId: session.user?.Id,
+        sessionToken: session.sessionToken
+      });
+      if (
+        requestVersion !== this.notificationRequestVersion ||
+        !this.isConnected
+      )
+        return;
+      this.liveNotifications = (rows || []).map((row) => ({
+        ...row,
+        itemClass: row.IsRead
+          ? "border-bottom py-2"
+          : "border-bottom py-2 fw-semibold",
+        readLabel: row.IsRead ? "Read" : "Mark as read"
+      }));
+    } catch (error) {
+      if (
+        requestVersion !== this.notificationRequestVersion ||
+        !this.isConnected
+      )
+        return;
+      this.notificationError =
+        error?.body?.message ||
+        error?.message ||
+        "Unable to load notifications. Please retry.";
+    } finally {
+      if (requestVersion === this.notificationRequestVersion)
+        this.notificationsLoading = false;
+    }
+  }
+  async updateNotificationReadState(event) {
+    if (this.notificationsUpdating) return;
+    this.notificationsUpdating = true;
+    this.notificationError = "";
+    const session = getSession();
+    const args = {
+      portalUserId: session.user?.Id,
+      sessionToken: session.sessionToken
+    };
+    try {
+      const id = event.currentTarget.dataset.id;
+      if (id) await markAsRead({ ...args, notificationId: id });
+      else await markAllAsRead(args);
+      if (
+        this.isConnected &&
+        getSession().sessionToken === session.sessionToken
+      )
+        await this.loadNotifications();
+    } catch (error) {
+      if (
+        this.isConnected &&
+        getSession().sessionToken === session.sessionToken
+      ) {
+        this.notificationError =
+          error?.body?.message ||
+          error?.message ||
+          "Unable to update notifications. Please retry.";
+      }
+    } finally {
+      this.notificationsUpdating = false;
+    }
+  }
+  handleShowAllNotifications() {
+    this.showAllNotifications = true;
+  }
+
   @track isLightningExperience = false;
 
   get communityHomeHref() {
@@ -104,10 +215,17 @@ export default class PwchronoHeader extends LightningElement {
     return "/";
   }
 
+  _handleSearchShortcut = (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === "/") {
+      event.preventDefault();
+      this.querySelector('[data-region="search"] input')?.focus();
+    }
+  };
   _handleDocClick;
   _handleSessionChanged;
 
   connectedCallback() {
+    document.addEventListener("keydown", this._handleSearchShortcut);
     this.isLightningExperience =
       globalThis?.location?.pathname?.startsWith("/lightning") === true;
     this.loadUserData();
@@ -141,6 +259,8 @@ export default class PwchronoHeader extends LightningElement {
   }
 
   disconnectedCallback() {
+    this.notificationRequestVersion++;
+    document.removeEventListener("keydown", this._handleSearchShortcut);
     try {
       if (this._handleDocClick) {
         document.removeEventListener("click", this._handleDocClick);
@@ -158,6 +278,8 @@ export default class PwchronoHeader extends LightningElement {
   loadUserData() {
     const session = getSession();
     this.userData = session.isLoggedIn && session.user ? session.user : null;
+    this.liveNotifications = [];
+    this.loadNotifications();
   }
 
   get userName() {
@@ -212,8 +334,7 @@ export default class PwchronoHeader extends LightningElement {
   }
 
   get notificationCount() {
-    // Placeholder until notifications are wired.
-    return 0;
+    return this.liveNotifications.filter((item) => !item.IsRead).length;
   }
 
   get chatCount() {
@@ -259,7 +380,7 @@ export default class PwchronoHeader extends LightningElement {
   }
 
   handleLogout() {
-    clearSession();
+    if (this.logoutPending) return;
     this.dispatchEvent(
       new CustomEvent("logout", {
         bubbles: true,
@@ -295,6 +416,10 @@ export default class PwchronoHeader extends LightningElement {
         return;
       case "toggleNotifications":
         this.showNotifications = !this.showNotifications;
+        if (this.showNotifications) {
+          this.showAllNotifications = false;
+          this.loadNotifications();
+        }
         if (this.showNotifications) {
           this.showProfileMenu = false;
           this.showQuickMenu = false;

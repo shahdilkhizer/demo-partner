@@ -149,7 +149,13 @@ public inherited sharing class PWChrono_AttendanceService {
     if (req.Employees__c == approverId) {
       throw handledException('Self-approval is not allowed.');
     }
-    if (req.Approvers__c != approverId && !isPortalAdmin(approverId)) {
+    if (
+      !PWChrono_AccessController.canApproveForEmployee(
+        approverId,
+        req.Employees__c,
+        req.Approvers__c
+      )
+    ) {
       throw handledException(
         'Access denied: Not authorized to process this request.'
       );
@@ -238,7 +244,10 @@ public inherited sharing class PWChrono_AttendanceService {
       throw handledException('Attendance request not found.');
     }
 
-    if (req.Employees__c != employeeId && !isPortalAdmin(employeeId)) {
+    if (
+      req.Employees__c != employeeId &&
+      !PWChrono_AccessController.isAdmin(employeeId)
+    ) {
       throw handledException(
         'Unauthorized: You can only cancel your own requests.'
       );
@@ -371,24 +380,5 @@ public inherited sharing class PWChrono_AttendanceService {
     AuraHandledException ex = new AuraHandledException(message);
     ex.setMessage(message);
     return ex;
-  }
-
-  private static Boolean isPortalAdmin(Id employeeId) {
-    if (employeeId == null) {
-      return false;
-    }
-
-    List<Portal_Users__c> users = [
-      SELECT Role__c
-      FROM Portal_Users__c
-      WHERE Id = :employeeId
-      LIMIT 1
-    ];
-    if (users.isEmpty()) {
-      return false;
-    }
-
-    return users[0].Role__c == PWChrono_Constants.ROLE_HR_ADMIN ||
-      users[0].Role__c == 'System Admin';
   }
 }

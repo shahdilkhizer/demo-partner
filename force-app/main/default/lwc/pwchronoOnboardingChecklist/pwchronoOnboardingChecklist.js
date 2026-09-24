@@ -10,6 +10,9 @@ export default class PwchronoOnboardingChecklist extends LightningElement {
   @track error;
   @track progress = 0;
   @track isLoading = true;
+  @track filter = "all";
+  @track searchTerm = "";
+  @track savingTaskId;
   wiredTasksResult;
 
   employeeId = getEmployeeId();
@@ -26,23 +29,89 @@ export default class PwchronoOnboardingChecklist extends LightningElement {
     if (data) {
       this.tasks = data.map((task) => {
         const isCompleted = task.Status__c === "Completed";
+        const due = task.Due_Date__c
+          ? new Date(`${task.Due_Date__c}T00:00:00`)
+          : null;
+        const overdue = !isCompleted && due && due < new Date();
         return {
           ...task,
           isCompleted: isCompleted,
           iconName: isCompleted ? "action:approval" : "action:new_task",
-          iconVariant: isCompleted ? "success" : "warning"
+          iconVariant: isCompleted ? "success" : "warning",
+          isOverdue: overdue,
+          statusLabel: isCompleted
+            ? "Completed"
+            : overdue
+              ? "Overdue"
+              : task.Status__c
         };
       });
       this.calculateProgress();
       this.error = undefined;
     } else if (error) {
-      this.error = error.body.message;
+      this.error =
+        error?.body?.message ||
+        error?.message ||
+        "Unable to load onboarding tasks.";
       this.tasks = undefined;
     }
   }
 
   get hasTasks() {
-    return this.tasks && this.tasks.length > 0;
+    return this.filteredTasks.length > 0;
+  }
+
+  get filteredTasks() {
+    const term = this.searchTerm.trim().toLowerCase();
+    return (this.tasks || [])
+      .filter((task) => {
+        const matchesFilter =
+          this.filter === "all" ||
+          (this.filter === "open" && !task.isCompleted) ||
+          (this.filter === "completed" && task.isCompleted);
+        const haystack =
+          `${task.Name || ""} ${task.Description__c || ""}`.toLowerCase();
+        return matchesFilter && (!term || haystack.includes(term));
+      })
+      .map((task) => ({ ...task, isSaving: task.Id === this.savingTaskId }));
+  }
+
+  get totalCount() {
+    return (this.tasks || []).length;
+  }
+  get completedCount() {
+    return (this.tasks || []).filter((task) => task.isCompleted).length;
+  }
+  get openCount() {
+    return this.totalCount - this.completedCount;
+  }
+  get overdueCount() {
+    return (this.tasks || []).filter((task) => task.isOverdue).length;
+  }
+  get progressStyle() {
+    return `--progress:${this.progress}%`;
+  }
+  get progressLabel() {
+    return `${this.progress}% complete`;
+  }
+  get filterOptions() {
+    return [
+      {
+        value: "all",
+        label: `All tasks (${this.totalCount})`,
+        selected: this.filter === "all"
+      },
+      {
+        value: "open",
+        label: `Open (${this.openCount})`,
+        selected: this.filter === "open"
+      },
+      {
+        value: "completed",
+        label: `Completed (${this.completedCount})`,
+        selected: this.filter === "completed"
+      }
+    ];
   }
 
   calculateProgress() {
@@ -56,8 +125,13 @@ export default class PwchronoOnboardingChecklist extends LightningElement {
     this.progress = Math.round((completedCount / this.tasks.length) * 100);
   }
 
+  loadTasks() {
+    return refreshApex(this.wiredTasksResult);
+  }
+
   handleMarkComplete(event) {
-    const taskId = event.target.dataset.id;
+    const taskId = event.currentTarget.dataset.id;
+    this.savingTaskId = taskId;
     updateTaskStatus({
       taskId: taskId,
       status: "Completed",
@@ -68,7 +142,7 @@ export default class PwchronoOnboardingChecklist extends LightningElement {
         this.dispatchEvent(
           new ShowToastEvent({
             title: "Success",
-            message: "Task marked as completed",
+            message: "Onboarding task marked as completed.",
             variant: "success"
           })
         );
@@ -78,10 +152,23 @@ export default class PwchronoOnboardingChecklist extends LightningElement {
         this.dispatchEvent(
           new ShowToastEvent({
             title: "Error updating task",
-            message: error.body.message,
+            message:
+              error?.body?.message ||
+              error?.message ||
+              "Unable to update task.",
             variant: "error"
           })
         );
+      })
+      .finally(() => {
+        this.savingTaskId = undefined;
       });
+  }
+
+  handleFilter(event) {
+    this.filter = event.target.value;
+  }
+  handleSearch(event) {
+    this.searchTerm = event.target.value;
   }
 }

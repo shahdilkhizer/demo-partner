@@ -61,7 +61,7 @@ export default class PwchronoOfferLetterGenerator extends LightningElement {
           name: applicantName
         };
       });
-    } else if (error) {
+    } else if (result.error) {
       this.showToast("Error", "Error loading applicants", "error");
     }
   }

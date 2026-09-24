@@ -7,54 +7,71 @@ public without sharing class PWChrono_StaffingPlanController {
     String portalUserId,
     String sessionToken
   ) {
-    if (UserInfo.getUserType() != 'Guest') {
-      return;
-    }
-    if (String.isBlank(portalUserId)) {
-      return;
-    }
-    List<Portal_Users__c> users = [
-      SELECT Id, Role__c, Access_Features__c, Is_Active__c
-      FROM Portal_Users__c
-      WHERE Id = :portalUserId
-      LIMIT 1
-    ];
-    if (users.isEmpty()) {
-      return;
-    }
-    if (users[0].Is_Active__c == false) {
-      throw new AuraHandledException('Account is inactive.');
-    }
-    if (
-      users[0].Role__c != PWChrono_Constants.ROLE_HR_ADMIN &&
-      users[0].Role__c != 'System Admin'
-    ) {
-      throw new AuraHandledException('Unauthorized.');
-    }
+    Id actorId = UserInfo.getUserType() == 'Guest'
+      ? PWChrono_GuestSession.requireVerifiedPortalUserId(
+          portalUserId,
+          sessionToken
+        )
+      : (String.isBlank(portalUserId)
+          ? null
+          : PWChrono_RequestValidator.resolveEmployeeId(
+              portalUserId,
+              sessionToken
+            ));
+    PWChrono_AccessController.requireFeature(actorId, 'Recruitment');
   }
 
-  private static PWChrono_Staffing_Plan__c parsePlanJson(String planJson, String portalUserId) {
-    Map<String, Object> raw = (Map<String, Object>) JSON.deserializeUntyped(planJson);
+  private static PWChrono_Staffing_Plan__c parsePlanJson(
+    String planJson,
+    String portalUserId
+  ) {
+    Map<String, Object> raw = (Map<String, Object>) JSON.deserializeUntyped(
+      planJson
+    );
     PWChrono_Staffing_Plan__c plan = new PWChrono_Staffing_Plan__c();
-    if (raw.containsKey('Id') && raw.get('Id') != null && String.isNotBlank(String.valueOf(raw.get('Id')))) {
+    if (
+      raw.containsKey('Id') &&
+      raw.get('Id') != null &&
+      String.isNotBlank(String.valueOf(raw.get('Id')))
+    ) {
       plan.Id = (Id) raw.get('Id');
     }
-    if (raw.containsKey('Name') && raw.get('Name') != null && String.isNotBlank(String.valueOf(raw.get('Name')))) {
+    if (
+      raw.containsKey('Name') &&
+      raw.get('Name') != null &&
+      String.isNotBlank(String.valueOf(raw.get('Name')))
+    ) {
       plan.Name = String.valueOf(raw.get('Name'));
     }
     if (raw.containsKey('Company__c') && raw.get('Company__c') != null) {
       plan.Company__c = String.valueOf(raw.get('Company__c'));
     }
-    if (raw.containsKey('Department__c') && raw.get('Department__c') != null && String.isNotBlank(String.valueOf(raw.get('Department__c')))) {
+    if (
+      raw.containsKey('Department__c') &&
+      raw.get('Department__c') != null &&
+      String.isNotBlank(String.valueOf(raw.get('Department__c')))
+    ) {
       plan.Department__c = (Id) raw.get('Department__c');
     }
-    if (raw.containsKey('From_Date__c') && raw.get('From_Date__c') != null && String.isNotBlank(String.valueOf(raw.get('From_Date__c')))) {
+    if (
+      raw.containsKey('From_Date__c') &&
+      raw.get('From_Date__c') != null &&
+      String.isNotBlank(String.valueOf(raw.get('From_Date__c')))
+    ) {
       plan.From_Date__c = Date.valueOf(String.valueOf(raw.get('From_Date__c')));
     }
-    if (raw.containsKey('To_Date__c') && raw.get('To_Date__c') != null && String.isNotBlank(String.valueOf(raw.get('To_Date__c')))) {
+    if (
+      raw.containsKey('To_Date__c') &&
+      raw.get('To_Date__c') != null &&
+      String.isNotBlank(String.valueOf(raw.get('To_Date__c')))
+    ) {
       plan.To_Date__c = Date.valueOf(String.valueOf(raw.get('To_Date__c')));
     }
-    if (raw.containsKey('Status__c') && raw.get('Status__c') != null && String.isNotBlank(String.valueOf(raw.get('Status__c')))) {
+    if (
+      raw.containsKey('Status__c') &&
+      raw.get('Status__c') != null &&
+      String.isNotBlank(String.valueOf(raw.get('Status__c')))
+    ) {
       plan.Status__c = String.valueOf(raw.get('Status__c'));
     }
     if (raw.containsKey('Notes__c') && raw.get('Notes__c') != null) {
@@ -66,7 +83,10 @@ public without sharing class PWChrono_StaffingPlanController {
     return plan;
   }
 
-  private static List<PWChrono_Staffing_Plan_Detail__c> parseDetailsJson(String detailsJson, Id planId) {
+  private static List<PWChrono_Staffing_Plan_Detail__c> parseDetailsJson(
+    String detailsJson,
+    Id planId
+  ) {
     List<PWChrono_Staffing_Plan_Detail__c> details = new List<PWChrono_Staffing_Plan_Detail__c>();
     if (String.isBlank(detailsJson)) {
       return details;
@@ -76,17 +96,39 @@ public without sharing class PWChrono_StaffingPlanController {
       Map<String, Object> m = (Map<String, Object>) obj;
       PWChrono_Staffing_Plan_Detail__c d = new PWChrono_Staffing_Plan_Detail__c();
       d.Staffing_Plan__c = planId;
-      if (m.containsKey('Designation__c') && m.get('Designation__c') != null && String.isNotBlank(String.valueOf(m.get('Designation__c')))) {
+      if (
+        m.containsKey('Designation__c') &&
+        m.get('Designation__c') != null &&
+        String.isNotBlank(String.valueOf(m.get('Designation__c')))
+      ) {
         d.Designation__c = (Id) m.get('Designation__c');
       }
-      if (m.containsKey('Vacancies__c') && m.get('Vacancies__c') != null && String.isNotBlank(String.valueOf(m.get('Vacancies__c')))) {
+      if (
+        m.containsKey('Vacancies__c') &&
+        m.get('Vacancies__c') != null &&
+        String.isNotBlank(String.valueOf(m.get('Vacancies__c')))
+      ) {
         d.Vacancies__c = Decimal.valueOf(String.valueOf(m.get('Vacancies__c')));
       }
-      if (m.containsKey('Estimated_Cost_Per_Position__c') && m.get('Estimated_Cost_Per_Position__c') != null && String.isNotBlank(String.valueOf(m.get('Estimated_Cost_Per_Position__c')))) {
-        d.Estimated_Cost_Per_Position__c = Decimal.valueOf(String.valueOf(m.get('Estimated_Cost_Per_Position__c')));
+      if (
+        m.containsKey('Estimated_Cost_Per_Position__c') &&
+        m.get('Estimated_Cost_Per_Position__c') != null &&
+        String.isNotBlank(
+          String.valueOf(m.get('Estimated_Cost_Per_Position__c'))
+        )
+      ) {
+        d.Estimated_Cost_Per_Position__c = Decimal.valueOf(
+          String.valueOf(m.get('Estimated_Cost_Per_Position__c'))
+        );
       }
-      if (m.containsKey('Number_of_Positions__c') && m.get('Number_of_Positions__c') != null && String.isNotBlank(String.valueOf(m.get('Number_of_Positions__c')))) {
-        d.Number_of_Positions__c = Decimal.valueOf(String.valueOf(m.get('Number_of_Positions__c')));
+      if (
+        m.containsKey('Number_of_Positions__c') &&
+        m.get('Number_of_Positions__c') != null &&
+        String.isNotBlank(String.valueOf(m.get('Number_of_Positions__c')))
+      ) {
+        d.Number_of_Positions__c = Decimal.valueOf(
+          String.valueOf(m.get('Number_of_Positions__c'))
+        );
       }
       details.add(d);
     }
@@ -225,7 +267,10 @@ public without sharing class PWChrono_StaffingPlanController {
         delete existing; // NOPMD
       }
 
-      List<PWChrono_Staffing_Plan_Detail__c> details = parseDetailsJson(detailsJson, planId);
+      List<PWChrono_Staffing_Plan_Detail__c> details = parseDetailsJson(
+        detailsJson,
+        planId
+      );
 
       if (!details.isEmpty()) {
         insert details; // NOPMD

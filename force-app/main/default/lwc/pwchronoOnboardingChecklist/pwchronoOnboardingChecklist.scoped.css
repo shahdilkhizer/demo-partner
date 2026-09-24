@@ -1,0 +1,303 @@
+.onboarding-shell {
+  min-height: 100%;
+  background: #f6f7fb;
+  color: #24324b;
+}
+
+.content {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.page-header,
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.page-title,
+.section-heading h2,
+.welcome-card h1,
+.empty-state h3,
+.task-title h3 {
+  margin: 0;
+  color: #17253f;
+}
+
+.page-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+.breadcrumb-text {
+  margin: 6px 0 0;
+  color: #748198;
+  font-size: 0.875rem;
+}
+.eyebrow {
+  margin: 0 0 8px;
+  color: #f26522;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.welcome-card,
+.checklist-card,
+.metric-card,
+.state-card {
+  border: 1px solid #e7eaf1;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgb(27 43 73 / 5%);
+}
+
+.welcome-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+  padding: 28px 32px;
+}
+.welcome-card h1 {
+  font-size: 1.5rem;
+}
+.welcome-card p:not(.eyebrow) {
+  max-width: 620px;
+  margin: 8px 0 0;
+  color: #647188;
+}
+.progress-ring {
+  --progress: 0%;
+  display: grid;
+  width: 112px;
+  height: 112px;
+  flex: 0 0 112px;
+  place-content: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, #fff 78%, transparent 80% 100%),
+    conic-gradient(#f26522 var(--progress), #edf0f5 0);
+  text-align: center;
+}
+.progress-ring strong {
+  color: #17253f;
+  font-size: 1.5rem;
+}
+.progress-ring span {
+  color: #748198;
+  font-size: 0.75rem;
+}
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.metric-card {
+  display: grid;
+  gap: 4px;
+  min-height: 116px;
+  padding: 18px 20px;
+}
+.metric-card strong {
+  color: #17253f;
+  font-size: 1.8rem;
+  line-height: 1.1;
+}
+.metric-card span:last-child {
+  color: #748198;
+  font-size: 0.8rem;
+}
+.metric-card.warning strong {
+  color: #c77b00;
+}
+.checklist-card {
+  padding: 24px;
+}
+.section-heading h2 {
+  font-size: 1.2rem;
+}
+.section-heading p {
+  margin: 5px 0 0;
+  color: #748198;
+  font-size: 0.875rem;
+}
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: min(420px, 100%);
+}
+.controls input,
+.controls select {
+  min-width: 0;
+  height: 40px;
+  border: 1px solid #d8deea;
+  border-radius: 7px;
+  padding: 0 12px;
+  color: #24324b;
+  background: #fff;
+}
+.controls input {
+  flex: 1;
+}
+.controls select {
+  width: 160px;
+}
+.task-list {
+  display: grid;
+  gap: 12px;
+}
+.task-row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #edf0f5;
+  border-radius: 9px;
+}
+.task-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff3ec;
+}
+.task-copy {
+  min-width: 0;
+}
+.task-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.task-title h3 {
+  font-size: 0.98rem;
+}
+.task-copy p {
+  margin: 5px 0 8px;
+  color: #647188;
+  font-size: 0.85rem;
+}
+.badge {
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.badge.mandatory {
+  color: #a54e16;
+  background: #fff0e7;
+}
+.task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  color: #748198;
+  font-size: 0.75rem;
+}
+.complete-button {
+  white-space: nowrap;
+}
+.completed-label {
+  color: #24804b;
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.state-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 180px;
+  padding: 24px;
+  color: #647188;
+}
+.error-state {
+  flex-direction: column;
+  text-align: center;
+}
+.error-state strong {
+  color: #a33b36;
+}
+.empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 48px 16px;
+  color: #748198;
+  text-align: center;
+}
+.empty-state h3 {
+  font-size: 1rem;
+}
+.empty-state p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid #1b75d0;
+  outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .controls {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .content {
+    padding: 16px;
+  }
+  .page-header,
+  .welcome-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .welcome-card {
+    padding: 22px;
+  }
+  .progress-ring {
+    align-self: center;
+  }
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+  .checklist-card {
+    padding: 16px;
+  }
+  .controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .controls select {
+    width: 100%;
+  }
+  .task-row {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+  .task-row > button,
+  .completed-label {
+    grid-column: 2;
+    justify-self: start;
+  }
+}

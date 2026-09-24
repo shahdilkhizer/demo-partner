@@ -4,42 +4,18 @@ public without sharing class PWChrono_RoleFeatureMappingController {
     String callerPortalUserId,
     String sessionToken
   ) {
-    if (UserInfo.getUserType() != 'Guest') {
-      return;
-    }
-
-    Id verifiedPortalUserId = PWChrono_GuestSession.requireVerifiedPortalUserId(
-      callerPortalUserId,
-      sessionToken
-    );
-    Portal_Users__c caller = [
-      SELECT Role__c, Access_Features__c
-      FROM Portal_Users__c
-      WHERE Id = :verifiedPortalUserId
-      LIMIT 1
-    ];
-    Boolean isAdminRole =
-      caller.Role__c == 'HR Admin' ||
-      caller.Role__c == 'System Admin';
-    Boolean hasAdminFeature = hasFeature(
-      caller.Access_Features__c,
-      'Admin Settings'
-    );
-    if (!isAdminRole && !hasAdminFeature) {
-      throw new AuraHandledException('Unauthorized.');
-    }
-  }
-
-  private static Boolean hasFeature(String accessFeatures, String featureName) {
-    if (String.isBlank(accessFeatures) || String.isBlank(featureName)) {
-      return false;
-    }
-    for (String part : accessFeatures.split('\\s*;\\s*')) {
-      if (part == featureName) {
-        return true;
-      }
-    }
-    return false;
+    Id actorEmployeeId = UserInfo.getUserType() == 'Guest'
+      ? PWChrono_GuestSession.requireVerifiedPortalUserId(
+          callerPortalUserId,
+          sessionToken
+        )
+      : (String.isBlank(callerPortalUserId)
+          ? null
+          : PWChrono_RequestValidator.resolveEmployeeId(
+              callerPortalUserId,
+              sessionToken
+            ));
+    PWChrono_AccessController.requireFeature(actorEmployeeId, 'Configuration');
   }
 
   @AuraEnabled(cacheable=false)

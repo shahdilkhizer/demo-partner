@@ -176,6 +176,17 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
     this.filterUsers();
   }
 
+  sortBy = "userName";
+  sortDirection = "asc";
+  get pageSizeValue() {
+    return String(this.pageSize);
+  }
+  handleSort(event) {
+    this.sortBy = event.detail.fieldName;
+    this.sortDirection = event.detail.sortDirection;
+    this.currentPage = 1;
+    this.filterUsers();
+  }
   filterUsers() {
     if (this.searchTerm) {
       this.filteredUsers = this.users.filter(
@@ -188,6 +199,16 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
     } else {
       this.filteredUsers = [...this.users];
     }
+    const direction = this.sortDirection === "asc" ? 1 : -1;
+    this.filteredUsers.sort(
+      (a, b) =>
+        direction *
+        String(a[this.sortBy] || "").localeCompare(
+          String(b[this.sortBy] || ""),
+          undefined,
+          { numeric: true, sensitivity: "base" }
+        )
+    );
     this.applyPagination();
   }
 

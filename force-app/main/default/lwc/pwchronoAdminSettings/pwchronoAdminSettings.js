@@ -1,9 +1,9 @@
 import { LightningElement, track } from "lwc";
-import getFeatureSettings from "@salesforce/apex/PWChrono_AdminController.getFeatureSettings";
-import saveFeatureSettings from "@salesforce/apex/PWChrono_AdminController.saveFeatureSettings";
-import getGlobalSettings from "@salesforce/apex/PWChrono_AdminController.getGlobalSettings";
-import searchPortalUsers from "@salesforce/apex/PWChrono_AdminController.searchPortalUsers";
-import updatePortalUserAccess from "@salesforce/apex/PWChrono_AdminController.updatePortalUserAccess";
+import getFeatureSettings from "@salesforce/apex/PWChrono_PortalApi.getFeatureSettings";
+import saveFeatureSettings from "@salesforce/apex/PWChrono_PortalApi.saveFeatureSettings";
+import getGlobalSettings from "@salesforce/apex/PWChrono_PortalApi.getGlobalSettings";
+import searchPortalUsers from "@salesforce/apex/PWChrono_PortalApi.searchPortalUsers";
+import updatePortalUserAccess from "@salesforce/apex/PWChrono_PortalApi.updatePortalUserAccess";
 import getUserAccessById from "@salesforce/apex/PWChrono_AccessController.getUserAccessById";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { getEmployeeId, getSessionToken } from "c/pwchronoSession";

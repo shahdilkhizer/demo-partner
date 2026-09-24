@@ -274,10 +274,7 @@ public inherited sharing class PWChrono_LeaveController {
       );
 
       leave.Certificate_Uploaded__c = true;
-      update new Leave__c(
-        Id = leaveId,
-        Certificate_Uploaded__c = true
-      );
+      update new Leave__c(Id = leaveId, Certificate_Uploaded__c = true);
 
       PWChrono_RequestCommentService.addSystemComment(
         leaveId,
@@ -310,10 +307,7 @@ public inherited sharing class PWChrono_LeaveController {
         sessionToken
       );
       requireAccessibleLeave(leaveId, empId);
-      return PWChrono_RequestCommentService.getComments(
-        leaveId,
-        'Leave__c'
-      );
+      return PWChrono_RequestCommentService.getComments(leaveId, 'Leave__c');
     } catch (AuraHandledException ahe) {
       throw ahe;
     } catch (Exception e) {
@@ -573,10 +567,7 @@ public inherited sharing class PWChrono_LeaveController {
     }
   }
 
-  private static Leave__c requireAccessibleLeave(
-    Id leaveId,
-    Id employeeId
-  ) {
+  private static Leave__c requireAccessibleLeave(Id leaveId, Id employeeId) {
     Leave__c leave = PWChrono_LeaveSelector.getLeaveById(leaveId);
 
     if (leave == null) {

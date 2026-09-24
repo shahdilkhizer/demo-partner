@@ -76,7 +76,8 @@
                   class="form-control"
                   placeholder={searchPlaceholder}
                   aria-label={searchAriaLabel}
-                  onkeyup={handleSearch}
+                  value={searchTerm}
+                  oninput={handleSearch}
                 />
                 <span class="input-group-text" aria-hidden="true">
                   <kbd>{searchShortcutText}</kbd>
@@ -104,163 +105,85 @@
                 class="dropdown me-1 notification_item"
                 data-region="notifications"
               >
-                <template if:true={showNotifications}>
-                  <button
-                    type="button"
-                    class="btn btn-menubar position-relative me-1"
-                    data-action="toggleNotifications"
-                    onclick={handleActionClick}
-                    aria-expanded="true"
+                <button
+                  type="button"
+                  class="btn btn-menubar position-relative me-1"
+                  data-action="toggleNotifications"
+                  onclick={handleActionClick}
+                  aria-expanded={showNotifications}
+                >
+                  <i class="fa-regular fa-bell" aria-hidden="true"></i>
+                  <template if:true={hasNotifications}
+                    ><span class="badge bg-danger"
+                      >{notificationCount}</span
+                    ></template
                   >
-                    <i class="fa-regular fa-bell" aria-hidden="true"></i>
-                    <span
-                      class="notification-status-dot"
-                      aria-hidden="true"
-                    ></span>
-                    <span class="visually-hidden">{notificationsLabel}</span>
-                  </button>
-                </template>
-                <template if:false={showNotifications}>
-                  <button
-                    type="button"
-                    class="btn btn-menubar position-relative me-1"
-                    data-action="toggleNotifications"
-                    onclick={handleActionClick}
-                    aria-expanded="false"
-                  >
-                    <i class="fa-regular fa-bell" aria-hidden="true"></i>
-                    <span
-                      class="notification-status-dot"
-                      aria-hidden="true"
-                    ></span>
-                    <span class="visually-hidden">{notificationsLabel}</span>
-                  </button>
-                </template>
-
+                  <span class="visually-hidden">{notificationsLabel}</span>
+                </button>
                 <template if:true={showNotifications}>
                   <div
                     class="dropdown-menu dropdown-menu-end notification-dropdown p-4 show"
                   >
-                    <div
-                      class="d-flex align-items-center justify-content-between border-bottom p-0 pb-3 mb-3"
+                    <h4>{notificationsTitle}</h4>
+                    <p class="small text-muted">Latest 15 notifications</p>
+                    <template if:true={notificationsLoading}
+                      ><p role="status">Loading notifications…</p></template
                     >
-                      <h4 class="notification-title">{notificationsTitle}</h4>
-                      <div class="d-flex align-items-center">
-                        <button
-                          type="button"
-                          class="text-primary fs-15 me-3 lh-1 bg-transparent border-0 p-0"
-                          data-action="markAllRead"
-                          onclick={handleActionClick}
-                        >
-                          {markAllReadLabel}
-                        </button>
-                        <div class="dropdown">
-                          <template if:true={showNotificationFilter}>
-                            <button
-                              type="button"
-                              class="bg-white dropdown-toggle border-0"
-                              data-action="toggleNotificationFilter"
-                              onclick={handleActionClick}
-                              aria-expanded="true"
-                            >
-                              <i
-                                class="fa-solid fa-calendar-check me-1"
-                                aria-hidden="true"
-                              ></i
-                              >{notificationFilterLabel}
-                            </button>
-                          </template>
-                          <template if:false={showNotificationFilter}>
-                            <button
-                              type="button"
-                              class="bg-white dropdown-toggle border-0"
-                              data-action="toggleNotificationFilter"
-                              onclick={handleActionClick}
-                              aria-expanded="false"
-                            >
-                              <i
-                                class="fa-solid fa-calendar-check me-1"
-                                aria-hidden="true"
-                              ></i
-                              >{notificationFilterLabel}
-                            </button>
-                          </template>
-                          <template if:true={showNotificationFilter}>
-                            <ul
-                              class="dropdown-menu mt-2 p-3 show"
-                              data-list="notificationFilters"
-                            >
-                              <template
-                                for:each={notificationFilters}
-                                for:item="f"
-                              >
-                                <li
-                                  key={f.key}
-                                  data-repeat="notificationFilter"
-                                >
-                                  <button
-                                    type="button"
-                                    class="dropdown-item rounded-1"
-                                    data-action={f.action}
-                                    onclick={handleActionClick}
-                                  >
-                                    {f.label}
-                                  </button>
-                                </li>
-                              </template>
-                            </ul>
-                          </template>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="noti-content" data-list="notificationsList">
-                      <template for:each={notifications} for:item="n">
-                        <div
-                          key={n.key}
-                          class="border-bottom mb-3 pb-3"
-                          data-repeat="notificationItem"
-                        >
+                    <template if:true={notificationError}>
+                      <p role="alert">{notificationError}</p>
+                      <button
+                        type="button"
+                        class="btn btn-link"
+                        onclick={loadNotifications}
+                      >
+                        Retry
+                      </button>
+                    </template>
+                    <template if:true={notificationsEmpty}
+                      ><p>No notifications yet.</p></template
+                    >
+                    <div class="noti-content">
+                      <template for:each={visibleNotifications} for:item="n">
+                        <div key={n.Id} class={n.itemClass}>
+                          <p class="mb-1">{n.Subject}</p>
+                          <p class="small mb-1">{n.Message}</p>
                           <button
                             type="button"
-                            class="btn-reset d-block w-100 text-start bg-transparent border-0 p-0"
-                            data-action={n.action}
-                            onclick={handleActionClick}
+                            class="btn btn-link p-0"
+                            data-id={n.Id}
+                            disabled={n.IsRead}
+                            onclick={updateNotificationReadState}
                           >
-                            <div class="d-flex">
-                              <c-pwchrono-avatar
-                                container-class="avatar avatar-lg me-2 flex-shrink-0"
-                                image-url={n.avatarUrl}
-                                name={n.avatarAlt}
-                                initials={n.initials}
-                                title-class="avatar-title rounded-circle"
-                              ></c-pwchrono-avatar>
-                              <div class="flex-grow-1">
-                                <p class="mb-1">{n.text}</p>
-                                <span>{n.time}</span>
-                              </div>
-                            </div>
+                            {n.readLabel}
                           </button>
                         </div>
                       </template>
                     </div>
-
-                    <div class="d-flex p-0">
+                    <template if:true={hasMoreNotifications}>
                       <button
                         type="button"
-                        class="btn btn-light w-100 me-2"
-                        data-action="closeNotifications"
-                        onclick={handleActionClick}
+                        class="btn btn-link"
+                        onclick={handleShowAllNotifications}
                       >
-                        {cancelLabel}
+                        Show all recent notifications
+                      </button>
+                    </template>
+                    <div class="d-flex gap-2 mt-3">
+                      <button
+                        type="button"
+                        class="btn btn-primary"
+                        disabled={markAllDisabled}
+                        onclick={updateNotificationReadState}
+                      >
+                        {markAllReadLabel}
                       </button>
                       <button
                         type="button"
-                        class="btn btn-primary w-100"
-                        data-action="viewAllNotifications"
+                        class="btn btn-light"
+                        data-action="closeNotifications"
                         onclick={handleActionClick}
                       >
-                        {viewAllLabel}
+                        Close
                       </button>
                     </div>
                   </div>
@@ -381,7 +304,7 @@
                             class="fa-solid fa-right-from-bracket me-2"
                             aria-hidden="true"
                           ></i
-                          >{logoutLabel}</a
+                          >{displayedLogoutLabel}</a
                         >
                       </div>
                     </div>

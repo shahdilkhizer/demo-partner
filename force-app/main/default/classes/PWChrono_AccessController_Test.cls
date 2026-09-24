@@ -32,7 +32,7 @@ private class PWChrono_AccessController_Test {
 
   @isTest
   static void testGetUserAccess_SalesforceInternalUser() {
-    // Salesforce internal users (Standard profile) should get FULL ACCESS
+    // Internal users without a linked PWChrono identity must not bypass RBAC.
     Profile p = [SELECT Id FROM Profile WHERE Name = 'Standard User'];
     User u = new User(
       Alias = 'sfuser',
@@ -53,32 +53,25 @@ private class PWChrono_AccessController_Test {
       Test.stopTest();
 
       System.assertEquals(
-        true,
+        false,
         result.get('hasAccess'),
-        'Salesforce users should have access'
+        'Unlinked internal users should not have portal access'
       );
+      System.assertEquals(null, result.get('role'));
       System.assertEquals(
-        'Salesforce User',
-        result.get('role'),
-        'Role should be Salesforce User'
-      );
-      System.assertEquals(
-        true,
+        false,
         result.get('isSalesforceUser'),
-        'Should be flagged as Salesforce user'
+        'Only platform administrators receive the internal bypass flag'
       );
 
       List<Object> features = (List<Object>) result.get('features');
-      System.assert(
-        features.size() > 10,
-        'Salesforce users should have many features'
-      );
+      System.assertEquals(0, features.size());
     }
   }
 
   @isTest
   static void testGetUserAccess_HRAdmin_LinkedToSalesforceUser() {
-    // Even with HR Admin Portal_Users__c linked, Salesforce internal users get full access
+    // A linked internal user keeps the PWChrono role assigned to that identity.
     Portal_Users__c admin = [
       SELECT Id
       FROM Portal_Users__c
@@ -110,30 +103,23 @@ private class PWChrono_AccessController_Test {
       Map<String, Object> result = PWChrono_AccessController.getUserAccess();
       Test.stopTest();
 
-      // Salesforce internal users always get full access
       System.assertEquals(true, result.get('hasAccess'));
-      System.assertEquals('Salesforce User', result.get('role'));
-      System.assertEquals(true, result.get('isSalesforceUser'));
+      System.assertEquals('HR Admin', result.get('role'));
+      System.assertEquals(false, result.get('isSalesforceUser'));
+      System.assertEquals(true, result.get('isAdmin'));
     }
   }
 
   @isTest
   static void testGetUserAccess_WithEmployeeId() {
-    // When employeeId is passed, we still check if caller is Salesforce internal user first
-    Portal_Users__c admin = [
-      SELECT Id
-      FROM Portal_Users__c
-      WHERE Role__c = 'HR Admin'
-      LIMIT 1
-    ];
-
     Test.startTest();
     Map<String, Object> result = PWChrono_AccessController.getUserAccess();
     Test.stopTest();
 
-    // Running as system user in test context = Salesforce internal user = full access
+    // An unlinked platform administrator retains emergency administrative access.
     System.assertEquals(true, result.get('hasAccess'));
-    System.assertEquals('Salesforce User', result.get('role'));
+    System.assertEquals('System Administrator', result.get('role'));
+    System.assertEquals(true, result.get('isAdmin'));
   }
 
   @isTest
@@ -180,17 +166,18 @@ private class PWChrono_AccessController_Test {
 
     System.assertEquals(true, portalResult.get('hasAccess'));
     System.assertEquals(
-      new List<String>{ 'Attendance Management' },
+      new List<String>{ 'Attendance Management', 'Dashboard', 'My Profile' },
       (List<String>) portalResult.get('features')
     );
     System.assertEquals(true, guestResult.get('hasAccess'));
     System.assertEquals(
-      new List<String>{ 'Attendance Management' },
+      new List<String>{ 'Attendance Management', 'Dashboard', 'My Profile' },
       (List<String>) guestResult.get('features')
     );
+    System.assertEquals(false, guestLoginResult.get('hasAccess'));
     System.assertEquals(
-      new List<String>{ 'Dashboard', 'My Profile' },
-      (List<String>) guestLoginResult.get('features')
+      0,
+      ((List<String>) guestLoginResult.get('features')).size()
     );
     System.assertEquals(false, missingUserResult.get('hasAccess'));
   }
@@ -214,7 +201,47 @@ private class PWChrono_AccessController_Test {
     Test.stopTest();
 
     System.assertEquals(true, result.get('hasAccess'));
-    System.assertEquals(true, adminResult);
+    System.assertEquals(false, adminResult);
     System.assertEquals(true, nullAdminResult);
+  }
+
+  @isTest
+  static void testHrManagerHasTeamScopeButNoGlobalAdministration() {
+    Portal_User_Profile__c profile = new Portal_User_Profile__c(
+      Profile_Type__c = 'HR Manager',
+      Can_Approve__c = true,
+      Approval_Scope__c = 'All Employees',
+      Is_Active__c = true
+    );
+    insert profile;
+    insert new Portal_Profile_Feature__c(
+      Portal_User_Profile__c = profile.Id,
+      Feature_Key__c = 'Attendance Management',
+      Feature_Label__c = 'Attendance Management',
+      Is_Enabled__c = true
+    );
+    Portal_Users__c manager = PWChrono_TestDataFactory.createPortalUser(
+      'Test HR Manager',
+      'hr.manager@test.com',
+      'HR Manager'
+    );
+    manager.Portal_User_Profile__c = profile.Id;
+    manager.Department__c = 'People';
+    update manager;
+
+    Test.startTest();
+    Map<String, Object> result = PWChrono_AccessController.getUserAccessImpl(
+      manager.Id,
+      'PowerCustomerSuccess'
+    );
+    Test.stopTest();
+
+    List<String> features = (List<String>) result.get('features');
+    System.assertEquals('HR Manager', result.get('role'));
+    System.assertEquals('Department', result.get('approvalScope'));
+    System.assert(features.contains('Attendance Team'));
+    System.assert(!features.contains('Attendance Administration'));
+    System.assert(!features.contains('Admin Settings'));
+    System.assert(!features.contains('Configuration'));
   }
 }

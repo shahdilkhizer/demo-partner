@@ -1,130 +1,174 @@
 <template>
-  <div class="page-wrapper">
-    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
-      <div
-        class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
-      >
-        <!-- Header -->
-        <div
-          class="bg-gradient-to-r from-sky-500 to-sky-600 px-6 py-5 text-white"
-        >
-          <h1 class="text-xl font-bold">Onboarding Checklist</h1>
-          <p class="text-sm text-white/80 mt-1">
-            Complete your onboarding tasks
-          </p>
+  <div class="page-wrapper onboarding-shell">
+    <div class="content container-fluid">
+      <header class="page-header">
+        <div>
+          <h2 class="page-title">Onboarding checklist</h2>
+          <p class="breadcrumb-text">Dashboard / Onboarding</p>
         </div>
-
-        <div class="p-4 md:p-6">
-          <!-- Loading State -->
-          <template if:true={isLoading}>
-            <div class="flex items-center justify-center py-12">
-              <div
-                class="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600"
-              ></div>
-              <span class="ml-3 text-gray-600">Loading tasks...</span>
+        <button
+          class="btn btn-outline-secondary"
+          type="button"
+          onclick={loadTasks}
+          disabled={isLoading}
+        >
+          Refresh
+        </button>
+      </header>
+      <template if:true={isLoading}
+        ><section class="state-card" aria-live="polite">
+          <lightning-spinner
+            alternative-text="Loading onboarding tasks"
+            size="small"
+          ></lightning-spinner
+          ><span>Loading your onboarding tasks…</span>
+        </section></template
+      >
+      <template if:false={isLoading}
+        ><template if:true={error}
+          ><section class="state-card error-state" role="alert">
+            <strong>We could not load your checklist.</strong
+            ><span>{error}</span
+            ><button class="btn btn-primary" type="button" onclick={loadTasks}>
+              Try again
+            </button>
+          </section></template
+        ><template if:false={error}>
+          <section class="welcome-card">
+            <div>
+              <p class="eyebrow">Your onboarding plan</p>
+              <h1>Welcome to PWChrono</h1>
+              <p>
+                Complete the tasks below to get set up. Your progress is saved
+                as you finish each item.
+              </p>
             </div>
-          </template>
-
-          <template if:false={isLoading}>
-            <!-- Progress Bar -->
-            <div class="mb-6">
-              <div
-                class="flex items-center justify-between text-sm text-gray-600 mb-2"
-              >
-                <span class="font-medium">Progress</span>
-                <span class="font-bold text-sky-600">{progress}%</span>
+            <div
+              class="progress-ring"
+              style={progressStyle}
+              role="img"
+              aria-label={progressLabel}
+            >
+              <strong>{progress}%</strong><span>complete</span>
+            </div>
+          </section>
+          <section class="metric-grid" aria-label="Onboarding summary">
+            <div class="metric-card">
+              <span class="metric-label">Total tasks</span
+              ><strong>{totalCount}</strong><span>Assigned to you</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Open tasks</span
+              ><strong>{openCount}</strong><span>Still to complete</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Completed</span
+              ><strong>{completedCount}</strong><span>Saved successfully</span>
+            </div>
+            <div class="metric-card warning">
+              <span class="metric-label">Overdue</span
+              ><strong>{overdueCount}</strong><span>Need your attention</span>
+            </div>
+          </section>
+          <section class="checklist-card">
+            <div class="section-heading">
+              <div>
+                <h2>My tasks</h2>
+                <p>Work through each task in due-date order.</p>
               </div>
-              <lightning-progress-bar
-                value={progress}
-                variant="circular"
-              ></lightning-progress-bar>
+              <div class="controls">
+                <input
+                  class="form-control"
+                  type="search"
+                  placeholder="Search tasks"
+                  aria-label="Search tasks"
+                  oninput={handleSearch}
+                /><select
+                  class="form-select"
+                  aria-label="Filter tasks"
+                  onchange={handleFilter}
+                >
+                  <template for:each={filterOptions} for:item="option"
+                    ><option key={option.value} value={option.value}>
+                      {option.label}
+                    </option></template
+                  >
+                </select>
+              </div>
             </div>
-
-            <!-- Task List -->
-            <template if:true={tasks}>
-              <template if:true={hasTasks}>
-                <div class="space-y-3">
-                  <template for:each={tasks} for:item="task">
-                    <div
-                      key={task.Id}
-                      class="flex items-start gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
-                    >
-                      <div class="flex-shrink-0 mt-1">
-                        <lightning-icon
-                          icon-name={task.iconName}
-                          size="small"
-                          variant={task.iconVariant}
-                        ></lightning-icon>
-                      </div>
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2 mb-1">
-                          <h3 class="text-base font-semibold text-gray-800">
-                            {task.Name}
-                          </h3>
-                          <template if:true={task.Is_Mandatory__c}>
-                            <span
-                              class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800"
-                            >
-                              Mandatory
-                            </span>
-                          </template>
-                        </div>
-                        <p class="text-sm text-gray-600 mb-2">
-                          {task.Description__c}
-                        </p>
-                        <div
-                          class="flex items-center gap-4 text-xs text-gray-500"
+            <template if:true={hasTasks}
+              ><div class="task-list">
+                <template for:each={filteredTasks} for:item="task"
+                  ><article key={task.Id} class="task-row">
+                    <div class="task-icon">
+                      <lightning-icon
+                        icon-name={task.iconName}
+                        size="small"
+                        alternative-text=""
+                      ></lightning-icon>
+                    </div>
+                    <div class="task-copy">
+                      <div class="task-title">
+                        <h3>{task.Name}</h3>
+                        <template if:true={task.Is_Mandatory__c}
+                          ><span class="badge mandatory"
+                            >Mandatory</span
+                          ></template
                         >
-                          <span
-                            >Due:
+                      </div>
+                      <p>{task.Description__c}</p>
+                      <div class="task-meta">
+                        <span>{task.statusLabel}</span
+                        ><span
+                          ><template if:true={task.Due_Date__c}
+                            >Due
                             <lightning-formatted-date-time
                               value={task.Due_Date__c}
-                            ></lightning-formatted-date-time
-                          ></span>
-                          <span>Status: {task.Status__c}</span>
-                        </div>
+                              year="numeric"
+                              month="short"
+                              day="numeric"
+                            ></lightning-formatted-date-time></template
+                          ><template if:false={task.Due_Date__c}
+                            >No due date</template
+                          ></span
+                        >
                       </div>
-                      <template if:false={task.isCompleted}>
-                        <lightning-button-icon
-                          icon-name="utility:check"
-                          variant="brand"
-                          alternative-text="Mark as Complete"
-                          title="Mark as Complete"
-                          data-id={task.Id}
-                          onclick={handleMarkComplete}
-                        ></lightning-button-icon>
-                      </template>
                     </div>
-                  </template>
-                </div>
-              </template>
-              <template if:false={hasTasks}>
-                <div
-                  class="flex flex-col items-center justify-center py-12 text-center"
+                    <template if:false={task.isCompleted}
+                      ><button
+                        class="btn btn-primary complete-button"
+                        type="button"
+                        data-id={task.Id}
+                        onclick={handleMarkComplete}
+                        disabled={task.isSaving}
+                      >
+                        <lightning-icon
+                          icon-name="utility:check"
+                          size="x-small"
+                          alternative-text=""
+                        ></lightning-icon>
+                        Mark complete
+                      </button></template
+                    ><template if:true={task.isCompleted}
+                      ><span class="completed-label">✓ Done</span></template
+                    >
+                  </article></template
                 >
-                  <div
-                    class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"
-                  >
-                    <lightning-icon
-                      icon-name="utility:task"
-                      size="medium"
-                      class="text-gray-400"
-                    ></lightning-icon>
-                  </div>
-                  <p class="text-gray-500">No onboarding tasks assigned.</p>
-                </div>
-              </template>
-            </template>
-            <template if:true={error}>
-              <div
-                class="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600"
-              >
-                {error}
-              </div>
-            </template>
-          </template>
-        </div>
-      </div>
+              </div></template
+            ><template if:false={hasTasks}
+              ><div class="empty-state">
+                <lightning-icon
+                  icon-name="utility:task"
+                  size="medium"
+                  alternative-text=""
+                ></lightning-icon>
+                <h3>No tasks match this view</h3>
+                <p>Try another filter or search term.</p>
+              </div></template
+            >
+          </section>
+        </template></template
+      >
     </div>
   </div>
 </template>

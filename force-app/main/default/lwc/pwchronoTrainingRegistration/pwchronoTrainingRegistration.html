@@ -1,4 +1,4 @@
-<template>
+<template lwc:render-mode="light">
   <div class="page-wrapper">
     <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
       <!-- PwChrono Standard Header -->
@@ -22,9 +22,7 @@
             <lightning-tab label="Upcoming Trainings">
               <div class="py-4">
                 <template if:true={hasUpcomingTrainings}>
-                  <div
-                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-                  >
+                  <div class="training-grid">
                     <template for:each={upcomingTrainings} for:item="training">
                       <div
                         key={training.Id}
@@ -37,7 +35,7 @@
                           <p class="text-sm text-gray-600 mb-4 line-clamp-2">
                             {training.Training_Program__r.Description__c}
                           </p>
-                          <div class="grid grid-cols-2 gap-3 text-sm">
+                          <div class="training-details">
                             <div>
                               <p
                                 class="text-xs text-gray-500 uppercase tracking-wide font-medium"
@@ -151,7 +149,7 @@
                       >
                       <lightning-combobox
                         label="Per Page"
-                        value={pageSize}
+                        value={pageSizeValue}
                         options={pageSizeOptions}
                         onchange={handlePageSizeChange}
                         variant="label-hidden"

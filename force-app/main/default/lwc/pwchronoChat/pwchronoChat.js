@@ -1,28 +1,22 @@
-import communityBasePath from "@salesforce/community/basePath";
+import getSalesforceChatterUrl from "@salesforce/apex/PWChrono_AuthController.getSalesforceChatterUrl";
 import isGuest from "@salesforce/user/isGuest";
-import { NavigationMixin } from "lightning/navigation";
 import { LightningElement } from "lwc";
 
-export default class PwchronoChat extends NavigationMixin(LightningElement) {
-  get isAuthenticatedChatterUser() {
-    return !isGuest;
+export default class PwchronoChat extends LightningElement {
+  chatterLoginUrl;
+  errorMessage;
+  connectedCallback() {
+    this.loadChatterUrl();
   }
-
-  get showSignIn() {
-    return isGuest;
+  async loadChatterUrl() {
+    this.errorMessage = "";
+    try {
+      this.chatterLoginUrl = await getSalesforceChatterUrl();
+    } catch {
+      this.errorMessage = "Unable to open Chatter. Please try again.";
+    }
   }
-
-  get chatterLoginUrl() {
-    const basePath = String(communityBasePath || "").replace(/\/$/, "");
-    return `${basePath}/login`;
-  }
-
-  openChatter() {
-    this[NavigationMixin.Navigate]({
-      type: "standard__namedPage",
-      attributes: {
-        pageName: "chatter"
-      }
-    });
+  get actionLabel() {
+    return isGuest ? "Sign in with Salesforce" : "Open Chatter";
   }
 }

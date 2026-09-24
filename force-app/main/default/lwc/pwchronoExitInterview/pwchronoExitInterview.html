@@ -1,330 +1,593 @@
-<template>
-    <c-pwchrono-main-layout>
-        <div slot="main-content">
-            <!-- Page header -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h4 class="fw-bold mb-1">
-                        <i class="fa-solid fa-comments fa-fw me-2 text-primary"></i>Exit Interview
-                    </h4>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb mb-0">
-                            <li class="breadcrumb-item"><a href="#" onclick={handleHome}>Home</a></li>
-                            <li class="breadcrumb-item active" aria-current="page">Exit Interview</li>
-                        </ol>
-                    </nav>
-                </div>
-                <template if:true={isHrAdmin}>
-                    <button class="btn btn-primary btn-sm" onclick={handleCreate}>
-                        <i class="fa-solid fa-plus fa-fw me-1"></i>New Exit Interview
-                    </button>
-                </template>
-            </div>
-
-            <!-- Error alert -->
-            <template if:true={errorMessage}>
-                <div class="alert alert-danger alert-dismissible d-flex align-items-center mb-3" role="alert">
-                    <i class="fa-solid fa-circle-exclamation fa-fw me-2"></i>
-                    <div>{errorMessage}</div>
-                    <button type="button" class="btn-close" onclick={clearError}></button>
-                </div>
-            </template>
-
-            <!-- Metric cards -->
-            <div class="row g-3 mb-4">
-                <div class="col-6 col-md-3">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body text-center">
-                            <div class="fs-2 fw-bold text-primary">{totalCount}</div>
-                            <div class="text-muted small">Total</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body text-center">
-                            <div class="fs-2 fw-bold text-secondary">{pendingCount}</div>
-                            <div class="text-muted small">Pending</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body text-center">
-                            <div class="fs-2 fw-bold text-warning">{scheduledCount}</div>
-                            <div class="text-muted small">Scheduled</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body text-center">
-                            <div class="fs-2 fw-bold text-success">{completedCount}</div>
-                            <div class="text-muted small">Completed</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Filter bar -->
-            <div class="card border-0 shadow-sm mb-3">
-                <div class="card-body py-2">
-                    <div class="row g-2 align-items-center">
-                        <div class="col-auto">
-                            <label class="form-label mb-0 fw-semibold small">Status</label>
-                        </div>
-                        <div class="col-auto">
-                            <select class="form-select form-select-sm" onchange={handleFilterChange}>
-                                <template for:each={statusOptions} for:item="opt">
-                                    <option key={opt.value} value={opt.value}
-                                        selected={opt.selected}>{opt.label}</option>
-                                </template>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Loading -->
-            <template if:true={isLoading}>
-                <div class="text-center py-5">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
-            </template>
-
-            <!-- Table -->
-            <template if:false={isLoading}>
-                <div class="card border-0 shadow-sm">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Interview #</th>
-                                    <th>Employee</th>
-                                    <th>Department</th>
-                                    <th>Designation</th>
-                                    <th>Interview Date</th>
-                                    <th>Interviewer</th>
-                                    <th>Rating</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template if:true={hasRecords}>
-                                    <template for:each={enrichedRecords} for:item="row">
-                                        <tr key={row.Id}>
-                                            <td class="text-muted small">{row.Name}</td>
-                                            <td class="fw-semibold">{row.employeeName}</td>
-                                            <td>{row.deptName}</td>
-                                            <td>{row.desigName}</td>
-                                            <td>{row.Interview_Date__c}</td>
-                                            <td>{row.interviewerName}</td>
-                                            <td>
-                                                <template if:true={row.Rating__c}>
-                                                    <span class="badge bg-info text-dark">
-                                                        <i class="fa-solid fa-star fa-fw me-1"></i>{row.Rating__c}/5
-                                                    </span>
-                                                </template>
-                                                <template if:false={row.Rating__c}>
-                                                    <span class="text-muted small">—</span>
-                                                </template>
-                                            </td>
-                                            <td>
-                                                <span class={row.statusBadgeClass}>{row.Status__c}</span>
-                                            </td>
-                                            <td>
-                                                <button class="btn btn-sm btn-outline-primary me-1"
-                                                    data-id={row.Id} onclick={handleEdit} title="Edit">
-                                                    <i class="fa-solid fa-pen-to-square fa-fw"></i>
-                                                </button>
-                                                <template if:true={isHrAdmin}>
-                                                    <button class="btn btn-sm btn-outline-danger"
-                                                        data-id={row.Id} onclick={handleDelete} title="Delete">
-                                                        <i class="fa-solid fa-trash fa-fw"></i>
-                                                    </button>
-                                                </template>
-                                            </td>
-                                        </tr>
-                                    </template>
-                                </template>
-                                <template if:false={hasRecords}>
-                                    <tr>
-                                        <td colspan="9" class="text-center text-muted py-4">
-                                            <i class="fa-solid fa-inbox fa-fw me-2"></i>No exit interview records found.
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </template>
-
-            <!-- Create / Edit Modal -->
-            <template if:true={showModal}>
-                <div class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
-                    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title fw-semibold">
-                                    <i class="fa-solid fa-comments fa-fw me-2 text-primary"></i>
-                                    {modalTitle}
-                                </h5>
-                                <button type="button" class="btn-close" onclick={handleModalClose}></button>
-                            </div>
-                            <div class="modal-body">
-                                <!-- Validation error -->
-                                <template if:true={validationError}>
-                                    <div class="alert alert-warning d-flex align-items-center mb-3">
-                                        <i class="fa-solid fa-triangle-exclamation fa-fw me-2"></i>
-                                        {validationError}
-                                    </div>
-                                </template>
-
-                                <div class="row g-3">
-                                    <!-- Employee -->
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-semibold small">Employee <span class="text-danger">*</span></label>
-                                        <select class="form-select form-select-sm" data-field="Employee__c" onchange={handleFieldChange}>
-                                            <option value="">-- Select Employee --</option>
-                                            <template for:each={employeeOptions} for:item="opt">
-                                                <option key={opt.value} value={opt.value}
-                                                    selected={opt.selected}>{opt.label}</option>
-                                            </template>
-                                        </select>
-                                    </div>
-                                    <!-- Employee Name -->
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-semibold small">Employee Name</label>
-                                        <input type="text" class="form-control form-control-sm"
-                                            data-field="Employee_Name__c"
-                                            value={editRecord.Employee_Name__c}
-                                            onchange={handleFieldChange} />
-                                    </div>
-                                    <!-- Department -->
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-semibold small">Department</label>
-                                        <select class="form-select form-select-sm" data-field="Department__c" onchange={handleFieldChange}>
-                                            <option value="">-- Select --</option>
-                                            <template for:each={departmentOptions} for:item="opt">
-                                                <option key={opt.value} value={opt.value}
-                                                    selected={opt.selected}>{opt.label}</option>
-                                            </template>
-                                        </select>
-                                    </div>
-                                    <!-- Designation -->
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-semibold small">Designation</label>
-                                        <select class="form-select form-select-sm" data-field="Designation__c" onchange={handleFieldChange}>
-                                            <option value="">-- Select --</option>
-                                            <template for:each={designationOptions} for:item="opt">
-                                                <option key={opt.value} value={opt.value}
-                                                    selected={opt.selected}>{opt.label}</option>
-                                            </template>
-                                        </select>
-                                    </div>
-                                    <!-- Separation -->
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-semibold small">Linked Separation</label>
-                                        <select class="form-select form-select-sm" data-field="Separation__c" onchange={handleFieldChange}>
-                                            <option value="">-- None --</option>
-                                            <template for:each={separationOptions} for:item="opt">
-                                                <option key={opt.value} value={opt.value}
-                                                    selected={opt.selected}>{opt.label}</option>
-                                            </template>
-                                        </select>
-                                    </div>
-                                    <!-- Interviewer -->
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-semibold small">Interviewer</label>
-                                        <select class="form-select form-select-sm" data-field="Interviewer__c" onchange={handleFieldChange}>
-                                            <option value="">-- Select --</option>
-                                            <template for:each={employeeOptions} for:item="opt">
-                                                <option key={opt.value} value={opt.value}
-                                                    selected={opt.interviewerSelected}>{opt.label}</option>
-                                            </template>
-                                        </select>
-                                    </div>
-                                    <!-- Interview Date -->
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-semibold small">Interview Date <span class="text-danger">*</span></label>
-                                        <input type="date" class="form-control form-control-sm"
-                                            data-field="Interview_Date__c"
-                                            value={editRecord.Interview_Date__c}
-                                            onchange={handleFieldChange} />
-                                    </div>
-                                    <!-- Rating -->
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-semibold small">Rating (1–5)</label>
-                                        <select class="form-select form-select-sm" data-field="Rating__c" onchange={handleFieldChange}>
-                                            <option value="">-- Not Rated --</option>
-                                            <template for:each={ratingOptions} for:item="opt">
-                                                <option key={opt.value} value={opt.value}
-                                                    selected={opt.selected}>{opt.label}</option>
-                                            </template>
-                                        </select>
-                                    </div>
-                                    <!-- Status (HR only) -->
-                                    <template if:true={isHrAdmin}>
-                                        <div class="col-md-4">
-                                            <label class="form-label fw-semibold small">Status</label>
-                                            <select class="form-select form-select-sm" data-field="Status__c" onchange={handleFieldChange}>
-                                                <template for:each={eiStatusOptions} for:item="opt">
-                                                    <option key={opt.value} value={opt.value}
-                                                        selected={opt.selected}>{opt.label}</option>
-                                                </template>
-                                            </select>
-                                        </div>
-                                    </template>
-
-                                    <!-- Exit Questionnaire -->
-                                    <div class="col-12">
-                                        <hr class="my-1" />
-                                        <label class="form-label fw-semibold small">Exit Questionnaire</label>
-                                        <textarea class="form-control form-control-sm" rows="4"
-                                            data-field="Exit_Questionnaire__c"
-                                            onchange={handleFieldChange}>{editRecord.Exit_Questionnaire__c}</textarea>
-                                    </div>
-                                    <!-- Employee Feedback -->
-                                    <div class="col-12">
-                                        <label class="form-label fw-semibold small">Employee Feedback</label>
-                                        <textarea class="form-control form-control-sm" rows="4"
-                                            data-field="Employee_Feedback__c"
-                                            onchange={handleFieldChange}>{editRecord.Employee_Feedback__c}</textarea>
-                                    </div>
-                                    <!-- Final Remarks -->
-                                    <div class="col-12">
-                                        <label class="form-label fw-semibold small">Final Remarks</label>
-                                        <textarea class="form-control form-control-sm" rows="3"
-                                            data-field="Final_Remarks__c"
-                                            onchange={handleFieldChange}>{editRecord.Final_Remarks__c}</textarea>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <template if:true={isHrAdmin}>
-                                    <template if:true={isEditMode}>
-                                        <button type="button" class="btn btn-danger btn-sm me-auto"
-                                            data-id={editRecord.Id} onclick={handleDelete}>
-                                            <i class="fa-solid fa-trash fa-fw me-1"></i>Delete
-                                        </button>
-                                    </template>
-                                </template>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick={handleModalClose}>Cancel</button>
-                                <button type="button" class="btn btn-primary btn-sm" onclick={handleSave} disabled={isSaving}>
-                                    <template if:true={isSaving}>
-                                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                                    </template>
-                                    <i class="fa-solid fa-floppy-disk fa-fw me-1"></i>Save
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </template>
+<template lwc:render-mode="light">
+  <div class="page-wrapper pwchrono-lifecycle-page">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <!-- Page header -->
+      <div
+        class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4"
+      >
+        <div>
+          <h4 class="fw-bold mb-1">
+            <i class="fa-solid fa-comments fa-fw me-2 text-primary"></i>Exit
+            Interview
+          </h4>
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item">
+                <a href="#" onclick={handleHome}>Home</a>
+              </li>
+              <li class="breadcrumb-item active" aria-current="page">
+                Exit Interview
+              </li>
+            </ol>
+          </nav>
         </div>
-    </c-pwchrono-main-layout>
+        <div class="d-flex gap-2">
+          <button
+            type="button"
+            class="btn btn-outline-secondary btn-sm"
+            onclick={handleExport}
+            disabled={isLoading}
+            data-action="export"
+          >
+            <i class="fa-solid fa-file-csv fa-fw me-1"></i>Export CSV
+          </button>
+          <template lwc:if={canCreate}>
+            <button
+              type="button"
+              class="btn btn-primary btn-sm"
+              onclick={handleCreate}
+              data-action="create"
+            >
+              <i class="fa-solid fa-plus fa-fw me-1"></i>New Exit Interview
+            </button>
+          </template>
+        </div>
+      </div>
+
+      <!-- Load error -->
+      <template lwc:if={loadError}>
+        <div
+          class="alert alert-danger d-flex align-items-center justify-content-between mb-3"
+          role="alert"
+          data-id="load-error"
+        >
+          <div>
+            <i class="fa-solid fa-circle-exclamation fa-fw me-2"></i>{loadError}
+          </div>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-danger"
+            onclick={handleRetry}
+          >
+            <i class="fa-solid fa-rotate-right fa-fw me-1"></i>Retry
+          </button>
+        </div>
+      </template>
+
+      <!-- Metric cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+              <div class="fs-2 fw-bold text-primary" data-metric="total">
+                {totalCount}
+              </div>
+              <div class="text-muted small">Total</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+              <div class="fs-2 fw-bold text-secondary" data-metric="pending">
+                {pendingCount}
+              </div>
+              <div class="text-muted small">Pending</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+              <div class="fs-2 fw-bold text-warning" data-metric="scheduled">
+                {scheduledCount}
+              </div>
+              <div class="text-muted small">Scheduled</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+              <div class="fs-2 fw-bold text-success" data-metric="completed">
+                {completedCount}
+              </div>
+              <div class="text-muted small">Completed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body py-2">
+          <div class="row g-2 align-items-center">
+            <div class="col-auto">
+              <label
+                class="form-label mb-0 fw-semibold small"
+                for="exit-status-filter"
+                >Status</label
+              >
+            </div>
+            <div class="col-auto">
+              <select
+                id="exit-status-filter"
+                class="form-select form-select-sm"
+                onchange={handleFilterChange}
+              >
+                <template for:each={statusOptions} for:item="opt">
+                  <option
+                    key={opt.value}
+                    value={opt.value}
+                    selected={opt.selected}
+                  >
+                    {opt.label}
+                  </option>
+                </template>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <template lwc:if={isLoading}>
+        <div class="text-center py-5" data-id="loading">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </template>
+
+      <!-- Table -->
+      <template lwc:if={showTable}>
+        <div class="card border-0 shadow-sm">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Interview #</th>
+                  <th>Employee</th>
+                  <th>Department</th>
+                  <th>Designation</th>
+                  <th>Interview Date</th>
+                  <th>Interviewer</th>
+                  <th>Rating</th>
+                  <th>Status</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template lwc:if={hasRecords}>
+                  <template for:each={enrichedRecords} for:item="row">
+                    <tr key={row.Id} data-row={row.Id}>
+                      <td class="text-muted small">{row.Name}</td>
+                      <td class="fw-semibold">{row.employeeName}</td>
+                      <td>{row.deptName}</td>
+                      <td>{row.desigName}</td>
+                      <td>{row.interviewDateFormatted}</td>
+                      <td>{row.interviewerName}</td>
+                      <td>
+                        <template lwc:if={row.hasRating}>
+                          <span class="badge bg-info text-dark">
+                            <i class="fa-solid fa-star fa-fw me-1"></i
+                            >{row.Rating__c}/5
+                          </span>
+                        </template>
+                        <template lwc:else>
+                          <span class="text-muted small">—</span>
+                        </template>
+                      </td>
+                      <td>
+                        <span class={row.statusBadgeClass}
+                          >{row.Status__c}</span
+                        >
+                      </td>
+                      <td class="text-end text-nowrap">
+                        <template lwc:if={row.canEdit}>
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-outline-primary me-1"
+                            data-id={row.Id}
+                            data-action="edit"
+                            onclick={handleEdit}
+                            title="Edit"
+                            aria-label="Edit exit interview"
+                            disabled={row.isBusy}
+                          >
+                            <i class="fa-solid fa-pen-to-square fa-fw"></i>
+                          </button>
+                        </template>
+                        <template lwc:if={row.canView}>
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary me-1"
+                            data-id={row.Id}
+                            data-action="view"
+                            onclick={handleView}
+                            title="View"
+                            aria-label="View exit interview"
+                          >
+                            <i class="fa-solid fa-eye fa-fw"></i>
+                          </button>
+                        </template>
+                        <template lwc:if={row.canSchedule}>
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-outline-warning me-1"
+                            data-id={row.Id}
+                            data-status="Scheduled"
+                            data-action="schedule"
+                            onclick={handleStatusAction}
+                            title="Mark as scheduled"
+                            aria-label="Mark as scheduled"
+                            disabled={row.isBusy}
+                          >
+                            <i class="fa-solid fa-calendar-check fa-fw"></i>
+                          </button>
+                        </template>
+                        <template lwc:if={row.canComplete}>
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-outline-success me-1"
+                            data-id={row.Id}
+                            data-status="Completed"
+                            data-action="complete"
+                            onclick={handleStatusAction}
+                            title="Mark as completed"
+                            aria-label="Mark as completed"
+                            disabled={row.isBusy}
+                          >
+                            <i class="fa-solid fa-circle-check fa-fw"></i>
+                          </button>
+                        </template>
+                        <template lwc:if={row.canSkip}>
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary me-1"
+                            data-id={row.Id}
+                            data-status="Skipped"
+                            data-action="skip"
+                            onclick={handleStatusAction}
+                            title="Skip interview"
+                            aria-label="Skip interview"
+                            disabled={row.isBusy}
+                          >
+                            <i class="fa-solid fa-forward fa-fw"></i>
+                          </button>
+                        </template>
+                        <template lwc:if={row.canDelete}>
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-outline-danger"
+                            data-id={row.Id}
+                            data-action="delete"
+                            onclick={handleDelete}
+                            title="Delete"
+                            aria-label="Delete exit interview"
+                            disabled={row.isBusy}
+                          >
+                            <i class="fa-solid fa-trash fa-fw"></i>
+                          </button>
+                        </template>
+                      </td>
+                    </tr>
+                  </template>
+                </template>
+                <template lwc:else>
+                  <tr>
+                    <td
+                      colspan="9"
+                      class="text-center text-muted py-4"
+                      data-id="empty"
+                    >
+                      <i class="fa-solid fa-inbox fa-fw me-2"></i>No exit
+                      interview records found.
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </template>
+
+      <!-- Create / Edit / View Modal -->
+      <template lwc:if={showModal}>
+        <div
+          class="modal d-block"
+          tabindex="-1"
+          role="dialog"
+          aria-modal="true"
+          style="background: rgba(0, 0, 0, 0.5)"
+        >
+          <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title fw-semibold">
+                  <i class="fa-solid fa-comments fa-fw me-2 text-primary"></i>
+                  {modalTitle}
+                  <template lwc:if={isEditMode}>
+                    <span class={modalStatusBadgeClass}
+                      >{editRecord.Status__c}</span
+                    >
+                  </template>
+                </h5>
+                <button
+                  type="button"
+                  class="btn-close"
+                  aria-label="Close"
+                  onclick={handleModalClose}
+                ></button>
+              </div>
+              <div class="modal-body">
+                <!-- Validation / server error -->
+                <template lwc:if={validationError}>
+                  <div
+                    class="alert alert-warning d-flex align-items-center mb-3"
+                    data-id="validation-error"
+                  >
+                    <i class="fa-solid fa-triangle-exclamation fa-fw me-2"></i>
+                    {validationError}
+                  </div>
+                </template>
+
+                <div class="row g-3">
+                  <!-- Separation -->
+                  <div class="col-md-4">
+                    <label class="form-label fw-semibold small"
+                      >Linked Separation</label
+                    >
+                    <select
+                      class="form-select form-select-sm"
+                      data-field="Separation__c"
+                      onchange={handleFieldChange}
+                      disabled={isReadOnly}
+                    >
+                      <option value="">-- None --</option>
+                      <template for:each={separationOptions} for:item="opt">
+                        <option
+                          key={opt.value}
+                          value={opt.value}
+                          selected={opt.selected}
+                        >
+                          {opt.label}
+                        </option>
+                      </template>
+                    </select>
+                  </div>
+                  <!-- Employee -->
+                  <div class="col-md-4">
+                    <label class="form-label fw-semibold small"
+                      >Employee <span class="text-danger">*</span></label
+                    >
+                    <select
+                      class="form-select form-select-sm"
+                      data-field="Employee__c"
+                      onchange={handleFieldChange}
+                      disabled={isReadOnly}
+                    >
+                      <option value="">-- Select Employee --</option>
+                      <template for:each={employeeOptions} for:item="opt">
+                        <option
+                          key={opt.value}
+                          value={opt.value}
+                          selected={opt.selected}
+                        >
+                          {opt.label}
+                        </option>
+                      </template>
+                    </select>
+                  </div>
+                  <!-- Employee Name -->
+                  <div class="col-md-4">
+                    <label class="form-label fw-semibold small"
+                      >Employee Name</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control form-control-sm"
+                      data-field="Employee_Name__c"
+                      value={editRecord.Employee_Name__c}
+                      onchange={handleFieldChange}
+                      disabled={isReadOnly}
+                    />
+                  </div>
+                  <!-- Department -->
+                  <div class="col-md-4">
+                    <label class="form-label fw-semibold small"
+                      >Department</label
+                    >
+                    <select
+                      class="form-select form-select-sm"
+                      data-field="Department__c"
+                      onchange={handleFieldChange}
+                      disabled={isReadOnly}
+                    >
+                      <option value="">-- Select --</option>
+                      <template for:each={departmentOptions} for:item="opt">
+                        <option
+                          key={opt.value}
+                          value={opt.value}
+                          selected={opt.selected}
+                        >
+                          {opt.label}
+                        </option>
+                      </template>
+                    </select>
+                  </div>
+                  <!-- Designation -->
+                  <div class="col-md-4">
+                    <label class="form-label fw-semibold small"
+                      >Designation</label
+                    >
+                    <select
+                      class="form-select form-select-sm"
+                      data-field="Designation__c"
+                      onchange={handleFieldChange}
+                      disabled={isReadOnly}
+                    >
+                      <option value="">-- Select --</option>
+                      <template for:each={designationOptions} for:item="opt">
+                        <option
+                          key={opt.value}
+                          value={opt.value}
+                          selected={opt.selected}
+                        >
+                          {opt.label}
+                        </option>
+                      </template>
+                    </select>
+                  </div>
+                  <!-- Interviewer -->
+                  <div class="col-md-4">
+                    <label class="form-label fw-semibold small"
+                      >Interviewer</label
+                    >
+                    <select
+                      class="form-select form-select-sm"
+                      data-field="Interviewer__c"
+                      onchange={handleFieldChange}
+                      disabled={isReadOnly}
+                    >
+                      <option value="">-- Select --</option>
+                      <template for:each={interviewerOptions} for:item="opt">
+                        <option
+                          key={opt.value}
+                          value={opt.value}
+                          selected={opt.selected}
+                        >
+                          {opt.label}
+                        </option>
+                      </template>
+                    </select>
+                  </div>
+                  <!-- Interview Date -->
+                  <div class="col-md-4">
+                    <label class="form-label fw-semibold small"
+                      >Interview Date <span class="text-danger">*</span></label
+                    >
+                    <input
+                      type="date"
+                      class="form-control form-control-sm"
+                      data-field="Interview_Date__c"
+                      value={editRecord.Interview_Date__c}
+                      onchange={handleFieldChange}
+                      disabled={isReadOnly}
+                    />
+                  </div>
+                  <!-- Rating -->
+                  <div class="col-md-4">
+                    <label class="form-label fw-semibold small"
+                      >Rating (1–5)</label
+                    >
+                    <select
+                      class="form-select form-select-sm"
+                      data-field="Rating__c"
+                      onchange={handleFieldChange}
+                      disabled={isReadOnly}
+                    >
+                      <option value="">-- Not Rated --</option>
+                      <template for:each={ratingOptions} for:item="opt">
+                        <option
+                          key={opt.value}
+                          value={opt.value}
+                          selected={opt.selected}
+                        >
+                          {opt.label}
+                        </option>
+                      </template>
+                    </select>
+                  </div>
+
+                  <!-- Exit Questionnaire -->
+                  <div class="col-12">
+                    <hr class="my-1" />
+                    <label class="form-label fw-semibold small"
+                      >Exit Questionnaire</label
+                    >
+                    <textarea
+                      class="form-control form-control-sm"
+                      rows="4"
+                      data-field="Exit_Questionnaire__c"
+                      onchange={handleFieldChange}
+                      disabled={isReadOnly}
+                    >
+{editRecord.Exit_Questionnaire__c}</textarea
+                    >
+                  </div>
+                  <!-- Employee Feedback -->
+                  <div class="col-12">
+                    <label class="form-label fw-semibold small"
+                      >Employee Feedback</label
+                    >
+                    <textarea
+                      class="form-control form-control-sm"
+                      rows="4"
+                      data-field="Employee_Feedback__c"
+                      onchange={handleFieldChange}
+                      disabled={isReadOnly}
+                    >
+{editRecord.Employee_Feedback__c}</textarea
+                    >
+                  </div>
+                  <!-- Final Remarks -->
+                  <div class="col-12">
+                    <label class="form-label fw-semibold small"
+                      >Final Remarks</label
+                    >
+                    <textarea
+                      class="form-control form-control-sm"
+                      rows="3"
+                      data-field="Final_Remarks__c"
+                      onchange={handleFieldChange}
+                      disabled={isReadOnly}
+                    >
+{editRecord.Final_Remarks__c}</textarea
+                    >
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  onclick={handleModalClose}
+                >
+                  {closeLabel}
+                </button>
+                <template lwc:if={isEditable}>
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    onclick={handleSave}
+                    disabled={isSaving}
+                    data-action="save"
+                  >
+                    <template lwc:if={isSaving}>
+                      <span
+                        class="spinner-border spinner-border-sm me-1"
+                        role="status"
+                      ></span>
+                    </template>
+                    <i class="fa-solid fa-floppy-disk fa-fw me-1"></i>Save
+                  </button>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
 </template>

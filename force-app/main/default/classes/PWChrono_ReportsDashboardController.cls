@@ -5,45 +5,25 @@
  * @date        2025-12-31
  */
 public inherited sharing class PWChrono_ReportsDashboardController {
-  private static Boolean hasFeature(String accessFeatures, String featureName) {
-    if (String.isBlank(accessFeatures) || String.isBlank(featureName)) {
-      return false;
-    }
-    for (String part : accessFeatures.split(';')) {
-      if (part != null && part.trim() == featureName) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private static void requireReportsDashboardAccessForGuest(
     String portalUserId,
     String sessionToken
   ) {
-    Id verifiedPortalUserId = PWChrono_GuestSession.requireVerifiedPortalUserId(
-      portalUserId,
-      sessionToken
+    Id actorEmployeeId = UserInfo.getUserType() == 'Guest'
+      ? PWChrono_GuestSession.requireVerifiedPortalUserId(
+          portalUserId,
+          sessionToken
+        )
+      : (String.isBlank(portalUserId)
+          ? null
+          : PWChrono_RequestValidator.resolveEmployeeId(
+              portalUserId,
+              sessionToken
+            ));
+    PWChrono_AccessController.requireFeature(
+      actorEmployeeId,
+      'Reports Dashboard'
     );
-
-    Portal_Users__c portalUser = [
-      SELECT Id, Is_Active__c, Access_Features__c
-      FROM Portal_Users__c
-      WHERE Id = :verifiedPortalUserId
-      LIMIT 1
-    ];
-
-    if (portalUser == null || portalUser.Is_Active__c != true) {
-      throw new AuraHandledException('Unauthorized.');
-    }
-
-    // Reports are org-wide aggregates. Require an explicit feature flag.
-    if (
-      !hasFeature(portalUser.Access_Features__c, 'Reports Dashboard') &&
-      !hasFeature(portalUser.Access_Features__c, 'Admin Settings')
-    ) {
-      throw new AuraHandledException('Access denied.');
-    }
   }
 
   /**
@@ -172,9 +152,7 @@ public inherited sharing class PWChrono_ReportsDashboardController {
     String portalUserId,
     String sessionToken
   ) {
-    if (UserInfo.getUserType() == 'Guest') {
-      requireReportsDashboardAccessForGuest(portalUserId, sessionToken);
-    }
+    requireReportsDashboardAccessForGuest(portalUserId, sessionToken);
     return getDashboardSummaryCore();
   }
 
@@ -197,9 +175,7 @@ public inherited sharing class PWChrono_ReportsDashboardController {
    */
   @AuraEnabled(cacheable=true)
   public static LeaveMetrics getLeaveMetrics() {
-    if (UserInfo.getUserType() == 'Guest') {
-      throw new AuraHandledException('Unauthorized.');
-    }
+    PWChrono_AccessController.requireFeature(null, 'Reports Dashboard');
     return getLeaveMetricsCore();
   }
 
@@ -259,9 +235,7 @@ public inherited sharing class PWChrono_ReportsDashboardController {
    */
   @AuraEnabled(cacheable=true)
   public static AttendanceMetrics getAttendanceMetrics() {
-    if (UserInfo.getUserType() == 'Guest') {
-      throw new AuraHandledException('Unauthorized.');
-    }
+    PWChrono_AccessController.requireFeature(null, 'Reports Dashboard');
     return getAttendanceMetricsCore();
   }
 
@@ -313,9 +287,7 @@ public inherited sharing class PWChrono_ReportsDashboardController {
    */
   @AuraEnabled(cacheable=true)
   public static EmployeeMetrics getEmployeeMetrics() {
-    if (UserInfo.getUserType() == 'Guest') {
-      throw new AuraHandledException('Unauthorized.');
-    }
+    PWChrono_AccessController.requireFeature(null, 'Reports Dashboard');
     return getEmployeeMetricsCore();
   }
 
@@ -373,9 +345,7 @@ public inherited sharing class PWChrono_ReportsDashboardController {
    */
   @AuraEnabled(cacheable=true)
   public static PerformanceMetrics getPerformanceMetrics() {
-    if (UserInfo.getUserType() == 'Guest') {
-      throw new AuraHandledException('Unauthorized.');
-    }
+    PWChrono_AccessController.requireFeature(null, 'Reports Dashboard');
     return getPerformanceMetricsCore();
   }
 
@@ -430,9 +400,7 @@ public inherited sharing class PWChrono_ReportsDashboardController {
    */
   @AuraEnabled(cacheable=true)
   public static ExpenseMetrics getExpenseMetrics() {
-    if (UserInfo.getUserType() == 'Guest') {
-      throw new AuraHandledException('Unauthorized.');
-    }
+    PWChrono_AccessController.requireFeature(null, 'Reports Dashboard');
     return getExpenseMetricsCore();
   }
 
@@ -477,9 +445,7 @@ public inherited sharing class PWChrono_ReportsDashboardController {
    */
   @AuraEnabled(cacheable=true)
   public static TrainingMetrics getTrainingMetrics() {
-    if (UserInfo.getUserType() == 'Guest') {
-      throw new AuraHandledException('Unauthorized.');
-    }
+    PWChrono_AccessController.requireFeature(null, 'Reports Dashboard');
     return getTrainingMetricsCore();
   }
 
@@ -518,9 +484,7 @@ public inherited sharing class PWChrono_ReportsDashboardController {
    */
   @AuraEnabled(cacheable=true)
   public static RecruitmentMetrics getRecruitmentMetrics() {
-    if (UserInfo.getUserType() == 'Guest') {
-      throw new AuraHandledException('Unauthorized.');
-    }
+    PWChrono_AccessController.requireFeature(null, 'Reports Dashboard');
     return getRecruitmentMetricsCore();
   }
 

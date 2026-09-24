@@ -1,0 +1,89 @@
+:host {
+  display: block;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.eyebrow {
+  color: #667085;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.section-heading {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+h3 {
+  color: #344054;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin: 1.5rem 0 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.feature-card {
+  border: 1px solid #eaecf0;
+  border-radius: 0.5rem;
+  height: 100%;
+  padding: 0.85rem;
+}
+
+.feature-card p {
+  color: #667085;
+  font-size: 0.8rem;
+  margin: 0.5rem 0 0;
+  padding-left: 1.55rem;
+}
+
+.status {
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.3rem 0.65rem;
+}
+
+.status-active {
+  background: #ecfdf3;
+  color: #027a48;
+}
+
+.status-inactive {
+  background: #fef3f2;
+  color: #b42318;
+}
+
+.loading-panel {
+  min-height: 14rem;
+  position: relative;
+}
+
+.empty-state {
+  color: #667085;
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.visually-hidden {
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
+}

@@ -12,6 +12,11 @@ import { LightningElement, track } from "lwc";
 
 export default class PwchronoEmployeeDirectory extends LightningElement {
   static renderMode = "light";
+  get selectedEmployeeEmailUrl() {
+    return this.selectedEmployee?.email
+      ? `mailto:${encodeURIComponent(this.selectedEmployee.email)}`
+      : null;
+  }
 
   // View state: 'list', 'grid', 'detail'
   @track currentView = "list";

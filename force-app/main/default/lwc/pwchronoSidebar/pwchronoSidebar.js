@@ -1,6 +1,10 @@
 import getNavigationMenuItems from "@salesforce/apex/PWChrono_NavigationController.getNavigationMenuItems";
 import smarthrAssets from "@salesforce/resourceUrl/smarthr_assets";
-import { filterMenuItemsByFeatures } from "c/pwchronoNavigationAccess";
+import {
+  filterMenuItemsBySearch,
+  filterMenuItemsByFeatures,
+  filterMenuItemsByReachability
+} from "c/pwchronoNavigationAccess";
 import { getSession, SESSION_CHANGED_EVENT } from "c/pwchronoSession";
 import { navigateTo } from "c/pwchronoRouter";
 import { NavigationMixin } from "lightning/navigation";
@@ -59,6 +63,7 @@ const APPLICATION_ROUTES = {
   "performance management": "performance",
   performance: "performance",
   goals: "goals",
+  appraisals: "performance",
   "training management": "training",
   training: "training",
   projects: "projects",
@@ -66,6 +71,7 @@ const APPLICATION_ROUTES = {
   "expense management": "expenses",
   expenses: "expenses",
   payroll: "payroll",
+  "payroll & payslips": "payroll",
   approvals: "approvals",
   "company policies": "policies",
   policies: "policies",
@@ -77,9 +83,39 @@ const APPLICATION_ROUTES = {
   "admin settings": "configuration"
 };
 
+function getApplicationRoute(item) {
+  return APPLICATION_ROUTES[
+    String(item?.label || "")
+      .trim()
+      .toLowerCase()
+  ];
+}
+
+// The Lightning app only renders pages that have an application route. Other
+// internal links would resolve to a dead /lightning/... URL there, so they are
+// hidden in that shell. External and Salesforce object links still open.
+function canOpenInApplication(item) {
+  if (getApplicationRoute(item)) {
+    return true;
+  }
+  return (
+    ["ExternalLink", "SalesforceObject"].includes(item?.type) &&
+    Boolean(item?.actionValue)
+  );
+}
+
 export default class PwchronoSidebar extends NavigationMixin(LightningElement) {
   static renderMode = "light";
   @api features = [];
+  _searchTerm = "";
+  @api
+  get searchTerm() {
+    return this._searchTerm;
+  }
+  set searchTerm(value) {
+    this._searchTerm = String(value || "");
+    if (this._searchTerm.trim()) this.activeSidebarTab = "menu";
+  }
   @api isSalesforceUser = false;
   @api menuGroupLabel;
   @api applicationMode = false;
@@ -353,13 +389,38 @@ export default class PwchronoSidebar extends NavigationMixin(LightningElement) {
       return [];
     }
 
-    // If Salesforce internal user, show everything.
-    if (this.isSalesforceUser) {
-      return this.rawMenuItems;
-    }
+    // Salesforce internal users see everything. For portal users this is a
+    // visibility aid; Apex remains responsible for authorization.
+    const authorizedItems = this.isSalesforceUser
+      ? this.rawMenuItems
+      : filterMenuItemsByFeatures(
+          this.rawMenuItems,
+          this.features,
+          this.userRole
+        );
 
-    // This is a visibility aid. Apex remains responsible for authorization.
-    return filterMenuItemsByFeatures(this.rawMenuItems, this.features);
+    const openableItems = this.isApplicationNavigation
+      ? filterMenuItemsByReachability(authorizedItems, canOpenInApplication)
+      : authorizedItems;
+
+    return filterMenuItemsBySearch(openableItems, this.searchTerm);
+  }
+
+  // True when the rendered (filtered) menu shows child pages under this item.
+  _hasVisibleChildren(key) {
+    const findVisible = (items) => {
+      for (const item of items || []) {
+        if (String(item.key) === String(key)) {
+          return item;
+        }
+        const match = findVisible(item.children);
+        if (match) {
+          return match;
+        }
+      }
+      return null;
+    };
+    return Boolean(findVisible(this.menuItems)?.children?.length);
   }
 
   get menuGroupLabelValue() {
@@ -554,7 +615,9 @@ export default class PwchronoSidebar extends NavigationMixin(LightningElement) {
         Array.isArray(item.children) && item.children.length > 0;
 
       // Return boolean strictly. false instead of undefined ensures aria-expanded="false" which is valid.
-      const isExpanded = hasChildren ? this.isParentExpanded(item.key) : false;
+      const isExpanded = hasChildren
+        ? Boolean(this.searchTerm.trim()) || this.isParentExpanded(item.key)
+        : false;
 
       const isActive = String(this.activeNavKey) === String(item.key);
 
@@ -619,12 +682,7 @@ export default class PwchronoSidebar extends NavigationMixin(LightningElement) {
 
   _computeItemHref(item) {
     try {
-      const applicationRoute =
-        APPLICATION_ROUTES[
-          String(item?.label || "")
-            .trim()
-            .toLowerCase()
-        ];
+      const applicationRoute = getApplicationRoute(item);
       if (this.isApplicationNavigation && applicationRoute) {
         return `#${applicationRoute}`;
       }
@@ -652,7 +710,9 @@ export default class PwchronoSidebar extends NavigationMixin(LightningElement) {
         label: this.menuGroupLabelValue,
         items,
         hasItems: Array.isArray(items) && items.length > 0,
-        emptyText: "No menu items available",
+        emptyText: this.searchTerm.trim()
+          ? "No matching pages"
+          : "No menu items available",
         emptyKey: "main-empty",
         wrapKey: "main-wrap"
       }
@@ -662,14 +722,16 @@ export default class PwchronoSidebar extends NavigationMixin(LightningElement) {
   handleItemClick(event) {
     const navKey = event?.currentTarget?.dataset?.key;
     const selectedItem = this._allItemsByKey?.[String(navKey)];
-    const applicationRoute =
-      APPLICATION_ROUTES[
-        String(selectedItem?.label || "")
-          .trim()
-          .toLowerCase()
-      ];
+    const applicationRoute = getApplicationRoute(selectedItem);
 
-    if (this.isApplicationNavigation && applicationRoute) {
+    // In the Lightning app a page with a route opens directly. A group that
+    // still shows child pages (e.g. Performance, Payroll) expands instead, so
+    // its children stay reachable, the same as in the portal.
+    if (
+      this.isApplicationNavigation &&
+      applicationRoute &&
+      !this._hasVisibleChildren(navKey)
+    ) {
       this.activeNavKey = String(navKey);
       this.syncExpandedToActive();
       this._navigateWithinApplication(applicationRoute);
@@ -715,13 +777,8 @@ export default class PwchronoSidebar extends NavigationMixin(LightningElement) {
     this.activeNavKey = String(navKey);
     this.syncExpandedToActive();
 
-    const applicationRoute =
-      APPLICATION_ROUTES[
-        String(item?.label || "")
-          .trim()
-          .toLowerCase()
-      ];
-    if (this.applicationMode && applicationRoute) {
+    const applicationRoute = getApplicationRoute(item);
+    if (this.isApplicationNavigation && applicationRoute) {
       this._navigateWithinApplication(applicationRoute);
       return;
     }

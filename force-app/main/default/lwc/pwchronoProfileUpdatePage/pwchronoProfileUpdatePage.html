@@ -8,17 +8,17 @@
 <template lwc:render-mode="light">
   <c-pwchrono-main-layout>
     <div slot="main-content">
-      <template if:true={isPortalUserProfileRecord}>
-        <div class="page-wrapper">
-          <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
-            <!-- Page Header -->
-            <div class="page-header">
-              <div class="content-page-header">
-                <h5>Portal User Profile</h5>
-              </div>
+      <div class="page-wrapper">
+        <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+          <!-- Page Header -->
+          <div class="page-header">
+            <div class="content-page-header">
+              <h5>Portal User Profile</h5>
             </div>
-            <!-- /Page Header -->
+          </div>
+          <!-- /Page Header -->
 
+          <template if:true={isPortalUserProfileRecord}>
             <div class="row">
               <div class="col-md-12">
                 <div class="card shadow-sm">
@@ -73,15 +73,24 @@
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </template>
+          </template>
 
-      <template if:false={isPortalUserProfileRecord}>
-        <c-pwchrono-profile-update
-          employee-id={effectiveEmployeeId}
-        ></c-pwchrono-profile-update>
-      </template>
+          <template if:false={isPortalUserProfileRecord}>
+            <!-- Fallback behavior when used elsewhere (e.g. Portal_Users__c record page) -->
+            <div class="row">
+              <div class="col-md-12">
+                <div class="card shadow-sm">
+                  <div class="card-body">
+                    <c-pwchrono-profile-update
+                      employee-id={effectiveEmployeeId}
+                    ></c-pwchrono-profile-update>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
     </div>
   </c-pwchrono-main-layout>
 </template>

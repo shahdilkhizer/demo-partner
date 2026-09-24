@@ -1,95 +1,128 @@
-import { LightningElement, api, track } from "lwc";
+import getUserAccessById from "@salesforce/apex/PWChrono_AccessController.getUserAccessById";
+import decideWorkLog from "@salesforce/apex/PWChrono_WorkLogController.decideWorkLog";
+import getAssignableEmployees from "@salesforce/apex/PWChrono_WorkLogController.getAssignableEmployees";
+import getWorkLogs from "@salesforce/apex/PWChrono_WorkLogController.getWorkLogs";
+import saveWorkLog from "@salesforce/apex/PWChrono_WorkLogController.saveWorkLog";
+import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
+import { ShowToastEvent } from "lightning/platformShowToastEvent";
+import { LightningElement, track } from "lwc";
+
+const WORK_TYPE = "Work From Home";
 
 export default class WfhChildManagement extends LightningElement {
-  @api parentData = []; // Data passed from parent
   @track allRequests = [];
   @track visibleRequests = [];
+  @track employeeOptions = [];
   @track isAddModalOpen = false;
+  @track isLoading = true;
+  canReview = false;
+  selectedStatus = "All";
+  searchTerm = "";
+  employeeId;
+  sessionToken;
 
-  // Filters and UI Config
   filterConfigs = [
-    {
-      label: "Designation",
-      type: "designation",
-      options: ["Accountant", "App Developer", "Technician", "Web Developer"]
-    },
-    { label: "Shift", type: "shift", options: ["Regular", "Night"] },
     {
       label: "Status",
       type: "status",
-      options: ["Approved", "Pending", "Rejected", "Completed"]
+      options: ["All", "Submitted", "Approved", "Rejected", "Cancelled"]
     }
   ];
 
   connectedCallback() {
-    this.loadInitialData();
+    this.employeeId = getEmployeeId();
+    this.sessionToken = getSessionToken();
+    this.initialize();
   }
 
-  // Initialize with data from parent or sample if empty
-  loadInitialData() {
-    if (this.parentData && this.parentData.length > 0) {
-      this.allRequests = [...this.parentData];
-    } else {
-      // Sample Data for Load UI demonstration
-      this.allRequests = [
-        {
-          id: 1,
-          empId: "Emp-001",
-          name: "Anthony Lewis",
-          userImage: "/assets/img/users/user-11.jpg",
-          designation: "Accountant",
-          shift: "Regular",
-          reason: "Mild health issue",
-          date: "14 Jun 2025",
-          status: "Approved",
-          statusClass:
-            "badge badge-soft-success d-inline-flex align-items-center badge-xs"
-        },
-        {
-          id: 2,
-          empId: "Emp-002",
-          name: "Brian Villalobos",
-          userImage: "/assets/img/users/user-12.jpg",
-          designation: "App Developer",
-          shift: "Regular",
-          reason: "Internet issue",
-          date: "25 May 2025",
-          status: "Pending",
-          statusClass:
-            "badge badge-soft-info d-inline-flex align-items-center badge-xs"
-        }
-      ];
+  async initialize() {
+    this.isLoading = true;
+    try {
+      const access = await getUserAccessById({
+        employeeId: this.employeeId,
+        sessionToken: this.sessionToken
+      });
+      const features = access?.features || [];
+      this.canReview =
+        features.includes("Attendance Team") ||
+        features.includes("Attendance Administration");
+      if (this.canReview) {
+        const employees = await getAssignableEmployees({
+          portalUserId: this.employeeId,
+          sessionToken: this.sessionToken
+        });
+        this.employeeOptions = (employees || []).map((employee) => ({
+          label: employee.Name,
+          value: employee.Id
+        }));
+      }
+      await this.loadData();
+    } catch (error) {
+      this.notify("Unable to load WFH requests", this.message(error), "error");
+    } finally {
+      this.isLoading = false;
     }
-    this.visibleRequests = [...this.allRequests];
+  }
+
+  async loadData() {
+    const rows = await getWorkLogs({
+      workType: WORK_TYPE,
+      statusFilter: this.selectedStatus,
+      portalUserId: this.employeeId,
+      sessionToken: this.sessionToken
+    });
+    this.allRequests = (rows || []).map((row) => this.mapRow(row));
+    this.applyFilters();
+  }
+
+  mapRow(row) {
+    return {
+      id: row.Id,
+      empId: row.Name,
+      name: row.Employee__r?.Name || "Employee",
+      userImage: row.Employee__r?.Photo_Url__c,
+      designation: row.Employee__r?.Designation__c || "—",
+      shift: row.End_Date__c ? "Date range" : "Single day",
+      reason: row.Description__c,
+      date: row.End_Date__c
+        ? `${this.formatDate(row.Work_Date__c)} – ${this.formatDate(row.End_Date__c)}`
+        : this.formatDate(row.Work_Date__c),
+      status: row.Status__c,
+      statusClass: this.statusClass(row.Status__c),
+      canDecide: this.canReview && row.Status__c === "Submitted"
+    };
   }
 
   get totalRecords() {
     return this.visibleRequests.length;
   }
 
-  // Actions & Handlers
+  get showEmployeeSelect() {
+    return this.canReview && this.employeeOptions.length > 0;
+  }
+
   handleSearch(event) {
-    const key = event.target.value.toLowerCase();
-    this.visibleRequests = this.allRequests.filter(
-      (req) =>
-        req.name.toLowerCase().includes(key) ||
-        req.empId.toLowerCase().includes(key)
-    );
+    this.searchTerm = (event.target.value || "").toLowerCase();
+    this.applyFilters();
   }
 
   handleDropdownFilter(event) {
-    const type = event.currentTarget.dataset.type;
-    const value = event.currentTarget.dataset.value;
-    this.visibleRequests = this.allRequests.filter(
-      (req) => req[type] === value
+    this.selectedStatus = event.currentTarget.dataset.value;
+    this.loadData();
+  }
+
+  applyFilters() {
+    this.visibleRequests = this.allRequests.filter((request) =>
+      `${request.name} ${request.empId} ${request.designation}`
+        .toLowerCase()
+        .includes(this.searchTerm)
     );
   }
 
   handleSelectAll(event) {
-    const isChecked = event.target.checked;
-    this.visibleRequests = this.visibleRequests.map((req) => ({
-      ...req,
-      selected: isChecked
+    this.visibleRequests = this.visibleRequests.map((request) => ({
+      ...request,
+      selected: event.target.checked
     }));
   }
 
@@ -101,66 +134,107 @@ export default class WfhChildManagement extends LightningElement {
     this.isAddModalOpen = false;
   }
 
-  handleSaveNewRequest(event) {
+  async handleSaveNewRequest(event) {
     event.preventDefault();
-    const inputs = event.target.elements;
-    const newReq = {
-      id: Math.random(),
-      empId: "Emp-" + Math.floor(100 + Math.random() * 900),
-      name: inputs.name.value,
-      designation: inputs.designation.value,
-      shift: inputs.shift.value,
-      reason: inputs.reviewer.value, // Mapping reviewer text to reason for sample
-      date: new Date().toLocaleDateString(),
-      status: "Pending",
-      statusClass:
-        "badge badge-soft-info d-inline-flex align-items-center badge-xs"
-    };
-
-    this.allRequests = [newReq, ...this.allRequests];
-    this.visibleRequests = [...this.allRequests];
-    this.handleCloseModal();
+    const values = Object.fromEntries(new FormData(event.target));
+    try {
+      await saveWorkLog({
+        workLog: {
+          Work_Type__c: WORK_TYPE,
+          Employee__c: values.employee || this.employeeId,
+          Work_Date__c: values.startDate,
+          End_Date__c: values.endDate || values.startDate,
+          Description__c: values.description
+        },
+        portalUserId: this.employeeId,
+        sessionToken: this.sessionToken
+      });
+      this.handleCloseModal();
+      await this.loadData();
+      this.notify(
+        "Request submitted",
+        "The WFH request is awaiting approval.",
+        "success"
+      );
+    } catch (error) {
+      this.notify("Unable to submit request", this.message(error), "error");
+    }
   }
 
-  handleExportPDF() {
-    this.dispatchEvent(
-      new CustomEvent("exportpdf", { bubbles: true, composed: true })
-    );
+  async handleDecision(event) {
+    try {
+      await decideWorkLog({
+        workLogId: event.currentTarget.dataset.id,
+        decision: event.currentTarget.dataset.decision,
+        comments: "Reviewed from Work From Home Management",
+        portalUserId: this.employeeId,
+        sessionToken: this.sessionToken
+      });
+      await this.loadData();
+      this.notify("Request updated", "The decision has been saved.", "success");
+    } catch (error) {
+      this.notify("Unable to update request", this.message(error), "error");
+    }
   }
 
   handleExportExcel() {
-    this.dispatchEvent(
-      new CustomEvent("exportexcel", { bubbles: true, composed: true })
-    );
+    this.downloadCsv("pwchrono-wfh.csv", [
+      ["Request", "Employee", "Designation", "Dates", "Status", "Reason"],
+      ...this.visibleRequests.map((row) => [
+        row.empId,
+        row.name,
+        row.designation,
+        row.date,
+        row.status,
+        row.reason
+      ])
+    ]);
   }
 
-  handleEdit(event) {
-    this.dispatchEvent(
-      new CustomEvent("editrequest", {
-        detail: { id: event.currentTarget.dataset.id },
-        bubbles: true,
-        composed: true
-      })
-    );
+  handleExportPDF() {
+    globalThis?.window?.print?.();
   }
 
-  handleFilterChange(event) {
-    this.dispatchEvent(
-      new CustomEvent("datefilterchange", {
-        detail: { value: event.target.value },
-        bubbles: true,
-        composed: true
-      })
-    );
+  handleFilterChange() {}
+  handlePageSizeChange() {}
+
+  downloadCsv(filename, rows) {
+    const csv = rows
+      .map((row) =>
+        row
+          .map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`)
+          .join(",")
+      )
+      .join("\n");
+    const link = document.createElement("a");
+    link.href = `data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`;
+    link.download = filename;
+    link.click();
   }
 
-  handlePageSizeChange(event) {
-    this.dispatchEvent(
-      new CustomEvent("pagesizechange", {
-        detail: { value: event.target.value },
-        bubbles: true,
-        composed: true
-      })
-    );
+  statusClass(status) {
+    const tone =
+      status === "Approved"
+        ? "success"
+        : status === "Rejected" || status === "Cancelled"
+          ? "danger"
+          : "info";
+    return `badge badge-soft-${tone} d-inline-flex align-items-center badge-xs`;
+  }
+
+  formatDate(value) {
+    return value
+      ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(
+          new Date(`${value}T00:00:00`)
+        )
+      : "—";
+  }
+
+  message(error) {
+    return error?.body?.message || error?.message || "Please try again.";
+  }
+
+  notify(title, message, variant) {
+    this.dispatchEvent(new ShowToastEvent({ title, message, variant }));
   }
 }

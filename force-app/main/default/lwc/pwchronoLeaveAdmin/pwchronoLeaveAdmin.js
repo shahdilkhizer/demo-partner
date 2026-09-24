@@ -1,10 +1,37 @@
-import getTeamLeavesForApproval from "@salesforce/apex/PWChrono_LeaveController.getTeamLeavesForApproval";
-import processLeaveApproval from "@salesforce/apex/PWChrono_LeaveController.processLeaveApproval";
+import { NavigationMixin } from "lightning/navigation";
+import { downloadCsv } from "c/pwchronoCsv";
+import getTeamLeavesForApproval from "@salesforce/apex/PWChrono_PortalApi.getTeamLeaves";
+import processLeaveApproval from "@salesforce/apex/PWChrono_PortalApi.processLeaveApproval";
 import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { LightningElement, track } from "lwc";
 
-export default class PwchronoLeaveAdmin extends LightningElement {
+export default class PwchronoLeaveAdmin extends NavigationMixin(
+  LightningElement
+) {
+  handleNewRequest() {
+    this[NavigationMixin.Navigate]({
+      type: "comm__namedPage",
+      attributes: { name: "Leaves__c" }
+    });
+  }
+  handleExportPdf() {
+    window.print();
+  }
+  handleExportCsv() {
+    downloadCsv(
+      "team-leave.csv",
+      ["Employee", "Leave type", "From", "To", "Days", "Status"],
+      this.teamLeaves.map((r) => [
+        r.employeeName,
+        r.leaveTypeName,
+        r.From_Date__c,
+        r.To_Date__c,
+        r.Total_Days__c,
+        r.Status__c
+      ])
+    );
+  }
   employeeId = getEmployeeId();
   sessionToken = getSessionToken();
   @track teamLeaves = [];
@@ -37,6 +64,9 @@ export default class PwchronoLeaveAdmin extends LightningElement {
     this.isLoading = true;
     try {
       const result = await getTeamLeavesForApproval({
+        statusFilter: "All",
+        startDate: null,
+        endDate: null,
         employeeId: this.employeeId,
         sessionToken: this.sessionToken
       });

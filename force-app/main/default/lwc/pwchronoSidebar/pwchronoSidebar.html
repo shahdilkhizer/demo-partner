@@ -122,7 +122,8 @@
           placeholder="Search"
           aria-label="Search"
           role="searchbox"
-          onkeyup={handleSearch}
+          value={searchTerm}
+          oninput={handleSearch}
         />
         <span class="input-group-text" aria-hidden="true">
           <kbd>CTRL + / </kbd>

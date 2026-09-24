@@ -1,4 +1,4 @@
-public without sharing class PWChrono_NavigationController {
+public inherited sharing class PWChrono_NavigationController {
   public class NavigationItemWrapper {
     @AuraEnabled public String id { get; set; }
     @AuraEnabled public String label { get; set; }

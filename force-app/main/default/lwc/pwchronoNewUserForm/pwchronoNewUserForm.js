@@ -4,6 +4,16 @@ import createPortalUser from "@salesforce/apex/PWChrono_ReportingManagerControll
 import getAvailableProfiles from "@salesforce/apex/PWChrono_ConfigurationController.getAvailableProfiles";
 import getReportingOptions from "@salesforce/apex/PWChrono_ReportingManagerController.getReportingOptions";
 
+// Values of the restricted Portal_Users__c.Role__c picklist.
+const ROLE_OPTIONS = [
+  "Employee",
+  "Manager",
+  "HR Admin",
+  "HR Manager",
+  "Project Manager",
+  "Payroll Admin"
+].map((role) => ({ label: role, value: role }));
+
 export default class PwchronoNewUserForm extends LightningElement {
   @api callerPortalUserId;
   @api sessionToken;
@@ -26,6 +36,10 @@ export default class PwchronoNewUserForm extends LightningElement {
   connectedCallback() {
     this.loadProfiles();
     this.loadManagers();
+  }
+
+  get roleOptions() {
+    return ROLE_OPTIONS;
   }
 
   async loadManagers() {
@@ -88,6 +102,16 @@ export default class PwchronoNewUserForm extends LightningElement {
     this.newUser[field] = event.target.value;
   }
 
+  handleRoleChange(event) {
+    this.newUser = { ...this.newUser, Role__c: event.detail.value };
+  }
+
+  handleKeyDown(event) {
+    if (event.key === "Escape") {
+      this.closeModal();
+    }
+  }
+
   handleProfileChange(event) {
     this.selectedProfileId = event.detail.value;
   }
@@ -122,11 +146,9 @@ export default class PwchronoNewUserForm extends LightningElement {
       this.dispatchEvent(new CustomEvent("usersaved", { detail: userId }));
       this.closeModal();
     } catch (error) {
-      this.showToast(
-        "Error",
-        `Failed to create user: ${error.body.message}`,
-        "error"
-      );
+      const message =
+        error?.body?.message || error?.message || "Please try again.";
+      this.showToast("Error", `Failed to create user: ${message}`, "error");
     } finally {
       this.isSaving = false;
     }

@@ -1,89 +1,136 @@
 <template>
-  <lightning-modal header="Create New Portal User" onclose={closeModal}>
-    <div class="p-6 space-y-4">
-      <lightning-input
-        label="Full Name"
-        value={newUser.Name}
-        onchange={handleInputChange}
-        data-field="Name"
-        required
-      ></lightning-input>
+  <!-- Rendered as a Bootstrap modal: <lightning-modal> is a base class opened
+       from JavaScript, not a tag, so the previous template never displayed. -->
+  <div
+    class="modal fade show d-block"
+    role="dialog"
+    tabindex="-1"
+    aria-modal="true"
+    aria-labelledby="new-user-title"
+    onkeydown={handleKeyDown}
+  >
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="new-user-title">
+            Create New Portal User
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            aria-label="Close"
+            onclick={closeModal}
+          ></button>
+        </div>
 
-      <lightning-combobox
-        name="reportingManager"
-        label="Reports To"
-        value={newUser.Reports_To__c}
-        options={managerOptions}
-        onchange={handleManagerChange}
-        field-level-help="Used for approval routing and manager team access. Leave blank only for top-level users."
-      ></lightning-combobox>
-      <lightning-input
-        label="Email"
-        type="email"
-        value={newUser.Email__c}
-        onchange={handleInputChange}
-        data-field="Email__c"
-        required
-      ></lightning-input>
-      <lightning-input
-        label="Role"
-        value={newUser.Role__c}
-        onchange={handleInputChange}
-        data-field="Role__c"
-      ></lightning-input>
-      <lightning-input
-        label="Designation"
-        value={newUser.Designation__c}
-        onchange={handleInputChange}
-        data-field="Designation__c"
-      ></lightning-input>
-      <lightning-input
-        label="Department"
-        value={newUser.Department__c}
-        onchange={handleInputChange}
-        data-field="Department__c"
-      ></lightning-input>
-
-      <div class="pt-4 border-t border-gray-200">
-        <h3 class="text-base font-semibold text-gray-800 mb-2">
-          Portal User Profile
-        </h3>
-        <p class="text-sm text-gray-500 mb-4">
-          The new user inherits object and field access from this profile.
-        </p>
-        <template if:true={isLoadingProfiles}>
-          <lightning-spinner
-            alternative-text="Loading Portal User Profiles"
-            size="small"
-          ></lightning-spinner>
-        </template>
-        <template if:false={isLoadingProfiles}>
-          <template if:true={profileLoadError}>
-            <div class="slds-text-color_error" role="alert">
-              {profileLoadError}
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <lightning-input
+                label="Full Name"
+                value={newUser.Name}
+                onchange={handleInputChange}
+                data-field="Name"
+                required
+              ></lightning-input>
             </div>
-          </template>
-          <template if:false={profileLoadError}>
-            <lightning-combobox
-              name="portalProfile"
-              label="Portal User Profile"
-              value={selectedProfileId}
-              options={profileOptions}
-              onchange={handleProfileChange}
-              required
-            ></lightning-combobox>
-          </template>
-        </template>
+            <div class="col-md-6">
+              <lightning-input
+                label="Email"
+                type="email"
+                value={newUser.Email__c}
+                onchange={handleInputChange}
+                data-field="Email__c"
+                required
+              ></lightning-input>
+            </div>
+            <div class="col-md-6">
+              <lightning-combobox
+                name="role"
+                data-id="role"
+                label="Role"
+                value={newUser.Role__c}
+                options={roleOptions}
+                onchange={handleRoleChange}
+                required
+              ></lightning-combobox>
+            </div>
+            <div class="col-md-6">
+              <lightning-combobox
+                name="reportingManager"
+                data-id="reportingManager"
+                label="Reports To"
+                value={newUser.Reports_To__c}
+                options={managerOptions}
+                onchange={handleManagerChange}
+                field-level-help="Used for approval routing and manager team access. Leave blank only for top-level users."
+              ></lightning-combobox>
+            </div>
+            <div class="col-md-6">
+              <lightning-input
+                label="Designation"
+                value={newUser.Designation__c}
+                onchange={handleInputChange}
+                data-field="Designation__c"
+              ></lightning-input>
+            </div>
+            <div class="col-md-6">
+              <lightning-input
+                label="Department"
+                value={newUser.Department__c}
+                onchange={handleInputChange}
+                data-field="Department__c"
+              ></lightning-input>
+            </div>
+          </div>
+
+          <div class="border-top mt-4 pt-3">
+            <h6 class="fw-semibold mb-1">Portal User Profile</h6>
+            <p class="text-muted small mb-3">
+              The new user inherits object and field access from this profile.
+            </p>
+            <template if:true={isLoadingProfiles}>
+              <lightning-spinner
+                alternative-text="Loading Portal User Profiles"
+                size="small"
+              ></lightning-spinner>
+            </template>
+            <template if:false={isLoadingProfiles}>
+              <template if:true={profileLoadError}>
+                <div class="alert alert-danger mb-0" role="alert">
+                  {profileLoadError}
+                </div>
+              </template>
+              <template if:false={profileLoadError}>
+                <lightning-combobox
+                  name="portalProfile"
+                  data-id="portalProfile"
+                  label="Portal User Profile"
+                  value={selectedProfileId}
+                  options={profileOptions}
+                  onchange={handleProfileChange}
+                  required
+                ></lightning-combobox>
+              </template>
+            </template>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <lightning-button
+            label="Cancel"
+            variant="neutral"
+            onclick={closeModal}
+          ></lightning-button>
+          <lightning-button
+            label="Create User"
+            variant="brand"
+            onclick={handleSave}
+            disabled={isSaving}
+          ></lightning-button>
+        </div>
       </div>
     </div>
-    <div slot="footer">
-      <lightning-button label="Cancel" onclick={closeModal}></lightning-button>
-      <lightning-button
-        label="Save"
-        variant="brand"
-        onclick={handleSave}
-        disabled={isSaving}
-      ></lightning-button>
-    </div>
-  </lightning-modal>
+  </div>
+  <div class="modal-backdrop fade show"></div>
 </template>

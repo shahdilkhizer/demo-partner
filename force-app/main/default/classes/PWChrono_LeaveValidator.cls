@@ -5,7 +5,6 @@
  */
 @SuppressWarnings('PMD.CognitiveComplexity')
 public inherited sharing class PWChrono_LeaveValidator {
-
   /**
    * @description Validate a leave request before submission.
    * @param dto Leave data transfer object
@@ -22,14 +21,19 @@ public inherited sharing class PWChrono_LeaveValidator {
     }
 
     // 1. Active employee check (shared)
-    String empError = PWChrono_RequestValidator.validateActiveEmployee(employeeId);
+    String empError = PWChrono_RequestValidator.validateActiveEmployee(
+      employeeId
+    );
     if (empError != null) {
       errors.add(empError);
       return errors; // Fatal — no point continuing
     }
 
     // 2. Date range (shared)
-    String dateError = PWChrono_RequestValidator.validateDateRange(dto.fromDate, dto.toDate);
+    String dateError = PWChrono_RequestValidator.validateDateRange(
+      dto.fromDate,
+      dto.toDate
+    );
     if (dateError != null) {
       errors.add(dateError);
     }
@@ -45,7 +49,9 @@ public inherited sharing class PWChrono_LeaveValidator {
     }
 
     // 4. Load leave type config
-    PWChrono_Leave_Type__c leaveType = PWChrono_LeaveSelector.getLeaveTypeById(dto.leaveTypeId);
+    PWChrono_Leave_Type__c leaveType = PWChrono_LeaveSelector.getLeaveTypeById(
+      dto.leaveTypeId
+    );
     if (leaveType == null || leaveType.Is_Active__c != true) {
       errors.add('Selected leave type is not active.');
       return errors;
@@ -58,35 +64,55 @@ public inherited sharing class PWChrono_LeaveValidator {
     }
 
     // Only proceed with date-dependent checks if dates are valid
-    if (dto.fromDate != null && dto.toDate != null && dto.toDate >= dto.fromDate) {
-
+    if (
+      dto.fromDate != null &&
+      dto.toDate != null &&
+      dto.toDate >= dto.fromDate
+    ) {
       // 6. Backdated limit (shared)
-      String backdatedError = PWChrono_RequestValidator.validateBackdatedLimit(dto.fromDate, 30);
+      String backdatedError = PWChrono_RequestValidator.validateBackdatedLimit(
+        dto.fromDate,
+        30
+      );
       if (backdatedError != null) {
         errors.add(backdatedError);
       }
 
       // 7. Advance limit (shared)
-      String advanceError = PWChrono_RequestValidator.validateAdvanceLimit(dto.toDate, 90);
+      String advanceError = PWChrono_RequestValidator.validateAdvanceLimit(
+        dto.toDate,
+        90
+      );
       if (advanceError != null) {
         errors.add(advanceError);
       }
 
       // 7a. Blocked dates
-      String blockedDateError = validateBlockedDates(employeeId, dto.fromDate, dto.toDate);
+      String blockedDateError = validateBlockedDates(
+        employeeId,
+        dto.fromDate,
+        dto.toDate
+      );
       if (blockedDateError != null) {
         errors.add(blockedDateError);
       }
 
       // 7b. Salary already processed
-      String salaryProcessedError = validateSalaryProcessed(employeeId, dto.fromDate, dto.toDate);
+      String salaryProcessedError = validateSalaryProcessed(
+        employeeId,
+        dto.fromDate,
+        dto.toDate
+      );
       if (salaryProcessedError != null) {
         errors.add(salaryProcessedError);
       }
 
       // 8. Max consecutive days
       if (dto.totalDays != null) {
-        String consecutiveError = validateMaxConsecutiveDays(leaveType, dto.totalDays);
+        String consecutiveError = validateMaxConsecutiveDays(
+          leaveType,
+          dto.totalDays
+        );
         if (consecutiveError != null) {
           errors.add(consecutiveError);
         }
@@ -104,7 +130,9 @@ public inherited sharing class PWChrono_LeaveValidator {
       // 9. Leave balance
       if (dto.totalDays != null && dto.totalDays > 0) {
         String balanceError = PWChrono_LeaveBalanceService.checkSufficientBalance(
-          employeeId, dto.leaveTypeId, dto.totalDays
+          employeeId,
+          dto.leaveTypeId,
+          dto.totalDays
         );
         if (balanceError != null) {
           errors.add(balanceError);
@@ -112,7 +140,12 @@ public inherited sharing class PWChrono_LeaveValidator {
       }
 
       // 10. Overlap check
-      String overlapError = validateOverlap(employeeId, dto.fromDate, dto.toDate, dto.leaveId);
+      String overlapError = validateOverlap(
+        employeeId,
+        dto.fromDate,
+        dto.toDate,
+        dto.leaveId
+      );
       if (overlapError != null) {
         errors.add(overlapError);
       }
@@ -120,7 +153,10 @@ public inherited sharing class PWChrono_LeaveValidator {
       // 11. Max days allowed per year
       if (dto.totalDays != null) {
         String maxDaysError = validateMaxDaysAllowed(
-          employeeId, dto.leaveTypeId, dto.totalDays, leaveType.Max_Days_Allowed__c
+          employeeId,
+          dto.leaveTypeId,
+          dto.totalDays,
+          leaveType.Max_Days_Allowed__c
         );
         if (maxDaysError != null) {
           errors.add(maxDaysError);
@@ -151,7 +187,10 @@ public inherited sharing class PWChrono_LeaveValidator {
    * @description Validate that half-day is only selected for single-day requests
    *              and the leave type allows it.
    */
-  public static String validateHalfDayRules(LeaveDTO dto, PWChrono_Leave_Type__c leaveType) {
+  public static String validateHalfDayRules(
+    LeaveDTO dto,
+    PWChrono_Leave_Type__c leaveType
+  ) {
     if (dto.halfDay != true) {
       return null;
     }
@@ -161,7 +200,11 @@ public inherited sharing class PWChrono_LeaveValidator {
     }
 
     // Check single day
-    if (dto.fromDate != null && dto.toDate != null && dto.fromDate != dto.toDate) {
+    if (
+      dto.fromDate != null &&
+      dto.toDate != null &&
+      dto.fromDate != dto.toDate
+    ) {
       return 'Half day can only be applied for single-day requests.';
     }
 
@@ -172,17 +215,28 @@ public inherited sharing class PWChrono_LeaveValidator {
    * @description Validate that the request doesn't overlap with existing approved/pending leaves.
    */
   @SuppressWarnings('PMD.ExcessiveParameterList')
-  public static String validateOverlap(Id employeeId, Date fromDate, Date toDate, Id excludeLeaveId) {
+  public static String validateOverlap(
+    Id employeeId,
+    Date fromDate,
+    Date toDate,
+    Id excludeLeaveId
+  ) {
     List<Leave__c> overlapping = PWChrono_LeaveSelector.getOverlappingLeaves(
-      employeeId, fromDate, toDate, excludeLeaveId
+      employeeId,
+      fromDate,
+      toDate,
+      excludeLeaveId
     );
 
     if (!overlapping.isEmpty()) {
       Leave__c overlap = overlapping[0];
       return 'Leave request overlaps with existing ' +
-             overlap.Leave_Type__r.Name + ' (' +
-             overlap.From_Date__c.format() + ' - ' +
-             overlap.To_Date__c.format() + ').';
+        overlap.Leave_Type__r.Name +
+        ' (' +
+        overlap.From_Date__c.format() +
+        ' - ' +
+        overlap.To_Date__c.format() +
+        ').';
     }
 
     return null;
@@ -191,14 +245,20 @@ public inherited sharing class PWChrono_LeaveValidator {
   /**
    * @description Validate max consecutive days per leave type.
    */
-  public static String validateMaxConsecutiveDays(PWChrono_Leave_Type__c leaveType, Decimal totalDays) {
+  public static String validateMaxConsecutiveDays(
+    PWChrono_Leave_Type__c leaveType,
+    Decimal totalDays
+  ) {
     if (leaveType.Max_Consecutive_Days__c == null) {
       return null;
     }
 
     if (totalDays > leaveType.Max_Consecutive_Days__c) {
-      return 'Maximum ' + leaveType.Max_Consecutive_Days__c.intValue() +
-             ' consecutive days allowed for ' + leaveType.Name + '.';
+      return 'Maximum ' +
+        leaveType.Max_Consecutive_Days__c.intValue() +
+        ' consecutive days allowed for ' +
+        leaveType.Name +
+        '.';
     }
 
     return null;
@@ -207,14 +267,23 @@ public inherited sharing class PWChrono_LeaveValidator {
   /**
    * @description Validate minimum days per request.
    */
-  public static String validateMinDays(PWChrono_Leave_Type__c leaveType, Decimal totalDays) {
-    if (leaveType.Min_Days_Per_Request__c == null || leaveType.Min_Days_Per_Request__c <= 0) {
+  public static String validateMinDays(
+    PWChrono_Leave_Type__c leaveType,
+    Decimal totalDays
+  ) {
+    if (
+      leaveType.Min_Days_Per_Request__c == null ||
+      leaveType.Min_Days_Per_Request__c <= 0
+    ) {
       return null;
     }
 
     if (totalDays < leaveType.Min_Days_Per_Request__c) {
-      return 'Minimum ' + leaveType.Min_Days_Per_Request__c.setScale(1) +
-             ' day(s) required for ' + leaveType.Name + '.';
+      return 'Minimum ' +
+        leaveType.Min_Days_Per_Request__c.setScale(1) +
+        ' day(s) required for ' +
+        leaveType.Name +
+        '.';
     }
 
     return null;
@@ -225,7 +294,10 @@ public inherited sharing class PWChrono_LeaveValidator {
    */
   @SuppressWarnings('PMD.ExcessiveParameterList')
   public static String validateMaxDaysAllowed(
-    Id employeeId, Id leaveTypeId, Decimal requestedDays, Decimal maxDaysAllowed
+    Id employeeId,
+    Id leaveTypeId,
+    Decimal requestedDays,
+    Decimal maxDaysAllowed
   ) {
     if (maxDaysAllowed == null || maxDaysAllowed <= 0) {
       return null;
@@ -238,10 +310,11 @@ public inherited sharing class PWChrono_LeaveValidator {
     List<AggregateResult> aggregates = [
       SELECT SUM(Total_Days__c) totalDays
       FROM Leave__c
-      WHERE Employees__c = :employeeId
+      WHERE
+        Employees__c = :employeeId
         AND Leave_Type__c = :leaveTypeId
         AND (Status__c = :PWChrono_Constants.STATUS_APPROVED
-             OR Status__c = :PWChrono_Constants.STATUS_SUBMITTED)
+        OR Status__c = :PWChrono_Constants.STATUS_SUBMITTED)
         AND From_Date__c >= :yearStart
         AND From_Date__c <= :yearEnd
     ];
@@ -253,9 +326,13 @@ public inherited sharing class PWChrono_LeaveValidator {
 
     if (totalUsedThisYear + requestedDays > maxDaysAllowed) {
       Decimal remaining = maxDaysAllowed - totalUsedThisYear;
-      return 'You have already used/requested ' + totalUsedThisYear.setScale(1) +
-             ' days this year. Maximum allowed: ' + maxDaysAllowed.intValue() +
-             ' days. Remaining: ' + Math.max(0, remaining).setScale(1) + ' days.';
+      return 'You have already used/requested ' +
+        totalUsedThisYear.setScale(1) +
+        ' days this year. Maximum allowed: ' +
+        maxDaysAllowed.intValue() +
+        ' days. Remaining: ' +
+        Math.max(0, remaining).setScale(1) +
+        ' days.';
     }
 
     return null;
@@ -264,8 +341,14 @@ public inherited sharing class PWChrono_LeaveValidator {
   /**
    * @description Validate that the employee has been employed long enough for this leave type.
    */
-  public static String validateApplicableAfter(Id employeeId, PWChrono_Leave_Type__c leaveType) {
-    if (leaveType.Applicable_After_Days__c == null || leaveType.Applicable_After_Days__c <= 0) {
+  public static String validateApplicableAfter(
+    Id employeeId,
+    PWChrono_Leave_Type__c leaveType
+  ) {
+    if (
+      leaveType.Applicable_After_Days__c == null ||
+      leaveType.Applicable_After_Days__c <= 0
+    ) {
       return null;
     }
 
@@ -280,12 +363,17 @@ public inherited sharing class PWChrono_LeaveValidator {
       return null; // Can't validate without DOJ
     }
 
-    Integer daysEmployed = employees[0].Date_Of_Joining__c.daysBetween(Date.today());
+    Integer daysEmployed = employees[0]
+      .Date_Of_Joining__c.daysBetween(Date.today());
     Integer requiredDays = leaveType.Applicable_After_Days__c.intValue();
 
     if (daysEmployed < requiredDays) {
-      return leaveType.Name + ' is only available after ' + requiredDays +
-             ' days of employment. You have been employed ' + daysEmployed + ' days.';
+      return leaveType.Name +
+        ' is only available after ' +
+        requiredDays +
+        ' days of employment. You have been employed ' +
+        daysEmployed +
+        ' days.';
     }
 
     return null;
@@ -294,9 +382,19 @@ public inherited sharing class PWChrono_LeaveValidator {
   /**
    * @description Validate that none of the requested dates are blocked for leave.
    */
-  public static String validateBlockedDates(Id employeeId, Date fromDate, Date toDate) {
-    Id departmentId = PWChrono_LeaveSelector.getEmployeeDepartmentId(employeeId);
-    Set<Date> blockedDates = PWChrono_LeaveSelector.getBlockedDateSet(fromDate, toDate, departmentId);
+  public static String validateBlockedDates(
+    Id employeeId,
+    Date fromDate,
+    Date toDate
+  ) {
+    Id departmentId = PWChrono_LeaveSelector.getEmployeeDepartmentId(
+      employeeId
+    );
+    Set<Date> blockedDates = PWChrono_LeaveSelector.getBlockedDateSet(
+      fromDate,
+      toDate,
+      departmentId
+    );
 
     if (blockedDates.isEmpty()) {
       return null;
@@ -313,14 +411,26 @@ public inherited sharing class PWChrono_LeaveValidator {
 
     return blockedDateLabels.isEmpty()
       ? null
-      : 'Leave is blocked for the following date(s): ' + String.join(blockedDateLabels, ', ') + '.';
+      : 'Leave is blocked for the following date(s): ' +
+        String.join(blockedDateLabels, ', ') +
+        '.';
   }
 
   /**
    * @description Validate that salary has not already been processed for requested dates.
    */
-  public static String validateSalaryProcessed(Id employeeId, Date fromDate, Date toDate) {
-    if (PWChrono_LeaveSelector.hasPaidSalarySlipInRange(employeeId, fromDate, toDate)) {
+  public static String validateSalaryProcessed(
+    Id employeeId,
+    Date fromDate,
+    Date toDate
+  ) {
+    if (
+      PWChrono_LeaveSelector.hasPaidSalarySlipInRange(
+        employeeId,
+        fromDate,
+        toDate
+      )
+    ) {
       return 'Leave cannot be submitted because payroll has already been processed for at least one requested date.';
     }
     return null;
@@ -340,25 +450,45 @@ public inherited sharing class PWChrono_LeaveValidator {
   // ── DTO ──
 
   public class LeaveDTO {
-    @AuraEnabled public Id leaveId;
-    @AuraEnabled public Id leaveTypeId;
-    @AuraEnabled public String leaveTypeName;
-    @AuraEnabled public Date fromDate;
-    @AuraEnabled public Date toDate;
-    @AuraEnabled public Decimal totalDays;
-    @AuraEnabled public Boolean halfDay;
-    @AuraEnabled public String halfDaySession;
-    @AuraEnabled public String reason;
-    @AuraEnabled public String status;
-    @AuraEnabled public Id employeeId;
-    @AuraEnabled public String employeeName;
-    @AuraEnabled public Id approverId;
-    @AuraEnabled public String approverName;
-    @AuraEnabled public Date appliedDate;
-    @AuraEnabled public Date approvalDate;
-    @AuraEnabled public String rejectionReason;
-    @AuraEnabled public String approverComments;
-    @AuraEnabled public Boolean certificateRequired;
-    @AuraEnabled public Boolean certificateUploaded;
+    @AuraEnabled
+    public Id leaveId;
+    @AuraEnabled
+    public Id leaveTypeId;
+    @AuraEnabled
+    public String leaveTypeName;
+    @AuraEnabled
+    public Date fromDate;
+    @AuraEnabled
+    public Date toDate;
+    @AuraEnabled
+    public Decimal totalDays;
+    @AuraEnabled
+    public Boolean halfDay;
+    @AuraEnabled
+    public String halfDaySession;
+    @AuraEnabled
+    public String reason;
+    @AuraEnabled
+    public String status;
+    @AuraEnabled
+    public Id employeeId;
+    @AuraEnabled
+    public String employeeName;
+    @AuraEnabled
+    public Id approverId;
+    @AuraEnabled
+    public String approverName;
+    @AuraEnabled
+    public Date appliedDate;
+    @AuraEnabled
+    public Date approvalDate;
+    @AuraEnabled
+    public String rejectionReason;
+    @AuraEnabled
+    public String approverComments;
+    @AuraEnabled
+    public Boolean certificateRequired;
+    @AuraEnabled
+    public Boolean certificateUploaded;
   }
 }

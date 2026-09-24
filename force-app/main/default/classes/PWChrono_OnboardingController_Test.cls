@@ -38,7 +38,7 @@ private class PWChrono_OnboardingController_Test {
 
     System.runAs(testUser) {
       Test.startTest();
-      List<PWChrono_Onboarding_Task__c> tasks = PWChrono_OnboardingController.getOnboardingTasks(
+      List<PWChrono_Onboarding_Task__c> tasks = PWChrono_OnboardingPortalController.getOnboardingTasks(
         null,
         null
       );
@@ -60,7 +60,7 @@ private class PWChrono_OnboardingController_Test {
 
     System.runAs(testUser) {
       Test.startTest();
-      PWChrono_OnboardingController.updateTaskStatus(
+      PWChrono_OnboardingPortalController.updateOnboardingTaskStatus(
         task.Id,
         'Completed',
         null,
@@ -87,7 +87,7 @@ private class PWChrono_OnboardingController_Test {
 
     System.runAs(adminUser) {
       Test.startTest();
-      List<PWChrono_Onboarding_Task__c> tasks = PWChrono_OnboardingController.getOnboardingTasks(
+      List<PWChrono_Onboarding_Task__c> tasks = PWChrono_OnboardingPortalController.getOnboardingTasks(
         null,
         null
       );

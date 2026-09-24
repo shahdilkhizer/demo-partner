@@ -59,10 +59,11 @@ export function getSession() {
     const permissions = permText ? safeJsonParse(permText) : null;
     const sessionToken = tokenText || null;
 
-    // If parsing fails (null), fall back to memory.
-    const finalUser = user ?? memorySession.user;
-    const finalPerms = permissions ?? memorySession.permissions;
-    const finalToken = sessionToken ?? memorySession.sessionToken;
+    // Successful storage reads are authoritative, including removed credentials.
+    // Use memory only when storage access itself is unavailable.
+    const finalUser = user;
+    const finalPerms = permissions;
+    const finalToken = sessionToken;
 
     return {
       user: finalUser,
@@ -113,6 +114,7 @@ export function setSession(user, permissions, sessionToken) {
     if (userText) sessionStorage.setItem(USER_KEY, userText);
     if (permText) sessionStorage.setItem(PERM_KEY, permText);
     if (tokenValue) sessionStorage.setItem(TOKEN_KEY, tokenValue);
+    else sessionStorage.removeItem(TOKEN_KEY);
   } catch {
     // sessionStorage not available; memory fallback is already set.
   }

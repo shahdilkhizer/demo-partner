@@ -1,9 +1,25 @@
-public inherited sharing class PWChrono_NotificationController {
+// Custom OTP guests have no Salesforce record sharing. Every operation below
+// verifies the session and restricts records to its mapped Salesforce owner.
+public without sharing class PWChrono_NotificationController {
+  @TestVisible
+  private static String testUserTypeOverride;
+
+  @AuraEnabled
+  public static List<NotificationWrapper> getRecentNotifications(
+    String portalUserId,
+    String sessionToken
+  ) {
+    return getNotifications(portalUserId, sessionToken);
+  }
+
   private static Id resolveNotificationOwnerUserId(
     String portalUserId,
     String sessionToken
   ) {
-    if (UserInfo.getUserType() != 'Guest') {
+    String userType = Test.isRunningTest() && testUserTypeOverride != null
+      ? testUserTypeOverride
+      : UserInfo.getUserType();
+    if (userType != 'Guest') {
       return UserInfo.getUserId();
     }
 

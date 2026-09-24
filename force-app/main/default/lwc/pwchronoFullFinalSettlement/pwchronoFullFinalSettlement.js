@@ -1,17 +1,34 @@
 import { LightningElement, track } from "lwc";
 import LightningConfirm from "lightning/confirm";
+import { NavigationMixin } from "lightning/navigation";
+import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { getSession, getSessionToken } from "c/pwchronoSession";
-import { PAGES } from "c/pwchronoRouter";
+import { downloadCsv } from "c/pwchronoCsv";
+import { CONSTANTS } from "c/pwchronoConstants";
+
 import getSettlements from "@salesforce/apex/PWChrono_FullFinalSettlementController.getSettlements";
 import getSettlementById from "@salesforce/apex/PWChrono_FullFinalSettlementController.getSettlementById";
 import getPayables from "@salesforce/apex/PWChrono_FullFinalSettlementController.getPayables";
 import getReceivables from "@salesforce/apex/PWChrono_FullFinalSettlementController.getReceivables";
 import saveSettlement from "@salesforce/apex/PWChrono_FullFinalSettlementController.saveSettlement";
+import updateSettlementStatus from "@salesforce/apex/PWChrono_FullFinalSettlementController.updateSettlementStatus";
 import deleteSettlement from "@salesforce/apex/PWChrono_FullFinalSettlementController.deleteSettlement";
 import getActiveDesignations from "@salesforce/apex/PWChrono_FullFinalSettlementController.getActiveDesignations";
 import getActiveDepartments from "@salesforce/apex/PWChrono_FullFinalSettlementController.getActiveDepartments";
 import getActiveEmployees from "@salesforce/apex/PWChrono_FullFinalSettlementController.getActiveEmployees";
 import getActiveSeparations from "@salesforce/apex/PWChrono_FullFinalSettlementController.getActiveSeparations";
+
+const ADMIN_ROLES = ["HR Admin", "System Administrator", "System Admin"];
+
+const STATUS = {
+  DRAFT: "Draft",
+  SUBMITTED: "Submitted",
+  PAID: "Paid",
+  CANCELLED: "Cancelled"
+};
+const SETTLEMENT_STATUSES = Object.values(STATUS);
+const EDITABLE_STATUSES = [STATUS.DRAFT, STATUS.SUBMITTED];
+const DELETABLE_STATUSES = [STATUS.DRAFT, STATUS.CANCELLED];
 
 const STATUS_BADGE = {
   Draft: "badge bg-secondary",
@@ -20,140 +37,331 @@ const STATUS_BADGE = {
   Cancelled: "badge bg-danger"
 };
 
-const FFS_STATUSES = ["Draft", "Submitted", "Paid", "Cancelled"];
+const STATUS_SUCCESS = {
+  Submitted: "Settlement submitted.",
+  Paid: "Settlement marked as paid.",
+  Cancelled: "Settlement cancelled."
+};
 
-let _keyCounter = 0;
+const PAYABLE_STATUSES = ["Pending", "Paid", "Waived"];
+const RECEIVABLE_STATUSES = ["Pending", "Recovered", "Waived"];
+const WAIVED = "Waived";
 
-const emptyPayableLine = () => ({
-  _key: ++_keyCounter,
-  Component__c: "",
-  Reference_Document__c: "",
-  Account__c: "",
-  Amount__c: 0,
-  Status__c: "Pending",
-  _statusPending: true,
-  _statusPaid: false,
-  _statusWaived: false
-});
+/** Fields the server accepts from the form. Status and totals are server-owned. */
+const EDITABLE_FIELDS = [
+  "Employee__c",
+  "Employee_Name__c",
+  "Company__c",
+  "Department__c",
+  "Designation__c",
+  "Separation__c",
+  "Date_of_Joining__c",
+  "Relieving_Date__c"
+];
 
-const emptyReceivableLine = () => ({
-  _key: ++_keyCounter,
-  Component__c: "",
-  Reference_Document__c: "",
-  Account__c: "",
-  Amount__c: 0,
-  Status__c: "Pending",
-  _statusPending: true,
-  _statusRecovered: false,
-  _statusWaived: false
-});
+const CURRENCY_CODE = CONSTANTS?.CURRENCY_CODE ?? "USD";
 
-const emptyRecord = () => ({
-  Employee__c: "",
-  Employee_Name__c: "",
-  Company__c: "",
-  Department__c: "",
-  Designation__c: "",
-  Separation__c: "",
-  Date_of_Joining__c: "",
-  Relieving_Date__c: "",
-  Status__c: "Draft"
-});
+let keyCounter = 0;
+function nextKey() {
+  keyCounter += 1;
+  return `ln_${keyCounter}`;
+}
 
-export default class PwchronoFullFinalSettlement extends LightningElement {
+function emptyRecord() {
+  const record = { Id: null, Status__c: STATUS.DRAFT };
+  EDITABLE_FIELDS.forEach((field) => {
+    record[field] = "";
+  });
+  return record;
+}
+
+function toLine(line) {
+  return {
+    _key: nextKey(),
+    Name: line?.Name ?? "",
+    Component__c: line?.Component__c ?? "",
+    Reference_Document__c: line?.Reference_Document__c ?? "",
+    Account__c: line?.Account__c ?? "",
+    Amount__c:
+      line?.Amount__c === null || line?.Amount__c === undefined
+        ? 0
+        : line.Amount__c,
+    Status__c: line?.Status__c || "Pending"
+  };
+}
+
+function sumLines(lines) {
+  return lines
+    .filter((line) => line.Status__c !== WAIVED)
+    .reduce((sum, line) => sum + (parseFloat(line.Amount__c) || 0), 0);
+}
+
+function reduceError(error, fallback) {
+  const bodies = Array.isArray(error?.body) ? error.body : [error?.body];
+  const messages = bodies.map((body) => body?.message).filter(Boolean);
+  if (messages.length) return messages.join(" ");
+  return error?.message || fallback;
+}
+
+function formatDate(value) {
+  if (!value) return "—";
+  const [year, month, day] = String(value).split("-").map(Number);
+  if (!year || !month || !day) return value;
+  return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString(
+    undefined,
+    { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" }
+  );
+}
+
+function formatMoney(value) {
+  if (value === null || value === undefined || value === "") return "—";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: CURRENCY_CODE,
+    maximumFractionDigits: 2
+  }).format(Number(value));
+}
+
+export default class PwchronoFullFinalSettlement extends NavigationMixin(
+  LightningElement
+) {
   static renderMode = "light";
 
   @track settlements = [];
   @track currentRecord = emptyRecord();
   @track payableLines = [];
   @track receivableLines = [];
-  @track viewRecord = {};
+  @track viewRecord = null;
+  @track viewPayables = [];
+  @track viewReceivables = [];
 
-  @track isLoading = false;
-  @track errorMessage = "";
-  @track showModal = false;
-  @track showViewModal = false;
-  @track modalError = "";
-  @track isSaving = false;
-  @track isEditMode = false;
+  isLoading = false;
+  hasLoaded = false;
+  loadError = "";
+  showModal = false;
+  showViewModal = false;
+  modalError = "";
+  isSaving = false;
+  isOpening = false;
+  viewLinesLoading = false;
+  actionPendingId = null;
 
   _statusFilter = "All";
+  _portalUserId = "";
+  _role = "";
+  _sessionToken = null;
   _employees = [];
   _departments = [];
   _designations = [];
   _separations = [];
-  _session = null;
-  _pages = PAGES;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Lifecycle and session
+  // ─────────────────────────────────────────────────────────────────────────
 
   connectedCallback() {
-    this._session = getSession();
+    const session = getSession() || {};
+    const user = session.user || {};
+    this._portalUserId = session.portalUserId || user.Id || "";
+    this._role = session.role || user.Role__c || "";
+    this._sessionToken = getSessionToken();
     this._loadLookups();
     this._loadSettlements();
   }
 
-  // ─── Getters ──────────────────────────────────────────────────────────────
-
-  get isHR() {
-    return this._session && this._session.role === "HR Admin";
+  get _authParams() {
+    return {
+      portalUserId: this._portalUserId,
+      sessionToken: this._sessionToken
+    };
   }
 
-  get isEmployee() {
-    return !this.isHR;
+  /** UI hint only; the server re-checks administrator rights on every call. */
+  get isAdmin() {
+    return ADMIN_ROLES.includes(this._role);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Data loading
+  // ─────────────────────────────────────────────────────────────────────────
+
+  async _loadSettlements() {
+    this.isLoading = true;
+    this.loadError = "";
+    try {
+      const rows = await getSettlements({
+        statusFilter: this._statusFilter,
+        ...this._authParams
+      });
+      this.settlements = Array.isArray(rows) ? rows : [];
+      this.hasLoaded = true;
+    } catch (error) {
+      this.settlements = [];
+      this.loadError = reduceError(error, "Failed to load settlements.");
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  async _loadLookups() {
+    try {
+      const [employees, departments, designations, separations] =
+        await Promise.all([
+          getActiveEmployees(this._authParams),
+          getActiveDepartments(this._authParams),
+          getActiveDesignations(this._authParams),
+          getActiveSeparations(this._authParams)
+        ]);
+      this._employees = employees || [];
+      this._departments = departments || [];
+      this._designations = designations || [];
+      this._separations = separations || [];
+    } catch (error) {
+      this._employees = [];
+      this._departments = [];
+      this._designations = [];
+      this._separations = [];
+      this._toast(
+        "Warning",
+        reduceError(error, "Could not load the form options."),
+        "warning"
+      );
+    }
+  }
+
+  handleRetry() {
+    this._loadLookups();
+    this._loadSettlements();
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Page state and metrics
+  // ─────────────────────────────────────────────────────────────────────────
+
+  get canCreate() {
+    return this.hasLoaded && !this.loadError;
+  }
+
+  get showTable() {
+    return !this.isLoading && !this.loadError;
   }
 
   get hasRecords() {
-    return this.settlements && this.settlements.length > 0;
+    return this.settlements.length > 0;
   }
 
   get totalCount() {
     return this.settlements.length;
   }
-
   get draftCount() {
-    return this.settlements.filter((s) => s.Status__c === "Draft").length;
+    return this._countByStatus(STATUS.DRAFT);
   }
-
   get submittedCount() {
-    return this.settlements.filter((s) => s.Status__c === "Submitted").length;
+    return this._countByStatus(STATUS.SUBMITTED);
+  }
+  get paidCount() {
+    return this._countByStatus(STATUS.PAID);
   }
 
-  get paidCount() {
-    return this.settlements.filter((s) => s.Status__c === "Paid").length;
+  _countByStatus(status) {
+    return this.settlements.filter((s) => s.Status__c === status).length;
   }
+
+  _decorate(s) {
+    const isAdmin = this.isAdmin;
+    const status = s.Status__c || STATUS.DRAFT;
+    const editable = EDITABLE_STATUSES.includes(status);
+    return {
+      ...s,
+      badgeClass: STATUS_BADGE[status] ?? "badge bg-secondary",
+      employeeName: s.Employee__r?.Name ?? s.Employee_Name__c ?? "—",
+      deptName: s.Department__r?.Name ?? "—",
+      desigName: s.Designation__r?.Name ?? "—",
+      separationName: s.Separation__r?.Name ?? "—",
+      joiningDateFormatted: formatDate(s.Date_of_Joining__c),
+      relievingDateFormatted: formatDate(s.Relieving_Date__c),
+      totalPayableFormatted: formatMoney(s.Total_Payable__c ?? 0),
+      totalReceivableFormatted: formatMoney(s.Total_Receivable__c ?? 0),
+      netPayableFormatted: formatMoney(s.Net_Payable__c ?? 0),
+      canEdit: editable,
+      canSubmit: isAdmin && status === STATUS.DRAFT,
+      canPay: isAdmin && status === STATUS.SUBMITTED,
+      canCancel: isAdmin && editable,
+      canDelete: isAdmin && DELETABLE_STATUSES.includes(status),
+      isBusy: this.actionPendingId === s.Id
+    };
+  }
+
+  get enrichedSettlements() {
+    return this.settlements.map((s) => this._decorate(s));
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Filter and export
+  // ─────────────────────────────────────────────────────────────────────────
+
+  get statusOptions() {
+    return ["All", ...SETTLEMENT_STATUSES].map((s) => ({
+      value: s,
+      label: s === "All" ? "All Status" : s,
+      selected: this._statusFilter === s
+    }));
+  }
+
+  handleFilterChange(event) {
+    this._statusFilter = event.target.value;
+    this._loadSettlements();
+  }
+
+  handleExport() {
+    const rows = this.enrichedSettlements.map((s) => [
+      s.Name,
+      s.employeeName,
+      s.separationName,
+      s.Relieving_Date__c ?? "",
+      s.deptName,
+      s.Total_Payable__c ?? 0,
+      s.Total_Receivable__c ?? 0,
+      s.Net_Payable__c ?? 0,
+      s.Status__c
+    ]);
+    downloadCsv(
+      "full-final-settlements.csv",
+      [
+        "Settlement #",
+        "Employee",
+        "Separation",
+        "Relieving Date",
+        "Department",
+        "Total Payable",
+        "Total Receivable",
+        "Net Payable",
+        "Status"
+      ],
+      rows
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Modal options and totals
+  // ─────────────────────────────────────────────────────────────────────────
 
   get modalTitle() {
-    return this.isEditMode ? "Edit Settlement" : "New Settlement";
+    return this.currentRecord.Id ? "Edit Settlement" : "New Settlement";
   }
 
-  get computedTotalPayable() {
-    const total = this.payableLines.reduce(
-      (sum, l) => sum + (parseFloat(l.Amount__c) || 0),
-      0
-    );
-    return total.toFixed(2);
+  get isEditMode() {
+    return !!this.currentRecord.Id;
   }
 
-  get computedTotalReceivable() {
-    const total = this.receivableLines.reduce(
-      (sum, l) => sum + (parseFloat(l.Amount__c) || 0),
-      0
-    );
-    return total.toFixed(2);
-  }
-
-  get computedNetPayable() {
-    const net =
-      parseFloat(this.computedTotalPayable) -
-      parseFloat(this.computedTotalReceivable);
-    return net.toFixed(2);
+  get modalStatusBadgeClass() {
+    return `${STATUS_BADGE[this.currentRecord.Status__c] ?? "badge bg-secondary"} ms-2`;
   }
 
   get employeeOptions() {
     return this._employees.map((e) => ({
       value: e.Id,
-      label:
-        e.Full_Name__c +
-        (e.Employee_ID__c ? " (" + e.Employee_ID__c + ")" : ""),
+      label: e.Is_Active__c === false ? `${e.Name} (inactive)` : e.Name,
       selected: e.Id === this.currentRecord.Employee__c
     }));
   }
@@ -177,71 +385,63 @@ export default class PwchronoFullFinalSettlement extends LightningElement {
   get separationOptions() {
     return this._separations.map((s) => ({
       value: s.Id,
-      label: s.Name + (s.Employee__r ? " — " + s.Employee__r.Full_Name__c : ""),
+      label:
+        s.Name +
+        (s.Employee__r?.Name ? " — " + s.Employee__r.Name : "") +
+        (s.Status__c ? ` (${s.Status__c})` : ""),
       selected: s.Id === this.currentRecord.Separation__c
     }));
   }
 
-  get statusOptions() {
-    return FFS_STATUSES.map((s) => ({
-      value: s,
-      label: s,
-      selected: s === this.currentRecord.Status__c
+  get payableLinesView() {
+    return this.payableLines.map((line) => ({
+      ...line,
+      statusOptions: PAYABLE_STATUSES.map((s) => ({
+        value: s,
+        label: s,
+        selected: line.Status__c === s
+      }))
     }));
   }
 
-  // ─── Data Loading ─────────────────────────────────────────────────────────
-
-  _loadLookups() {
-    Promise.all([
-      getActiveEmployees(),
-      getActiveDepartments(),
-      getActiveDesignations(),
-      getActiveSeparations()
-    ])
-      .then(([emps, depts, desigs, seps]) => {
-        this._employees = emps;
-        this._departments = depts;
-        this._designations = desigs;
-        this._separations = seps;
-      })
-      .catch(() => {});
+  get receivableLinesView() {
+    return this.receivableLines.map((line) => ({
+      ...line,
+      statusOptions: RECEIVABLE_STATUSES.map((s) => ({
+        value: s,
+        label: s,
+        selected: line.Status__c === s
+      }))
+    }));
   }
 
-  _loadSettlements() {
-    this.isLoading = true;
-    this.errorMessage = "";
-    const puid = this._session ? this._session.portalUserId : "";
-    const tok = getSessionToken();
-    getSettlements({
-      statusFilter: this._statusFilter,
-      portalUserId: puid,
-      sessionToken: tok
-    })
-      .then((data) => {
-        this.settlements = data.map((s) => ({
-          ...s,
-          _badgeClass: STATUS_BADGE[s.Status__c] || "badge bg-secondary"
-        }));
-        this.isLoading = false;
-      })
-      .catch((err) => {
-        this.errorMessage = err.body ? err.body.message : err.message;
-        this.isLoading = false;
-      });
+  get hasPayableLines() {
+    return this.payableLines.length > 0;
   }
 
-  // ─── Filter ───────────────────────────────────────────────────────────────
-
-  handleFilterChange(event) {
-    this._statusFilter = event.target.value;
-    this._loadSettlements();
+  get hasReceivableLines() {
+    return this.receivableLines.length > 0;
   }
 
-  // ─── New / Edit ───────────────────────────────────────────────────────────
+  get computedTotalPayable() {
+    return formatMoney(sumLines(this.payableLines));
+  }
+
+  get computedTotalReceivable() {
+    return formatMoney(sumLines(this.receivableLines));
+  }
+
+  get computedNetPayable() {
+    return formatMoney(
+      sumLines(this.payableLines) - sumLines(this.receivableLines)
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // New / Edit
+  // ─────────────────────────────────────────────────────────────────────────
 
   handleNew() {
-    this.isEditMode = false;
     this.currentRecord = emptyRecord();
     this.payableLines = [];
     this.receivableLines = [];
@@ -249,149 +449,123 @@ export default class PwchronoFullFinalSettlement extends LightningElement {
     this.showModal = true;
   }
 
-  handleEdit(event) {
+  async handleEdit(event) {
     const id = event.currentTarget.dataset.id;
-    const puid = this._session ? this._session.portalUserId : "";
-    const tok = getSessionToken();
-    this.isEditMode = true;
+    if (this.isOpening) return;
+    this.isOpening = true;
     this.modalError = "";
-    Promise.all([
-      getSettlementById({
-        settlementId: id,
-        portalUserId: puid,
-        sessionToken: tok
-      }),
-      getPayables({ settlementId: id, portalUserId: puid, sessionToken: tok }),
-      getReceivables({
-        settlementId: id,
-        portalUserId: puid,
-        sessionToken: tok
-      })
-    ])
-      .then(([rec, pays, recs]) => {
-        this.currentRecord = { ...rec };
-        this.payableLines = pays.map((p) => this._decoratePayable(p));
-        this.receivableLines = recs.map((r) => this._decorateReceivable(r));
-        this.showModal = true;
-      })
-      .catch((err) => {
-        this.errorMessage = err.body ? err.body.message : err.message;
+    try {
+      const [rec, pays, recs] = await Promise.all([
+        getSettlementById({ settlementId: id, ...this._authParams }),
+        getPayables({ settlementId: id, ...this._authParams }),
+        getReceivables({ settlementId: id, ...this._authParams })
+      ]);
+      // A blank (legacy) status is treated as Draft, as the server does.
+      const record = { Id: rec.Id, Status__c: rec.Status__c || STATUS.DRAFT };
+      EDITABLE_FIELDS.forEach((field) => {
+        record[field] = rec[field] ?? "";
       });
-  }
-
-  _decoratePayable(p) {
-    return {
-      ...p,
-      _key: ++_keyCounter,
-      _statusPending: p.Status__c === "Pending",
-      _statusPaid: p.Status__c === "Paid",
-      _statusWaived: p.Status__c === "Waived"
-    };
-  }
-
-  _decorateReceivable(r) {
-    return {
-      ...r,
-      _key: ++_keyCounter,
-      _statusPending: r.Status__c === "Pending",
-      _statusRecovered: r.Status__c === "Recovered",
-      _statusWaived: r.Status__c === "Waived"
-    };
-  }
-
-  // ─── View ─────────────────────────────────────────────────────────────────
-
-  handleView(event) {
-    const id = event.currentTarget.dataset.id;
-    const found = this.settlements.find((s) => s.Id === id);
-    if (found) {
-      this.viewRecord = { ...found };
-      this.showViewModal = true;
+      this.currentRecord = record;
+      this.payableLines = (pays || []).map(toLine);
+      this.receivableLines = (recs || []).map(toLine);
+      this.showModal = true;
+    } catch (error) {
+      this._toast(
+        "Error",
+        reduceError(error, "Failed to open the settlement."),
+        "error"
+      );
+    } finally {
+      this.isOpening = false;
     }
   }
 
-  handleViewClose() {
-    this.showViewModal = false;
+  handleModalClose() {
+    this.showModal = false;
+    this.modalError = "";
   }
-
-  // ─── Delete ───────────────────────────────────────────────────────────────
-
-  async handleDelete(event) {
-    const id = event.currentTarget.dataset.id;
-    const confirmed = await LightningConfirm.open({
-      message: "Delete this settlement? This action cannot be undone.",
-      label: "Confirm Delete",
-      theme: "warning"
-    });
-    if (!confirmed) return;
-    const puid = this._session ? this._session.portalUserId : "";
-    const tok = getSessionToken();
-    deleteSettlement({
-      settlementId: id,
-      portalUserId: puid,
-      sessionToken: tok
-    })
-      .then(() => {
-        this._loadSettlements();
-      })
-      .catch((err) => {
-        this.errorMessage = err.body ? err.body.message : err.message;
-      });
-  }
-
-  // ─── Modal Field Changes ──────────────────────────────────────────────────
 
   handleFieldChange(event) {
     const field = event.target.dataset.field;
-    this.currentRecord = { ...this.currentRecord, [field]: event.target.value };
+    const value = event.target.value;
+    const next = { ...this.currentRecord, [field]: value };
+    if (field === "Employee__c") {
+      const employee = this._employees.find((e) => e.Id === value);
+      next.Employee_Name__c = employee?.Name ?? "";
+      if (!next.Date_of_Joining__c && employee?.Date_of_Joining__c) {
+        next.Date_of_Joining__c = employee.Date_of_Joining__c;
+      }
+    }
+    if (field === "Separation__c" && value && !this.isEditMode) {
+      this._applySeparationDefaults(next, value);
+    }
+    this.currentRecord = next;
   }
 
-  // ─── Line Item Changes ────────────────────────────────────────────────────
+  _applySeparationDefaults(record, separationId) {
+    const separation = this._separations.find((s) => s.Id === separationId);
+    if (!separation) return;
+    if (!record.Employee__c && separation.Employee__c) {
+      record.Employee__c = separation.Employee__c;
+      const employee = this._employees.find(
+        (e) => e.Id === separation.Employee__c
+      );
+      record.Employee_Name__c =
+        separation.Employee_Name__c ||
+        separation.Employee__r?.Name ||
+        employee?.Name ||
+        "";
+      if (!record.Date_of_Joining__c && employee?.Date_of_Joining__c) {
+        record.Date_of_Joining__c = employee.Date_of_Joining__c;
+      }
+    }
+    if (!record.Relieving_Date__c && separation.Relieving_Date__c) {
+      record.Relieving_Date__c = separation.Relieving_Date__c;
+    }
+    if (!record.Department__c && separation.Department__c) {
+      record.Department__c = separation.Department__c;
+    }
+    if (!record.Designation__c && separation.Designation__c) {
+      record.Designation__c = separation.Designation__c;
+    }
+    if (!record.Company__c && separation.Company__c) {
+      record.Company__c = separation.Company__c;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Line items
+  // ─────────────────────────────────────────────────────────────────────────
 
   handleAddPayable() {
-    this.payableLines = [...this.payableLines, emptyPayableLine()];
+    this.payableLines = [...this.payableLines, toLine(null)];
   }
 
   handleAddReceivable() {
-    this.receivableLines = [...this.receivableLines, emptyReceivableLine()];
+    this.receivableLines = [...this.receivableLines, toLine(null)];
   }
 
   handleLineChange(event) {
-    const key = parseInt(event.target.dataset.key, 10);
+    const key = event.target.dataset.key;
     const field = event.target.dataset.field;
     const table = event.target.dataset.table;
-    const val =
+    const value =
       field === "Amount__c"
         ? parseFloat(event.target.value) || 0
         : event.target.value;
-
+    const update = (lines) =>
+      lines.map((line) => {
+        return line._key === key ? { ...line, [field]: value } : line;
+      });
     if (table === "payable") {
-      this.payableLines = this.payableLines.map((p) => {
-        if (p._key !== key) return p;
-        const updated = { ...p, [field]: val };
-        if (field === "Status__c") {
-          updated._statusPending = val === "Pending";
-          updated._statusPaid = val === "Paid";
-          updated._statusWaived = val === "Waived";
-        }
-        return updated;
-      });
+      this.payableLines = update(this.payableLines);
     } else {
-      this.receivableLines = this.receivableLines.map((r) => {
-        if (r._key !== key) return r;
-        const updated = { ...r, [field]: val };
-        if (field === "Status__c") {
-          updated._statusPending = val === "Pending";
-          updated._statusRecovered = val === "Recovered";
-          updated._statusWaived = val === "Waived";
-        }
-        return updated;
-      });
+      this.receivableLines = update(this.receivableLines);
     }
   }
 
   handleRemoveLine(event) {
-    const key = parseInt(event.currentTarget.dataset.key, 10);
+    const key = event.currentTarget.dataset.key;
     const table = event.currentTarget.dataset.table;
     if (table === "payable") {
       this.payableLines = this.payableLines.filter((p) => p._key !== key);
@@ -400,76 +574,197 @@ export default class PwchronoFullFinalSettlement extends LightningElement {
     }
   }
 
-  // ─── Validate ─────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
+  // Save
+  // ─────────────────────────────────────────────────────────────────────────
 
   _validate() {
-    if (!this.currentRecord.Employee__c) {
-      this.modalError = "Employee is required.";
-      return false;
+    const rec = this.currentRecord;
+    if (!rec.Employee__c) return "Employee is required.";
+    if (!rec.Relieving_Date__c) return "Relieving date is required.";
+    const lines = [...this.payableLines, ...this.receivableLines];
+    if (lines.some((line) => (parseFloat(line.Amount__c) || 0) < 0)) {
+      return "Line amounts cannot be negative.";
     }
-    if (!this.currentRecord.Relieving_Date__c) {
-      this.modalError = "Relieving Date is required.";
-      return false;
-    }
-    return true;
+    return null;
   }
 
-  // ─── Save ─────────────────────────────────────────────────────────────────
-
-  handleSave() {
-    this.modalError = "";
-    if (!this._validate()) return;
+  async handleSave() {
+    this.modalError = this._validate() || "";
+    if (this.modalError) return;
 
     this.isSaving = true;
-    const puid = this._session ? this._session.portalUserId : "";
-    const tok = getSessionToken();
-
-    const cleanPayables = this.payableLines.map((line) =>
-      stripClientFields(line, [
-        "_key",
-        "_statusPending",
-        "_statusPaid",
-        "_statusWaived"
-      ])
-    );
-    const cleanReceivables = this.receivableLines.map((line) =>
-      stripClientFields(line, [
-        "_key",
-        "_statusPending",
-        "_statusRecovered",
-        "_statusWaived"
-      ])
-    );
-
-    saveSettlement({
-      settlementJson: JSON.stringify(this.currentRecord),
-      payablesJson: JSON.stringify(cleanPayables),
-      receivablesJson: JSON.stringify(cleanReceivables),
-      portalUserId: puid,
-      sessionToken: tok
-    })
-      .then(() => {
-        this.isSaving = false;
-        this.showModal = false;
-        this._loadSettlements();
-      })
-      .catch((err) => {
-        this.isSaving = false;
-        this.modalError = err.body ? err.body.message : err.message;
+    const isNew = !this.currentRecord.Id;
+    const payload = { Id: this.currentRecord.Id };
+    EDITABLE_FIELDS.forEach((field) => {
+      payload[field] = this.currentRecord[field] || null;
+    });
+    const serializeLines = (lines) =>
+      JSON.stringify(
+        lines.map((line) => ({
+          Name: line.Name || null,
+          Component__c: line.Component__c || null,
+          Reference_Document__c: line.Reference_Document__c || null,
+          Account__c: line.Account__c || null,
+          Amount__c: parseFloat(line.Amount__c) || 0,
+          Status__c: line.Status__c || "Pending"
+        }))
+      );
+    try {
+      await saveSettlement({
+        settlementJson: JSON.stringify(payload),
+        payablesJson: serializeLines(this.payableLines),
+        receivablesJson: serializeLines(this.receivableLines),
+        ...this._authParams
       });
+      this.showModal = false;
+      this._toast(
+        "Success",
+        isNew ? "Settlement created." : "Settlement updated.",
+        "success"
+      );
+      await this._loadSettlements();
+    } catch (error) {
+      const message = reduceError(error, "Failed to save the settlement.");
+      this.modalError = message;
+      this._toast("Error", message, "error");
+    } finally {
+      this.isSaving = false;
+    }
   }
 
-  // ─── Modal Close ──────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
+  // Status workflow and delete
+  // ─────────────────────────────────────────────────────────────────────────
 
-  handleModalClose() {
-    this.showModal = false;
+  async handleStatusAction(event) {
+    const { id, status } = event.currentTarget.dataset;
+    const rec = this.enrichedSettlements.find((s) => s.Id === id);
+    if (!rec || this.actionPendingId) return;
+
+    if (status === STATUS.PAID || status === STATUS.CANCELLED) {
+      const confirmed = await LightningConfirm.open({
+        label:
+          status === STATUS.PAID
+            ? "Mark settlement as paid?"
+            : "Cancel settlement?",
+        theme: "warning",
+        message:
+          status === STATUS.PAID
+            ? `Mark ${rec.Name} for ${rec.employeeName} as paid (net ${rec.netPayableFormatted})? Paid settlements can no longer be edited.`
+            : `Cancel ${rec.Name} for ${rec.employeeName}? Cancelled settlements can no longer be edited.`
+      });
+      if (!confirmed) return;
+    }
+
+    this.actionPendingId = id;
+    try {
+      await updateSettlementStatus({
+        settlementId: id,
+        newStatus: status,
+        ...this._authParams
+      });
+      this._toast("Success", STATUS_SUCCESS[status], "success");
+      await this._loadSettlements();
+    } catch (error) {
+      this._toast(
+        "Error",
+        reduceError(error, "Failed to update the settlement status."),
+        "error"
+      );
+    } finally {
+      this.actionPendingId = null;
+    }
   }
-}
 
-function stripClientFields(record, fields) {
-  const cleanRecord = { ...record };
-  fields.forEach((field) => {
-    delete cleanRecord[field];
-  });
-  return cleanRecord;
+  async handleDelete(event) {
+    const id = event.currentTarget.dataset.id;
+    if (!id || this.actionPendingId) return;
+    const confirmed = await LightningConfirm.open({
+      message:
+        "Delete this settlement and its payable and receivable lines? This cannot be undone.",
+      label: "Delete settlement?",
+      theme: "warning"
+    });
+    if (!confirmed) return;
+    this.actionPendingId = id;
+    try {
+      await deleteSettlement({ settlementId: id, ...this._authParams });
+      this._toast("Success", "Settlement deleted.", "success");
+      await this._loadSettlements();
+    } catch (error) {
+      this._toast(
+        "Error",
+        reduceError(error, "Failed to delete the settlement."),
+        "error"
+      );
+    } finally {
+      this.actionPendingId = null;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // View
+  // ─────────────────────────────────────────────────────────────────────────
+
+  get hasViewPayables() {
+    return this.viewPayables.length > 0;
+  }
+
+  get hasViewReceivables() {
+    return this.viewReceivables.length > 0;
+  }
+
+  async handleView(event) {
+    const id = event.currentTarget.dataset.id;
+    const found = this.enrichedSettlements.find((s) => s.Id === id);
+    if (!found) return;
+    this.viewRecord = found;
+    this.viewPayables = [];
+    this.viewReceivables = [];
+    this.showViewModal = true;
+    this.viewLinesLoading = true;
+    const decorate = (line) => ({
+      ...line,
+      amountFormatted: formatMoney(line.Amount__c ?? 0),
+      label: line.Component__c || line.Name
+    });
+    try {
+      const [pays, recs] = await Promise.all([
+        getPayables({ settlementId: id, ...this._authParams }),
+        getReceivables({ settlementId: id, ...this._authParams })
+      ]);
+      this.viewPayables = (pays || []).map(decorate);
+      this.viewReceivables = (recs || []).map(decorate);
+    } catch (error) {
+      this._toast(
+        "Error",
+        reduceError(error, "Failed to load the settlement lines."),
+        "error"
+      );
+    } finally {
+      this.viewLinesLoading = false;
+    }
+  }
+
+  handleViewClose() {
+    this.showViewModal = false;
+    this.viewRecord = null;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Misc
+  // ─────────────────────────────────────────────────────────────────────────
+
+  _toast(title, message, variant) {
+    this.dispatchEvent(new ShowToastEvent({ title, message, variant }));
+  }
+
+  handleHome(evt) {
+    evt?.preventDefault();
+    this[NavigationMixin.Navigate]({
+      type: "comm__namedPage",
+      attributes: { name: "Home" }
+    });
+  }
 }

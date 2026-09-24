@@ -1,6 +1,8 @@
-import getAttendanceAdminRows from "@salesforce/apex/PWChrono_AttendanceController.getAttendanceAdminRows";
+import getAttendanceAdminRows from "@salesforce/apex/PWChrono_PortalApi.getAttendanceAdminRows";
+import getUserAccessById from "@salesforce/apex/PWChrono_AccessController.getUserAccessById";
 import { logError } from "c/pwchronoErrorHandler";
 import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
+import { downloadCsv } from "c/pwchronoCsv";
 import { NavigationMixin } from "lightning/navigation";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { LightningElement, track } from "lwc";
@@ -12,6 +14,10 @@ export default class PwchronoAttendanceAdmin extends NavigationMixin(
   @track allAttendanceData = [];
   @track isLoading = false;
   @track reportData = null;
+  @track accessLoaded = false;
+  @track hasAccess = false;
+  @track canManage = false;
+  @track accessRole = "";
 
   // Metrics
   @track metrics = {
@@ -40,7 +46,55 @@ export default class PwchronoAttendanceAdmin extends NavigationMixin(
   connectedCallback() {
     this.employeeId = getEmployeeId();
     this.sessionToken = getSessionToken();
-    this.loadAttendance();
+    this.initializeAccess();
+  }
+
+  async initializeAccess() {
+    try {
+      const access = await getUserAccessById({
+        employeeId: this.employeeId,
+        sessionToken: this.sessionToken
+      });
+      const features = access?.features || [];
+      this.hasAccess =
+        features.includes("Attendance Team") ||
+        features.includes("Attendance Administration");
+      this.canManage = features.includes("Attendance Administration");
+      this.accessRole = access?.role || "";
+      if (this.hasAccess) {
+        await this.loadAttendance();
+      }
+    } catch (error) {
+      logError("pwchronoAttendanceAdmin.initializeAccess", error);
+      this.hasAccess = false;
+    } finally {
+      this.accessLoaded = true;
+    }
+  }
+
+  get isAccessLoading() {
+    return !this.accessLoaded;
+  }
+
+  get isAccessDenied() {
+    return this.accessLoaded && !this.hasAccess;
+  }
+
+  get pageTitle() {
+    return this.canManage ? "Attendance Administration" : "Team Attendance";
+  }
+
+  get pageDescription() {
+    return this.canManage
+      ? "Review and manage attendance across the organization."
+      : "Review attendance for employees within your assigned scope.";
+  }
+
+  get employeeOptions() {
+    return this.allAttendanceData.map((record) => ({
+      label: record.employeeName,
+      value: record.Employees__c
+    }));
   }
 
   renderedCallback() {
@@ -75,6 +129,31 @@ export default class PwchronoAttendanceAdmin extends NavigationMixin(
     this.showExportDropdown = !this.showExportDropdown;
     this.showStatusDropdown = false;
     this.showDeptDropdown = false;
+  }
+
+  handleExportCsv() {
+    downloadCsv(
+      "team-attendance.csv",
+      [
+        "Employee",
+        "Role",
+        "Date",
+        "Check in",
+        "Check out",
+        "Working hours",
+        "Status"
+      ],
+      this.attendanceData.map((record) => [
+        record.employeeName,
+        record.role,
+        record.Attendance_Date__c,
+        record.From_Time__c,
+        record.To_Time__c,
+        record.productionHours,
+        record.Status__c
+      ])
+    );
+    this.showExportDropdown = false;
   }
 
   toggleStatusDropdown(event) {
@@ -127,6 +206,8 @@ export default class PwchronoAttendanceAdmin extends NavigationMixin(
           From_Time__c: record.checkIn,
           To_Time__c: record.checkOut,
           Status__c: record.status,
+          Request_Status__c: record.requestStatus || "Approved",
+          Correction_Type__c: record.correctionType || "Other",
           employeeName: record.employeeName || "Unknown",
           role: record.role || "Employee",
           hasAttendanceRecord: Boolean(record.attendanceRecordId),
@@ -135,7 +216,7 @@ export default class PwchronoAttendanceAdmin extends NavigationMixin(
             record.checkIn,
             record.checkOut
           ),
-          overtime: "0h" // Placeholder logic
+          overtime: "—"
         }));
         this.attendanceData = [...this.allAttendanceData];
         this.calculateMetrics();
@@ -160,17 +241,20 @@ export default class PwchronoAttendanceAdmin extends NavigationMixin(
     const absent = this.attendanceData.filter(
       (r) => r.Status__c === "Absent"
     ).length;
-    const onLeave = this.attendanceData.filter(
-      (r) => r.Status__c === "On Leave"
+    const onLeave = this.attendanceData.filter((r) =>
+      ["On Leave", "Leave"].includes(r.Status__c)
+    ).length;
+    const holiday = this.attendanceData.filter(
+      (r) => r.Status__c === "Holiday"
     ).length;
 
     this.metrics = {
-      totalEmployees: total, // This should ideally be total active employees, but using record count for now
+      totalEmployees: total,
       present,
       late,
       absent,
       onLeave,
-      holiday: 0 // Placeholder
+      holiday
     };
   }
 
@@ -197,8 +281,16 @@ export default class PwchronoAttendanceAdmin extends NavigationMixin(
 
   calculateProductionHours(start, end) {
     if (!start || !end) return "0h";
-    // Simple calculation placeholder. Real logic needs Time parsing.
-    return "8h";
+    const startTime = new Date(`1970-01-01T${String(start).replace("Z", "")}Z`);
+    const endTime = new Date(`1970-01-01T${String(end).replace("Z", "")}Z`);
+    if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) {
+      return "—";
+    }
+    let minutes = Math.round((endTime - startTime) / 60000);
+    if (minutes < 0) minutes += 24 * 60;
+    const hours = Math.floor(minutes / 60);
+    const remainder = minutes % 60;
+    return `${hours}h ${String(remainder).padStart(2, "0")}m`;
   }
 
   handleDateFilter(event) {
@@ -247,8 +339,8 @@ export default class PwchronoAttendanceAdmin extends NavigationMixin(
       status,
       totalWorking: productive,
       productive,
-      breakHours: "00m",
-      overtime: record.overtime || "0h"
+      breakHours: "—",
+      overtime: record.overtime || "—"
     };
   }
 
@@ -258,12 +350,18 @@ export default class PwchronoAttendanceAdmin extends NavigationMixin(
   @track selectedRecord;
 
   handleNewAttendance() {
+    if (!this.canManage) {
+      return;
+    }
     this.selectedRecordId = null;
     this.selectedRecord = null;
     this.showModal = true;
   }
 
   handleEdit(event) {
+    if (!this.canManage) {
+      return;
+    }
     const id = event.currentTarget.dataset.id;
     this.selectedRecordId = id;
     this.selectedRecord = this.allAttendanceData.find((r) => r.Id === id);

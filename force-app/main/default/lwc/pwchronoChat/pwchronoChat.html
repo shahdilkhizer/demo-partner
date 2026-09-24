@@ -1,28 +1,27 @@
 <template>
   <section class="chat-access-card field-card text-center">
-    <span class="chat-access-icon" aria-hidden="true">
-      <i class="fa-solid fa-comments"></i>
-    </span>
-    <h3 class="mt-3 mb-2">Private Chatter messages</h3>
+    <span class="chat-access-icon" aria-hidden="true"
+      ><i class="fa-solid fa-comments"></i
+    ></span>
+    <h3 class="mt-3 mb-2">Salesforce Chatter</h3>
     <p class="text-muted mb-4">
-      Conversations are handled by Salesforce Chatter and are visible only to
-      their participants. PWChrono does not copy messages into portal records.
+      Open Chatter using the Salesforce or Chatter Free account assigned by your
+      administrator.
     </p>
-
-    <template if:true={showSignIn}>
-      <a class="btn btn-primary" href={chatterLoginUrl}>
-        <i class="fa-solid fa-right-to-bracket me-2"></i>
-        Sign in with Chatter Free
-      </a>
-      <p class="small text-muted mt-3 mb-0">
-        Use the Chatter Free account assigned by your administrator.
-      </p>
+    <template if:true={chatterLoginUrl}>
+      <a
+        class="btn btn-primary"
+        href={chatterLoginUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        >{actionLabel}</a
+      >
+      <p class="small text-muted mt-3">Opens in a new tab.</p>
     </template>
-
-    <template if:true={isAuthenticatedChatterUser}>
-      <button class="btn btn-primary" type="button" onclick={openChatter}>
-        <i class="fa-solid fa-arrow-up-right-from-square me-2"></i>
-        Open private messages
+    <template if:true={errorMessage}>
+      <p role="alert">{errorMessage}</p>
+      <button class="btn btn-primary" type="button" onclick={loadChatterUrl}>
+        Retry
       </button>
     </template>
   </section>

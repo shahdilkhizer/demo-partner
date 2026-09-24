@@ -180,6 +180,10 @@
         <apexClass>PWChrono_Utils</apexClass>
         <enabled>true</enabled>
     </classAccesses>
+    <classAccesses>
+        <apexClass>PWChrono_WorkLogController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <description>Provides Guest Users access to all necessary Apex controllers and portal objects for the Pulse Work Chrono Experience Cloud site.</description>
     <hasActivationRequired>false</hasActivationRequired>
     <label>PWChrono Guest Access</label>
@@ -559,6 +563,15 @@
         <allowRead>true</allowRead>
         <modifyAllRecords>false</modifyAllRecords>
         <object>PWChrono_User_Feature_Access__c</object>
+        <viewAllRecords>false</viewAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <object>PWChrono_Work_Log__c</object>
         <viewAllRecords>false</viewAllRecords>
     </objectPermissions>
     <objectPermissions>

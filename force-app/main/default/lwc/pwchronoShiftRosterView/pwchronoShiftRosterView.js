@@ -1,5 +1,5 @@
 import { LightningElement, track } from "lwc";
-import getMyShiftAssignments from "@salesforce/apex/PWChrono_AttendanceController.getMyShiftAssignments";
+import getMyShiftAssignments from "@salesforce/apex/PWChrono_PortalApi.getMyShiftAssignments";
 import { showErrorToast, logError } from "c/pwchronoErrorHandler";
 import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
 

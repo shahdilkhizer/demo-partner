@@ -1,8 +1,9 @@
 import { LightningElement, track, wire } from "lwc";
 import getUserAccessById from "@salesforce/apex/PWChrono_AccessController.getUserAccessById";
-import getAttendanceTrackerDataForEmployee from "@salesforce/apex/PWChrono_AttendanceController.getAttendanceTrackerDataForEmployee";
+import getAttendanceTrackerDataForEmployee from "@salesforce/apex/PWChrono_PortalApi.getAttendanceTrackerDataForEmployee";
 import { showErrorToast, logError } from "c/pwchronoErrorHandler";
 import { getSession, getEmployeeId, getSessionToken } from "c/pwchronoSession";
+import { downloadCsv } from "c/pwchronoCsv";
 import { CurrentPageReference, NavigationMixin } from "lightning/navigation";
 
 const MONTH_NAMES = [
@@ -24,6 +25,23 @@ export default class PwchronoAttendanceTracker extends NavigationMixin(
   LightningElement
 ) {
   @track currentDate = new Date();
+  showReport = false;
+  openReport(event) {
+    event?.preventDefault();
+    this.setDefaultReportData();
+    this.showReport = true;
+  }
+  closeReport() {
+    this.showReport = false;
+  }
+  handleDateSort(event) {
+    const direction = event.target.value === "asc" ? 1 : -1;
+    this.attendanceData = [...this.attendanceData].sort(
+      (a, b) =>
+        String(a.attendanceDate).localeCompare(String(b.attendanceDate)) *
+        direction
+    );
+  }
   @track attendanceData = [];
   @track isLoading = false;
   @track error = null;
@@ -102,6 +120,13 @@ export default class PwchronoAttendanceTracker extends NavigationMixin(
     );
   }
 
+  get employeeOptions() {
+    const employeeId = this.targetEmployeeId || this.employeeId;
+    return employeeId
+      ? [{ label: this.userName || "Employee", value: employeeId }]
+      : [];
+  }
+
   handleBackToAdmin() {
     this[NavigationMixin.Navigate]({
       type: "comm__namedPage",
@@ -176,6 +201,33 @@ export default class PwchronoAttendanceTracker extends NavigationMixin(
     this.showExportDropdown = !this.showExportDropdown;
     this.showStatusDropdown = false;
     this.showDateRangeDropdown = false;
+  }
+
+  handleExportCsv() {
+    downloadCsv(
+      "my-attendance.csv",
+      [
+        "Date",
+        "Check in",
+        "Check out",
+        "Working hours",
+        "Shift start",
+        "Shift end",
+        "Break",
+        "Status"
+      ],
+      this.attendanceData.map((day) => [
+        day.formattedDate,
+        day.formattedCheckIn,
+        day.formattedCheckOut,
+        day.productionHours,
+        day.formattedShiftStart,
+        day.formattedShiftEnd,
+        day.breakTime,
+        day.displayStatus
+      ])
+    );
+    this.showExportDropdown = false;
   }
 
   toggleStatusDropdown(event) {
@@ -463,7 +515,7 @@ export default class PwchronoAttendanceTracker extends NavigationMixin(
       totalWorking: day.productionHours || "--",
       productive: day.productionHours || "--",
       breakHours: day.breakTime || "00 Min",
-      overtime: "0h"
+      overtime: "Not recorded"
     };
   }
 

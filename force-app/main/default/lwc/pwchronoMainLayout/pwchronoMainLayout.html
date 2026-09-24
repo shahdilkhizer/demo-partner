@@ -86,12 +86,17 @@
     <template if:true={shouldRenderPortalChrome}>
       <c-pwchrono-header
         onlogout={handleLogout}
+        onsearch={handleMenuSearch}
+        search-term={menuSearchTerm}
+        logout-pending={logoutPending}
         onnavigate={handleChildNavigate}
         ontogglesidebar={handleSidebarToggle}
       >
       </c-pwchrono-header>
 
       <c-pwchrono-sidebar
+        onsearch={handleMenuSearch}
+        search-term={menuSearchTerm}
         features={features}
         is-salesforce-user={isSalesforceUser}
         application-mode={applicationNavigationEnabled}
@@ -99,6 +104,10 @@
         onnavigate={handleChildNavigate}
       >
       </c-pwchrono-sidebar>
+    </template>
+
+    <template if:true={logoutError}>
+      <div class="alert alert-danger" role="alert">{logoutError}</div>
     </template>
 
     <!-- Page Content Slot -->

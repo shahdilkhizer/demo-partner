@@ -65,7 +65,7 @@ private class PWChrono_TrainingController_Test {
 
     System.runAs(testUser) {
       Test.startTest();
-      List<PWChrono_Training_Attendance__c> registrations = PWChrono_TrainingController.getMyRegistrations(
+      List<PWChrono_Training_Attendance__c> registrations = PWChrono_PortalApi.getMyRegistrations(
         null,
         null
       );
@@ -91,7 +91,7 @@ private class PWChrono_TrainingController_Test {
 
     System.runAs(testUser) {
       Test.startTest();
-      PWChrono_TrainingController.registerForTraining(event.Id, null, null);
+      PWChrono_PortalApi.registerForTraining(event.Id, null, null);
       Test.stopTest();
 
       List<PWChrono_Training_Attendance__c> registrations = [
@@ -114,7 +114,7 @@ private class PWChrono_TrainingController_Test {
 
     System.runAs(testUser) {
       Test.startTest();
-      PWChrono_TrainingController.cancelRegistration(attendance.Id, null, null);
+      PWChrono_PortalApi.cancelRegistration(attendance.Id, null, null);
       Test.stopTest();
 
       List<PWChrono_Training_Attendance__c> registrations = [
@@ -137,7 +137,7 @@ private class PWChrono_TrainingController_Test {
     System.runAs(adminUser) {
       Test.startTest();
       try {
-        PWChrono_TrainingController.getMyRegistrations(null, null);
+        PWChrono_PortalApi.getMyRegistrations(null, null);
         System.assert(false, 'Should throw exception');
       } catch (AuraHandledException e) {
         System.assert(true);

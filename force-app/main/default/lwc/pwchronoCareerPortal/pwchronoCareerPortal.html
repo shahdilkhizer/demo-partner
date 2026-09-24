@@ -1,0 +1,414 @@
+<template>
+  <div class="pwchrono-career-portal">
+    <!-- Header -->
+    <div class="page-header mb-4">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+          <h4 class="mb-1 fw-semibold">
+            <i class="fa-solid fa-briefcase fa-fw me-2 text-primary"></i>Career Portal
+          </h4>
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0 small">
+              <li class="breadcrumb-item">Recruitment</li>
+              <li class="breadcrumb-item active">Career Portal</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body py-3">
+        <div class="row g-2 align-items-end">
+          <div class="col-12 col-md-4">
+            <label class="form-label small fw-semibold mb-1">Search</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-white">
+                <i class="fa-solid fa-magnifying-glass text-muted"></i>
+              </span>
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Job title or keyword..."
+                value={filters.keyword}
+                data-field="keyword"
+                onchange={handleFilterChange}
+              />
+            </div>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label small fw-semibold mb-1">Department</label>
+            <select
+              class="form-select form-select-sm"
+              value={filters.departmentId}
+              data-field="departmentId"
+              onchange={handleFilterChange}
+            >
+              <option value="">All Departments</option>
+              <template for:each={departmentOptions} for:item="d">
+                <option key={d.value} value={d.value}>{d.label}</option>
+              </template>
+            </select>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label small fw-semibold mb-1">Employment Type</label>
+            <select
+              class="form-select form-select-sm"
+              value={filters.employmentType}
+              data-field="employmentType"
+              onchange={handleFilterChange}
+            >
+              <option value="">All Types</option>
+              <option value="Full Time">Full Time</option>
+              <option value="Part Time">Part Time</option>
+              <option value="Contract">Contract</option>
+              <option value="Internship">Internship</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label small fw-semibold mb-1">Company</label>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Company..."
+              value={filters.company}
+              data-field="company"
+              onchange={handleFilterChange}
+            />
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label small fw-semibold mb-1">Location</label>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Location..."
+              value={filters.location}
+              data-field="location"
+              onchange={handleFilterChange}
+            />
+          </div>
+        </div>
+        <div class="mt-2 d-flex gap-2">
+          <button class="btn btn-primary btn-sm" onclick={handleSearch}>
+            <i class="fa-solid fa-magnifying-glass fa-fw me-1"></i>Search
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" onclick={handleClearFilters}>
+            <i class="fa-solid fa-rotate-left fa-fw me-1"></i>Clear
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading spinner -->
+    <template if:true={isLoading}>
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-muted small">Loading job openings...</p>
+      </div>
+    </template>
+
+    <!-- Results count -->
+    <template if:false={isLoading}>
+      <p class="text-muted small mb-3">
+        Showing <strong>{jobCount}</strong> open position{jobCountPlural}
+      </p>
+
+      <!-- Empty state -->
+      <template if:true={isEmpty}>
+        <div class="text-center py-5">
+          <i class="fa-solid fa-folder-open fa-3x text-muted mb-3"></i>
+          <h6 class="text-muted">No job openings found</h6>
+          <p class="text-muted small">Try adjusting your filters.</p>
+        </div>
+      </template>
+
+      <!-- Job Cards Grid -->
+      <template if:false={isEmpty}>
+        <div class="row g-3">
+          <template for:each={jobs} for:item="job">
+            <div key={job.Id} class="col-12 col-md-6 col-lg-4">
+              <div class="card h-100 border-0 shadow-sm job-card">
+                <div class="card-body d-flex flex-column">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class={job.employmentTypeBadge}>{job.Employment_Type__c}</span>
+                    <small class="text-muted">
+                      <i class="fa-regular fa-calendar fa-fw me-1"></i>{job.formattedClosingDate}
+                    </small>
+                  </div>
+                  <h6 class="fw-semibold mb-1">{job.Name}</h6>
+                  <p class="text-muted small mb-1">
+                    <i class="fa-solid fa-building fa-fw me-1"></i>{job.Company__c}
+                  </p>
+                  <p class="text-muted small mb-1">
+                    <i class="fa-solid fa-layer-group fa-fw me-1"></i>{job.departmentName}
+                  </p>
+                  <p class="text-muted small mb-2">
+                    <i class="fa-solid fa-location-dot fa-fw me-1"></i>{job.Location__c}
+                  </p>
+                  <p class="text-muted small flex-grow-1 description-preview">{job.descriptionPreview}</p>
+                  <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                    <small class="text-muted">
+                      <i class="fa-solid fa-user-group fa-fw me-1"></i>{job.No_of_Positions__c} position{job.positionsPlural}
+                    </small>
+                    <button
+                      class="btn btn-primary btn-sm"
+                      data-id={job.Id}
+                      onclick={handleViewJob}
+                    >
+                      View &amp; Apply
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
+    </template>
+
+    <!-- Job Detail Modal -->
+    <template if:true={isDetailOpen}>
+      <div class="modal fade show d-block" tabindex="-1" role="dialog"
+           style="background:rgba(0,0,0,0.5)">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+          <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+              <h5 class="modal-title fw-semibold">
+                <i class="fa-solid fa-briefcase fa-fw me-2 text-primary"></i>{selectedJob.Name}
+              </h5>
+              <button type="button" class="btn-close" onclick={handleCloseDetail}></button>
+            </div>
+            <div class="modal-body">
+              <div class="row g-3 mb-3">
+                <div class="col-6 col-md-3">
+                  <div class="small text-muted">Company</div>
+                  <div class="fw-semibold small">{selectedJob.Company__c}</div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="small text-muted">Department</div>
+                  <div class="fw-semibold small">{selectedJob.departmentName}</div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="small text-muted">Location</div>
+                  <div class="fw-semibold small">{selectedJob.Location__c}</div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="small text-muted">Employment Type</div>
+                  <div class="fw-semibold small">{selectedJob.Employment_Type__c}</div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="small text-muted">Designation</div>
+                  <div class="fw-semibold small">{selectedJob.designationName}</div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="small text-muted">Positions</div>
+                  <div class="fw-semibold small">{selectedJob.No_of_Positions__c}</div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="small text-muted">Closing Date</div>
+                  <div class="fw-semibold small">{selectedJob.formattedClosingDate}</div>
+                </div>
+              </div>
+              <h6 class="fw-semibold mb-2">Job Description</h6>
+              <p class="text-muted small" style="white-space:pre-wrap">{selectedJob.Job_Description__c}</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick={handleCloseDetail}>Close</button>
+              <button type="button" class="btn btn-primary btn-sm" onclick={handleOpenApply}>
+                <i class="fa-solid fa-paper-plane fa-fw me-1"></i>Apply Now
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Apply Modal -->
+    <template if:true={isApplyOpen}>
+      <div class="modal fade show d-block" tabindex="-1" role="dialog"
+           style="background:rgba(0,0,0,0.5)">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+          <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+              <h5 class="modal-title fw-semibold">
+                <i class="fa-solid fa-paper-plane fa-fw me-2 text-primary"></i>Apply — {selectedJob.Name}
+              </h5>
+              <button type="button" class="btn-close" onclick={handleCloseApply}></button>
+            </div>
+            <div class="modal-body">
+              <div class="row g-3">
+                <!-- Applicant Name -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label small fw-semibold">Applicant Name <span class="text-danger">*</span></label>
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    value={applyRecord.Name}
+                    data-field="Name"
+                    onchange={handleApplyChange}
+                    placeholder="Full name"
+                  />
+                </div>
+                <!-- Email -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label small fw-semibold">Email Address <span class="text-danger">*</span></label>
+                  <input
+                    type="email"
+                    class="form-control form-control-sm"
+                    value={applyRecord.Email__c}
+                    data-field="Email__c"
+                    onchange={handleApplyChange}
+                    placeholder="email@example.com"
+                  />
+                </div>
+                <!-- Phone -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label small fw-semibold">Phone Number</label>
+                  <input
+                    type="tel"
+                    class="form-control form-control-sm"
+                    value={applyRecord.Phone__c}
+                    data-field="Phone__c"
+                    onchange={handleApplyChange}
+                    placeholder="+1-555-0100"
+                  />
+                </div>
+                <!-- Country -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label small fw-semibold">Country of Residence</label>
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    value={applyRecord.Country__c}
+                    data-field="Country__c"
+                    onchange={handleApplyChange}
+                    placeholder="Country"
+                  />
+                </div>
+                <!-- Source -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label small fw-semibold">Source</label>
+                  <select
+                    class="form-select form-select-sm"
+                    value={applyRecord.Source__c}
+                    data-field="Source__c"
+                    onchange={handleApplyChange}
+                  >
+                    <option value="">-- Select --</option>
+                    <option value="Website">Website</option>
+                    <option value="Referral">Referral</option>
+                    <option value="Recruiter">Recruiter</option>
+                    <option value="Job Board">Job Board</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <!-- Expected Salary -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label small fw-semibold">Expected Salary</label>
+                  <input
+                    type="number"
+                    class="form-control form-control-sm"
+                    value={applyRecord.Expected_Salary__c}
+                    data-field="Expected_Salary__c"
+                    onchange={handleApplyChange}
+                    min="0"
+                    placeholder="0.00"
+                  />
+                </div>
+                <!-- Salary Range -->
+                <div class="col-6">
+                  <label class="form-label small fw-semibold">Lower Salary Range</label>
+                  <input
+                    type="number"
+                    class="form-control form-control-sm"
+                    value={applyRecord.Lower_Salary_Range__c}
+                    data-field="Lower_Salary_Range__c"
+                    onchange={handleApplyChange}
+                    min="0"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div class="col-6">
+                  <label class="form-label small fw-semibold">Upper Salary Range</label>
+                  <input
+                    type="number"
+                    class="form-control form-control-sm"
+                    value={applyRecord.Upper_Salary_Range__c}
+                    data-field="Upper_Salary_Range__c"
+                    onchange={handleApplyChange}
+                    min="0"
+                    placeholder="0.00"
+                  />
+                </div>
+                <!-- Resume Link -->
+                <div class="col-12">
+                  <label class="form-label small fw-semibold">Resume Link</label>
+                  <input
+                    type="url"
+                    class="form-control form-control-sm"
+                    value={applyRecord.Resume__c}
+                    data-field="Resume__c"
+                    onchange={handleApplyChange}
+                    placeholder="https://..."
+                  />
+                </div>
+                <!-- Cover Letter -->
+                <div class="col-12">
+                  <label class="form-label small fw-semibold">Cover Letter</label>
+                  <textarea
+                    class="form-control form-control-sm"
+                    rows="5"
+                    value={applyRecord.Cover_Letter__c}
+                    data-field="Cover_Letter__c"
+                    onchange={handleApplyChange}
+                    placeholder="Tell us why you're a great fit..."
+                  ></textarea>
+                </div>
+              </div>
+
+              <!-- Error -->
+              <template if:true={applyError}>
+                <div class="alert alert-danger mt-3 py-2 small" role="alert">
+                  <i class="fa-solid fa-circle-exclamation fa-fw me-1"></i>{applyError}
+                </div>
+              </template>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick={handleCloseApply} disabled={isSubmitting}>
+                Cancel
+              </button>
+              <button type="button" class="btn btn-primary btn-sm" onclick={handleSubmitApplication} disabled={isSubmitting}>
+                <template if:true={isSubmitting}>
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                  Submitting...
+                </template>
+                <template if:false={isSubmitting}>
+                  <i class="fa-solid fa-paper-plane fa-fw me-1"></i>Submit Application
+                </template>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Success Toast -->
+    <template if:true={showSuccessToast}>
+      <div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999">
+        <div class="toast show align-items-center text-bg-success border-0" role="alert">
+          <div class="d-flex">
+            <div class="toast-body">
+              <i class="fa-solid fa-circle-check fa-fw me-2"></i>
+              Application submitted successfully! We'll be in touch.
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                    onclick={handleDismissToast}></button>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+</template>

@@ -1,8 +1,8 @@
 import { LightningElement, track, wire } from "lwc";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { refreshApex } from "@salesforce/apex";
-import getMyAppraisals from "@salesforce/apex/PWChrono_PerformanceController.getMyAppraisals";
-import saveAppraisal from "@salesforce/apex/PWChrono_PerformanceController.saveAppraisal";
+import getMyAppraisals from "@salesforce/apex/PWChrono_PortalApi.getMyAppraisals";
+import saveAppraisal from "@salesforce/apex/PWChrono_PortalApi.saveAppraisal";
 import getUserAccessById from "@salesforce/apex/PWChrono_AccessController.getUserAccessById";
 import { getSession, getEmployeeId, getSessionToken } from "c/pwchronoSession";
 

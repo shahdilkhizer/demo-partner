@@ -1,15 +1,21 @@
+import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
 import { refreshApex } from "@salesforce/apex";
-import cancelRegistration from "@salesforce/apex/PWChrono_TrainingController.cancelRegistration";
-import getMyRegistrations from "@salesforce/apex/PWChrono_TrainingController.getMyRegistrations";
+import cancelRegistration from "@salesforce/apex/PWChrono_PortalApi.cancelRegistration";
+import getMyRegistrations from "@salesforce/apex/PWChrono_PortalApi.getMyRegistrations";
 import getUpcomingTrainings from "@salesforce/apex/PWChrono_TrainingController.getUpcomingTrainings";
-import registerForTraining from "@salesforce/apex/PWChrono_TrainingController.registerForTraining";
+import registerForTraining from "@salesforce/apex/PWChrono_PortalApi.registerForTraining";
 import LightningConfirm from "lightning/confirm";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { LightningElement, track, wire } from "lwc";
 
 const COLUMNS = [
-  { label: "Program", fieldName: "ProgramName", sortable: true },
-  { label: "Start Date", fieldName: "StartDate", type: "date", sortable: true },
+  { label: "Program", fieldName: "ProgramName", sortable: false },
+  {
+    label: "Start Date",
+    fieldName: "StartDate",
+    type: "date",
+    sortable: false
+  },
   { label: "Location", fieldName: "Location" },
   { label: "Attended", fieldName: "Attended__c", type: "boolean" },
   {
@@ -25,6 +31,12 @@ const COLUMNS = [
 ];
 
 export default class PwchronoTrainingRegistration extends LightningElement {
+  static renderMode = "light";
+  employeeId = getEmployeeId();
+  sessionToken = getSessionToken();
+  get sessionParams() {
+    return { portalUserId: getEmployeeId(), sessionToken: getSessionToken() };
+  }
   @track upcomingTrainings;
   @track allRegistrations = [];
   @track myRegistrations = [];
@@ -39,6 +51,10 @@ export default class PwchronoTrainingRegistration extends LightningElement {
 
   wiredUpcomingResult;
   wiredRegistrationsResult;
+
+  get pageSizeValue() {
+    return String(this.pageSize);
+  }
 
   pageSizeOptions = [
     { label: "5", value: "5" },
@@ -61,7 +77,10 @@ export default class PwchronoTrainingRegistration extends LightningElement {
     this.isLoading = false;
   }
 
-  @wire(getMyRegistrations)
+  @wire(getMyRegistrations, {
+    portalUserId: "$employeeId",
+    sessionToken: "$sessionToken"
+  })
   wiredRegistrations(result) {
     this.wiredRegistrationsResult = result;
     if (result.data) {
@@ -154,8 +173,8 @@ export default class PwchronoTrainingRegistration extends LightningElement {
   }
 
   handleRegister(event) {
-    const eventId = event.target.dataset.id;
-    registerForTraining({ eventId })
+    const eventId = event.currentTarget.dataset.id;
+    registerForTraining({ eventId, ...this.sessionParams })
       .then(() => {
         this.showToast("Success", "Registered successfully", "success");
         return Promise.all([
@@ -179,7 +198,7 @@ export default class PwchronoTrainingRegistration extends LightningElement {
         label: "Cancel Registration"
       }).then((result) => {
         if (result) {
-          cancelRegistration({ attendanceId: row.Id })
+          cancelRegistration({ attendanceId: row.Id, ...this.sessionParams })
             .then(() => {
               this.showToast("Success", "Registration cancelled", "success");
               return Promise.all([

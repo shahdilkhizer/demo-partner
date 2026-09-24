@@ -78,6 +78,41 @@ public inherited sharing class PWChrono_PayrollController {
     return verifiedPortalUserId;
   }
 
+  private static void requirePayrollAdminAccess(
+    String portalUserId,
+    String sessionToken
+  ) {
+    if (isGuestRuntime()) {
+      Id verifiedPortalUserId = resolveVerifiedPayrollPortalUserId(
+        portalUserId,
+        sessionToken
+      );
+      Portal_Users__c caller = [
+        SELECT Role__c
+        FROM Portal_Users__c
+        WHERE Id = :verifiedPortalUserId AND Is_Active__c = TRUE
+        LIMIT 1
+      ];
+      if (
+        caller.Role__c != PWChrono_Constants.ROLE_HR_ADMIN &&
+        caller.Role__c != PWChrono_AccessController.ROLE_PAYROLL_ADMIN &&
+        caller.Role__c != PWChrono_AccessController.ROLE_SYSTEM_ADMIN &&
+        caller.Role__c != 'System Admin'
+      ) {
+        throw new AuraHandledException('Unauthorized payroll administration.');
+      }
+      return;
+    }
+
+    if (
+      FeatureManagement.checkPermission('PWChrono_Send_Payslips') ||
+      PWChrono_AccessController.isAdmin(null)
+    ) {
+      return;
+    }
+    throw new AuraHandledException('Unauthorized payroll administration.');
+  }
+
   private static Id resolveTargetContactIdForNonGuest(String contactId) {
     if (
       String.isNotBlank(contactId) &&
@@ -123,7 +158,8 @@ public inherited sharing class PWChrono_PayrollController {
       'Gross_Pay__c, Total_Deductions__c, Net_Pay__c, ' +
       'Status__c, CreatedDate ' +
       'FROM PWChrono_Salary_Slip__c ' +
-      'WHERE Contact__c = :targetContactId ';
+      'WHERE Contact__c = :targetContactId ' +
+      'AND Status__c IN (\'Submitted\', \'Paid\') ';
 
     if (year != null) {
       query += 'AND CALENDAR_YEAR(Payroll_Period__c) = :year ';
@@ -247,6 +283,73 @@ public inherited sharing class PWChrono_PayrollController {
     return new Map<String, String>{ 'ccEmail' => '' };
   }
 
+  /** Returns payroll readiness, calculated previews and current run states. */
+  @AuraEnabled(cacheable=false)
+  public static PWChrono_PayrollRunService.PayrollWorkspaceDTO getPayrollWorkspace(
+    Date payrollPeriod,
+    String portalUserId,
+    String sessionToken
+  ) {
+    requirePayrollAdminAccess(portalUserId, sessionToken);
+    return PWChrono_PayrollRunService.getWorkspace(payrollPeriod);
+  }
+
+  /** Creates or updates an effective-dated employee salary assignment. */
+  @AuraEnabled
+  public static PWChrono_PayrollRunService.PayrollMutationResult saveSalaryAssignment(
+    Id contactId,
+    Decimal baseSalary,
+    Date effectiveDate,
+    String portalUserId,
+    String sessionToken
+  ) {
+    requirePayrollAdminAccess(portalUserId, sessionToken);
+    return PWChrono_PayrollRunService.saveSalaryAssignment(
+      contactId,
+      baseSalary,
+      effectiveDate
+    );
+  }
+
+  /** Generates or refreshes draft payslips for the selected month. */
+  @AuraEnabled
+  public static PWChrono_PayrollRunService.PayrollMutationResult generatePayrollDrafts(
+    Date payrollPeriod,
+    String portalUserId,
+    String sessionToken
+  ) {
+    requirePayrollAdminAccess(portalUserId, sessionToken);
+    return PWChrono_PayrollRunService.generateDrafts(payrollPeriod);
+  }
+
+  /** Locks and publishes draft payslips to employee self service. */
+  @AuraEnabled
+  public static PWChrono_PayrollRunService.PayrollMutationResult submitPayroll(
+    Date payrollPeriod,
+    String portalUserId,
+    String sessionToken
+  ) {
+    requirePayrollAdminAccess(portalUserId, sessionToken);
+    return PWChrono_PayrollRunService.submitPayroll(payrollPeriod);
+  }
+
+  /** Records the payment state without initiating an external bank transfer. */
+  @AuraEnabled
+  public static PWChrono_PayrollRunService.PayrollMutationResult markPayrollPaid(
+    Date payrollPeriod,
+    Date paymentDate,
+    String paymentMethod,
+    String portalUserId,
+    String sessionToken
+  ) {
+    requirePayrollAdminAccess(portalUserId, sessionToken);
+    return PWChrono_PayrollRunService.markPayrollPaid(
+      payrollPeriod,
+      paymentDate,
+      paymentMethod
+    );
+  }
+
   /**
    * @description Send Salary Slip via Email
    */
@@ -346,7 +449,10 @@ public inherited sharing class PWChrono_PayrollController {
           Earning_Details__c,
           Deduction_Details__c
         FROM PWChrono_Salary_Slip__c
-        WHERE Id = :salarySlipId AND Contact__c = :targetContactId
+        WHERE
+          Id = :salarySlipId
+          AND Contact__c = :targetContactId
+          AND Status__c IN ('Submitted', 'Paid')
         LIMIT 1
       ];
 

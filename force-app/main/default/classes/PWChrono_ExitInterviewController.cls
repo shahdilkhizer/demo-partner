@@ -1,137 +1,131 @@
 /**
- * @description Controller for the Exit Interview module.
- *              HR admins can manage all exit interviews; employees see only their own.
+ * @description Server API for the Exit Interview portal module.
+ *
+ *              Runs without sharing because portal requests execute as the
+ *              Experience Cloud site guest user and exit interview records use
+ *              a private external sharing model, so with-sharing queries would
+ *              return nothing for the guest. Authorization is enforced in code
+ *              instead: every @AuraEnabled method verifies the portal session
+ *              token and requires the Employee Lifecycle feature. Status
+ *              changes and deletes additionally require an administrator.
  */
-public inherited sharing class PWChrono_ExitInterviewController {
+public without sharing class PWChrono_ExitInterviewController {
+  public static final String STATUS_PENDING = 'Pending';
+  public static final String STATUS_SCHEDULED = 'Scheduled';
+  public static final String STATUS_COMPLETED = 'Completed';
+  public static final String STATUS_SKIPPED = 'Skipped';
+
+  private static final Set<String> INTERVIEW_STATUSES = new Set<String>{
+    STATUS_PENDING,
+    STATUS_SCHEDULED,
+    STATUS_COMPLETED,
+    STATUS_SKIPPED
+  };
+  private static final Set<String> EDITABLE_STATUSES = new Set<String>{
+    STATUS_PENDING,
+    STATUS_SCHEDULED
+  };
+  private static final Set<String> DELETABLE_STATUSES = new Set<String>{
+    STATUS_PENDING,
+    STATUS_SKIPPED
+  };
+  private static final Map<String, Set<String>> ALLOWED_TRANSITIONS = new Map<String, Set<String>>{
+    STATUS_PENDING => new Set<String>{
+      STATUS_SCHEDULED,
+      STATUS_COMPLETED,
+      STATUS_SKIPPED
+    },
+    STATUS_SCHEDULED => new Set<String>{ STATUS_COMPLETED, STATUS_SKIPPED }
+  };
+
+  /** Fields a client may set on an exit interview. Status is never client-set. */
+  private static final List<String> EDITABLE_FIELDS = new List<String>{
+    'Employee__c',
+    'Employee_Name__c',
+    'Department__c',
+    'Designation__c',
+    'Separation__c',
+    'Interviewer__c',
+    'Interview_Date__c',
+    'Exit_Questionnaire__c',
+    'Employee_Feedback__c',
+    'Final_Remarks__c',
+    'Rating__c'
+  };
+  private static final Set<String> ID_FIELDS = new Set<String>{
+    'Employee__c',
+    'Department__c',
+    'Designation__c',
+    'Separation__c',
+    'Interviewer__c'
+  };
+
+  private static final String INTERVIEW_SELECT =
+    'SELECT Id, Name, Employee__c, Employee__r.Name, Employee_Name__c,' +
+    ' Department__c, Department__r.Name, Designation__c, Designation__r.Name,' +
+    ' Separation__c, Separation__r.Name, Separation__r.Status__c,' +
+    ' Interviewer__c, Interviewer__r.Name, Interview_Date__c,' +
+    ' Exit_Questionnaire__c, Employee_Feedback__c, Final_Remarks__c,' +
+    ' Rating__c, Status__c' +
+    ' FROM PWChrono_Exit_Interview__c';
+
   // ─────────────────────────────────────────────────────────────────────────
-  // Private helpers
-  // ─────────────────────────────────────────────────────────────────────────
-
-  private static void requireAccess(String portalUserId, String sessionToken) {
-    PWChrono_GuestSession.requireVerifiedPortalUserId(
-      portalUserId,
-      sessionToken
-    );
-  }
-
-  private static Boolean isHrAdmin(String portalUserId) {
-    List<Portal_Users__c> users = [
-      SELECT Role__c
-      FROM Portal_Users__c
-      WHERE Id = :portalUserId
-      LIMIT 1
-    ];
-    return !users.isEmpty() &&
-      users[0].Role__c == PWChrono_Constants.ROLE_HR_ADMIN;
-  }
-
-  private static void requireHrAdmin(String portalUserId) {
-    if (!isHrAdmin(portalUserId)) {
-      throw new AuraHandledException('Access denied. HR Admin role required.');
-    }
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Interview list
+  // Interview list and detail
   // ─────────────────────────────────────────────────────────────────────────
 
   /**
-   * @description Returns exit interviews. HR admins see all; employees see their own.
+   * @description Returns exit interviews, most recent interview date first,
+   *              optionally filtered by status.
    */
-  @AuraEnabled(cacheable=true)
+  @AuraEnabled
   public static List<PWChrono_Exit_Interview__c> getInterviews(
     String statusFilter,
     String portalUserId,
     String sessionToken
   ) {
     try {
-      requireAccess(portalUserId, sessionToken);
-      Boolean isHR = isHrAdmin(portalUserId);
+      requireLifecycleAccess(portalUserId, sessionToken);
       Integer queryLimit = PWChrono_Constants.DEFAULT_QUERY_LIMIT;
-
-      String query =
-        'SELECT Id, Name, Employee__c, Employee__r.Name, Employee_Name__c,' +
-        ' Department__c, Department__r.Name,' +
-        ' Designation__c, Designation__r.Name,' +
-        ' Separation__c, Separation__r.Name,' +
-        ' Interviewer__c, Interviewer__r.Name,' +
-        ' Interview_Date__c, Rating__c, Status__c' +
-        ' FROM PWChrono_Exit_Interview__c';
-
-      List<String> filters = new List<String>();
-      if (!isHR) {
-        filters.add('Employee__c = :portalUserId');
-      }
+      String query = INTERVIEW_SELECT;
       if (String.isNotBlank(statusFilter) && statusFilter != 'All') {
-        filters.add('Status__c = :statusFilter');
+        query += ' WHERE Status__c = :statusFilter';
       }
-      if (!filters.isEmpty()) {
-        query += ' WHERE ' + String.join(filters, ' AND ');
-      }
-      query += ' ORDER BY Interview_Date__c DESC NULLS LAST LIMIT :queryLimit';
-
+      query += ' ORDER BY Interview_Date__c DESC NULLS LAST, CreatedDate DESC LIMIT :queryLimit';
       return Database.query(query);
-    } catch (Exception ex) {
-      PWChrono_Logger.error(
-        'PWChrono_ExitInterviewController.getInterviews',
-        ex
+    } catch (Exception e) {
+      throw toAuraException(
+        'getInterviews',
+        'Unable to load exit interviews.',
+        e
       );
-      throw new AuraHandledException(ex.getMessage());
     }
   }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Single interview
-  // ─────────────────────────────────────────────────────────────────────────
 
   /**
    * @description Returns a single exit interview by Id.
    */
-  @AuraEnabled(cacheable=true)
+  @AuraEnabled
   public static PWChrono_Exit_Interview__c getInterviewById(
     String interviewId,
     String portalUserId,
     String sessionToken
   ) {
     try {
-      requireAccess(portalUserId, sessionToken);
-      List<PWChrono_Exit_Interview__c> results = [
-        SELECT
-          Id,
-          Name,
-          Employee__c,
-          Employee__r.Name,
-          Employee_Name__c,
-          Department__c,
-          Department__r.Name,
-          Designation__c,
-          Designation__r.Name,
-          Separation__c,
-          Separation__r.Name,
-          Interviewer__c,
-          Interviewer__r.Name,
-          Interview_Date__c,
-          Exit_Questionnaire__c,
-          Employee_Feedback__c,
-          Final_Remarks__c,
-          Rating__c,
-          Status__c
-        FROM PWChrono_Exit_Interview__c
-        WHERE Id = :interviewId
-        LIMIT 1
-      ];
+      requireLifecycleAccess(portalUserId, sessionToken);
+      Id recordId = toId(interviewId);
+      List<PWChrono_Exit_Interview__c> results = Database.query(
+        INTERVIEW_SELECT + ' WHERE Id = :recordId LIMIT 1'
+      );
       if (results.isEmpty()) {
-        throw new AuraHandledException('Exit interview not found.');
+        throw handled('Exit interview not found.');
       }
       return results[0];
-    } catch (AuraHandledException ex) {
-      throw ex;
-    } catch (Exception ex) {
-      PWChrono_Logger.error(
-        'PWChrono_ExitInterviewController.getInterviewById',
-        ex
+    } catch (Exception e) {
+      throw toAuraException(
+        'getInterviewById',
+        'Unable to load the exit interview.',
+        e
       );
-      throw new AuraHandledException(ex.getMessage());
     }
   }
 
@@ -140,7 +134,12 @@ public inherited sharing class PWChrono_ExitInterviewController {
   // ─────────────────────────────────────────────────────────────────────────
 
   /**
-   * @description Creates or updates an exit interview record.
+   * @description Creates or updates an exit interview. New interviews start as
+   *              Pending and status changes use updateInterviewStatus.
+   *              Completed or skipped interviews cannot be edited. When a
+   *              separation is linked, blank employee, department and
+   *              designation values are taken from the separation.
+   * @return Id of the saved interview
    */
   @AuraEnabled
   public static String saveInterview(
@@ -149,101 +148,82 @@ public inherited sharing class PWChrono_ExitInterviewController {
     String sessionToken
   ) {
     try {
-      requireAccess(portalUserId, sessionToken);
+      requireLifecycleAccess(portalUserId, sessionToken);
+      Map<String, Object> payload = parseObject(interviewJson);
+      Id recordId = readId(payload, 'Id', 'exit interview');
+      PWChrono_Exit_Interview__c existing = recordId == null
+        ? null
+        : loadInterview(recordId);
+      if (existing != null && !EDITABLE_STATUSES.contains(existing.Status__c)) {
+        throw handled(
+          'This exit interview is ' +
+            existing.Status__c.toLowerCase() +
+            ' and can no longer be edited.'
+        );
+      }
 
-      Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(
-        interviewJson
+      PWChrono_Exit_Interview__c merged = existing == null
+        ? new PWChrono_Exit_Interview__c()
+        : existing.clone(true, true, false, false);
+      applyFields(merged, payload);
+
+      Boolean separationChanged =
+        merged.Separation__c != null &&
+        (existing == null ||
+        merged.Separation__c != existing.Separation__c);
+      if (merged.Separation__c != null) {
+        applySeparationDefaults(merged, separationChanged);
+      }
+      if (merged.Employee__c == null) {
+        throw handled('Select the employee for this exit interview.');
+      }
+      if (
+        merged.Interviewer__c != null &&
+        (existing == null ||
+        merged.Interviewer__c != existing.Interviewer__c)
+      ) {
+        requireActiveInterviewer(merged.Interviewer__c);
+      }
+      if (
+        merged.Rating__c != null &&
+        (merged.Rating__c < 1 ||
+        merged.Rating__c > 5 ||
+        Math.floor(merged.Rating__c) != merged.Rating__c)
+      ) {
+        throw handled('Rating must be a whole number from 1 to 5.');
+      }
+      if (String.isBlank(merged.Employee_Name__c)) {
+        merged.Employee_Name__c = getEmployeeName(merged.Employee__c);
+      }
+
+      PWChrono_Exit_Interview__c record = new PWChrono_Exit_Interview__c(
+        Id = recordId
       );
-
-      PWChrono_Exit_Interview__c rec = new PWChrono_Exit_Interview__c();
-
-      String recId = (String) payload.get('Id');
-      if (String.isNotBlank(recId)) {
-        rec.Id = recId;
+      for (String fieldName : EDITABLE_FIELDS) {
+        record.put(fieldName, merged.get(fieldName));
       }
-      if (
-        payload.containsKey('Employee__c') && payload.get('Employee__c') != null
-      ) {
-        rec.Employee__c = (String) payload.get('Employee__c');
+      if (recordId == null) {
+        record.Status__c = STATUS_PENDING;
       }
-      if (payload.containsKey('Employee_Name__c')) {
-        rec.Employee_Name__c = (String) payload.get('Employee_Name__c');
-      }
-      if (
-        payload.containsKey('Department__c') &&
-        payload.get('Department__c') != null
-      ) {
-        rec.Department__c = (String) payload.get('Department__c');
-      }
-      if (
-        payload.containsKey('Designation__c') &&
-        payload.get('Designation__c') != null
-      ) {
-        rec.Designation__c = (String) payload.get('Designation__c');
-      }
-      if (
-        payload.containsKey('Separation__c') &&
-        payload.get('Separation__c') != null
-      ) {
-        rec.Separation__c = (String) payload.get('Separation__c');
-      }
-      if (
-        payload.containsKey('Interviewer__c') &&
-        payload.get('Interviewer__c') != null
-      ) {
-        rec.Interviewer__c = (String) payload.get('Interviewer__c');
-      }
-      if (
-        payload.containsKey('Interview_Date__c') &&
-        payload.get('Interview_Date__c') != null
-      ) {
-        rec.Interview_Date__c = Date.valueOf(
-          (String) payload.get('Interview_Date__c')
-        );
-      }
-      if (payload.containsKey('Exit_Questionnaire__c')) {
-        rec.Exit_Questionnaire__c = (String) payload.get(
-          'Exit_Questionnaire__c'
-        );
-      }
-      if (payload.containsKey('Employee_Feedback__c')) {
-        rec.Employee_Feedback__c = (String) payload.get('Employee_Feedback__c');
-      }
-      if (payload.containsKey('Final_Remarks__c')) {
-        rec.Final_Remarks__c = (String) payload.get('Final_Remarks__c');
-      }
-      if (
-        payload.containsKey('Rating__c') && payload.get('Rating__c') != null
-      ) {
-        rec.Rating__c = Integer.valueOf(
-          String.valueOf(payload.get('Rating__c'))
-        );
-      }
-      if (
-        payload.containsKey('Status__c') && payload.get('Status__c') != null
-      ) {
-        rec.Status__c = (String) payload.get('Status__c');
-      }
-
-      upsert rec;
-      return rec.Id;
-    } catch (AuraHandledException ex) {
-      throw ex;
-    } catch (Exception ex) {
-      PWChrono_Logger.error(
-        'PWChrono_ExitInterviewController.saveInterview',
-        ex
+      upsert record;
+      return record.Id;
+    } catch (Exception e) {
+      throw toAuraException(
+        'saveInterview',
+        'Unable to save the exit interview.',
+        e
       );
-      throw new AuraHandledException(ex.getMessage());
     }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Status update (HR only)
+  // Status workflow (administrators)
   // ─────────────────────────────────────────────────────────────────────────
 
   /**
-   * @description Updates the status of an exit interview. HR Admin only.
+   * @description Moves an exit interview through its workflow. Administrators
+   *              only. Allowed: Pending to Scheduled; Pending or Scheduled to
+   *              Completed or Skipped. Scheduling requires an interview date.
    */
   @AuraEnabled
   public static void updateInterviewStatus(
@@ -253,31 +233,47 @@ public inherited sharing class PWChrono_ExitInterviewController {
     String sessionToken
   ) {
     try {
-      requireAccess(portalUserId, sessionToken);
-      requireHrAdmin(portalUserId);
-
-      PWChrono_Exit_Interview__c rec = new PWChrono_Exit_Interview__c(
-        Id = interviewId,
+      Id actorId = requireLifecycleAccess(portalUserId, sessionToken);
+      requireAdmin(
+        actorId,
+        'Only HR administrators can change the status of an exit interview.'
+      );
+      if (!INTERVIEW_STATUSES.contains(newStatus)) {
+        throw handled('Choose a valid exit interview status.');
+      }
+      PWChrono_Exit_Interview__c interview = loadInterview(toId(interviewId));
+      Set<String> allowed = ALLOWED_TRANSITIONS.get(interview.Status__c);
+      if (allowed == null || !allowed.contains(newStatus)) {
+        throw handled(
+          'A ' +
+            interview.Status__c.toLowerCase() +
+            ' exit interview cannot be moved to ' +
+            newStatus +
+            '.'
+        );
+      }
+      if (
+        newStatus == STATUS_SCHEDULED &&
+        interview.Interview_Date__c == null
+      ) {
+        throw handled('Set an interview date before scheduling the interview.');
+      }
+      update new PWChrono_Exit_Interview__c(
+        Id = interview.Id,
         Status__c = newStatus
       );
-      update rec;
-    } catch (AuraHandledException ex) {
-      throw ex;
-    } catch (Exception ex) {
-      PWChrono_Logger.error(
-        'PWChrono_ExitInterviewController.updateInterviewStatus',
-        ex
+    } catch (Exception e) {
+      throw toAuraException(
+        'updateInterviewStatus',
+        'Unable to update the exit interview status.',
+        e
       );
-      throw new AuraHandledException(ex.getMessage());
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Delete (HR only)
-  // ─────────────────────────────────────────────────────────────────────────
-
   /**
-   * @description Deletes an exit interview record. HR Admin only.
+   * @description Deletes a pending or skipped exit interview. Administrators
+   *              only.
    */
   @AuraEnabled
   public static void deleteInterview(
@@ -286,32 +282,24 @@ public inherited sharing class PWChrono_ExitInterviewController {
     String sessionToken
   ) {
     try {
-      requireAccess(portalUserId, sessionToken);
-      requireHrAdmin(portalUserId);
-
-      List<PWChrono_Exit_Interview__c> interviews = [
-        SELECT Id, Status__c
-        FROM PWChrono_Exit_Interview__c
-        WHERE Id = :interviewId
-        LIMIT 1
-      ];
-      if (interviews.isEmpty()) {
-        throw new AuraHandledException('Exit interview not found.');
-      }
-      if (interviews[0].Status__c != 'Pending') {
-        throw new AuraHandledException(
-          'Only pending exit interviews can be deleted.'
+      Id actorId = requireLifecycleAccess(portalUserId, sessionToken);
+      requireAdmin(
+        actorId,
+        'Only HR administrators can delete exit interviews.'
+      );
+      PWChrono_Exit_Interview__c interview = loadInterview(toId(interviewId));
+      if (!DELETABLE_STATUSES.contains(interview.Status__c)) {
+        throw handled(
+          'Only pending or skipped exit interviews can be deleted.'
         );
       }
-      delete interviews[0];
-    } catch (AuraHandledException ex) {
-      throw ex;
-    } catch (Exception ex) {
-      PWChrono_Logger.error(
-        'PWChrono_ExitInterviewController.deleteInterview',
-        ex
+      delete new PWChrono_Exit_Interview__c(Id = interview.Id);
+    } catch (Exception e) {
+      throw toAuraException(
+        'deleteInterview',
+        'Unable to delete the exit interview.',
+        e
       );
-      throw new AuraHandledException(ex.getMessage());
     }
   }
 
@@ -319,12 +307,14 @@ public inherited sharing class PWChrono_ExitInterviewController {
   // Lookup helpers
   // ─────────────────────────────────────────────────────────────────────────
 
-  /**
-   * @description Returns active designations for dropdown.
-   */
-  @AuraEnabled(cacheable=true)
-  public static List<PWChrono_Designation__c> getActiveDesignations() {
+  /** @description Returns active designations for dropdowns. */
+  @AuraEnabled
+  public static List<PWChrono_Designation__c> getActiveDesignations(
+    String portalUserId,
+    String sessionToken
+  ) {
     try {
+      requireLifecycleAccess(portalUserId, sessionToken);
       return [
         SELECT Id, Name
         FROM PWChrono_Designation__c
@@ -332,21 +322,23 @@ public inherited sharing class PWChrono_ExitInterviewController {
         ORDER BY Name ASC
         LIMIT :PWChrono_Constants.DEFAULT_QUERY_LIMIT
       ];
-    } catch (Exception ex) {
-      PWChrono_Logger.error(
-        'PWChrono_ExitInterviewController.getActiveDesignations',
-        ex
+    } catch (Exception e) {
+      throw toAuraException(
+        'getActiveDesignations',
+        'Unable to load designations.',
+        e
       );
-      throw new AuraHandledException(ex.getMessage());
     }
   }
 
-  /**
-   * @description Returns active departments for dropdown.
-   */
-  @AuraEnabled(cacheable=true)
-  public static List<PWChrono_Department__c> getActiveDepartments() {
+  /** @description Returns active departments for dropdowns. */
+  @AuraEnabled
+  public static List<PWChrono_Department__c> getActiveDepartments(
+    String portalUserId,
+    String sessionToken
+  ) {
     try {
+      requireLifecycleAccess(portalUserId, sessionToken);
       return [
         SELECT Id, Name
         FROM PWChrono_Department__c
@@ -354,56 +346,357 @@ public inherited sharing class PWChrono_ExitInterviewController {
         ORDER BY Name ASC
         LIMIT :PWChrono_Constants.DEFAULT_QUERY_LIMIT
       ];
-    } catch (Exception ex) {
-      PWChrono_Logger.error(
-        'PWChrono_ExitInterviewController.getActiveDepartments',
-        ex
+    } catch (Exception e) {
+      throw toAuraException(
+        'getActiveDepartments',
+        'Unable to load departments.',
+        e
       );
-      throw new AuraHandledException(ex.getMessage());
     }
   }
 
   /**
-   * @description Returns active portal users for employee / interviewer dropdowns.
+   * @description Returns employees for the employee and interviewer
+   *              dropdowns: every active employee plus departing employees
+   *              who already have an open or completed separation (they may be
+   *              inactive when the interview is recorded). Is_Active__c lets
+   *              the portal offer only active people as interviewers.
    */
-  @AuraEnabled(cacheable=true)
-  public static List<Portal_Users__c> getActiveEmployees() {
+  @AuraEnabled
+  public static List<Portal_Users__c> getActiveEmployees(
+    String portalUserId,
+    String sessionToken
+  ) {
     try {
+      requireLifecycleAccess(portalUserId, sessionToken);
+      Set<Id> departingEmployeeIds = new Set<Id>();
+      for (PWChrono_Employee_Separation__c separation : [
+        SELECT Employee__c
+        FROM PWChrono_Employee_Separation__c
+        WHERE
+          Status__c != 'Cancelled'
+          AND Employee__c != NULL
+          AND Employee__r.Is_Active__c = FALSE
+        LIMIT 1000
+      ]) {
+        departingEmployeeIds.add(separation.Employee__c);
+      }
       return [
-        SELECT Id, Name
+        SELECT Id, Name, Is_Active__c
         FROM Portal_Users__c
-        WHERE Is_Active__c = TRUE
+        WHERE Is_Active__c = TRUE OR Id IN :departingEmployeeIds
         ORDER BY Name ASC
-        LIMIT :PWChrono_Constants.DEFAULT_QUERY_LIMIT
+        LIMIT 1000
       ];
-    } catch (Exception ex) {
-      PWChrono_Logger.error(
-        'PWChrono_ExitInterviewController.getActiveEmployees',
-        ex
+    } catch (Exception e) {
+      throw toAuraException(
+        'getActiveEmployees',
+        'Unable to load employees.',
+        e
       );
-      throw new AuraHandledException(ex.getMessage());
     }
   }
 
   /**
-   * @description Returns active employee separations for linking to an exit interview.
+   * @description Returns separations that are not cancelled, for linking an
+   *              exit interview to a separation.
    */
-  @AuraEnabled(cacheable=true)
-  public static List<PWChrono_Employee_Separation__c> getActiveSeparations() {
+  @AuraEnabled
+  public static List<PWChrono_Employee_Separation__c> getActiveSeparations(
+    String portalUserId,
+    String sessionToken
+  ) {
     try {
+      requireLifecycleAccess(portalUserId, sessionToken);
       return [
-        SELECT Id, Name, Employee__r.Name
+        SELECT
+          Id,
+          Name,
+          Status__c,
+          Employee__c,
+          Employee__r.Name,
+          Employee_Name__c,
+          Department__c,
+          Designation__c
         FROM PWChrono_Employee_Separation__c
         WHERE Status__c != 'Cancelled'
-        ORDER BY Name ASC
+        ORDER BY CreatedDate DESC
         LIMIT :PWChrono_Constants.DEFAULT_QUERY_LIMIT
       ];
-    } catch (Exception ex) {
-      PWChrono_Logger.error(
-        'PWChrono_ExitInterviewController.getActiveSeparations',
-        ex
+    } catch (Exception e) {
+      throw toAuraException(
+        'getActiveSeparations',
+        'Unable to load separations.',
+        e
       );
-      throw new AuraHandledException(ex.getMessage());
     }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Authorization helpers
+  // ─────────────────────────────────────────────────────────────────────────
+
+  private static Id requireLifecycleAccess(
+    String portalUserId,
+    String sessionToken
+  ) {
+    Id actorId = PWChrono_GuestSession.requireVerifiedPortalUserId(
+      portalUserId,
+      sessionToken
+    );
+    PWChrono_AccessController.requireFeature(
+      actorId,
+      PWChrono_AccessController.FEATURE_EMPLOYEE_LIFECYCLE
+    );
+    return actorId;
+  }
+
+  private static void requireAdmin(Id actorId, String message) {
+    if (!PWChrono_AccessController.isAdmin(actorId)) {
+      throw handled(message);
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Business rule helpers
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Loads an exit interview for a write and locks its row, so the status
+   * checked here cannot change before this transaction's DML commits.
+   */
+  private static PWChrono_Exit_Interview__c loadInterview(Id interviewId) {
+    List<PWChrono_Exit_Interview__c> records = [
+      SELECT
+        Id,
+        Status__c,
+        Employee__c,
+        Employee_Name__c,
+        Department__c,
+        Designation__c,
+        Separation__c,
+        Interviewer__c,
+        Interview_Date__c,
+        Exit_Questionnaire__c,
+        Employee_Feedback__c,
+        Final_Remarks__c,
+        Rating__c
+      FROM PWChrono_Exit_Interview__c
+      WHERE Id = :interviewId
+      LIMIT 1
+      FOR UPDATE
+    ];
+    if (records.isEmpty()) {
+      throw handled('Exit interview not found.');
+    }
+    if (String.isBlank(records[0].Status__c)) {
+      records[0].Status__c = STATUS_PENDING;
+    }
+    return records[0];
+  }
+
+  private static void applySeparationDefaults(
+    PWChrono_Exit_Interview__c interview,
+    Boolean separationChanged
+  ) {
+    List<PWChrono_Employee_Separation__c> separations = [
+      SELECT
+        Id,
+        Name,
+        Status__c,
+        Employee__c,
+        Employee_Name__c,
+        Department__c,
+        Designation__c
+      FROM PWChrono_Employee_Separation__c
+      WHERE Id = :interview.Separation__c
+      LIMIT 1
+    ];
+    if (separations.isEmpty()) {
+      throw handled('The linked separation was not found.');
+    }
+    PWChrono_Employee_Separation__c separation = separations[0];
+    if (separationChanged && separation.Status__c == 'Cancelled') {
+      throw handled(
+        'Separation ' +
+          separation.Name +
+          ' is cancelled and cannot be linked to an exit interview.'
+      );
+    }
+    if (interview.Employee__c == null) {
+      interview.Employee__c = separation.Employee__c;
+      interview.Employee_Name__c = separation.Employee_Name__c;
+    } else if (
+      separation.Employee__c != null &&
+      interview.Employee__c != separation.Employee__c
+    ) {
+      throw handled(
+        'The selected employee does not match separation ' +
+          separation.Name +
+          '.'
+      );
+    }
+    if (interview.Department__c == null) {
+      interview.Department__c = separation.Department__c;
+    }
+    if (interview.Designation__c == null) {
+      interview.Designation__c = separation.Designation__c;
+    }
+  }
+
+  private static void requireActiveInterviewer(Id interviewerId) {
+    List<Portal_Users__c> interviewers = [
+      SELECT Id
+      FROM Portal_Users__c
+      WHERE Id = :interviewerId AND Is_Active__c = TRUE
+      LIMIT 1
+    ];
+    if (interviewers.isEmpty()) {
+      throw handled('The interviewer must be an active employee.');
+    }
+  }
+
+  private static String getEmployeeName(Id employeeId) {
+    List<Portal_Users__c> employees = [
+      SELECT Name
+      FROM Portal_Users__c
+      WHERE Id = :employeeId
+      LIMIT 1
+    ];
+    if (employees.isEmpty()) {
+      throw handled('The selected employee was not found.');
+    }
+    return employees[0].Name;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Payload parsing helpers
+  // ─────────────────────────────────────────────────────────────────────────
+
+  private static Map<String, Object> parseObject(String jsonText) {
+    if (String.isBlank(jsonText)) {
+      throw handled('The request data is missing.');
+    }
+    Object parsed = JSON.deserializeUntyped(jsonText);
+    if (!(parsed instanceof Map<String, Object>)) {
+      throw handled('The request data is not valid.');
+    }
+    return (Map<String, Object>) parsed;
+  }
+
+  /** Copies only whitelisted fields that are present in the payload. */
+  private static void applyFields(
+    PWChrono_Exit_Interview__c target,
+    Map<String, Object> payload
+  ) {
+    for (String fieldName : EDITABLE_FIELDS) {
+      if (!payload.containsKey(fieldName)) {
+        continue;
+      }
+      if (ID_FIELDS.contains(fieldName)) {
+        target.put(
+          fieldName,
+          readId(
+            payload,
+            fieldName,
+            fieldName.removeEnd('__c').replace('_', ' ').toLowerCase()
+          )
+        );
+      } else if (fieldName == 'Interview_Date__c') {
+        target.put(fieldName, readDate(payload, fieldName));
+      } else if (fieldName == 'Rating__c') {
+        target.put(fieldName, readDecimal(payload, fieldName));
+      } else {
+        target.put(fieldName, readString(payload, fieldName));
+      }
+    }
+  }
+
+  private static String readString(Map<String, Object> source, String key) {
+    Object value = source.get(key);
+    if (value == null) {
+      return null;
+    }
+    String text = String.valueOf(value);
+    return String.isBlank(text) ? null : text;
+  }
+
+  private static Id readId(
+    Map<String, Object> source,
+    String key,
+    String label
+  ) {
+    String text = readString(source, key);
+    if (text == null) {
+      return null;
+    }
+    try {
+      return Id.valueOf(text.trim());
+    } catch (Exception e) {
+      throw handled('The ' + label + ' reference is not valid.');
+    }
+  }
+
+  private static Date readDate(Map<String, Object> source, String key) {
+    String text = readString(source, key);
+    if (text == null) {
+      return null;
+    }
+    try {
+      return Date.valueOf(text.trim().substringBefore('T'));
+    } catch (Exception e) {
+      throw handled('Enter dates in the format YYYY-MM-DD.');
+    }
+  }
+
+  private static Decimal readDecimal(Map<String, Object> source, String key) {
+    String text = readString(source, key);
+    if (text == null) {
+      return null;
+    }
+    try {
+      return Decimal.valueOf(text.trim());
+    } catch (Exception e) {
+      throw handled('Rating must be a whole number from 1 to 5.');
+    }
+  }
+
+  private static Id toId(String value) {
+    if (String.isBlank(value)) {
+      throw handled('An exit interview is required.');
+    }
+    try {
+      return Id.valueOf(value.trim());
+    } catch (Exception e) {
+      throw handled('The exit interview reference is not valid.');
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Error handling
+  // ─────────────────────────────────────────────────────────────────────────
+
+  private static AuraHandledException handled(String message) {
+    AuraHandledException ahe = new AuraHandledException(message);
+    ahe.setMessage(message);
+    return ahe;
+  }
+
+  private static AuraHandledException toAuraException(
+    String operation,
+    String fallbackMessage,
+    Exception e
+  ) {
+    if (e instanceof AuraHandledException) {
+      return (AuraHandledException) e;
+    }
+    PWChrono_Logger.error('PWChrono_ExitInterviewController.' + operation, e);
+    if (e instanceof DmlException) {
+      return handled(((DmlException) e).getDmlMessage(0));
+    }
+    if (e instanceof JSONException) {
+      return handled('The request data is not valid.');
+    }
+    return handled(fallbackMessage);
   }
 }

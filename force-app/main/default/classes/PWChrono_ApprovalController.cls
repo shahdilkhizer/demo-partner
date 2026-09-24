@@ -20,9 +20,7 @@ public inherited sharing class PWChrono_ApprovalController {
   @AuraEnabled(cacheable=true)
   public static List<ApprovalRequestWrapper> getPendingApprovals() {
     try {
-      if (UserInfo.getUserType() == 'Guest') {
-        throw new AuraHandledException('Unauthorized.');
-      }
+      PWChrono_AccessController.requireFeature(null, 'Approvals');
       List<ApprovalRequestWrapper> wrappers = new List<ApprovalRequestWrapper>();
       Id currentUserId = UserInfo.getUserId();
 
@@ -85,9 +83,7 @@ public inherited sharing class PWChrono_ApprovalController {
     String comments
   ) {
     try {
-      if (UserInfo.getUserType() == 'Guest') {
-        throw new AuraHandledException('Unauthorized.');
-      }
+      PWChrono_AccessController.requireFeature(null, 'Approvals');
       // Validate work item still exists and is pending
       List<ProcessInstanceWorkitem> workItems = [
         SELECT Id, ProcessInstance.Status

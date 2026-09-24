@@ -1,5 +1,5 @@
 <template lwc:render-mode="light">
-  <div class="page-wrapper">
+  <div class="page-wrapper" style="min-height: 1318px">
     <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
       <!-- Breadcrumb -->
       <div
@@ -10,7 +10,7 @@
           <nav>
             <ol class="breadcrumb mb-0">
               <li class="breadcrumb-item">
-                <a href="javascript:void(0);"><i class="fa-solid fa-house"></i></a>
+                <a href="index.html"><i class="fa-solid fa-house"></i></a>
               </li>
               <li class="breadcrumb-item">Pages</li>
               <li class="breadcrumb-item active" aria-current="page">
@@ -83,12 +83,10 @@
                             </div>
                             <button
                               type="button"
-                              class="btn btn-outline-danger btn-sm"
-                              onclick={handleRemovePhoto}
-                              disabled={isRemoveDisabled}
+                              class="btn btn-light btn-sm"
+                              onclick={handleCancelUpload}
                             >
-                              <template if:true={isRemovingPhoto}>Removing...</template>
-                              <template if:false={isRemovingPhoto}>Remove</template>
+                              Cancel
                             </button>
                           </div>
                         </div>
@@ -249,33 +247,12 @@
             </div>
           </template>
 
-          <template if:true={isLoading}>
+          <template if:false={profile}>
             <div class="d-flex justify-content-center p-5">
               <output class="spinner-border text-primary">
                 <span class="visually-hidden">Loading...</span>
               </output>
             </div>
-          </template>
-
-          <template if:false={isLoading}>
-            <template if:true={errorMessage}>
-              <div
-                class="alert alert-danger d-flex align-items-center justify-content-between m-3"
-                role="alert"
-              >
-                <div>
-                  <i class="fa-solid fa-circle-exclamation me-2"></i>
-                  <span>{errorMessage}</span>
-                </div>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline-danger"
-                  onclick={handleRetry}
-                >
-                  Retry
-                </button>
-              </div>
-            </template>
           </template>
         </div>
       </div>

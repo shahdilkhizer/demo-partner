@@ -5,7 +5,6 @@
  *              Pure validation — no DML.
  */
 public inherited sharing class PWChrono_RequestValidator {
-
   /**
    * @description Validate that the employee record is active
    * @param employeeId Portal_Users__c Id
@@ -59,14 +58,19 @@ public inherited sharing class PWChrono_RequestValidator {
    * @param maxBackdatedDays Maximum allowed days in the past (0 = no backdated allowed)
    * @return Error message or null if valid
    */
-  public static String validateBackdatedLimit(Date requestDate, Integer maxBackdatedDays) {
+  public static String validateBackdatedLimit(
+    Date requestDate,
+    Integer maxBackdatedDays
+  ) {
     if (requestDate == null || maxBackdatedDays == null) {
       return null;
     }
 
     Date cutoff = Date.today().addDays(-maxBackdatedDays);
     if (requestDate < cutoff) {
-      return 'Requests cannot be backdated more than ' + maxBackdatedDays + ' days.';
+      return 'Requests cannot be backdated more than ' +
+        maxBackdatedDays +
+        ' days.';
     }
 
     return null;
@@ -78,14 +82,19 @@ public inherited sharing class PWChrono_RequestValidator {
    * @param maxAdvanceDays Maximum allowed days in the future (0 = no advance allowed)
    * @return Error message or null if valid
    */
-  public static String validateAdvanceLimit(Date requestDate, Integer maxAdvanceDays) {
+  public static String validateAdvanceLimit(
+    Date requestDate,
+    Integer maxAdvanceDays
+  ) {
     if (requestDate == null || maxAdvanceDays == null) {
       return null;
     }
 
     Date cutoff = Date.today().addDays(maxAdvanceDays);
     if (requestDate > cutoff) {
-      return 'Requests cannot be more than ' + maxAdvanceDays + ' days in advance.';
+      return 'Requests cannot be more than ' +
+        maxAdvanceDays +
+        ' days in advance.';
     }
 
     return null;
@@ -95,16 +104,19 @@ public inherited sharing class PWChrono_RequestValidator {
    * @description Valid status transitions for request-based objects.
    *              Returns true if the transition from → to is allowed.
    */
-  public static Boolean isValidStatusTransition(String fromStatus, String toStatus) {
+  public static Boolean isValidStatusTransition(
+    String fromStatus,
+    String toStatus
+  ) {
     if (String.isBlank(fromStatus) || String.isBlank(toStatus)) {
       return false;
     }
 
     Map<String, Set<String>> allowed = new Map<String, Set<String>>{
-      'Draft'     => new Set<String>{ 'Submitted', 'Cancelled' },
+      'Draft' => new Set<String>{ 'Submitted', 'Cancelled' },
       'Submitted' => new Set<String>{ 'Approved', 'Rejected', 'Cancelled' },
-      'Approved'  => new Set<String>{ 'Cancelled' },
-      'Rejected'  => new Set<String>{ 'Draft' },
+      'Approved' => new Set<String>{ 'Cancelled' },
+      'Rejected' => new Set<String>{ 'Draft' },
       'Cancelled' => new Set<String>()
     };
 
@@ -115,9 +127,16 @@ public inherited sharing class PWChrono_RequestValidator {
   /**
    * @description Validate status transition and return error message if invalid
    */
-  public static String validateStatusTransition(String fromStatus, String toStatus) {
+  public static String validateStatusTransition(
+    String fromStatus,
+    String toStatus
+  ) {
     if (!isValidStatusTransition(fromStatus, toStatus)) {
-      return 'Invalid status transition from ' + fromStatus + ' to ' + toStatus + '.';
+      return 'Invalid status transition from ' +
+        fromStatus +
+        ' to ' +
+        toStatus +
+        '.';
     }
     return null;
   }
@@ -131,19 +150,46 @@ public inherited sharing class PWChrono_RequestValidator {
    */
   public static Id resolveEmployeeId(String portalUserId, String sessionToken) {
     if (UserInfo.getUserType() == 'Guest') {
-      return PWChrono_GuestSession.requireVerifiedPortalUserId(portalUserId, sessionToken);
+      return PWChrono_GuestSession.requireVerifiedPortalUserId(
+        portalUserId,
+        sessionToken
+      );
     }
 
+    Id currentEmployeeId = PWChrono_Utils.getCurrentEmployeeId(
+      UserInfo.getUserId()
+    );
     if (String.isNotBlank(portalUserId)) {
-      return (Id) portalUserId;
+      Id requestedEmployeeId;
+      try {
+        requestedEmployeeId = (Id) portalUserId;
+      } catch (Exception e) {
+        throw new AuraHandledException('Session invalid.');
+      }
+      if (
+        currentEmployeeId != null &&
+        requestedEmployeeId != currentEmployeeId
+      ) {
+        throw new AuraHandledException(
+          'Access denied: The selected portal identity does not belong to the current user.'
+        );
+      }
+      if (
+        currentEmployeeId == null && !PWChrono_AccessController.isAdmin(null)
+      ) {
+        throw new AuraHandledException(
+          'No employee record found for current user.'
+        );
+      }
+      return requestedEmployeeId;
     }
 
-    Id sfUserId = UserInfo.getUserId();
-    Id empId = PWChrono_Utils.getCurrentEmployeeId(sfUserId);
-    if (empId == null) {
-      throw new AuraHandledException('No employee record found for current user.');
+    if (currentEmployeeId == null) {
+      throw new AuraHandledException(
+        'No employee record found for current user.'
+      );
     }
-    return empId;
+    return currentEmployeeId;
   }
 
   /**
@@ -158,7 +204,10 @@ public inherited sharing class PWChrono_RequestValidator {
    *              Admins can view anyone; non-admins can only view own data.
    * @return The effective target employee ID (enforced to own if not admin)
    */
-  public static Id enforceDataAccess(Id currentEmployeeId, Id targetEmployeeId) {
+  public static Id enforceDataAccess(
+    Id currentEmployeeId,
+    Id targetEmployeeId
+  ) {
     if (targetEmployeeId == null || targetEmployeeId == currentEmployeeId) {
       return currentEmployeeId;
     }

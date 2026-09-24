@@ -1,0 +1,225 @@
+<template lwc:render-mode="light">
+  <div class="page-wrapper">
+    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
+      <div class="page-header">
+        <div class="content-page-header">
+          <div>
+            <p class="eyebrow mb-1">Portal administration</p>
+            <h1 class="page-title">{profileHeading}</h1>
+            <p class="text-muted mb-0">
+              Configure the reusable access package for portal users.
+            </p>
+          </div>
+          <div class="list-btn d-flex align-items-center gap-2">
+            <span class={statusClass}>{statusLabel}</span>
+            <lightning-button
+              variant="brand"
+              label="Save Profile"
+              icon-name="utility:save"
+              onclick={handleSave}
+              disabled={isSaveDisabled}
+            ></lightning-button>
+          </div>
+        </div>
+      </div>
+
+      <template lwc:if={hasError}>
+        <div
+          class="alert alert-danger d-flex justify-content-between align-items-center"
+          role="alert"
+        >
+          <span>{catalogError}{saveError}</span>
+          <lightning-button
+            variant="neutral"
+            label="Retry"
+            onclick={handleRetry}
+          ></lightning-button>
+        </div>
+      </template>
+
+      <template lwc:if={isLoading}>
+        <div
+          class="card shadow-sm loading-panel"
+          role="status"
+          aria-live="polite"
+        >
+          <lightning-spinner
+            alternative-text="Loading profile configuration"
+            size="medium"
+          ></lightning-spinner>
+          <span class="visually-hidden">Loading profile configuration</span>
+        </div>
+      </template>
+
+      <template lwc:else>
+        <section
+          class="card shadow-sm mb-4"
+          aria-labelledby="profile-details-heading"
+        >
+          <div class="card-body">
+            <div class="section-heading">
+              <div>
+                <h2 id="profile-details-heading">Profile details</h2>
+                <p class="text-muted mb-0">
+                  Use a business name and description so assignment decisions
+                  are clear.
+                </p>
+              </div>
+              <template lwc:if={profile.isLocked}>
+                <lightning-badge
+                  label="Locked system profile"
+                ></lightning-badge>
+              </template>
+            </div>
+            <div class="row g-3 mt-1">
+              <div class="col-md-6">
+                <lightning-input
+                  label="Display Name"
+                  value={profile.displayName}
+                  data-field="displayName"
+                  required
+                  onchange={handleProfileChange}
+                ></lightning-input>
+              </div>
+              <div class="col-md-6">
+                <lightning-combobox
+                  label="Profile Type"
+                  value={profile.profileType}
+                  options={typeOptions}
+                  data-field="profileType"
+                  onchange={handleProfileChange}
+                ></lightning-combobox>
+              </div>
+              <div class="col-md-6">
+                <lightning-input
+                  label="Developer Key"
+                  value={profile.developerKey}
+                  data-field="developerKey"
+                  maxlength="80"
+                  disabled={isDeveloperKeyLocked}
+                  onchange={handleProfileChange}
+                ></lightning-input>
+              </div>
+              <div class="col-12">
+                <lightning-textarea
+                  label="Description"
+                  value={profile.description}
+                  data-field="description"
+                  maxlength="32768"
+                  onchange={handleProfileChange}
+                ></lightning-textarea>
+              </div>
+              <div class="col-md-3">
+                <lightning-input
+                  type="toggle"
+                  label="Active"
+                  checked={profile.isActive}
+                  data-field="isActive"
+                  onchange={handleProfileChange}
+                ></lightning-input>
+              </div>
+              <template lwc:if={profile.canApprove}>
+                <div class="col-md-4">
+                  <lightning-combobox
+                    label="Approval Scope"
+                    value={profile.approvalScope}
+                    options={approvalScopeOptions}
+                    data-field="approvalScope"
+                    onchange={handleProfileChange}
+                  ></lightning-combobox>
+                </div>
+                <div class="col-md-4">
+                  <lightning-record-picker
+                    label="Default Approval Profile"
+                    object-api-name="Portal_User_Profile__c"
+                    value={profile.defaultApprovalProfileId}
+                    onchange={handleApprovalProfileChange}
+                  ></lightning-record-picker>
+                </div>
+              </template>
+              <div class="col-md-3">
+                <lightning-input
+                  type="toggle"
+                  label="Template"
+                  checked={profile.isTemplate}
+                  data-field="isTemplate"
+                  onchange={handleProfileChange}
+                ></lightning-input>
+              </div>
+              <div class="col-md-3">
+                <lightning-input
+                  type="toggle"
+                  label="Can Approve"
+                  checked={profile.canApprove}
+                  data-field="canApprove"
+                  onchange={handleProfileChange}
+                ></lightning-input>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card shadow-sm mb-4" aria-labelledby="features-heading">
+          <div class="card-body">
+            <div class="section-heading">
+              <div>
+                <h2 id="features-heading">Portal features</h2>
+                <p class="text-muted mb-0">
+                  Select capabilities from the approved feature list. Review
+                  object and field permissions below before saving.
+                </p>
+              </div>
+              <span class="text-muted">{featureCatalog.length} available</span>
+            </div>
+            <template lwc:if={hasFeatureCatalog}>
+              <template for:each={groupedFeatures} for:item="group">
+                <div key={group.category} class="feature-group">
+                  <h3>{group.category}</h3>
+                  <div class="row g-3">
+                    <template for:each={group.features} for:item="feature">
+                      <div key={feature.key} class="col-xl-4 col-md-6">
+                        <article class="feature-card">
+                          <lightning-input
+                            type="checkbox"
+                            label={feature.label}
+                            checked={feature.enabled}
+                            data-key={feature.key}
+                            onchange={handleFeatureChange}
+                          ></lightning-input>
+                          <p>{feature.description}</p>
+                        </article>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </template>
+            <template lwc:else>
+              <div class="empty-state">
+                No feature definitions are available.
+              </div>
+            </template>
+          </div>
+        </section>
+
+        <section aria-labelledby="permissions-heading">
+          <div class="section-heading mb-2">
+            <div>
+              <h2 id="permissions-heading">Advanced object permissions</h2>
+              <p class="text-muted mb-0">
+                Review CRUD access after selecting features. Keep broad access
+                limited to trusted administrator profiles.
+              </p>
+            </div>
+          </div>
+          <c-pwchrono-profile-permissions
+            record-id={recordId}
+          ></c-pwchrono-profile-permissions>
+          <c-pwchrono-profile-field-permissions
+            record-id={recordId}
+          ></c-pwchrono-profile-field-permissions>
+        </section>
+      </template>
+    </div>
+  </div>
+</template>

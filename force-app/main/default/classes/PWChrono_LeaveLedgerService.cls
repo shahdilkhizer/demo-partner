@@ -6,14 +6,13 @@
  *              Persists balance movements into PWChrono_Leave_Ledger__c.
  */
 public inherited sharing class PWChrono_LeaveLedgerService {
-
   // Transaction types
-  public static final String TYPE_ALLOCATION   = 'Allocation';
-  public static final String TYPE_USED         = 'Used';
-  public static final String TYPE_CANCELLED    = 'Cancelled';
-  public static final String TYPE_ADJUSTMENT   = 'Adjustment';
+  public static final String TYPE_ALLOCATION = 'Allocation';
+  public static final String TYPE_USED = 'Used';
+  public static final String TYPE_CANCELLED = 'Cancelled';
+  public static final String TYPE_ADJUSTMENT = 'Adjustment';
   public static final String TYPE_CARRY_FORWARD = 'Carry Forward';
-  public static final String TYPE_ENCASHMENT   = 'Encashment';
+  public static final String TYPE_ENCASHMENT = 'Encashment';
 
   /**
    * @description Create a ledger entry when leave is approved (debit).
@@ -26,7 +25,7 @@ public inherited sharing class PWChrono_LeaveLedgerService {
       leave.Leave_Type__c,
       leave.Id,
       TYPE_USED,
-      -leave.Total_Days__c,         // Negative = debit
+      -leave.Total_Days__c, // Negative = debit
       'Leave approved: ' + leave.Name,
       approverId
     );
@@ -43,7 +42,7 @@ public inherited sharing class PWChrono_LeaveLedgerService {
       leave.Leave_Type__c,
       leave.Id,
       TYPE_CANCELLED,
-      leave.Total_Days__c,          // Positive = credit (reversal)
+      leave.Total_Days__c, // Positive = credit (reversal)
       'Approved leave cancelled: ' + leave.Name,
       cancelledBy
     );
@@ -59,9 +58,21 @@ public inherited sharing class PWChrono_LeaveLedgerService {
    */
   @SuppressWarnings('PMD.ExcessiveParameterList')
   public static void recordAllocation(
-    Id employeeId, Id leaveTypeId, Decimal days, String notes, Id createdBy
+    Id employeeId,
+    Id leaveTypeId,
+    Decimal days,
+    String notes,
+    Id createdBy
   ) {
-    createEntry(employeeId, leaveTypeId, null, TYPE_ALLOCATION, days, notes, createdBy);
+    createEntry(
+      employeeId,
+      leaveTypeId,
+      null,
+      TYPE_ALLOCATION,
+      days,
+      notes,
+      createdBy
+    );
   }
 
   /**
@@ -74,9 +85,21 @@ public inherited sharing class PWChrono_LeaveLedgerService {
    */
   @SuppressWarnings('PMD.ExcessiveParameterList')
   public static void recordAdjustment(
-    Id employeeId, Id leaveTypeId, Decimal days, String reason, Id adjustedBy
+    Id employeeId,
+    Id leaveTypeId,
+    Decimal days,
+    String reason,
+    Id adjustedBy
   ) {
-    createEntry(employeeId, leaveTypeId, null, TYPE_ADJUSTMENT, days, reason, adjustedBy);
+    createEntry(
+      employeeId,
+      leaveTypeId,
+      null,
+      TYPE_ADJUSTMENT,
+      days,
+      reason,
+      adjustedBy
+    );
   }
 
   /**
@@ -84,11 +107,19 @@ public inherited sharing class PWChrono_LeaveLedgerService {
    */
   @SuppressWarnings('PMD.ExcessiveParameterList')
   public static void recordCarryForward(
-    Id employeeId, Id leaveTypeId, Decimal days, Id processedBy
+    Id employeeId,
+    Id leaveTypeId,
+    Decimal days,
+    Id processedBy
   ) {
     createEntry(
-      employeeId, leaveTypeId, null, TYPE_CARRY_FORWARD, days,
-      'Year-end carry forward', processedBy
+      employeeId,
+      leaveTypeId,
+      null,
+      TYPE_CARRY_FORWARD,
+      days,
+      'Year-end carry forward',
+      processedBy
     );
   }
 
@@ -97,11 +128,19 @@ public inherited sharing class PWChrono_LeaveLedgerService {
    */
   @SuppressWarnings('PMD.ExcessiveParameterList')
   public static void recordEncashment(
-    Id employeeId, Id leaveTypeId, Decimal days, Id processedBy
+    Id employeeId,
+    Id leaveTypeId,
+    Decimal days,
+    Id processedBy
   ) {
     createEntry(
-      employeeId, leaveTypeId, null, TYPE_ENCASHMENT, -days,
-      'Leave encashment', processedBy
+      employeeId,
+      leaveTypeId,
+      null,
+      TYPE_ENCASHMENT,
+      -days,
+      'Leave encashment',
+      processedBy
     );
   }
 
@@ -111,24 +150,38 @@ public inherited sharing class PWChrono_LeaveLedgerService {
    * @param leaveTypeId Optional leave type filter
    * @return List of ledger entries
    */
-  public static List<LedgerEntryDTO> getLedgerHistory(Id employeeId, Id leaveTypeId) {
+  public static List<LedgerEntryDTO> getLedgerHistory(
+    Id employeeId,
+    Id leaveTypeId
+  ) {
     List<PWChrono_Leave_Ledger__c> entries;
 
     if (leaveTypeId != null) {
       entries = [
-        SELECT Id, Transaction_Type__c, Days__c, Balance_After__c,
-               Transaction_Date__c, Notes__c,
-               Created_By__r.Name, Canonical_Leave__r.Name
+        SELECT
+          Id,
+          Transaction_Type__c,
+          Days__c,
+          Balance_After__c,
+          Transaction_Date__c,
+          Notes__c,
+          Created_By__r.Name,
+          Canonical_Leave__r.Name
         FROM PWChrono_Leave_Ledger__c
-        WHERE Employee__c = :employeeId
-          AND Leave_Type__c = :leaveTypeId
+        WHERE Employee__c = :employeeId AND Leave_Type__c = :leaveTypeId
         ORDER BY Transaction_Date__c DESC, CreatedDate DESC
       ];
     } else {
       entries = [
-        SELECT Id, Transaction_Type__c, Days__c, Balance_After__c,
-               Transaction_Date__c, Notes__c,
-               Created_By__r.Name, Canonical_Leave__r.Name
+        SELECT
+          Id,
+          Transaction_Type__c,
+          Days__c,
+          Balance_After__c,
+          Transaction_Date__c,
+          Notes__c,
+          Created_By__r.Name,
+          Canonical_Leave__r.Name
         FROM PWChrono_Leave_Ledger__c
         WHERE Employee__c = :employeeId
         ORDER BY Transaction_Date__c DESC, CreatedDate DESC
@@ -142,22 +195,35 @@ public inherited sharing class PWChrono_LeaveLedgerService {
    * @description Get ledger entries for a specific leave request.
    */
   public static List<LedgerEntryDTO> getLedgerHistoryByLeave(Id leaveId) {
-    return mapEntries([
-      SELECT Id, Transaction_Type__c, Days__c, Balance_After__c,
-             Transaction_Date__c, Notes__c,
-             Created_By__r.Name, Canonical_Leave__r.Name
-      FROM PWChrono_Leave_Ledger__c
-      WHERE Canonical_Leave__c = :leaveId
-      ORDER BY Transaction_Date__c DESC, CreatedDate DESC
-    ]);
+    return mapEntries(
+      [
+        SELECT
+          Id,
+          Transaction_Type__c,
+          Days__c,
+          Balance_After__c,
+          Transaction_Date__c,
+          Notes__c,
+          Created_By__r.Name,
+          Canonical_Leave__r.Name
+        FROM PWChrono_Leave_Ledger__c
+        WHERE Canonical_Leave__c = :leaveId
+        ORDER BY Transaction_Date__c DESC, CreatedDate DESC
+      ]
+    );
   }
 
   // ── Private ──
 
   @SuppressWarnings('PMD.ExcessiveParameterList')
   private static void createEntry(
-    Id employeeId, Id leaveTypeId, Id leaveId,
-    String transactionType, Decimal days, String notes, Id createdBy
+    Id employeeId,
+    Id leaveTypeId,
+    Id leaveId,
+    String transactionType,
+    Decimal days,
+    String notes,
+    Id createdBy
   ) {
     // Calculate running balance
     Decimal balanceAfter = calculateRunningBalance(employeeId, leaveTypeId);
@@ -175,9 +241,14 @@ public inherited sharing class PWChrono_LeaveLedgerService {
     insert entry;
   }
 
-  private static Decimal calculateRunningBalance(Id employeeId, Id leaveTypeId) {
-    PWChrono_LeaveBalanceService.LeaveBalanceWrapper balance =
-      PWChrono_LeaveBalanceService.getBalanceForType(employeeId, leaveTypeId);
+  private static Decimal calculateRunningBalance(
+    Id employeeId,
+    Id leaveTypeId
+  ) {
+    PWChrono_LeaveBalanceService.LeaveBalanceWrapper balance = PWChrono_LeaveBalanceService.getBalanceForType(
+      employeeId,
+      leaveTypeId
+    );
 
     if (balance == null) {
       return 0;
@@ -186,7 +257,9 @@ public inherited sharing class PWChrono_LeaveLedgerService {
     return balance.remaining;
   }
 
-  private static List<LedgerEntryDTO> mapEntries(List<PWChrono_Leave_Ledger__c> entries) {
+  private static List<LedgerEntryDTO> mapEntries(
+    List<PWChrono_Leave_Ledger__c> entries
+  ) {
     List<LedgerEntryDTO> results = new List<LedgerEntryDTO>();
 
     for (PWChrono_Leave_Ledger__c entry : entries) {
@@ -197,7 +270,9 @@ public inherited sharing class PWChrono_LeaveLedgerService {
       dto.balanceAfter = entry.Balance_After__c;
       dto.transactionDate = entry.Transaction_Date__c;
       dto.notes = entry.Notes__c;
-      dto.createdByName = entry.Created_By__r != null ? entry.Created_By__r.Name : null;
+      dto.createdByName = entry.Created_By__r != null
+        ? entry.Created_By__r.Name
+        : null;
       dto.leaveName = entry.Canonical_Leave__r != null
         ? entry.Canonical_Leave__r.Name
         : null;
@@ -210,13 +285,21 @@ public inherited sharing class PWChrono_LeaveLedgerService {
   // ── DTO ──
 
   public class LedgerEntryDTO {
-    @AuraEnabled public Id entryId;
-    @AuraEnabled public String transactionType;
-    @AuraEnabled public Decimal days;
-    @AuraEnabled public Decimal balanceAfter;
-    @AuraEnabled public Date transactionDate;
-    @AuraEnabled public String notes;
-    @AuraEnabled public String createdByName;
-    @AuraEnabled public String leaveName;
+    @AuraEnabled
+    public Id entryId;
+    @AuraEnabled
+    public String transactionType;
+    @AuraEnabled
+    public Decimal days;
+    @AuraEnabled
+    public Decimal balanceAfter;
+    @AuraEnabled
+    public Date transactionDate;
+    @AuraEnabled
+    public String notes;
+    @AuraEnabled
+    public String createdByName;
+    @AuraEnabled
+    public String leaveName;
   }
 }

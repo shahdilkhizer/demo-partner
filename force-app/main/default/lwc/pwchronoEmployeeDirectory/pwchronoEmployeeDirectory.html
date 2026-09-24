@@ -889,12 +889,17 @@
                       </button>
                     </div>
                     <div class="col-6">
-                      <button
-                        type="button"
-                        class="btn btn-primary w-100 btn-sm"
+                      <template if:true={selectedEmployee.email}
+                        ><a
+                          href={selectedEmployeeEmailUrl}
+                          class="btn btn-primary w-100 btn-sm"
+                          ><i
+                            class="fa-solid fa-envelope me-1"
+                            aria-hidden="true"
+                          ></i
+                          >Email</a
+                        ></template
                       >
-                        <i class="fa-solid fa-comment-dots me-1"></i>Message
-                      </button>
                     </div>
                   </div>
                 </div>

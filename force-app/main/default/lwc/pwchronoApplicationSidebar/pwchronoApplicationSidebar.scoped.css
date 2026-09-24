@@ -1,0 +1,55 @@
+.sidebar {
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0;
+  height: 100% !important;
+  overflow-y: auto;
+}
+
+.sidebar-logo a {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  color: #1f2937;
+  text-decoration: none;
+}
+
+.sidebar-logo img {
+  display: block;
+  max-width: 155px;
+  max-height: 44px;
+  object-fit: contain;
+}
+
+.brand-fallback {
+  display: inline-flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, #ff5e3a, #ff9b44);
+  color: #fff;
+  font-weight: 800;
+}
+
+.brand-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sidebar-menu a {
+  cursor: pointer;
+}
+
+.sidebar-menu a.active {
+  background: rgba(255, 94, 58, 0.12);
+  color: #ff5e3a;
+  font-weight: 600;
+}
+
+.sidebar-menu a:focus-visible {
+  outline: 2px solid #ff5e3a;
+  outline-offset: -2px;
+}
