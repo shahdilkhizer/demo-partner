@@ -77,6 +77,7 @@ public without sharing class PWChrono_ConfigurationController {
               pu.User__r.Email != null
               ? pu.User__r.Email
               : '');
+        config.phone = pu.Phone__c != null ? pu.Phone__c : '';
         config.profileId = pu.Portal_User_Profile__c == null
           ? null
           : String.valueOf(pu.Portal_User_Profile__c);
@@ -562,6 +563,8 @@ public without sharing class PWChrono_ConfigurationController {
     public String userName;
     @AuraEnabled
     public String userEmail;
+    @AuraEnabled
+    public String phone;
     @AuraEnabled
     public String profileName;
     @AuraEnabled

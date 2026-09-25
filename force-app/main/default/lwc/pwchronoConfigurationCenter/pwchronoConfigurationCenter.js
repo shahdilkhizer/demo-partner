@@ -19,6 +19,8 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
   @track searchTerm = "";
   @track showUserFeatureModal = false;
   @track showNewUserModal = false;
+  @track showViewRecordModal = false;
+  @track viewingUser = null;
   @track selectedUser = null;
   @track selectedProfileId = "";
   @track selectedManagerId = "";
@@ -285,14 +287,31 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
     if (actionName === "manage_access") {
       this.openManageAccessModal(row);
     } else if (actionName === "view_record") {
-      this[NavigationMixin.Navigate]({
-        type: "standard__recordPage",
-        attributes: {
-          recordId: row.userId,
-          objectApiName: "Portal_Users__c",
-          actionName: "view"
-        }
-      });
+      this.openViewRecordModal(row);
+    }
+  }
+
+  openViewRecordModal(user) {
+    this.viewingUser = {
+      ...user,
+      statusBadgeClass: user.isActive
+        ? "badge bg-success-subtle text-success"
+        : "badge bg-danger-subtle text-danger",
+      statusText: user.isActive ? "Active" : "Inactive"
+    };
+    this.showViewRecordModal = true;
+  }
+
+  closeViewRecordModal() {
+    this.showViewRecordModal = false;
+    this.viewingUser = null;
+  }
+
+  handleManageAccessFromView() {
+    const userToManage = this.viewingUser;
+    this.closeViewRecordModal();
+    if (userToManage) {
+      this.openManageAccessModal(userToManage);
     }
   }
 
