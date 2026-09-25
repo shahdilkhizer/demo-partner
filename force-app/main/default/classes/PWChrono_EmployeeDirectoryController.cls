@@ -1,4 +1,4 @@
-public inherited sharing class PWChrono_EmployeeDirectoryController {
+public without sharing class PWChrono_EmployeeDirectoryController {
   private static final String NOT_PROVIDED = 'Not provided';
   @TestVisible
   private static String testUserTypeOverride;
@@ -249,11 +249,9 @@ public inherited sharing class PWChrono_EmployeeDirectoryController {
           : operation == 'delete'
               ? (permission.Can_Modify_All__c ||
                 (permission.Can_Delete__c && isOwnContact))
-              : targetContactId == null
-                  ? (permission.Can_View_All__c || permission.Can_Modify_All__c)
-                  : (permission.Can_View_All__c ||
-                    permission.Can_Modify_All__c ||
-                    (permission.Can_View__c && isOwnContact));
+              : (permission.Can_View__c ||
+                permission.Can_View_All__c ||
+                permission.Can_Modify_All__c);
     if (!allowed) {
       throw new AuraHandledException('Unauthorized.');
     }
@@ -520,14 +518,29 @@ public inherited sharing class PWChrono_EmployeeDirectoryController {
         contactRecord.Id
       );
       Contact safeContact = new Contact(
-        Id = contactRecord.Id,
-        FirstName = contactRecord.FirstName,
-        LastName = contactRecord.LastName,
-        Email = contactRecord.Email,
-        Phone = contactRecord.Phone,
-        Title = contactRecord.Title,
-        Department = contactRecord.Department
+        Id = contactRecord.Id
       );
+      if (contactRecord.Id == null || contactRecord.FirstName != null) {
+        safeContact.FirstName = contactRecord.FirstName;
+      }
+      if (contactRecord.Id == null || contactRecord.LastName != null) {
+        safeContact.LastName = contactRecord.LastName;
+      }
+      if (contactRecord.Id == null || contactRecord.Email != null) {
+        safeContact.Email = contactRecord.Email;
+      }
+      if (contactRecord.Id == null || contactRecord.Phone != null) {
+        safeContact.Phone = contactRecord.Phone;
+      }
+      if (contactRecord.Id == null || contactRecord.Title != null) {
+        safeContact.Title = contactRecord.Title;
+      }
+      if (contactRecord.Id == null || contactRecord.Department != null) {
+        safeContact.Department = contactRecord.Department;
+      }
+      if (contactRecord.Description != null) {
+        safeContact.Description = contactRecord.Description;
+      }
       if (!isGuestRuntime()) {
         System.AccessType accessType = safeContact.Id == null
           ? System.AccessType.CREATABLE
@@ -538,7 +551,7 @@ public inherited sharing class PWChrono_EmployeeDirectoryController {
           )
           .getRecords()[0];
       }
-      if (String.isBlank(safeContact.LastName)) {
+      if (safeContact.Id == null && String.isBlank(safeContact.LastName)) {
         throw new EmployeeDirectoryException('Last Name is required.');
       }
       if (contactRecord.Id == null) {

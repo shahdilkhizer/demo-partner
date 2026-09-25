@@ -89,6 +89,8 @@ export default class PwchronoEmployeeDirectory extends LightningElement {
   // Modals
   @track isAddEditModalOpen = false;
   @track isDeleteModalOpen = false;
+  @track isAboutModalOpen = false;
+  @track aboutEmployeeText = "";
   @track modalTitle = "Add Employee";
   @track employeeForm = {
     Id: null,
@@ -485,7 +487,11 @@ export default class PwchronoEmployeeDirectory extends LightningElement {
   handleOpenEditModal(event) {
     event.stopPropagation();
     const empId = event.currentTarget.dataset.id;
-    const emp = this.allEmployees.find((e) => e.id === empId);
+    const emp =
+      this.allEmployees.find((e) => e.id === empId) ||
+      (this.selectedEmployee && this.selectedEmployee.id === empId
+        ? this.selectedEmployee
+        : null);
     if (emp) {
       this.modalTitle = "Edit Employee";
       this.employeeForm = {
@@ -508,6 +514,66 @@ export default class PwchronoEmployeeDirectory extends LightningElement {
   handleFormFieldChange(event) {
     const field = event.target.name;
     this.employeeForm[field] = event.target.value;
+  }
+
+  handleOpenAboutModal(event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    const currentAbout = this.selectedEmployee?.about;
+    this.aboutEmployeeText =
+      !currentAbout || currentAbout === "Not provided" ? "" : currentAbout;
+    this.isAboutModalOpen = true;
+  }
+
+  handleCloseAboutModal() {
+    this.isAboutModalOpen = false;
+  }
+
+  handleAboutTextChange(event) {
+    this.aboutEmployeeText = event.target.value;
+  }
+
+  async handleSaveAboutEmployee() {
+    if (!this.selectedEmployee?.id) {
+      return;
+    }
+    this.isLoading = true;
+    try {
+      const contactObj = {
+        sobjectType: "Contact",
+        Id: this.selectedEmployee.id,
+        LastName: this.selectedEmployee.lastName || "Employee",
+        Description: this.aboutEmployeeText || ""
+      };
+
+      await saveEmployee({
+        contactRecord: contactObj,
+        callerPortalUserId: this.callerPortalUserId,
+        sessionToken: this.sessionToken
+      });
+
+      this.selectedEmployee = {
+        ...this.selectedEmployee,
+        about: this.aboutEmployeeText.trim() || "Not provided"
+      };
+
+      this.showToast(
+        "Success",
+        "About Employee updated successfully!",
+        "success"
+      );
+      this.isAboutModalOpen = false;
+      await this.loadEmployees();
+    } catch (err) {
+      this.showToast(
+        "Error",
+        "Error updating About Employee: " + (err?.body?.message || err.message),
+        "error"
+      );
+    } finally {
+      this.isLoading = false;
+    }
   }
 
   async handleSaveEmployee() {
@@ -534,6 +600,23 @@ export default class PwchronoEmployeeDirectory extends LightningElement {
         callerPortalUserId: this.callerPortalUserId,
         sessionToken: this.sessionToken
       });
+
+      if (
+        this.selectedEmployee &&
+        this.selectedEmployee.id === this.employeeForm.Id
+      ) {
+        this.selectedEmployee = {
+          ...this.selectedEmployee,
+          firstName: this.employeeForm.FirstName,
+          lastName: this.employeeForm.LastName,
+          name: `${this.employeeForm.FirstName || ""} ${this.employeeForm.LastName || ""}`.trim(),
+          email: this.employeeForm.Email,
+          phone: this.employeeForm.Phone,
+          title: this.employeeForm.Title,
+          department: this.employeeForm.Department
+        };
+      }
+
       this.showToast(
         "Success",
         this.employeeForm.Id

@@ -1166,7 +1166,7 @@
                   type="button"
                   class="btn btn-icon btn-sm text-muted"
                   data-id={selectedEmployee.id}
-                  onclick={handleOpenEditModal}
+                  onclick={handleOpenAboutModal}
                 >
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
@@ -1659,6 +1659,60 @@
                   onclick={handleSaveEmployee}
                 >
                   Save Employee
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ========================================================================= -->
+      <!-- EDIT ABOUT EMPLOYEE MODAL                                                -->
+      <!-- ========================================================================= -->
+      <template if:true={isAboutModalOpen}>
+        <div
+          class="modal fade show d-block"
+          tabindex="-1"
+          style="background-color: rgba(0, 0, 0, 0.5)"
+        >
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow">
+              <div class="modal-header">
+                <h5 class="modal-title fw-bold">Edit About Employee</h5>
+                <button
+                  type="button"
+                  class="btn-close"
+                  onclick={handleCloseAboutModal}
+                ></button>
+              </div>
+              <div class="modal-body">
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label fs-13 fw-medium">About Employee / Bio</label>
+                    <textarea
+                      class="form-control"
+                      rows="5"
+                      value={aboutEmployeeText}
+                      oninput={handleAboutTextChange}
+                      placeholder="Enter a brief summary or bio about the employee..."
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-white"
+                  onclick={handleCloseAboutModal}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  onclick={handleSaveAboutEmployee}
+                >
+                  Save Changes
                 </button>
               </div>
             </div>
