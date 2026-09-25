@@ -16,7 +16,11 @@ public without sharing class PWChrono_EmployeeDirectoryController {
     @AuraEnabled
     public String passportNo { get; set; }
     @AuraEnabled
+    public String rawPassportNo { get; set; }
+    @AuraEnabled
     public String passportExpDate { get; set; }
+    @AuraEnabled
+    public String passportExpDateIso { get; set; }
     @AuraEnabled
     public String nationality { get; set; }
     @AuraEnabled
@@ -27,6 +31,8 @@ public without sharing class PWChrono_EmployeeDirectoryController {
     public String spouseEmployment { get; set; }
     @AuraEnabled
     public String noOfChildren { get; set; }
+    @AuraEnabled
+    public Decimal rawNoOfChildren { get; set; }
   }
 
   public class BankInfoWrapper {
@@ -602,6 +608,45 @@ public without sharing class PWChrono_EmployeeDirectoryController {
       if (contactRecord.Family_Member_Phone__c != null) {
         safeContact.Family_Member_Phone__c = contactRecord.Family_Member_Phone__c;
       }
+      if (contactRecord.Emergency_Contact_Name__c != null) {
+        safeContact.Emergency_Contact_Name__c = contactRecord.Emergency_Contact_Name__c;
+      }
+      if (contactRecord.Emergency_Contact_Relationship__c != null) {
+        safeContact.Emergency_Contact_Relationship__c = contactRecord.Emergency_Contact_Relationship__c;
+      }
+      if (contactRecord.Emergency_Contact_Number__c != null) {
+        safeContact.Emergency_Contact_Number__c = contactRecord.Emergency_Contact_Number__c;
+      }
+      if (contactRecord.Secondary_Emergency_Contact_Name__c != null) {
+        safeContact.Secondary_Emergency_Contact_Name__c = contactRecord.Secondary_Emergency_Contact_Name__c;
+      }
+      if (contactRecord.Secondary_Emergency_Contact_Relationship__c != null) {
+        safeContact.Secondary_Emergency_Contact_Relationship__c = contactRecord.Secondary_Emergency_Contact_Relationship__c;
+      }
+      if (contactRecord.Secondary_Emergency_Contact_Number__c != null) {
+        safeContact.Secondary_Emergency_Contact_Number__c = contactRecord.Secondary_Emergency_Contact_Number__c;
+      }
+      if (contactRecord.Passport_No__c != null) {
+        safeContact.Passport_No__c = contactRecord.Passport_No__c;
+      }
+      if (contactRecord.Passport_Exp_Date__c != null) {
+        safeContact.Passport_Exp_Date__c = contactRecord.Passport_Exp_Date__c;
+      }
+      if (contactRecord.Nationality__c != null) {
+        safeContact.Nationality__c = contactRecord.Nationality__c;
+      }
+      if (contactRecord.Religion__c != null) {
+        safeContact.Religion__c = contactRecord.Religion__c;
+      }
+      if (contactRecord.Marital_Status__c != null) {
+        safeContact.Marital_Status__c = contactRecord.Marital_Status__c;
+      }
+      if (contactRecord.Employment_of_Spouse__c != null) {
+        safeContact.Employment_of_Spouse__c = contactRecord.Employment_of_Spouse__c;
+      }
+      if (contactRecord.No_of_Children__c != null) {
+        safeContact.No_of_Children__c = contactRecord.No_of_Children__c;
+      }
       if (!isGuestRuntime()) {
         System.AccessType accessType = safeContact.Id == null
           ? System.AccessType.CREATABLE
@@ -903,9 +948,13 @@ public without sharing class PWChrono_EmployeeDirectoryController {
   private static PersonalInfoWrapper buildPersonalInfo(Contact c) {
     PersonalInfoWrapper info = new PersonalInfoWrapper();
     info.passportNo = maskValue(c.Passport_No__c);
+    info.rawPassportNo = c.Passport_No__c != null ? c.Passport_No__c : '';
     info.passportExpDate = c.Passport_Exp_Date__c == null
       ? NOT_PROVIDED
       : formatDate(c.Passport_Exp_Date__c);
+    info.passportExpDateIso = c.Passport_Exp_Date__c == null
+      ? ''
+      : String.valueOf(c.Passport_Exp_Date__c);
     info.nationality = displayValue(c.Nationality__c);
     info.religion = displayValue(c.Religion__c);
     info.maritalStatus = displayValue(c.Marital_Status__c);
@@ -913,6 +962,7 @@ public without sharing class PWChrono_EmployeeDirectoryController {
     info.noOfChildren = c.No_of_Children__c == null
       ? NOT_PROVIDED
       : String.valueOf(c.No_of_Children__c.setScale(0));
+    info.rawNoOfChildren = c.No_of_Children__c != null ? c.No_of_Children__c : 0;
     return info;
   }
 

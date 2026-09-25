@@ -105,6 +105,25 @@ export default class PwchronoEmployeeDirectory extends LightningElement {
     Family_Member_DOB__c: "",
     Family_Member_Phone__c: ""
   };
+  @track isEmergencyModalOpen = false;
+  @track emergencyForm = {
+    Emergency_Contact_Name__c: "",
+    Emergency_Contact_Relationship__c: "",
+    Emergency_Contact_Number__c: "",
+    Secondary_Emergency_Contact_Name__c: "",
+    Secondary_Emergency_Contact_Relationship__c: "",
+    Secondary_Emergency_Contact_Number__c: ""
+  };
+  @track isPersonalModalOpen = false;
+  @track personalForm = {
+    Passport_No__c: "",
+    Passport_Exp_Date__c: "",
+    Nationality__c: "",
+    Religion__c: "",
+    Marital_Status__c: "",
+    Employment_of_Spouse__c: "",
+    No_of_Children__c: 0
+  };
   @track modalTitle = "Add Employee";
   @track employeeForm = {
     Id: null,
@@ -748,6 +767,181 @@ export default class PwchronoEmployeeDirectory extends LightningElement {
       this.showToast(
         "Error",
         "Error updating Family Information: " + (err?.body?.message || err.message),
+        "error"
+      );
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  // Emergency Contact Modal Handlers
+  handleOpenEmergencyModal(event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (!this.selectedEmployee) {
+      return;
+    }
+    const ec = this.selectedEmployee.emergencyContact || {};
+    this.emergencyForm = {
+      Id: this.selectedEmployee.id,
+      Emergency_Contact_Name__c:
+        !ec.primaryName || ec.primaryName === "Not provided" ? "" : ec.primaryName,
+      Emergency_Contact_Relationship__c:
+        !ec.primaryRelationship || ec.primaryRelationship === "Not provided"
+          ? ""
+          : ec.primaryRelationship,
+      Emergency_Contact_Number__c:
+        !ec.primaryPhone || ec.primaryPhone === "Not provided" ? "" : ec.primaryPhone,
+      Secondary_Emergency_Contact_Name__c:
+        !ec.secondaryName || ec.secondaryName === "Not provided" ? "" : ec.secondaryName,
+      Secondary_Emergency_Contact_Relationship__c:
+        !ec.secondaryRelationship || ec.secondaryRelationship === "Not provided"
+          ? ""
+          : ec.secondaryRelationship,
+      Secondary_Emergency_Contact_Number__c:
+        !ec.secondaryPhone || ec.secondaryPhone === "Not provided" ? "" : ec.secondaryPhone
+    };
+    this.isEmergencyModalOpen = true;
+  }
+
+  handleCloseEmergencyModal() {
+    this.isEmergencyModalOpen = false;
+  }
+
+  handleEmergencyFormFieldChange(event) {
+    const field = event.target.name;
+    if (field) {
+      this.emergencyForm[field] = event.target.value;
+    }
+  }
+
+  async handleSaveEmergencyInfo() {
+    if (!this.selectedEmployee?.id) {
+      return;
+    }
+    this.isLoading = true;
+    try {
+      const contactObj = {
+        sobjectType: "Contact",
+        Id: this.selectedEmployee.id,
+        LastName: this.selectedEmployee.lastName || "Employee",
+        Emergency_Contact_Name__c: this.emergencyForm.Emergency_Contact_Name__c || "",
+        Emergency_Contact_Relationship__c:
+          this.emergencyForm.Emergency_Contact_Relationship__c || "",
+        Emergency_Contact_Number__c: this.emergencyForm.Emergency_Contact_Number__c || "",
+        Secondary_Emergency_Contact_Name__c:
+          this.emergencyForm.Secondary_Emergency_Contact_Name__c || "",
+        Secondary_Emergency_Contact_Relationship__c:
+          this.emergencyForm.Secondary_Emergency_Contact_Relationship__c || "",
+        Secondary_Emergency_Contact_Number__c:
+          this.emergencyForm.Secondary_Emergency_Contact_Number__c || ""
+      };
+
+      await saveEmployee({
+        contactRecord: contactObj,
+        callerPortalUserId: this.callerPortalUserId,
+        sessionToken: this.sessionToken
+      });
+
+      this.showToast(
+        "Success",
+        "Emergency contact information updated successfully!",
+        "success"
+      );
+      this.isEmergencyModalOpen = false;
+      await this.fetchEmployeeDetail(this.selectedEmployee.id);
+      await this.loadEmployees();
+    } catch (err) {
+      this.showToast(
+        "Error",
+        "Error updating Emergency Contact: " + (err?.body?.message || err.message),
+        "error"
+      );
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  // Personal Information Modal Handlers
+  handleOpenPersonalModal(event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (!this.selectedEmployee) {
+      return;
+    }
+    const pi = this.selectedEmployee.personalInfo || {};
+    this.personalForm = {
+      Id: this.selectedEmployee.id,
+      Passport_No__c: pi.rawPassportNo || "",
+      Passport_Exp_Date__c: pi.passportExpDateIso || "",
+      Nationality__c:
+        !pi.nationality || pi.nationality === "Not provided" ? "" : pi.nationality,
+      Religion__c:
+        !pi.religion || pi.religion === "Not provided" ? "" : pi.religion,
+      Marital_Status__c:
+        !pi.maritalStatus || pi.maritalStatus === "Not provided" ? "" : pi.maritalStatus,
+      Employment_of_Spouse__c:
+        !pi.spouseEmployment || pi.spouseEmployment === "Not provided"
+          ? ""
+          : pi.spouseEmployment,
+      No_of_Children__c: pi.rawNoOfChildren || 0
+    };
+    this.isPersonalModalOpen = true;
+  }
+
+  handleClosePersonalModal() {
+    this.isPersonalModalOpen = false;
+  }
+
+  handlePersonalFormFieldChange(event) {
+    const field = event.target.name;
+    if (field) {
+      this.personalForm[field] =
+        event.target.type === "number"
+          ? parseFloat(event.target.value) || 0
+          : event.target.value;
+    }
+  }
+
+  async handleSavePersonalInfo() {
+    if (!this.selectedEmployee?.id) {
+      return;
+    }
+    this.isLoading = true;
+    try {
+      const contactObj = {
+        sobjectType: "Contact",
+        Id: this.selectedEmployee.id,
+        LastName: this.selectedEmployee.lastName || "Employee",
+        Passport_No__c: this.personalForm.Passport_No__c || "",
+        Passport_Exp_Date__c: this.personalForm.Passport_Exp_Date__c || null,
+        Nationality__c: this.personalForm.Nationality__c || "",
+        Religion__c: this.personalForm.Religion__c || "",
+        Marital_Status__c: this.personalForm.Marital_Status__c || "",
+        Employment_of_Spouse__c: this.personalForm.Employment_of_Spouse__c || "",
+        No_of_Children__c: this.personalForm.No_of_Children__c || 0
+      };
+
+      await saveEmployee({
+        contactRecord: contactObj,
+        callerPortalUserId: this.callerPortalUserId,
+        sessionToken: this.sessionToken
+      });
+
+      this.showToast(
+        "Success",
+        "Personal information updated successfully!",
+        "success"
+      );
+      this.isPersonalModalOpen = false;
+      await this.fetchEmployeeDetail(this.selectedEmployee.id);
+      await this.loadEmployees();
+    } catch (err) {
+      this.showToast(
+        "Error",
+        "Error updating Personal Information: " + (err?.body?.message || err.message),
         "error"
       );
     } finally {

@@ -1000,6 +1000,17 @@
                     class="d-flex align-items-center justify-content-between mb-2"
                   >
                     <h6 class="fw-bold mb-0">Personal Information</h6>
+                    <template if:true={selectedEmployee.canViewSensitive}>
+                      <button
+                        type="button"
+                        class="btn btn-icon btn-sm text-muted"
+                        data-id={selectedEmployee.id}
+                        onclick={handleOpenPersonalModal}
+                        title="Edit Personal Information"
+                      >
+                        <i class="fa-solid fa-pen-to-square"></i>
+                      </button>
+                    </template>
                   </div>
                   <template if:true={selectedEmployee.canViewSensitive}>
                     <div
@@ -1107,6 +1118,17 @@
                 class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between"
               >
                 <h6 class="fw-bold mb-0">Emergency Contact Number</h6>
+                <template if:true={selectedEmployee.canViewSensitive}>
+                  <button
+                    type="button"
+                    class="btn btn-icon btn-sm text-muted"
+                    data-id={selectedEmployee.id}
+                    onclick={handleOpenEmergencyModal}
+                    title="Edit Emergency Contacts"
+                  >
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                </template>
               </div>
               <div class="card-body p-0">
                 <template if:true={selectedEmployee.canViewSensitive}>
@@ -1918,6 +1940,247 @@
                   type="button"
                   class="btn btn-primary"
                   onclick={handleSaveFamilyInfo}
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ========================================================================= -->
+      <!-- EDIT EMERGENCY CONTACT MODAL                                              -->
+      <!-- ========================================================================= -->
+      <template if:true={isEmergencyModalOpen}>
+        <div
+          class="modal fade show d-block"
+          tabindex="-1"
+          style="background-color: rgba(0, 0, 0, 0.5)"
+        >
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow">
+              <div class="modal-header">
+                <h5 class="modal-title fw-bold">
+                  <i class="fa-solid fa-phone-volume text-danger me-2"></i>Emergency Contacts
+                </h5>
+                <button
+                  type="button"
+                  class="btn-close"
+                  onclick={handleCloseEmergencyModal}
+                ></button>
+              </div>
+              <div class="modal-body">
+                <h6 class="fw-bold text-primary mb-2 fs-13">Primary Emergency Contact</h6>
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label fs-13 fw-medium">Contact Name</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="Emergency_Contact_Name__c"
+                      value={emergencyForm.Emergency_Contact_Name__c}
+                      oninput={handleEmergencyFormFieldChange}
+                      placeholder="e.g. Sigrid"
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fs-13 fw-medium">Relationship</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="Emergency_Contact_Relationship__c"
+                      value={emergencyForm.Emergency_Contact_Relationship__c}
+                      oninput={handleEmergencyFormFieldChange}
+                      placeholder="e.g. Spouse / Brother"
+                    />
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label fs-13 fw-medium">Phone Number</label>
+                    <input
+                      type="tel"
+                      class="form-control"
+                      name="Emergency_Contact_Number__c"
+                      value={emergencyForm.Emergency_Contact_Number__c}
+                      oninput={handleEmergencyFormFieldChange}
+                      placeholder="e.g. 8291266910"
+                    />
+                  </div>
+                </div>
+
+                <hr class="my-3" />
+
+                <h6 class="fw-bold text-secondary mb-2 fs-13">Secondary Emergency Contact</h6>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label fs-13 fw-medium">Contact Name</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="Secondary_Emergency_Contact_Name__c"
+                      value={emergencyForm.Secondary_Emergency_Contact_Name__c}
+                      oninput={handleEmergencyFormFieldChange}
+                      placeholder="e.g. Addison"
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fs-13 fw-medium">Relationship</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="Secondary_Emergency_Contact_Relationship__c"
+                      value={emergencyForm.Secondary_Emergency_Contact_Relationship__c}
+                      oninput={handleEmergencyFormFieldChange}
+                      placeholder="e.g. Friend"
+                    />
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label fs-13 fw-medium">Phone Number</label>
+                    <input
+                      type="tel"
+                      class="form-control"
+                      name="Secondary_Emergency_Contact_Number__c"
+                      value={emergencyForm.Secondary_Emergency_Contact_Number__c}
+                      oninput={handleEmergencyFormFieldChange}
+                      placeholder="e.g. 7969789435"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-white"
+                  onclick={handleCloseEmergencyModal}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  onclick={handleSaveEmergencyInfo}
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ========================================================================= -->
+      <!-- EDIT PERSONAL INFORMATION MODAL                                           -->
+      <!-- ========================================================================= -->
+      <template if:true={isPersonalModalOpen}>
+        <div
+          class="modal fade show d-block"
+          tabindex="-1"
+          style="background-color: rgba(0, 0, 0, 0.5)"
+        >
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow">
+              <div class="modal-header">
+                <h5 class="modal-title fw-bold">
+                  <i class="fa-solid fa-id-card text-primary me-2"></i>Personal Information
+                </h5>
+                <button
+                  type="button"
+                  class="btn-close"
+                  onclick={handleClosePersonalModal}
+                ></button>
+              </div>
+              <div class="modal-body">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label fs-13 fw-medium">Passport No</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="Passport_No__c"
+                      value={personalForm.Passport_No__c}
+                      oninput={handlePersonalFormFieldChange}
+                      placeholder="e.g. A12345678"
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fs-13 fw-medium">Passport Exp Date</label>
+                    <input
+                      type="date"
+                      class="form-control"
+                      name="Passport_Exp_Date__c"
+                      value={personalForm.Passport_Exp_Date__c}
+                      oninput={handlePersonalFormFieldChange}
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fs-13 fw-medium">Nationality</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="Nationality__c"
+                      value={personalForm.Nationality__c}
+                      oninput={handlePersonalFormFieldChange}
+                      placeholder="e.g. Saudi Arabia"
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fs-13 fw-medium">Religion</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="Religion__c"
+                      value={personalForm.Religion__c}
+                      oninput={handlePersonalFormFieldChange}
+                      placeholder="e.g. Islam"
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fs-13 fw-medium">Marital Status</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="Marital_Status__c"
+                      value={personalForm.Marital_Status__c}
+                      oninput={handlePersonalFormFieldChange}
+                      placeholder="e.g. Single / Married"
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fs-13 fw-medium">Employment of Spouse</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="Employment_of_Spouse__c"
+                      value={personalForm.Employment_of_Spouse__c}
+                      oninput={handlePersonalFormFieldChange}
+                      placeholder="e.g. Employed / None"
+                    />
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label fs-13 fw-medium">No. of Children</label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      name="No_of_Children__c"
+                      value={personalForm.No_of_Children__c}
+                      oninput={handlePersonalFormFieldChange}
+                      min="0"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-white"
+                  onclick={handleClosePersonalModal}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  onclick={handleSavePersonalInfo}
                 >
                   Save Changes
                 </button>
