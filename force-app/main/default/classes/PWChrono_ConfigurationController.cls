@@ -60,7 +60,9 @@ public without sharing class PWChrono_ConfigurationController {
           Is_Active__c,
           Photo_Url__c,
           User__r.Email,
-          Last_Login_Date__c
+          Last_Login_Date__c,
+          Reports_To__c,
+          Reports_To__r.Name
         FROM Portal_Users__c
         ORDER BY Name
         LIMIT 1000
@@ -85,6 +87,12 @@ public without sharing class PWChrono_ConfigurationController {
           ? (String.isNotBlank(pu.Portal_User_Profile__r.Display_Name__c)
               ? pu.Portal_User_Profile__r.Display_Name__c
               : pu.Portal_User_Profile__r.Name)
+          : 'Unassigned';
+        config.managerId = pu.Reports_To__c != null
+          ? String.valueOf(pu.Reports_To__c)
+          : '';
+        config.managerName = pu.Reports_To__r != null
+          ? pu.Reports_To__r.Name
           : 'Unassigned';
         config.roleName = pu.Role__c != null ? pu.Role__c : 'N/A';
         config.designation = pu.Designation__c != null
@@ -569,6 +577,10 @@ public without sharing class PWChrono_ConfigurationController {
     public String profileName;
     @AuraEnabled
     public String profileId;
+    @AuraEnabled
+    public String managerId;
+    @AuraEnabled
+    public String managerName;
     @AuraEnabled
     public String roleName;
     @AuraEnabled

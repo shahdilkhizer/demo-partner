@@ -32,6 +32,7 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
   @track isLoading = true;
   @track activeTab = "users";
   wiredUsersResult;
+  wiredManagersResult;
   employeeId = getEmployeeId();
   sessionToken = getSessionToken();
 
@@ -84,10 +85,16 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
     if (data) {
       this.users = data.map((user) => ({
         ...user,
-        profileName: user.profileName || "N/A",
-        managerId: this.reportingByUserId.get(user.userId)?.managerId || "",
+        profileName: user.profileName || "Unassigned",
+        managerId:
+          user.managerId ||
+          this.reportingByUserId.get(user.userId)?.managerId ||
+          "",
         managerName:
-          this.reportingByUserId.get(user.userId)?.managerName || "Unassigned"
+          user.managerName && user.managerName !== "Unassigned"
+            ? user.managerName
+            : this.reportingByUserId.get(user.userId)?.managerName ||
+              "Unassigned"
       }));
       this.filterUsers();
     } else if (error) {
@@ -128,7 +135,9 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
     callerPortalUserId: "$employeeId",
     sessionToken: "$sessionToken"
   })
-  wiredManagers({ error, data }) {
+  wiredManagers(result) {
+    this.wiredManagersResult = result;
+    const { error, data } = result;
     if (data) {
       this.reportingByUserId = new Map(
         data.map((portalUser) => [portalUser.portalUserId, portalUser])
@@ -147,9 +156,14 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
       if (this.users.length > 0) {
         this.users = this.users.map((user) => ({
           ...user,
-          managerId: this.reportingByUserId.get(user.userId)?.managerId || "",
+          managerId:
+            this.reportingByUserId.get(user.userId)?.managerId ||
+            user.managerId ||
+            "",
           managerName:
-            this.reportingByUserId.get(user.userId)?.managerName || "Unassigned"
+            this.reportingByUserId.get(user.userId)?.managerName ||
+            user.managerName ||
+            "Unassigned"
         }));
         this.filterUsers();
       }
@@ -346,7 +360,7 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
     );
   }
 
-  handleSaveUserProfile() {
+  async handleSaveUserProfile() {
     if (!this.selectedUser || !this.selectedProfileId) {
       this.showToast(
         "Error",
@@ -356,30 +370,79 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
       return;
     }
     this.isSaving = true;
-    saveUserSetup({
-      targetPortalUserId: this.selectedUser.userId,
-      profileId: this.selectedProfileId,
-      managerPortalUserId: this.selectedManagerId || null,
-      callerPortalUserId: this.employeeId,
-      sessionToken: this.sessionToken
-    })
-      .then(() => {
-        this.showToast(
-          "Success",
-          "Portal User Profile and reporting manager saved successfully",
-          "success"
-        );
-        this.closeModal();
-        return refreshApex(this.wiredUsersResult);
-      })
-      .catch((error) => {
-        const errorMsg =
-          error.body?.message || error.message || "Unknown error";
-        this.showToast("Error", errorMsg, "error");
-      })
-      .finally(() => {
-        this.isSaving = false;
+    try {
+      await saveUserSetup({
+        targetPortalUserId: this.selectedUser.userId,
+        profileId: this.selectedProfileId,
+        managerPortalUserId: this.selectedManagerId || null,
+        callerPortalUserId: this.employeeId,
+        sessionToken: this.sessionToken
       });
+
+      // Calculate updated manager and profile names immediately for instant UI reflection
+      let updatedManagerName = "Unassigned";
+      if (this.selectedManagerId) {
+        const foundManager = this.managerOptions.find(
+          (opt) => opt.value === this.selectedManagerId
+        );
+        if (foundManager && foundManager.label) {
+          updatedManagerName = foundManager.label.split(" — ")[0];
+        }
+      }
+
+      const foundProfile = this.profileOptions.find(
+        (opt) => opt.value === this.selectedProfileId
+      );
+      const updatedProfileName = foundProfile
+        ? foundProfile.label
+        : "Unassigned";
+
+      // Update in-memory user list immediately
+      this.users = this.users.map((u) => {
+        if (u.userId === this.selectedUser.userId) {
+          return {
+            ...u,
+            profileId: this.selectedProfileId,
+            profileName: updatedProfileName,
+            managerId: this.selectedManagerId || "",
+            managerName: updatedManagerName
+          };
+        }
+        return u;
+      });
+      this.filterUsers();
+
+      // Also update reportingByUserId map
+      if (this.selectedUser.userId) {
+        this.reportingByUserId.set(this.selectedUser.userId, {
+          portalUserId: this.selectedUser.userId,
+          portalUserName: this.selectedUser.userName,
+          managerId: this.selectedManagerId || "",
+          managerName: updatedManagerName
+        });
+      }
+
+      this.showToast(
+        "Success",
+        "Portal User Profile and reporting manager saved successfully",
+        "success"
+      );
+      this.closeModal();
+
+      // Refresh wire adapters in background
+      if (this.wiredUsersResult) {
+        await refreshApex(this.wiredUsersResult);
+      }
+      if (this.wiredManagersResult) {
+        await refreshApex(this.wiredManagersResult);
+      }
+    } catch (error) {
+      const errorMsg =
+        error.body?.message || error.message || "Unknown error";
+      this.showToast("Error", errorMsg, "error");
+    } finally {
+      this.isSaving = false;
+    }
   }
 
   handleGlobalSettingChange(event) {

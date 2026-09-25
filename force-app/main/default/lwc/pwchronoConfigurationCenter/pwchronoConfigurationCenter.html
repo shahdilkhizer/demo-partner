@@ -252,11 +252,11 @@
 
   <template if:true={showUserFeatureModal}>
     <div class="modal fade show d-block" role="dialog" tabindex="-1">
-      <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content shadow border-0" style="overflow: visible;">
           <div class="modal-header">
             <div>
-              <h5 class="modal-title">
+              <h5 class="modal-title fw-bold">
                 Assign Profile: {selectedUser.userName}
               </h5>
               <p class="text-muted small mb-0">
@@ -270,7 +270,7 @@
             ></button>
           </div>
 
-          <div class="modal-body">
+          <div class="modal-body p-4" style="overflow: visible; min-height: 320px;">
             <div class="alert alert-info mb-4" role="status">
               Access is inherited from the selected Portal User Profile. Object
               and field permissions are managed on the profile record.
@@ -281,6 +281,7 @@
               value={selectedProfileId}
               options={profileOptions}
               onchange={handleProfileChange}
+              dropdown-alignment="auto"
               required
             ></lightning-combobox>
             <lightning-combobox
@@ -290,6 +291,7 @@
               value={selectedManagerId}
               options={availableManagerOptions}
               onchange={handleManagerChange}
+              dropdown-alignment="auto"
               field-level-help="This Portal User becomes the employee's manager for team views and approval routing. Leave blank only for top-level users."
             ></lightning-combobox>
           </div>
