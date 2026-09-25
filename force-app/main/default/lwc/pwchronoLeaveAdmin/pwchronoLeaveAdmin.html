@@ -425,6 +425,12 @@
             ></button>
           </div>
           <div class="modal-body">
+            <template if:true={modalError}>
+              <div class="alert alert-danger d-flex align-items-center mb-3" role="alert">
+                <i class="fa-solid fa-triangle-exclamation me-2 fs-16 flex-shrink-0"></i>
+                <div style="white-space: pre-line; word-break: break-word;">{modalError}</div>
+              </div>
+            </template>
             <div class="row g-3">
               <div class="col-12">
                 <label for="new-leave-type" class="form-label"

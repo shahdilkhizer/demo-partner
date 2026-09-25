@@ -265,8 +265,25 @@ export default class PwchronoLeaveEmployee extends LightningElement {
     this.loadLeaveRequests();
   }
 
+  @track modalError = "";
+
+  extractErrorMessage(error) {
+    if (!error) return "An unexpected error occurred.";
+    if (typeof error === "string") return error;
+    if (Array.isArray(error.body)) {
+      return error.body.map((e) => e?.message || JSON.stringify(e)).join("\n");
+    }
+    if (error.body?.message) return error.body.message;
+    if (error.body?.output?.errors?.length) {
+      return error.body.output.errors.map((e) => e?.message).join("\n");
+    }
+    if (error.message) return error.message;
+    return "An unexpected error occurred.";
+  }
+
   handleNewLeaveRequest(event) {
     event?.preventDefault();
+    this.modalError = "";
     this._leaveOpener = event?.currentTarget;
     this._focusLeaveForm = true;
     this.newLeaveForm = {
@@ -281,6 +298,7 @@ export default class PwchronoLeaveEmployee extends LightningElement {
 
   handleCloseLeaveModal() {
     if (this.isSavingLeave) return;
+    this.modalError = "";
     this.isNewLeaveModalOpen = false;
     this._leaveOpener?.focus();
   }
@@ -308,6 +326,7 @@ export default class PwchronoLeaveEmployee extends LightningElement {
   }
 
   handleNewLeaveFormChange(event) {
+    this.modalError = "";
     const field = event.target.name;
     const value =
       event.target.type === "checkbox"
@@ -319,14 +338,11 @@ export default class PwchronoLeaveEmployee extends LightningElement {
   async handleSubmitLeave(event) {
     event?.preventDefault();
     if (this.isSavingLeave) return;
+    this.modalError = "";
     const form = this.template.querySelector("form");
     if (form && !form.reportValidity()) return;
     if (this.newLeaveForm.toDate < this.newLeaveForm.fromDate) {
-      this.showToast(
-        "Validation",
-        "To Date must be on or after From Date.",
-        "warning"
-      );
+      this.modalError = "To Date must be on or after From Date.";
       return;
     }
     if (
@@ -334,11 +350,7 @@ export default class PwchronoLeaveEmployee extends LightningElement {
       !this.newLeaveForm.fromDate ||
       !this.newLeaveForm.toDate
     ) {
-      this.showToast(
-        "Validation",
-        "Please fill in Leave Type, From Date and To Date.",
-        "warning"
-      );
+      this.modalError = "Please fill in Leave Type, From Date and To Date.";
       return;
     }
     this.isSavingLeave = true;
@@ -364,7 +376,7 @@ export default class PwchronoLeaveEmployee extends LightningElement {
       );
       await Promise.all([this.loadLeaveRequests(), this.loadLeaveBalance()]);
     } catch (error) {
-      this.showToast("Error", error.body?.message || error.message, "error");
+      this.modalError = this.extractErrorMessage(error);
     } finally {
       this.isSavingLeave = false;
     }
