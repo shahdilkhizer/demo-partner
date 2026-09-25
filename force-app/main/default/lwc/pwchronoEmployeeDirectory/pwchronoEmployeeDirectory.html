@@ -1408,7 +1408,7 @@
                 <ul class="nav nav-pills gap-2" role="tablist">
                   <li class="nav-item" role="presentation">
                     <button
-                      class="nav-link active btn-sm"
+                      class={projectsTabClass}
                       type="button"
                       onclick={selectProjectsTab}
                     >
@@ -1417,7 +1417,7 @@
                   </li>
                   <li class="nav-item" role="presentation">
                     <button
-                      class="nav-link btn-sm"
+                      class={assetsTabClass}
                       type="button"
                       onclick={selectAssetsTab}
                     >
@@ -1511,27 +1511,45 @@
                   <template
                     if:true={selectedEmployee.assetInfo.hasAssetInformation}
                   >
-                    <div class="text-center py-4 text-muted">
-                      <i
-                        class="fa-solid fa-laptop fs-1 d-block mb-2 text-secondary"
-                      ></i>
-                      <p class="mb-3 fw-medium text-dark">
-                        {selectedEmployee.assetInfo.displayText}
-                      </p>
-                      <div class="row g-3 text-start">
-                        <div class="col-md-4">
-                          <span class="d-block fs-12">Processor</span
-                          ><strong
+                    <div class="card border bg-light p-3">
+                      <div class="d-flex align-items-center mb-3">
+                        <div
+                          class="avatar avatar-md bg-white text-primary rounded-circle shadow-sm me-3 d-flex align-items-center justify-content-center"
+                          style="width: 44px; height: 44px"
+                        >
+                          <i class="fa-solid fa-laptop fs-18"></i>
+                        </div>
+                        <div>
+                          <h6 class="fw-bold mb-0 text-dark">
+                            {selectedEmployee.assetInfo.displayText}
+                          </h6>
+                          <span class="badge bg-success-subtle text-success fs-11"
+                            >Assigned Asset</span
+                          >
+                        </div>
+                      </div>
+                      <div class="row g-3">
+                        <div class="col-sm-6 col-md-3">
+                          <span class="text-muted fs-12 d-block">Brand / Model</span>
+                          <strong class="text-dark fs-13"
+                            >{selectedEmployee.assetInfo.brand} {selectedEmployee.assetInfo.model}</strong
+                          >
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                          <span class="text-muted fs-12 d-block">Processor</span>
+                          <strong class="text-dark fs-13"
                             >{selectedEmployee.assetInfo.processorType}</strong
                           >
                         </div>
-                        <div class="col-md-4">
-                          <span class="d-block fs-12">Storage</span
-                          ><strong>{selectedEmployee.assetInfo.storage}</strong>
+                        <div class="col-sm-6 col-md-3">
+                          <span class="text-muted fs-12 d-block">RAM & Storage</span>
+                          <strong class="text-dark fs-13"
+                            >{selectedEmployee.assetInfo.ram} / {selectedEmployee.assetInfo.storage}</strong
+                          >
                         </div>
-                        <div class="col-md-4">
-                          <span class="d-block fs-12">Screen size</span
-                          ><strong
+                        <div class="col-sm-6 col-md-3">
+                          <span class="text-muted fs-12 d-block">Screen Size</span>
+                          <strong class="text-dark fs-13"
                             >{selectedEmployee.assetInfo.screenSize}</strong
                           >
                         </div>
@@ -1542,10 +1560,18 @@
                     if:false={selectedEmployee.assetInfo.hasAssetInformation}
                   >
                     <div class="text-center py-4 text-muted" role="status">
-                      <i
-                        class="fa-solid fa-laptop fs-1 d-block mb-2 text-secondary"
-                      ></i>
-                      No assigned asset information is available.
+                      <div
+                        class="avatar avatar-xl bg-light text-muted rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                        style="width: 56px; height: 56px"
+                      >
+                        <i class="fa-solid fa-laptop fs-24 text-secondary"></i>
+                      </div>
+                      <h6 class="fw-semibold text-dark mb-1">
+                        No Assets Assigned
+                      </h6>
+                      <p class="text-muted fs-13 mb-0">
+                        No assigned asset information is available.
+                      </p>
                     </div>
                   </template>
                 </template>

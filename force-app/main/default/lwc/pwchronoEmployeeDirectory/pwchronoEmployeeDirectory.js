@@ -153,6 +153,18 @@ export default class PwchronoEmployeeDirectory extends LightningElement {
     return this.activeDetailTab === "assets";
   }
 
+  get projectsTabClass() {
+    return this.isProjectsTabActive
+      ? "nav-link active btn-sm"
+      : "nav-link btn-sm";
+  }
+
+  get assetsTabClass() {
+    return this.isAssetsTabActive
+      ? "nav-link active btn-sm"
+      : "nav-link btn-sm";
+  }
+
   get totalCount() {
     return this.allEmployees.length;
   }
