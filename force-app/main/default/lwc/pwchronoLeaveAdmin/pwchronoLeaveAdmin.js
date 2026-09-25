@@ -111,18 +111,44 @@ export default class PwchronoLeaveAdmin extends NavigationMixin(
     ).length;
   }
 
-  getStatusClass(status) {
-    // Mapping status to Bootstrap text colors if needed, or just returning status for logic
-    return status;
+  get leaveTypeButtonLabel() {
+    return this.selectedLeaveType === "All"
+      ? "All Types"
+      : this.selectedLeaveType;
+  }
+
+  get statusButtonLabel() {
+    return this.selectedStatus === "All"
+      ? "All Status"
+      : this.selectedStatus;
+  }
+
+  handleDropdownToggle(event) {
+    if (event.target.open) {
+      const dropdowns = this.template.querySelectorAll("details.native-menu");
+      dropdowns.forEach((d) => {
+        if (d !== event.target) {
+          d.open = false;
+        }
+      });
+    }
   }
 
   handleStatusFilter(event) {
     this.selectedStatus = event.target.dataset.value;
+    const parentDetails = event.target.closest("details");
+    if (parentDetails) {
+      parentDetails.open = false;
+    }
     this.applyFilters();
   }
 
   handleLeaveTypeFilter(event) {
     this.selectedLeaveType = event.target.dataset.value;
+    const parentDetails = event.target.closest("details");
+    if (parentDetails) {
+      parentDetails.open = false;
+    }
     this.applyFilters();
   }
 

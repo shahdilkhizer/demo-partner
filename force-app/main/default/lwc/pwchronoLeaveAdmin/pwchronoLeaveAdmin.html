@@ -189,9 +189,12 @@
                 </span>
               </div>
             </div>
-            <details class="native-menu dropdown me-3">
-              <summary class="btn btn-white">{selectedLeaveType}</summary>
-              <ul class="native-menu-list p-3">
+            <details class="native-menu dropdown me-3" ontoggle={handleDropdownToggle}>
+              <summary class="btn btn-white d-flex align-items-center">
+                <span>{leaveTypeButtonLabel}</span>
+                <i class="fa-solid fa-chevron-down ms-2 fs-10"></i>
+              </summary>
+              <ul class="native-menu-list p-2">
                 <li>
                   <button
                     type="button"
@@ -234,9 +237,12 @@
                 </li>
               </ul>
             </details>
-            <details class="native-menu dropdown">
-              <summary class="btn btn-white">{selectedStatus}</summary>
-              <ul class="native-menu-list p-3">
+            <details class="native-menu dropdown" ontoggle={handleDropdownToggle}>
+              <summary class="btn btn-white d-flex align-items-center">
+                <span>{statusButtonLabel}</span>
+                <i class="fa-solid fa-chevron-down ms-2 fs-10"></i>
+              </summary>
+              <ul class="native-menu-list p-2">
                 <li>
                   <button
                     type="button"
