@@ -1,0 +1,98 @@
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.calendar-header {
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #495057;
+  padding: 8px 0;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.calendar-day {
+  min-height: 90px;
+  background-color: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+}
+
+.calendar-day:hover {
+  border-color: #ff5722;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.calendar-day.today {
+  border: 2px solid #ff5722;
+  background-color: #fff8f5;
+}
+
+.calendar-day.muted {
+  background-color: #fbfbfb;
+  opacity: 0.45;
+}
+
+.day-number {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #333;
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.status-Present,
+.status-badge.status-Present {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-Absent,
+.status-badge.status-Absent {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.status-Late,
+.status-badge.status-Late {
+  background-color: #fff8e1;
+  color: #f57f17;
+}
+
+.status-Weekend,
+.status-badge.status-Weekend {
+  background-color: #f5f5f5;
+  color: #757575;
+}
+
+.status-Holiday,
+.status-badge.status-Holiday {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.status-Leave,
+.status-badge.status-Leave {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.time-info {
+  font-size: 0.7rem;
+  color: #666;
+  margin-top: 2px;
+}

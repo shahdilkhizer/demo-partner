@@ -1,8 +1,9 @@
-import { LightningElement, track } from "lwc";
+import { LightningElement, track, api } from "lwc";
 import getAttendanceTrackerData from "@salesforce/apex/PWChrono_AttendanceController.getAttendanceTrackerData";
 import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
 
 export default class PwchronoAttendanceCalendar extends LightningElement {
+  @api targetEmployeeId;
   @track currentMonth;
   @track currentYear;
   @track calendarDays = [];
@@ -72,10 +73,13 @@ export default class PwchronoAttendanceCalendar extends LightningElement {
     const daysToAdd = 6 - endDate.getDay();
     endDate.setDate(endDate.getDate() + daysToAdd);
 
+    const startStr = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}-${String(startDate.getDate()).padStart(2, "0")}`;
+    const endStr = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}`;
+
     getAttendanceTrackerData({
-      startDate: startDate.toISOString().split("T")[0],
-      endDate: endDate.toISOString().split("T")[0],
-      employeeId: this.employeeId,
+      startDate: startStr,
+      endDate: endStr,
+      employeeId: this.targetEmployeeId || this.employeeId,
       sessionToken: this.sessionToken
     })
       .then((data) => {

@@ -329,6 +329,8 @@
           </div>
         </div>
 
+        <!-- LIST VIEW -->
+        <template if:true={isListView}>
         <div
           class="card"
           data-np-autofill-form-type="other"
@@ -535,6 +537,16 @@
             </div>
           </div>
         </div>
+        </template>
+
+        <!-- CALENDAR VIEW -->
+        <template if:true={isCalendarView}>
+          <div class="mb-4">
+            <c-pwchrono-attendance-calendar
+              target-employee-id={targetEmployeeId}
+            ></c-pwchrono-attendance-calendar>
+          </div>
+        </template>
       </div>
 
       <div
