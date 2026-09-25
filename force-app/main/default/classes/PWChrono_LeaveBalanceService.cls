@@ -184,13 +184,27 @@ public inherited sharing class PWChrono_LeaveBalanceService {
     Id leaveTypeId,
     Decimal requestedDays
   ) {
+    if (leaveTypeId != null) {
+      List<PWChrono_Leave_Type__c> lts = [
+        SELECT Id, Is_Unpaid__c, Allow_Negative_Balance__c
+        FROM PWChrono_Leave_Type__c
+        WHERE Id = :leaveTypeId
+        LIMIT 1
+      ];
+      if (!lts.isEmpty()) {
+        if (lts[0].Is_Unpaid__c == true || lts[0].Allow_Negative_Balance__c == true) {
+          return null;
+        }
+      }
+    }
+
     LeaveBalanceWrapper balance = getBalanceForType(employeeId, leaveTypeId);
 
     if (balance == null) {
       return 'No leave allocation found for this leave type.';
     }
 
-    if (balance.allowNegative == true) {
+    if (balance.allowNegative == true || balance.isUnpaid == true) {
       return null;
     }
 
@@ -217,6 +231,18 @@ public inherited sharing class PWChrono_LeaveBalanceService {
     Id leaveTypeId,
     Decimal days
   ) {
+    if (leaveTypeId != null) {
+      List<PWChrono_Leave_Type__c> lts = [
+        SELECT Id, Is_Unpaid__c
+        FROM PWChrono_Leave_Type__c
+        WHERE Id = :leaveTypeId
+        LIMIT 1
+      ];
+      if (!lts.isEmpty() && lts[0].Is_Unpaid__c == true) {
+        return;
+      }
+    }
+
     List<PWChrono_Leave_Allocation__c> allocations = [
       SELECT Id, Total_Leaves_Used__c
       FROM PWChrono_Leave_Allocation__c
@@ -228,9 +254,7 @@ public inherited sharing class PWChrono_LeaveBalanceService {
     ];
 
     if (allocations.isEmpty()) {
-      throw new AuraHandledException(
-        'No leave allocation found to deduct from.'
-      );
+      return;
     }
 
     PWChrono_Leave_Allocation__c alloc = allocations[0];
@@ -249,6 +273,18 @@ public inherited sharing class PWChrono_LeaveBalanceService {
     Id leaveTypeId,
     Decimal days
   ) {
+    if (leaveTypeId != null) {
+      List<PWChrono_Leave_Type__c> lts = [
+        SELECT Id, Is_Unpaid__c
+        FROM PWChrono_Leave_Type__c
+        WHERE Id = :leaveTypeId
+        LIMIT 1
+      ];
+      if (!lts.isEmpty() && lts[0].Is_Unpaid__c == true) {
+        return;
+      }
+    }
+
     List<PWChrono_Leave_Allocation__c> allocations = [
       SELECT Id, Total_Leaves_Used__c
       FROM PWChrono_Leave_Allocation__c
@@ -260,7 +296,7 @@ public inherited sharing class PWChrono_LeaveBalanceService {
     ];
 
     if (allocations.isEmpty()) {
-      throw new AuraHandledException('No leave allocation found to reverse.');
+      return;
     }
 
     PWChrono_Leave_Allocation__c alloc = allocations[0];

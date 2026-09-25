@@ -155,15 +155,41 @@ export default class PwchronoSidebar extends NavigationMixin(LightningElement) {
     else this.logoLightErrored = true;
   }
 
+  urlCheckHandler;
+  urlWatcherTimer;
+  _lastKnownUrl = "";
+
   connectedCallback() {
     this.refreshUserFromSession();
     this.sessionChangedHandler = () => this.refreshUserFromSession();
+    this.urlCheckHandler = () => {
+      this.detectCurrentPage();
+    };
+
     try {
       const w = globalThis?.window ?? globalThis;
       w?.addEventListener?.(SESSION_CHANGED_EVENT, this.sessionChangedHandler);
+      w?.addEventListener?.("popstate", this.urlCheckHandler);
+      w?.addEventListener?.("hashchange", this.urlCheckHandler);
+      w?.addEventListener?.("appnavigate", this.urlCheckHandler);
     } catch {
       // no-op
     }
+
+    this._lastKnownUrl =
+      (globalThis.location?.pathname || "") +
+      (globalThis.location?.hash || "");
+
+    // eslint-disable-next-line @lwc/lwc/no-async-operation
+    this.urlWatcherTimer = setInterval(() => {
+      const current =
+        (globalThis.location?.pathname || "") +
+        (globalThis.location?.hash || "");
+      if (this._lastKnownUrl !== current) {
+        this._lastKnownUrl = current;
+        this.detectCurrentPage();
+      }
+    }, 150);
 
     if (globalThis.__pwchronoNavMenuCache) {
       this.processIncomingMenuItems(globalThis.__pwchronoNavMenuCache);
@@ -171,16 +197,24 @@ export default class PwchronoSidebar extends NavigationMixin(LightningElement) {
   }
 
   disconnectedCallback() {
+    if (this.urlWatcherTimer) {
+      clearInterval(this.urlWatcherTimer);
+      this.urlWatcherTimer = null;
+    }
     try {
       const w = globalThis?.window ?? globalThis;
       w?.removeEventListener?.(
         SESSION_CHANGED_EVENT,
         this.sessionChangedHandler
       );
+      w?.removeEventListener?.("popstate", this.urlCheckHandler);
+      w?.removeEventListener?.("hashchange", this.urlCheckHandler);
+      w?.removeEventListener?.("appnavigate", this.urlCheckHandler);
     } catch {
       // no-op
     }
     this.sessionChangedHandler = null;
+    this.urlCheckHandler = null;
   }
 
   refreshUserFromSession() {
@@ -546,30 +580,99 @@ export default class PwchronoSidebar extends NavigationMixin(LightningElement) {
 
   detectCurrentPage() {
     try {
-      const currentRel = this.getCommunityRelativePath();
-      const items = Object.values(this._allItemsByKey || {});
-      const found = items.find((item) => {
-        if (item.type === "InternalLink" && item.actionValue) {
-          const menuRel = this.normalizeMenuRelativePath(item.actionValue);
-          if (!menuRel) {
-            return false;
-          }
+      const rawPath = this.getCommunityRelativePath() || "/";
+      const currentRel =
+        rawPath.toLowerCase().replace(/\/+$/, "") || "/";
+      const currentHash = (globalThis.location?.hash || "")
+        .replace(/^#/, "")
+        .toLowerCase()
+        .trim();
+      const allItems = Object.values(this._allItemsByKey || {});
+      if (!allItems.length) return;
 
-          // Special-case home ('/') to avoid matching every route.
-          if (menuRel === "/") {
-            return currentRel === "/";
-          }
+      const isItemMatch = (item) => {
+        if (!item) return false;
 
-          return currentRel === menuRel || currentRel.startsWith(menuRel + "/");
+        // 1. Exact match on normalized actionValue
+        if (item.actionValue) {
+          const menuRel = (
+            this.normalizeMenuRelativePath(item.actionValue) || ""
+          )
+            .toLowerCase()
+            .replace(/\/+$/, "") || "/";
+          if (menuRel !== "/" && currentRel === menuRel) {
+            return true;
+          }
+          if (menuRel === "/" && currentRel === "/") {
+            return true;
+          }
         }
+
+        // 2. Exact match on hash route
+        const appRoute = getApplicationRoute(item)?.toLowerCase();
+        if (appRoute && currentHash && currentHash === appRoute) {
+          return true;
+        }
+
+        // 3. Match via label slug (e.g. "Leaves Admin" -> "/leaves-admin")
+        const labelSlug = String(item.label || "")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "");
+        if (labelSlug && currentRel !== "/" && currentRel === `/${labelSlug}`) {
+          return true;
+        }
+
+        // 4. Prefix match only if path has deeper segments
+        if (item.actionValue) {
+          const menuRel = (
+            this.normalizeMenuRelativePath(item.actionValue) || ""
+          )
+            .toLowerCase()
+            .replace(/\/+$/, "") || "/";
+          if (menuRel !== "/" && currentRel.startsWith(menuRel + "/")) {
+            return true;
+          }
+        }
+
         return false;
-      });
-      if (found) {
-        this.activeNavKey = found.key;
+      };
+
+      // Check child items first for specific match
+      let matchedItem = null;
+      for (const item of allItems) {
+        if (item.parentId && isItemMatch(item)) {
+          matchedItem = item;
+          break;
+        }
+      }
+
+      // If no child matched, check top-level items
+      if (!matchedItem) {
+        for (const item of allItems) {
+          if (!item.parentId && isItemMatch(item)) {
+            matchedItem = item;
+            break;
+          }
+        }
+      }
+
+      // If root/home URL ('/'), default to Dashboard child/item
+      if (!matchedItem && currentRel === "/") {
+        matchedItem = allItems.find(
+          (i) =>
+            i.label === "Employee Dashboard" ||
+            i.label === "Dashboard" ||
+            i.label === "Admin Dashboard"
+        );
+      }
+
+      if (matchedItem && String(this.activeNavKey) !== String(matchedItem.key)) {
+        this.activeNavKey = String(matchedItem.key);
         this.syncExpandedToActive();
       }
     } catch {
-      // Fallback to default
+      // Fallback
     }
   }
 
@@ -595,24 +698,69 @@ export default class PwchronoSidebar extends NavigationMixin(LightningElement) {
       }
 
       const allItems = Object.values(this._allItemsByKey || {});
-      const activeItem = allItems.find((i) => i.key === active);
+      const activeItem = allItems.find((i) => String(i.key) === active);
       if (!activeItem) {
         return;
       }
-      const parentId = activeItem.parentId;
-      if (!parentId) {
-        return;
-      }
-      const parent = allItems.find((i) => i.id === parentId);
-      if (parent) {
-        const parentKey = String(parent.key);
-        if (!this.isParentExpanded(parentKey)) {
-          this.expandedParentKeys = [
-            ...(this.expandedParentKeys || []),
-            parentKey
-          ];
+
+      // Find parent either via parentId or by checking children lists
+      let parentKey = null;
+      if (activeItem.parentId) {
+        const parent = allItems.find(
+          (i) =>
+            String(i.id) === String(activeItem.parentId) ||
+            String(i.key) === String(activeItem.parentId)
+        );
+        if (parent) {
+          parentKey = String(parent.key);
         }
       }
+
+      if (!parentKey) {
+        for (const topItem of this.rawMenuItems || []) {
+          if (
+            topItem.children &&
+            topItem.children.some(
+              (c) =>
+                String(c.key) === active ||
+                String(c.id) === String(activeItem.id) ||
+                c.label === activeItem.label
+            )
+          ) {
+            parentKey = String(topItem.key);
+            break;
+          }
+        }
+      }
+
+      if (parentKey && !this.isParentExpanded(parentKey)) {
+        this.expandedParentKeys = [
+          ...(this.expandedParentKeys || []),
+          parentKey
+        ];
+      }
+      this.scrollToActiveItem();
+    } catch {
+      // no-op
+    }
+  }
+
+  scrollToActiveItem() {
+    try {
+      // eslint-disable-next-line @lwc/lwc/no-async-operation
+      setTimeout(() => {
+        const activeElem =
+          document.querySelector(
+            ".sidebar-menu ul li.active a, .sidebar-menu ul li a.active"
+          ) || document.querySelector(".sidebar-menu ul li.active");
+        if (activeElem && typeof activeElem.scrollIntoView === "function") {
+          activeElem.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+            inline: "nearest"
+          });
+        }
+      }, 150);
     } catch {
       // no-op
     }
@@ -624,38 +772,51 @@ export default class PwchronoSidebar extends NavigationMixin(LightningElement) {
       const hasChildren =
         Array.isArray(item.children) && item.children.length > 0;
 
-      // Return boolean strictly. false instead of undefined ensures aria-expanded="false" which is valid.
-      const isExpanded = hasChildren
-        ? Boolean(this.searchTerm.trim()) || this.isParentExpanded(item.key)
-        : false;
+      const children = (item.children || []).map((child) => {
+        const childActive = String(this.activeNavKey) === String(child.key);
+        const childHref = this._computeItemHref(child);
+        return {
+          key: String(child.key),
+          label: child.label,
+          liClass: childActive ? "active" : "",
+          linkClass: childActive ? "active" : "",
+          href: childHref
+        };
+      });
 
+      const isChildActive = children.some((c) =>
+        c.linkClass.includes("active")
+      );
       const isActive = String(this.activeNavKey) === String(item.key);
+
+      const isExpanded = hasChildren
+        ? Boolean(this.searchTerm.trim()) ||
+          isChildActive ||
+          this.isParentExpanded(item.key)
+        : false;
 
       const isToggleOnly = hasChildren && (!item.type || !item.actionValue);
       const href = isToggleOnly ? null : this._computeItemHref(item);
 
-      // Template expects 'submenu' on LI if it has children
       let liClass = "";
       if (hasChildren) {
-        liClass = "submenu";
+        liClass = isChildActive ? "submenu active" : "submenu";
       } else if (isActive) {
         liClass = "active";
       }
 
-      // Template expects 'active' and 'subdrop' on A
       const linkClasses = [];
-      if (isActive || isExpanded) {
-        // expanded usually implies active parent in some templates, or just subdrop
-        if (isActive) linkClasses.push("active");
-        if (isExpanded) linkClasses.push("subdrop");
+      if (isActive || isChildActive) {
+        linkClasses.push("active");
       }
-      // Add utility class for buttons
+      if (isExpanded || isChildActive) {
+        linkClasses.push("subdrop");
+      }
       if (isToggleOnly || hasChildren) {
         linkClasses.push("sidebar-toggle-btn");
       }
       const linkClass = linkClasses.join(" ");
       const childId = hasChildren ? `submenu-${item.key}` : null;
-      // If it's a toggle-only item, treat as a button. If it's a link, leave role undefined (default to link).
       const itemRole = isToggleOnly ? "button" : undefined;
 
       return {
@@ -675,17 +836,7 @@ export default class PwchronoSidebar extends NavigationMixin(LightningElement) {
         hasBadge: false,
         badgeText: null,
         badgeClass: "",
-        children: (item.children || []).map((child) => {
-          const childActive = String(this.activeNavKey) === String(child.key);
-          const childHref = this._computeItemHref(child);
-          return {
-            key: String(child.key),
-            label: child.label,
-            liClass: childActive ? "active" : "",
-            linkClass: childActive ? "active" : "",
-            href: childHref
-          };
-        })
+        children
       };
     });
   }

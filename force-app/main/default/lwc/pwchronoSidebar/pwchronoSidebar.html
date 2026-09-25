@@ -217,7 +217,7 @@
                     <template if:true={item.hasChildren}>
                       <ul class={item.childClass} id={item.childId}>
                         <template for:each={item.children} for:item="child">
-                          <li key={child.key} data-repeat="child">
+                          <li key={child.key} data-repeat="child" class={child.liClass}>
                             <a
                               href={child.href}
                               data-key={child.key}

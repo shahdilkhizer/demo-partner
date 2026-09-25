@@ -241,7 +241,19 @@ export default class PwchronoLeaveAdmin extends NavigationMixin(
   }
 
   getStatusClass(status) {
-    return status;
+    switch (status) {
+      case "Approved":
+        return "badge badge-soft-success";
+      case "Pending":
+      case "Submitted":
+        return "badge badge-soft-warning";
+      case "Rejected":
+        return "badge badge-soft-danger";
+      case "Cancelled":
+        return "badge badge-soft-secondary";
+      default:
+        return "badge badge-soft-info";
+    }
   }
 
   handleDropdownToggle(event) {
@@ -287,7 +299,13 @@ export default class PwchronoLeaveAdmin extends NavigationMixin(
     let filtered = [...this.allTeamLeaves];
 
     if (this.selectedStatus !== "All") {
-      filtered = filtered.filter((l) => l.Status__c === this.selectedStatus);
+      if (this.selectedStatus === "Pending") {
+        filtered = filtered.filter(
+          (l) => l.Status__c === "Pending" || l.Status__c === "Submitted"
+        );
+      } else {
+        filtered = filtered.filter((l) => l.Status__c === this.selectedStatus);
+      }
     }
 
     if (this.selectedLeaveType !== "All") {

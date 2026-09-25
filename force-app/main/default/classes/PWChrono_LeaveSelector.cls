@@ -95,6 +95,29 @@ public inherited sharing class PWChrono_LeaveSelector {
    * @description Get team pending leaves for manager approval.
    */
   public static List<Leave__c> getTeamPendingLeaves(Id managerId) {
+    Boolean isAdmin = PWChrono_RequestValidator.isCurrentUserAdmin(managerId);
+    if (isAdmin) {
+      return [
+        SELECT
+          Id,
+          Name,
+          Employees__c,
+          Employees__r.Name,
+          Leave_Type__c,
+          Leave_Type__r.Name,
+          From_Date__c,
+          To_Date__c,
+          Total_Days__c,
+          Half_Day__c,
+          Reason__c,
+          Status__c,
+          CreatedDate
+        FROM Leave__c
+        WHERE Status__c = :PWChrono_Constants.STATUS_SUBMITTED
+        ORDER BY CreatedDate DESC
+        LIMIT :DEFAULT_LIMIT
+      ];
+    }
     return [
       SELECT
         Id,
@@ -129,14 +152,21 @@ public inherited sharing class PWChrono_LeaveSelector {
     Date startDate,
     Date endDate
   ) {
+    Boolean isAdmin = PWChrono_RequestValidator.isCurrentUserAdmin(managerId);
+
     String query =
       'SELECT Id, Name, Employees__c, Employees__r.Name, ' +
       'Leave_Type__c, Leave_Type__r.Name, ' +
       'From_Date__c, To_Date__c, Total_Days__c, ' +
       'Half_Day__c, Reason__c, Status__c, ' +
       'CreatedDate ' +
-      'FROM Leave__c ' +
-      'WHERE Approvers__c = :managerId ';
+      'FROM Leave__c ';
+
+    if (isAdmin) {
+      query += 'WHERE Id != null ';
+    } else {
+      query += 'WHERE (Approvers__c = :managerId OR Employees__c = :managerId) ';
+    }
 
     if (String.isNotBlank(statusFilter) && statusFilter != 'All') {
       query += 'AND Status__c = :statusFilter ';

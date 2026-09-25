@@ -16,3 +16,141 @@
   height: 32px;
   padding: 0;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   SmartHR Dark Sidebar - Refined Premium Menu Styling
+   ───────────────────────────────────────────────────────────── */
+
+/* Global text decoration reset for all sidebar links & spans */
+.sidebar-menu a,
+.sidebar-menu a:hover,
+.sidebar-menu a:focus,
+.sidebar-menu a:active,
+.sidebar-menu a span,
+.sidebar-menu a:hover span,
+.sidebar-menu ul li a,
+.sidebar-menu ul li a:hover,
+.sidebar-menu ul li a span,
+.sidebar-menu ul li a:hover span,
+.sidebar-menu ul li ul li a,
+.sidebar-menu ul li ul li a:hover,
+.sidebar-menu ul li ul li a span,
+.sidebar-menu ul li ul li a:hover span {
+  text-decoration: none !important;
+  outline: none !important;
+}
+
+/* Parent Menu Item - Normal & Hover */
+.sidebar-menu ul li > a {
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+  padding: 10px 14px;
+  text-decoration: none !important;
+}
+
+.sidebar-menu ul li > a:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
+
+/* Parent Dropdown when Expanded (subdrop) */
+.sidebar-menu ul li > a.subdrop {
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: #ffffff !important;
+  border-radius: 6px;
+  text-decoration: none !important;
+}
+
+.sidebar-menu ul li > a.subdrop span {
+  color: #ffffff !important;
+  font-weight: 500;
+  text-decoration: none !important;
+}
+
+.sidebar-menu ul li > a.subdrop i {
+  color: #ff9b44 !important;
+}
+
+/* Top-Level Single Active Item (e.g. Holidays, Approvals, Policies) */
+.sidebar-menu > ul > li.active:not(.submenu) > a,
+.sidebar-menu > ul > li:not(.submenu) > a.active {
+  background: rgba(254, 159, 67, 0.12) !important;
+  color: #ff9b44 !important;
+  border-left: 3px solid #ff9b44 !important;
+  border-radius: 0 6px 6px 0;
+  text-decoration: none !important;
+}
+
+.sidebar-menu > ul > li.active:not(.submenu) > a span,
+.sidebar-menu > ul > li:not(.submenu) > a.active span {
+  color: #ff9b44 !important;
+  font-weight: 600;
+  text-decoration: none !important;
+}
+
+.sidebar-menu > ul > li.active:not(.submenu) > a i,
+.sidebar-menu > ul > li:not(.submenu) > a.active i {
+  color: #ff9b44 !important;
+}
+
+/* Submenu Children Container */
+.sidebar-menu ul li.submenu ul {
+  padding-left: 0;
+  margin-top: 4px;
+}
+
+/* Inactive Submenu Child Links */
+.sidebar-menu ul li ul li a {
+  color: #9ca3af !important;
+  font-size: 13.5px;
+  font-weight: 400;
+  padding: 8px 14px 8px 24px !important;
+  border-radius: 6px;
+  transition: all 0.15s ease-in-out;
+  position: relative;
+  text-decoration: none !important;
+}
+
+.sidebar-menu ul li ul li a:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  text-decoration: none !important;
+}
+
+.sidebar-menu ul li ul li a span,
+.sidebar-menu ul li ul li a:hover span {
+  text-decoration: none !important;
+}
+
+/* Active Submenu Child Item (Matches SmartHR Reference Image) */
+.sidebar-menu ul li ul li.active > a,
+.sidebar-menu ul li ul li > a.active {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ff9b44 !important;
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+  padding-left: 28px !important;
+  text-decoration: none !important;
+}
+
+.sidebar-menu ul li ul li.active > a span,
+.sidebar-menu ul li ul li > a.active span {
+  color: #ff9b44 !important;
+  text-decoration: none !important;
+}
+
+/* Vertical orange accent indicator line '|' on active child item */
+.sidebar-menu ul li ul li.active > a::before,
+.sidebar-menu ul li ul li > a.active::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 3px !important;
+  height: 16px !important;
+  background-color: #ff9b44 !important;
+  border-radius: 2px !important;
+  opacity: 1 !important;
+}

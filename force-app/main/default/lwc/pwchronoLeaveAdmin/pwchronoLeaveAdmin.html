@@ -205,36 +205,18 @@
                     All Types
                   </button>
                 </li>
-                <li>
-                  <button
-                    type="button"
-                    class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100"
-                    onclick={handleLeaveTypeFilter}
-                    data-value="Casual Leave"
-                  >
-                    Casual Leave
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100"
-                    onclick={handleLeaveTypeFilter}
-                    data-value="Medical Leave"
-                  >
-                    Medical Leave
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100"
-                    onclick={handleLeaveTypeFilter}
-                    data-value="Loss of Pay"
-                  >
-                    Loss of Pay
-                  </button>
-                </li>
+                <template for:each={leaveTypes} for:item="lt">
+                  <li key={lt.value}>
+                    <button
+                      type="button"
+                      class="dropdown-item rounded-1 border-0 bg-transparent text-start w-100"
+                      onclick={handleLeaveTypeFilter}
+                      data-value={lt.label}
+                    >
+                      {lt.label}
+                    </button>
+                  </li>
+                </template>
               </ul>
             </details>
             <details class="native-menu dropdown" ontoggle={handleDropdownToggle}>
@@ -360,35 +342,40 @@
                         </a>
                       </div>
                     </td>
-                    <td>{leave.Start_Date__c}</td>
-                    <td>{leave.End_Date__c}</td>
+                    <td>{leave.From_Date__c}</td>
+                    <td>{leave.To_Date__c}</td>
                     <td>{leave.Total_Days__c} Days</td>
                     <td>
-                      <span class="badge badge-soft-info"
+                      <span class={leave.statusClass}
                         >{leave.Status__c}</span
                       >
                     </td>
                     <td>
-                      <div class="action-icon d-inline-flex">
-                        <button
-                          type="button"
-                          class="btn btn-icon btn-sm border-0 bg-transparent me-2"
-                          onclick={handleApprove}
-                          data-id={leave.Id}
-                          title="Approve"
-                        >
-                          <i class="fa-solid fa-check"></i>
-                        </button>
-                        <button
-                          type="button"
-                          class="btn btn-icon btn-sm border-0 bg-transparent"
-                          onclick={handleReject}
-                          data-id={leave.Id}
-                          title="Reject"
-                        >
-                          <i class="fa-solid fa-xmark"></i>
-                        </button>
-                      </div>
+                      <template if:true={leave.isPending}>
+                        <div class="action-icon d-inline-flex">
+                          <button
+                            type="button"
+                            class="btn btn-icon btn-sm border-0 bg-transparent me-2"
+                            onclick={handleApprove}
+                            data-id={leave.Id}
+                            title="Approve"
+                          >
+                            <i class="fa-solid fa-check text-success fs-14"></i>
+                          </button>
+                          <button
+                            type="button"
+                            class="btn btn-icon btn-sm border-0 bg-transparent"
+                            onclick={handleReject}
+                            data-id={leave.Id}
+                            title="Reject"
+                          >
+                            <i class="fa-solid fa-xmark text-danger fs-14"></i>
+                          </button>
+                        </div>
+                      </template>
+                      <template if:false={leave.isPending}>
+                        <span class="text-muted fs-13">-</span>
+                      </template>
                     </td>
                   </tr>
                 </template>
