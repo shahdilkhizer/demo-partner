@@ -52,7 +52,7 @@
                       >
                         <c-pwchrono-avatar
                           container-class="d-flex align-items-center justify-content-center avatar avatar-xxl rounded-circle border border-dashed me-2 flex-shrink-0 text-dark frames"
-                          image-url={profile.Photo_Url__c}
+                          image-url={displayedPhotoUrl}
                           name={profile.Name}
                           initials={initials}
                           alt-text="Profile"
@@ -68,10 +68,10 @@
                             </p>
                           </div>
                           <div
-                            class="profile-uploader d-flex align-items-center"
+                            class="profile-uploader d-flex align-items-center gap-2"
                           >
                             <div
-                              class="drag-upload-btn btn btn-sm btn-primary me-2"
+                              class="drag-upload-btn btn btn-sm btn-primary"
                             >
                               Upload
                               <input
@@ -81,13 +81,24 @@
                                 accept="image/*"
                               />
                             </div>
-                            <button
-                              type="button"
-                              class="btn btn-light btn-sm"
-                              onclick={handleCancelUpload}
-                            >
-                              Cancel
-                            </button>
+                            <template if:true={showCancelUploadButton}>
+                              <button
+                                type="button"
+                                class="btn btn-light btn-sm"
+                                onclick={handleCancelUpload}
+                              >
+                                Cancel
+                              </button>
+                            </template>
+                            <template if:true={showRemoveButton}>
+                              <button
+                                type="button"
+                                class="btn btn-outline-danger btn-sm"
+                                onclick={handleRemovePhoto}
+                              >
+                                Remove
+                              </button>
+                            </template>
                           </div>
                         </div>
                       </div>

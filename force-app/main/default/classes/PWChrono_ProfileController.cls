@@ -372,11 +372,70 @@ public inherited sharing class PWChrono_ProfileController {
     }
   }
 
+  /**
+   * @description Delete profile photo with access enforcement.
+   */
+  @AuraEnabled
+  public static void deleteProfilePhotoWithAccess(
+    String targetEmployeeId,
+    String portalUserId,
+    String sessionToken
+  ) {
+    try {
+      Id resolvedId = resolveTargetEmployeeId(
+        targetEmployeeId,
+        portalUserId,
+        sessionToken
+      );
+      if (resolvedId == null) {
+        throw new AuraHandledException('Employee record not found');
+      }
+
+      cleanupEmployeeProfileImages(resolvedId);
+
+      update new Portal_Users__c(
+        Id = resolvedId,
+        Photo_Url__c = null
+      );
+    } catch (Exception e) {
+      PWChrono_Logger.error('Error deleting profile photo (with access)', e);
+      AuraHandledException ahe = new AuraHandledException(
+        'Error deleting profile photo.'
+      );
+      ahe.setMessage('Error deleting profile photo.');
+      throw ahe;
+    }
+  }
+
+  private static void cleanupEmployeeProfileImages(Id employeeId) {
+    List<ContentDocumentLink> cdls = [
+      SELECT ContentDocumentId
+      FROM ContentDocumentLink
+      WHERE LinkedEntityId = :employeeId
+    ];
+    if (!cdls.isEmpty()) {
+      Set<Id> docIds = new Set<Id>();
+      for (ContentDocumentLink cdl : cdls) {
+        docIds.add(cdl.ContentDocumentId);
+      }
+      List<ContentDocument> docs = [
+        SELECT Id
+        FROM ContentDocument
+        WHERE Id IN :docIds
+      ];
+      if (!docs.isEmpty()) {
+        delete docs;
+      }
+    }
+  }
+
   private static String storeProfileImage(
     Id employeeId,
     String fileName,
     String base64Data
   ) {
+    cleanupEmployeeProfileImages(employeeId);
+
     ContentVersion cv = new ContentVersion(
       VersionData = EncodingUtil.base64Decode(base64Data),
       Title = fileName,

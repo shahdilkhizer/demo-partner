@@ -193,6 +193,9 @@ private class PWChrono_ProfileController_Test {
     );
     insert otherEmployee;
 
+    currentEmployee.Role__c = PWChrono_AccessController.ROLE_HR_ADMIN;
+    update currentEmployee;
+
     System.runAs(testUser) {
       Test.startTest();
       Portal_Users__c profile = PWChrono_ProfileController.getProfileWithAccess(
@@ -300,6 +303,43 @@ private class PWChrono_ProfileController_Test {
         profile,
         'Should return null for user without employee record'
       );
+    }
+  }
+
+  @isTest
+  static void testDeleteProfilePhotoWithAccess() {
+    User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
+    Portal_Users__c employee = [
+      SELECT Id
+      FROM Portal_Users__c
+      WHERE User__c = :testUser.Id
+      LIMIT 1
+    ];
+
+    System.runAs(testUser) {
+      Test.startTest();
+      String photoUrl = PWChrono_ProfileController.uploadProfileImageWithAccess(
+        employee.Id,
+        'profile.png',
+        EncodingUtil.base64Encode(Blob.valueOf('profile-image')),
+        employee.Id,
+        null
+      );
+      System.assertNotEquals(null, photoUrl);
+
+      PWChrono_ProfileController.deleteProfilePhotoWithAccess(
+        employee.Id,
+        employee.Id,
+        null
+      );
+      Test.stopTest();
+
+      Portal_Users__c updated = [
+        SELECT Photo_Url__c
+        FROM Portal_Users__c
+        WHERE Id = :employee.Id
+      ];
+      System.assertEquals(null, updated.Photo_Url__c, 'Photo Url should be cleared');
     }
   }
 }
