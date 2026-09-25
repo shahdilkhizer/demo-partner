@@ -4,6 +4,7 @@ import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
 
 export default class PwchronoAttendanceModal extends LightningElement {
+  static renderMode = "light";
   @api isOpen = false;
   @api recordId;
   @api employeeOptions = [];
@@ -19,6 +20,15 @@ export default class PwchronoAttendanceModal extends LightningElement {
   @track isSaving = false;
 
   _record;
+
+  connectedCallback() {
+    if (!this.selectedEmployeeId && this.employeeOptions?.length) {
+      this.selectedEmployeeId = this.employeeOptions[0].value;
+    }
+    if (!this.attendanceDate) {
+      this.attendanceDate = new Date().toISOString().split("T")[0];
+    }
+  }
 
   @api
   get record() {
@@ -42,7 +52,7 @@ export default class PwchronoAttendanceModal extends LightningElement {
       this.toTime = null;
       this.status = "Approved";
       this.selectedEmployeeId =
-        this.employeeOptions.length === 1
+        this.employeeOptions?.length === 1
           ? this.employeeOptions[0].value
           : null;
       this.correctionType = "Other";
@@ -126,7 +136,7 @@ export default class PwchronoAttendanceModal extends LightningElement {
 
   async handleSave() {
     const controls = [
-      ...this.template.querySelectorAll("input, select, textarea")
+      ...this.querySelectorAll("input, select, textarea")
     ];
     const isValid = controls.reduce((valid, control) => {
       control.reportValidity?.();

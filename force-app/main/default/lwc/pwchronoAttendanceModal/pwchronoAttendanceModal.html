@@ -5,18 +5,20 @@
   @last modified on  : 01-17-2026
   @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 -->
-<template>
+<template lwc:render-mode="light">
   <template if:true={isOpen}>
-    <dialog
-      class="modal fade show attendance-modal"
-      open
+    <div
+      class="modal fade show d-block attendance-modal"
+      role="dialog"
+      tabindex="-1"
       aria-modal="true"
       aria-labelledby="attendance-modal-title"
+      style="display: block;"
     >
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content shadow border-0">
           <div class="modal-header">
-            <h4 class="modal-title" id="attendance-modal-title">
+            <h4 class="modal-title fw-bold" id="attendance-modal-title">
               {modalTitle}
             </h4>
             <button
@@ -241,7 +243,7 @@
           </div>
         </div>
       </div>
-    </dialog>
+    </div>
     <div class="modal-backdrop fade show"></div>
   </template>
 </template>
