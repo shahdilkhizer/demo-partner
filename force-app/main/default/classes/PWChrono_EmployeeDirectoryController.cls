@@ -33,6 +33,8 @@ public without sharing class PWChrono_EmployeeDirectoryController {
     @AuraEnabled
     public String bankName { get; set; }
     @AuraEnabled
+    public String accountNumber { get; set; }
+    @AuraEnabled
     public String maskedAccountNumber { get; set; }
     @AuraEnabled
     public String swiftCode { get; set; }
@@ -568,6 +570,18 @@ public without sharing class PWChrono_EmployeeDirectoryController {
       if (contactRecord.Description != null) {
         safeContact.Description = contactRecord.Description;
       }
+      if (contactRecord.Bank_Name__c != null) {
+        safeContact.Bank_Name__c = contactRecord.Bank_Name__c;
+      }
+      if (contactRecord.Account_Number__c != null) {
+        safeContact.Account_Number__c = contactRecord.Account_Number__c;
+      }
+      if (contactRecord.SWIFT_Code__c != null) {
+        safeContact.SWIFT_Code__c = contactRecord.SWIFT_Code__c;
+      }
+      if (contactRecord.Branch_Name_Code__c != null) {
+        safeContact.Branch_Name_Code__c = contactRecord.Branch_Name_Code__c;
+      }
       if (!isGuestRuntime()) {
         System.AccessType accessType = safeContact.Id == null
           ? System.AccessType.CREATABLE
@@ -885,6 +899,7 @@ public without sharing class PWChrono_EmployeeDirectoryController {
   private static BankInfoWrapper buildBankInfo(Contact c) {
     BankInfoWrapper info = new BankInfoWrapper();
     info.bankName = displayValue(c.Bank_Name__c);
+    info.accountNumber = c.Account_Number__c != null ? c.Account_Number__c : '';
     info.maskedAccountNumber = maskValue(c.Account_Number__c);
     info.swiftCode = displayValue(c.SWIFT_Code__c);
     info.branch = displayValue(c.Branch_Name_Code__c);

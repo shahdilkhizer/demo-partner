@@ -91,6 +91,13 @@ export default class PwchronoEmployeeDirectory extends LightningElement {
   @track isDeleteModalOpen = false;
   @track isAboutModalOpen = false;
   @track aboutEmployeeText = "";
+  @track isBankModalOpen = false;
+  @track bankForm = {
+    Bank_Name__c: "",
+    Account_Number__c: "",
+    SWIFT_Code__c: "",
+    Branch_Name_Code__c: ""
+  };
   @track modalTitle = "Add Employee";
   @track employeeForm = {
     Id: null,
@@ -581,6 +588,82 @@ export default class PwchronoEmployeeDirectory extends LightningElement {
       this.showToast(
         "Error",
         "Error updating About Employee: " + (err?.body?.message || err.message),
+        "error"
+      );
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  // Bank & Statutory Modal Handlers
+  handleOpenBankModal(event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (!this.selectedEmployee) {
+      return;
+    }
+    const bank = this.selectedEmployee.bankInfo || {};
+    this.bankForm = {
+      Id: this.selectedEmployee.id,
+      Bank_Name__c:
+        !bank.bankName || bank.bankName === "Not provided" ? "" : bank.bankName,
+      Account_Number__c: bank.accountNumber || "",
+      SWIFT_Code__c:
+        !bank.swiftCode || bank.swiftCode === "Not provided"
+          ? ""
+          : bank.swiftCode,
+      Branch_Name_Code__c:
+        !bank.branch || bank.branch === "Not provided" ? "" : bank.branch
+    };
+    this.isBankModalOpen = true;
+  }
+
+  handleCloseBankModal() {
+    this.isBankModalOpen = false;
+  }
+
+  handleBankFormFieldChange(event) {
+    const field = event.target.name;
+    if (field) {
+      this.bankForm[field] = event.target.value;
+    }
+  }
+
+  async handleSaveBankInfo() {
+    if (!this.selectedEmployee?.id) {
+      return;
+    }
+    this.isLoading = true;
+    try {
+      const contactObj = {
+        sobjectType: "Contact",
+        Id: this.selectedEmployee.id,
+        LastName: this.selectedEmployee.lastName || "Employee",
+        Bank_Name__c: this.bankForm.Bank_Name__c || "",
+        Account_Number__c: this.bankForm.Account_Number__c || "",
+        SWIFT_Code__c: this.bankForm.SWIFT_Code__c || "",
+        Branch_Name_Code__c: this.bankForm.Branch_Name_Code__c || ""
+      };
+
+      await saveEmployee({
+        contactRecord: contactObj,
+        callerPortalUserId: this.callerPortalUserId,
+        sessionToken: this.sessionToken
+      });
+
+      this.showToast(
+        "Success",
+        "Bank & Statutory information updated successfully!",
+        "success"
+      );
+      this.isBankModalOpen = false;
+      await this.fetchEmployeeDetail(this.selectedEmployee.id);
+      await this.loadEmployees();
+    } catch (err) {
+      this.showToast(
+        "Error",
+        "Error updating Bank & Statutory: " + (err?.body?.message || err.message),
         "error"
       );
     } finally {

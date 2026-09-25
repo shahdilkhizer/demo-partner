@@ -122,9 +122,9 @@
               <button
                 type="button"
                 class="btn btn-primary d-flex align-items-center"
-                onclick={handleOpenAddModal}
+                onclick={handleOpenBankModal}
               >
-                <i class="fa-solid fa-circle-plus me-2"></i>Bank &amp; Statutory
+                <i class="fa-solid fa-building-columns me-2"></i>Bank &amp; Statutory
               </button>
             </div>
           </div>
@@ -1184,6 +1184,17 @@
                 class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between"
               >
                 <h5 class="fw-bold mb-0">Bank Information</h5>
+                <template if:true={selectedEmployee.canViewSensitive}>
+                  <button
+                    type="button"
+                    class="btn btn-icon btn-sm text-muted"
+                    data-id={selectedEmployee.id}
+                    onclick={handleOpenBankModal}
+                    title="Edit Bank & Statutory Details"
+                  >
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                </template>
               </div>
               <div class="card-body p-3">
                 <template if:true={selectedEmployee.canViewSensitive}>
@@ -1717,6 +1728,96 @@
                   type="button"
                   class="btn btn-primary"
                   onclick={handleSaveAboutEmployee}
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ========================================================================= -->
+      <!-- EDIT BANK & STATUTORY MODAL                                               -->
+      <!-- ========================================================================= -->
+      <template if:true={isBankModalOpen}>
+        <div
+          class="modal fade show d-block"
+          tabindex="-1"
+          style="background-color: rgba(0, 0, 0, 0.5)"
+        >
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow">
+              <div class="modal-header">
+                <h5 class="modal-title fw-bold">
+                  <i class="fa-solid fa-building-columns text-primary me-2"></i>Bank &amp; Statutory Details
+                </h5>
+                <button
+                  type="button"
+                  class="btn-close"
+                  onclick={handleCloseBankModal}
+                ></button>
+              </div>
+              <div class="modal-body">
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label fs-13 fw-medium">Bank Name</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="Bank_Name__c"
+                      value={bankForm.Bank_Name__c}
+                      oninput={handleBankFormFieldChange}
+                      placeholder="e.g. JPMorgan Chase Bank"
+                    />
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label fs-13 fw-medium">Bank Account Number</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="Account_Number__c"
+                      value={bankForm.Account_Number__c}
+                      oninput={handleBankFormFieldChange}
+                      placeholder="e.g. 123456789012"
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fs-13 fw-medium">SWIFT / Routing Code</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="SWIFT_Code__c"
+                      value={bankForm.SWIFT_Code__c}
+                      oninput={handleBankFormFieldChange}
+                      placeholder="e.g. CHASUS33"
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fs-13 fw-medium">Branch Name / Code</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="Branch_Name_Code__c"
+                      value={bankForm.Branch_Name_Code__c}
+                      oninput={handleBankFormFieldChange}
+                      placeholder="e.g. Manhattan 5th Ave"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-white"
+                  onclick={handleCloseBankModal}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  onclick={handleSaveBankInfo}
                 >
                   Save Changes
                 </button>
