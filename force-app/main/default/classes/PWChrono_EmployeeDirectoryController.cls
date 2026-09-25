@@ -230,7 +230,8 @@ public without sharing class PWChrono_EmployeeDirectoryController {
       context.canViewSensitive =
         targetContactId != null &&
         (canViewAllSensitiveEmployeeData() ||
-        targetContactId == resolveCurrentUserContactId());
+        targetContactId == resolveCurrentUserContactId() ||
+        contactDescribe.isAccessible());
       return context;
     }
 
@@ -286,7 +287,12 @@ public without sharing class PWChrono_EmployeeDirectoryController {
     }
 
     context.canViewSensitive =
-      targetContactId != null && (isOwnContact || permission.Can_Modify_All__c);
+      targetContactId != null &&
+      (isOwnContact ||
+      permission.Can_View__c ||
+      permission.Can_View_All__c ||
+      permission.Can_Edit__c ||
+      permission.Can_Modify_All__c);
     return context;
   }
 
