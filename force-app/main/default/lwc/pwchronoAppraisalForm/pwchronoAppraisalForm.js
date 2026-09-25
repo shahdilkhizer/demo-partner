@@ -258,7 +258,11 @@ export default class PwchronoAppraisalForm extends LightningElement {
       sobjectType: "PWChrono_Appraisal__c",
       Status__c: "Draft",
       Self_Rating__c: 3,
-      Employees__c: this.employeeId
+      Employees__c: this.employeeId,
+      Appraisal_Period__c: "",
+      Start_Date__c: "",
+      End_Date__c: "",
+      Achievements__c: ""
     };
     this.isReadOnly = false;
     this.showModal = true;
@@ -266,9 +270,19 @@ export default class PwchronoAppraisalForm extends LightningElement {
 
   handleViewEditRow(event) {
     const id = event.currentTarget.dataset.id;
-    const row = this.appraisals.find((item) => item.Id === id);
+    const row = this.allAppraisals.find((item) => item.Id === id);
     if (row) {
-      this.currentAppraisal = { ...row };
+      this.currentAppraisal = {
+        Id: row.Id,
+        Appraisal_Period__c: row.Appraisal_Period__c || "",
+        Start_Date__c: row.Start_Date__c || "",
+        End_Date__c: row.End_Date__c || "",
+        Status__c: row.Status__c || "Draft",
+        Self_Rating__c: row.Self_Rating__c || 3,
+        Achievements__c: row.Achievements__c || "",
+        Overall_Rating__c: row.Overall_Rating__c,
+        Feedback__c: row.Feedback__c
+      };
       this.isReadOnly =
         row.Status__c === "Submitted" || row.Status__c === "Completed";
       this.showModal = true;
@@ -279,8 +293,17 @@ export default class PwchronoAppraisalForm extends LightningElement {
     const actionName = event.detail.action.name;
     const row = event.detail.row;
     if (actionName === "view_edit") {
-      this.currentAppraisal = { ...row };
-      // Read only if Submitted or Completed
+      this.currentAppraisal = {
+        Id: row.Id,
+        Appraisal_Period__c: row.Appraisal_Period__c || "",
+        Start_Date__c: row.Start_Date__c || "",
+        End_Date__c: row.End_Date__c || "",
+        Status__c: row.Status__c || "Draft",
+        Self_Rating__c: row.Self_Rating__c || 3,
+        Achievements__c: row.Achievements__c || "",
+        Overall_Rating__c: row.Overall_Rating__c,
+        Feedback__c: row.Feedback__c
+      };
       this.isReadOnly =
         row.Status__c === "Submitted" || row.Status__c === "Completed";
       this.showModal = true;
@@ -289,7 +312,12 @@ export default class PwchronoAppraisalForm extends LightningElement {
 
   handleFieldChange(event) {
     const field = event.target.dataset.field;
-    this.currentAppraisal[field] = event.target.value;
+    if (field) {
+      this.currentAppraisal = {
+        ...this.currentAppraisal,
+        [field]: event.target.value
+      };
+    }
   }
 
   closeModal() {
@@ -324,7 +352,20 @@ export default class PwchronoAppraisalForm extends LightningElement {
   }
 
   saveRecord(status) {
-    const recordToSave = { ...this.currentAppraisal, Status__c: status };
+    const recordToSave = {
+      sobjectType: "PWChrono_Appraisal__c",
+      Status__c: status,
+      Appraisal_Period__c: this.currentAppraisal.Appraisal_Period__c,
+      Start_Date__c: this.currentAppraisal.Start_Date__c || null,
+      End_Date__c: this.currentAppraisal.End_Date__c || null,
+      Self_Rating__c: this.currentAppraisal.Self_Rating__c
+        ? Number(this.currentAppraisal.Self_Rating__c)
+        : null,
+      Achievements__c: this.currentAppraisal.Achievements__c || ""
+    };
+    if (this.currentAppraisal.Id) {
+      recordToSave.Id = this.currentAppraisal.Id;
+    }
     if (this.employeeId) {
       recordToSave.Employees__c = this.employeeId;
     }

@@ -55,9 +55,9 @@ public inherited sharing class PWChrono_PerformanceController {
     } catch (Exception e) {
       PWChrono_Logger.error('An error occurred', e);
       AuraHandledException ahe = new AuraHandledException(
-        'Error fetching appraisals: '
+        'Error fetching appraisals: ' + e.getMessage()
       );
-      ahe.setMessage('Error fetching appraisals: ');
+      ahe.setMessage('Error fetching appraisals: ' + e.getMessage());
       throw ahe;
     }
   }
@@ -112,9 +112,9 @@ public inherited sharing class PWChrono_PerformanceController {
     } catch (Exception e) {
       PWChrono_Logger.error('An error occurred', e);
       AuraHandledException ahe = new AuraHandledException(
-        'Error fetching team appraisals: '
+        'Error fetching team appraisals: ' + e.getMessage()
       );
-      ahe.setMessage('Error fetching team appraisals: ');
+      ahe.setMessage('Error fetching team appraisals: ' + e.getMessage());
       throw ahe;
     }
   }
@@ -147,13 +147,31 @@ public inherited sharing class PWChrono_PerformanceController {
         );
       }
 
-      if (appraisal.Id == null) {
-        appraisal.Employees__c = targetEmployeeId;
+      PWChrono_Appraisal__c toSave = new PWChrono_Appraisal__c();
+      if (appraisal.Id != null) {
+        toSave.Id = appraisal.Id;
+      }
+      toSave.Appraisal_Period__c = appraisal.Appraisal_Period__c;
+      toSave.Start_Date__c = appraisal.Start_Date__c;
+      toSave.End_Date__c = appraisal.End_Date__c;
+      toSave.Status__c = appraisal.Status__c;
+      toSave.Self_Rating__c = appraisal.Self_Rating__c;
+      toSave.Achievements__c = appraisal.Achievements__c;
+      if (appraisal.Overall_Rating__c != null) {
+        toSave.Overall_Rating__c = appraisal.Overall_Rating__c;
+      }
+      if (appraisal.Feedback__c != null) {
+        toSave.Feedback__c = appraisal.Feedback__c;
+      }
+
+      if (toSave.Id == null) {
+        toSave.Employees__c = targetEmployeeId;
+        insert toSave;
       } else {
         PWChrono_Appraisal__c existing = [
           SELECT Employees__c
           FROM PWChrono_Appraisal__c
-          WHERE Id = :appraisal.Id
+          WHERE Id = :toSave.Id
           LIMIT 1
         ];
         if (
@@ -164,13 +182,8 @@ public inherited sharing class PWChrono_PerformanceController {
           throw new AuraHandledException('Access Denied.');
         }
         // Do not allow changing Employees__c.
-        appraisal.Employees__c = existing.Employees__c;
-      }
-
-      if (appraisal.Id == null) {
-        insert appraisal;
-      } else {
-        update appraisal;
+        toSave.Employees__c = existing.Employees__c;
+        update toSave;
       }
 
       return [
@@ -187,14 +200,14 @@ public inherited sharing class PWChrono_PerformanceController {
           Achievements__c,
           Feedback__c
         FROM PWChrono_Appraisal__c
-        WHERE Id = :appraisal.Id
+        WHERE Id = :toSave.Id
       ];
     } catch (Exception e) {
       PWChrono_Logger.error('An error occurred', e);
       AuraHandledException ahe = new AuraHandledException(
-        'Error saving appraisal: '
+        'Error saving appraisal: ' + e.getMessage()
       );
-      ahe.setMessage('Error saving appraisal: ');
+      ahe.setMessage('Error saving appraisal: ' + e.getMessage());
       throw ahe;
     }
   }
@@ -245,9 +258,9 @@ public inherited sharing class PWChrono_PerformanceController {
     } catch (Exception e) {
       PWChrono_Logger.error('An error occurred', e);
       AuraHandledException ahe = new AuraHandledException(
-        'Error fetching goals: '
+        'Error fetching goals: ' + e.getMessage()
       );
-      ahe.setMessage('Error fetching goals: ');
+      ahe.setMessage('Error fetching goals: ' + e.getMessage());
       throw ahe;
     }
   }
@@ -318,9 +331,9 @@ public inherited sharing class PWChrono_PerformanceController {
     } catch (Exception e) {
       PWChrono_Logger.error('An error occurred', e);
       AuraHandledException ahe = new AuraHandledException(
-        'Error saving goal: '
+        'Error saving goal: ' + e.getMessage()
       );
-      ahe.setMessage('Error saving goal: ');
+      ahe.setMessage('Error saving goal: ' + e.getMessage());
       throw ahe;
     }
   }
@@ -389,9 +402,9 @@ public inherited sharing class PWChrono_PerformanceController {
     } catch (Exception e) {
       PWChrono_Logger.error('An error occurred', e);
       AuraHandledException ahe = new AuraHandledException(
-        'Error updating goal progress: '
+        'Error updating goal progress: ' + e.getMessage()
       );
-      ahe.setMessage('Error updating goal progress: ');
+      ahe.setMessage('Error updating goal progress: ' + e.getMessage());
       throw ahe;
     }
   }
