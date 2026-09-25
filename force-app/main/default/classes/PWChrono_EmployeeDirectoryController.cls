@@ -89,6 +89,29 @@ public without sharing class PWChrono_EmployeeDirectoryController {
     public Boolean hasAssetInformation { get; set; }
   }
 
+  public class ProjectItemWrapper {
+    @AuraEnabled
+    public String id { get; set; }
+    @AuraEnabled
+    public String name { get; set; }
+    @AuraEnabled
+    public String deadline { get; set; }
+    @AuraEnabled
+    public String projectLead { get; set; }
+    @AuraEnabled
+    public String stage { get; set; }
+    @AuraEnabled
+    public Integer totalTasks { get; set; }
+    @AuraEnabled
+    public Integer completedTasks { get; set; }
+    @AuraEnabled
+    public String iconClass { get; set; }
+    @AuraEnabled
+    public String iconBgColor { get; set; }
+    @AuraEnabled
+    public String avatarStyle { get; set; }
+  }
+
   public class EmployeeWrapper {
     @AuraEnabled
     public String id { get; set; }
@@ -154,6 +177,10 @@ public without sharing class PWChrono_EmployeeDirectoryController {
     public FamilyInfoWrapper familyInfo { get; set; }
     @AuraEnabled
     public AssetInfoWrapper assetInfo { get; set; }
+    @AuraEnabled
+    public List<ProjectItemWrapper> projectList { get; set; }
+    @AuraEnabled
+    public Boolean hasProjects { get; set; }
   }
 
   private static final String SELECT_FIELDS =
@@ -489,7 +516,7 @@ public without sharing class PWChrono_EmployeeDirectoryController {
         throw new EmployeeDirectoryException('Employee detail not found.');
       }
 
-      return buildEmployeeWrapper(contacts[0], 1, access.canViewSensitive);
+      return buildEmployeeWrapper(contacts[0], 1, access.canViewSensitive, true);
     } catch (Exception e) {
       PWChrono_Logger.error('Error getting employee detail', e);
       throw new EmployeeDirectoryException('Employee detail not found.');
@@ -607,6 +634,15 @@ public without sharing class PWChrono_EmployeeDirectoryController {
     Integer idx,
     Boolean canViewSensitive
   ) {
+    return buildEmployeeWrapper(c, idx, canViewSensitive, false);
+  }
+
+  private static EmployeeWrapper buildEmployeeWrapper(
+    Contact c,
+    Integer idx,
+    Boolean canViewSensitive,
+    Boolean includeProjects
+  ) {
     EmployeeWrapper w = new EmployeeWrapper();
     w.id = c.Id;
 
@@ -683,12 +719,30 @@ public without sharing class PWChrono_EmployeeDirectoryController {
       ? displayValue(c.Account.Name)
       : NOT_PROVIDED;
 
-    // Project metrics require a separate project relationship and are not inferred.
-    w.projects = 0;
-    w.done = 0;
-    w.progress = 0;
-    w.productivity = 0;
-    w.productivityClass = 'bg-secondary';
+    // Dynamic project list & metrics (only loaded on detail view)
+    if (includeProjects) {
+      w.projectList = buildProjects(c);
+      w.hasProjects = !w.projectList.isEmpty();
+      w.projects = w.projectList.size();
+      Integer totalTasksCount = 0;
+      Integer completedTasksCount = 0;
+      for (ProjectItemWrapper p : w.projectList) {
+        totalTasksCount += p.totalTasks;
+        completedTasksCount += p.completedTasks;
+      }
+      w.done = completedTasksCount;
+      w.progress = totalTasksCount > 0 ? (completedTasksCount * 100) / totalTasksCount : 0;
+      w.productivity = w.progress;
+      w.productivityClass = w.progress >= 70 ? 'bg-success' : w.progress >= 40 ? 'bg-warning' : 'bg-primary';
+    } else {
+      w.projectList = new List<ProjectItemWrapper>();
+      w.hasProjects = false;
+      w.projects = 0;
+      w.done = 0;
+      w.progress = 0;
+      w.productivity = 0;
+      w.productivityClass = 'bg-secondary';
+    }
 
     w.gender = displayValue(c.GenderIdentity);
     w.birthDateFormatted = c.Birthdate != null
@@ -706,6 +760,110 @@ public without sharing class PWChrono_EmployeeDirectoryController {
     }
 
     return w;
+  }
+
+  private static List<ProjectItemWrapper> buildProjects(Contact c) {
+    List<ProjectItemWrapper> projects = new List<ProjectItemWrapper>();
+    Set<Id> oppIds = new Set<Id>();
+
+    for (OpportunityContactRole ocr : [
+      SELECT OpportunityId
+      FROM OpportunityContactRole
+      WHERE ContactId = :c.Id
+      LIMIT 10
+    ]) {
+      oppIds.add(ocr.OpportunityId);
+    }
+
+    if (oppIds.isEmpty() && c.AccountId != null) {
+      for (Opportunity opp : [
+        SELECT Id
+        FROM Opportunity
+        WHERE AccountId = :c.AccountId
+        ORDER BY CreatedDate DESC
+        LIMIT 4
+      ]) {
+        oppIds.add(opp.Id);
+      }
+    }
+
+    List<Opportunity> opps;
+    if (!oppIds.isEmpty()) {
+      opps = [
+        SELECT Id, Name, CloseDate, StageName, Owner.Name
+        FROM Opportunity
+        WHERE Id IN :oppIds
+        ORDER BY CloseDate DESC
+        LIMIT 6
+      ];
+    } else {
+      opps = [
+        SELECT Id, Name, CloseDate, StageName, Owner.Name
+        FROM Opportunity
+        ORDER BY CreatedDate DESC
+        LIMIT 2
+      ];
+    }
+
+    if (opps.isEmpty()) {
+      return projects;
+    }
+
+    Set<Id> targetOppIds = new Set<Id>();
+    for (Opportunity opp : opps) {
+      targetOppIds.add(opp.Id);
+    }
+
+    Map<Id, Integer> totalTasksMap = new Map<Id, Integer>();
+    Map<Id, Integer> completedTasksMap = new Map<Id, Integer>();
+
+    // Count standard Task records linked to Opportunities
+    for (Task t : [
+      SELECT Id, Status, WhatId
+      FROM Task
+      WHERE WhatId IN :targetOppIds
+    ]) {
+      Id opId = t.WhatId;
+      totalTasksMap.put(opId, totalTasksMap.containsKey(opId) ? totalTasksMap.get(opId) + 1 : 1);
+      if (t.Status == 'Completed' || t.Status == 'Closed') {
+        completedTasksMap.put(opId, completedTasksMap.containsKey(opId) ? completedTasksMap.get(opId) + 1 : 1);
+      }
+    }
+
+    // Also count Cases linked to Opportunities (if any)
+    for (Case cs : [
+      SELECT Id, Status, Related_to_Opportunity__c
+      FROM Case
+      WHERE Related_to_Opportunity__c IN :targetOppIds
+    ]) {
+      Id opId = cs.Related_to_Opportunity__c;
+      totalTasksMap.put(opId, totalTasksMap.containsKey(opId) ? totalTasksMap.get(opId) + 1 : 1);
+      if (cs.Status == 'Closed' || cs.Status == 'Completed') {
+        completedTasksMap.put(opId, completedTasksMap.containsKey(opId) ? completedTasksMap.get(opId) + 1 : 1);
+      }
+    }
+
+    List<String> colors = new List<String>{ '#ff9b44', '#8b5cf6', '#0ea5e9', '#10b981', '#f59e0b' };
+    List<String> icons = new List<String>{ 'fa-solid fa-globe', 'fa-solid fa-hospital', 'fa-solid fa-briefcase', 'fa-solid fa-layer-group', 'fa-solid fa-chart-line' };
+
+    Integer idx = 0;
+    for (Opportunity opp : opps) {
+      ProjectItemWrapper p = new ProjectItemWrapper();
+      p.id = opp.Id;
+      p.name = opp.Name;
+      p.deadline = opp.CloseDate != null ? formatDate(opp.CloseDate) : NOT_PROVIDED;
+      p.projectLead = opp.Owner != null ? opp.Owner.Name : NOT_PROVIDED;
+      p.stage = opp.StageName;
+      p.totalTasks = totalTasksMap.containsKey(opp.Id) ? totalTasksMap.get(opp.Id) : 0;
+      p.completedTasks = completedTasksMap.containsKey(opp.Id) ? completedTasksMap.get(opp.Id) : 0;
+      p.iconBgColor = colors[Math.mod(idx, colors.size())];
+      p.iconClass = icons[Math.mod(idx, icons.size())];
+      p.avatarStyle = 'width: 36px; height: 36px; background-color: ' + p.iconBgColor + ';';
+      projects.add(p);
+      idx++;
+    }
+
+    return projects;
   }
 
   private static PersonalInfoWrapper buildPersonalInfo(Contact c) {

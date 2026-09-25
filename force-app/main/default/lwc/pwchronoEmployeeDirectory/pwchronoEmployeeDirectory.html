@@ -1429,81 +1429,61 @@
               <div class="card-body p-3">
                 <!-- Projects Tab Content -->
                 <template if:true={isProjectsTabActive}>
-                  <div class="row g-3">
-                    <div class="col-md-6">
-                      <div class="card border h-100 p-3 bg-light">
-                        <div
-                          class="d-flex align-items-center pb-2 mb-2 border-bottom"
-                        >
-                          <span
-                            class="avatar avatar-md rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
-                            style="width: 36px; height: 36px"
-                          >
-                            <i class="fa-solid fa-globe"></i>
-                          </span>
-                          <div>
-                            <h6 class="mb-0 fw-bold">World Health</h6>
-                            <p class="fs-12 text-muted mb-0">
-                              8 tasks •
-                              <span class="text-success">15 Completed</span>
-                            </p>
+                  <template if:true={selectedEmployee.hasProjects}>
+                    <div class="row g-3">
+                      <template for:each={selectedEmployee.projectList} for:item="proj">
+                        <div class="col-md-6" key={proj.id}>
+                          <div class="card border h-100 p-3 bg-light">
+                            <div
+                              class="d-flex align-items-center pb-2 mb-2 border-bottom"
+                            >
+                              <span
+                                class="avatar avatar-md rounded-circle text-white d-flex align-items-center justify-content-center me-2 flex-shrink-0"
+                                style={proj.avatarStyle}
+                              >
+                                <i class={proj.iconClass}></i>
+                              </span>
+                              <div class="overflow-hidden">
+                                <h6 class="mb-0 fw-bold text-truncate">{proj.name}</h6>
+                                <p class="fs-12 text-muted mb-0">
+                                  {proj.totalTasks} tasks •
+                                  <span class="text-success">{proj.completedTasks} Completed</span>
+                                </p>
+                              </div>
+                            </div>
+                            <div
+                              class="d-flex justify-content-between align-items-center pt-1 fs-12"
+                            >
+                              <div>
+                                <span class="text-muted d-block">Deadline</span>
+                                <strong class="text-dark">{proj.deadline}</strong>
+                              </div>
+                              <div class="text-end">
+                                <span class="text-muted d-block">Project Lead</span>
+                                <strong class="text-primary">{proj.projectLead}</strong>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                        <div
-                          class="d-flex justify-content-between align-items-center pt-1 fs-12"
-                        >
-                          <div>
-                            <span class="text-muted d-block">Deadline</span>
-                            <strong class="text-dark">31 July 2025</strong>
-                          </div>
-                          <div class="text-end">
-                            <span class="text-muted d-block">Project Lead</span>
-                            <strong class="text-primary">Leona</strong>
-                          </div>
-                        </div>
-                      </div>
+                      </template>
                     </div>
-
-                    <div class="col-md-6">
-                      <div class="card border h-100 p-3 bg-light">
-                        <div
-                          class="d-flex align-items-center pb-2 mb-2 border-bottom"
-                        >
-                          <span
-                            class="avatar avatar-md rounded-circle text-white d-flex align-items-center justify-content-center me-2"
-                            style="
-                              width: 36px;
-                              height: 36px;
-                              background-color: #8b5cf6;
-                            "
-                          >
-                            <i class="fa-solid fa-hospital"></i>
-                          </span>
-                          <div>
-                            <h6 class="mb-0 fw-bold">
-                              Hospital Administration
-                            </h6>
-                            <p class="fs-12 text-muted mb-0">
-                              8 tasks •
-                              <span class="text-success">15 Completed</span>
-                            </p>
-                          </div>
-                        </div>
-                        <div
-                          class="d-flex justify-content-between align-items-center pt-1 fs-12"
-                        >
-                          <div>
-                            <span class="text-muted d-block">Deadline</span>
-                            <strong class="text-dark">31 July 2025</strong>
-                          </div>
-                          <div class="text-end">
-                            <span class="text-muted d-block">Project Lead</span>
-                            <strong class="text-primary">Leona</strong>
-                          </div>
-                        </div>
+                  </template>
+                  <template if:false={selectedEmployee.hasProjects}>
+                    <div class="text-center py-4 text-muted" role="status">
+                      <div
+                        class="avatar avatar-xl bg-light text-muted rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                        style="width: 56px; height: 56px"
+                      >
+                        <i class="fa-solid fa-diagram-project fs-24 text-secondary"></i>
                       </div>
+                      <h6 class="fw-semibold text-dark mb-1">
+                        No Projects Assigned
+                      </h6>
+                      <p class="text-muted fs-13 mb-0">
+                        No active projects are currently assigned to this employee.
+                      </p>
                     </div>
-                  </div>
+                  </template>
                 </template>
 
                 <!-- Assets Tab Content -->
