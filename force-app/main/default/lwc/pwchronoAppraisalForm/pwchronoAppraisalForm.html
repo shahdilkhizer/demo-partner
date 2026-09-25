@@ -1,358 +1,383 @@
-<template>
+<template lwc:render-mode="light">
   <div class="page-wrapper">
     <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
-      <!-- Loading Access Check -->
-      <template if:false={accessLoaded}>
-        <div class="flex flex-col items-center justify-center py-16">
-          <div
-            class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"
-          ></div>
-          <p class="text-gray-500">Checking access...</p>
+      <!-- Breadcrumb -->
+      <div
+        class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3"
+      >
+        <div class="my-auto mb-2">
+          <h2 class="mb-1">My Appraisals</h2>
+          <nav>
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item">
+                <a href="javascript:void(0);"
+                  ><i class="ti ti-smart-home"></i
+                ></a>
+              </li>
+              <li class="breadcrumb-item">Performance</li>
+              <li class="breadcrumb-item active" aria-current="page">
+                My Appraisals
+              </li>
+            </ol>
+          </nav>
         </div>
-      </template>
-
-      <template if:true={accessLoaded}>
-        <template if:true={hasAccess}>
-          <div
-            class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+        <div
+          class="d-flex my-xl-auto right-content align-items-center flex-wrap gap-2"
+        >
+          <button
+            type="button"
+            class="btn btn-primary d-flex align-items-center"
+            onclick={handleNewAppraisal}
           >
-            <!-- Header -->
-            <div
-              class="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-5 text-white gap-4"
+            <i class="ti ti-circle-plus me-2" aria-hidden="true"></i>New
+            Appraisal
+          </button>
+        </div>
+      </div>
+      <!-- /Breadcrumb -->
+
+      <!-- Main Card -->
+      <div class="card">
+        <div
+          class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3"
+        >
+          <h5 class="card-title mb-0">Appraisals</h5>
+          <div class="d-flex align-items-center flex-wrap gap-2">
+            <!-- Search Filter -->
+            <div class="input-group" style="width: 220px">
+              <span class="input-group-text bg-white"
+                ><i class="ti ti-search text-muted"></i
+              ></span>
+              <input
+                type="text"
+                class="form-control ps-1"
+                placeholder="Search by period..."
+                value={searchFilter}
+                oninput={handleSearchFilter}
+              />
+            </div>
+
+            <!-- Status Filter -->
+            <select
+              class="form-select"
+              style="width: 160px"
+              onchange={handleStatusFilterChange}
             >
-              <div>
-                <h1 class="text-xl font-bold">My Appraisals</h1>
-                <p class="text-sm text-white/80 mt-1">
-                  View and manage your performance reviews
-                </p>
-              </div>
-              <lightning-button
-                label="New Appraisal"
-                onclick={handleNewAppraisal}
-                variant="neutral"
-              ></lightning-button>
-            </div>
+              <option value="">All Statuses</option>
+              <option value="Draft">Draft</option>
+              <option value="Submitted">Submitted</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
 
-            <div class="p-4 md:p-6">
-              <!-- Loading State -->
-              <template if:true={isLoading}>
-                <div class="flex flex-col items-center justify-center py-12">
-                  <div
-                    class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"
-                  ></div>
-                  <p class="text-gray-500">Loading appraisals...</p>
-                </div>
-              </template>
-
-              <template if:false={isLoading}>
-                <!-- Filters -->
-                <div class="flex flex-wrap gap-4 mb-4 items-end">
-                  <div class="flex-1 min-w-[200px]">
-                    <label
-                      for="searchPeriod"
-                      class="block text-xs font-medium text-gray-600 mb-1"
-                      >Search Period</label
-                    >
-                    <input
-                      id="searchPeriod"
-                      type="text"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      placeholder="Search by period..."
-                      value={searchFilter}
-                      onkeyup={handleSearchFilter}
-                    />
-                  </div>
-                  <div class="w-[160px]">
-                    <label
-                      for="statusFilter"
-                      class="block text-xs font-medium text-gray-600 mb-1"
-                      >Status</label
-                    >
-                    <lightning-combobox
-                      id="statusFilter"
-                      value={statusFilter}
-                      options={filterStatusOptions}
-                      onchange={handleStatusFilterChange}
-                      variant="label-hidden"
-                      placeholder="Filter by status"
-                    >
-                    </lightning-combobox>
-                  </div>
-                  <div class="w-[100px]">
-                    <label
-                      for="pageSize"
-                      class="block text-xs font-medium text-gray-600 mb-1"
-                      >Per Page</label
-                    >
-                    <lightning-combobox
-                      id="pageSize"
-                      value={pageSize}
-                      options={pageSizeOptions}
-                      onchange={handlePageSizeChange}
-                      variant="label-hidden"
-                    >
-                    </lightning-combobox>
-                  </div>
-                </div>
-
-                <!-- Appraisals List -->
-                <template if:true={hasAppraisals}>
-                  <div
-                    class="overflow-x-auto rounded-xl border border-gray-200"
-                  >
-                    <lightning-datatable
-                      key-field="Id"
-                      data={appraisals}
-                      columns={columns}
-                      hide-checkbox-column
-                      onrowaction={handleRowAction}
-                    >
-                    </lightning-datatable>
-                  </div>
-
-                  <!-- Pagination -->
-                  <div
-                    class="flex items-center justify-between mt-4 p-3 bg-gray-50 rounded-lg"
-                  >
-                    <span class="text-sm text-gray-600">{paginationInfo}</span>
-                    <div class="flex gap-2 items-center">
-                      <lightning-button-icon
-                        icon-name="utility:chevronleft"
-                        alternative-text="Previous"
-                        onclick={handlePrevPage}
-                        disabled={isPrevDisabled}
-                        variant="border-filled"
-                      >
-                      </lightning-button-icon>
-                      <span class="px-3 py-1 text-sm text-gray-700"
-                        >Page {currentPage} of {totalPages}</span
-                      >
-                      <lightning-button-icon
-                        icon-name="utility:chevronright"
-                        alternative-text="Next"
-                        onclick={handleNextPage}
-                        disabled={isNextDisabled}
-                        variant="border-filled"
-                      >
-                      </lightning-button-icon>
-                    </div>
-                  </div>
-                </template>
-
-                <template if:true={hasNoAppraisals}>
-                  <div
-                    class="flex flex-col items-center justify-center py-12 text-center bg-gray-50 rounded-xl"
-                  >
-                    <div
-                      class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"
-                    >
-                      <lightning-icon
-                        icon-name="utility:metrics"
-                        size="medium"
-                        class="text-gray-400"
-                      ></lightning-icon>
-                    </div>
-                    <p class="text-gray-500">No appraisals found.</p>
-                    <p class="text-sm text-gray-400 mt-1">
-                      Click "New Appraisal" to create one.
-                    </p>
-                  </div>
-                </template>
-
-                <template if:true={error}>
-                  <div
-                    class="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600"
-                  >
-                    {error}
-                  </div>
-                </template>
-              </template>
-            </div>
+            <!-- Per Page -->
+            <select
+              class="form-select"
+              style="width: 110px"
+              onchange={handlePageSizeChange}
+            >
+              <option value="10">10 / page</option>
+              <option value="5">5 / page</option>
+              <option value="25">25 / page</option>
+            </select>
           </div>
-        </template>
+        </div>
 
-        <template if:false={hasAccess}>
-          <div class="min-h-[60vh] flex items-center justify-center p-6">
-            <div
-              class="bg-white rounded-2xl shadow-xl p-10 text-center max-w-md"
-            >
+        <div class="card-body p-0">
+          <template if:true={isLoading}>
+            <div class="d-flex justify-content-center align-items-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          </template>
+
+          <template if:false={isLoading}>
+            <template if:true={hasAppraisals}>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Period</th>
+                      <th>Start Date</th>
+                      <th>End Date</th>
+                      <th>Status</th>
+                      <th>Self Rating</th>
+                      <th>Manager Rating</th>
+                      <th class="text-end">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template for:each={formattedAppraisals} for:item="item">
+                      <tr key={item.Id}>
+                        <td class="fw-semibold text-dark">
+                          {item.Appraisal_Period__c}
+                        </td>
+                        <td class="text-muted">{item.formattedStartDate}</td>
+                        <td class="text-muted">{item.formattedEndDate}</td>
+                        <td>
+                          <span class={item.statusBadgeClass}
+                            >{item.Status__c}</span
+                          >
+                        </td>
+                        <td>
+                          <span
+                            class="badge bg-light text-dark border px-2 py-1"
+                          >
+                            <i class="ti ti-star-filled text-warning me-1"></i
+                            >{item.selfRatingText}
+                          </span>
+                        </td>
+                        <td>
+                          <span
+                            class="badge bg-light text-dark border px-2 py-1"
+                          >
+                            <i class="ti ti-star-filled text-warning me-1"></i
+                            >{item.managerRatingText}
+                          </span>
+                        </td>
+                        <td class="text-end">
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-outline-primary"
+                            data-id={item.Id}
+                            onclick={handleViewEditRow}
+                          >
+                            <i class="ti ti-edit me-1"></i>View/Edit
+                          </button>
+                        </td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Pagination -->
               <div
-                class="w-20 h-20 mx-auto mb-6 flex items-center justify-center bg-red-100 rounded-full"
+                class="d-flex align-items-center justify-content-between p-3 border-top bg-white"
               >
-                <lightning-icon
-                  icon-name="utility:lock"
-                  size="large"
-                  class="text-red-500"
-                ></lightning-icon>
+                <span class="text-muted small">Showing {paginationInfo}</span>
+                <div class="btn-group btn-group-sm">
+                  <button
+                    type="button"
+                    class="btn btn-outline-light text-dark border"
+                    onclick={handlePrevPage}
+                    disabled={isPrevDisabled}
+                  >
+                    <i class="ti ti-chevron-left"></i> Previous
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-primary disabled"
+                    style="cursor: default"
+                  >
+                    Page {currentPage} of {totalPages}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-light text-dark border"
+                    onclick={handleNextPage}
+                    disabled={isNextDisabled}
+                  >
+                    Next <i class="ti ti-chevron-right"></i>
+                  </button>
+                </div>
               </div>
-              <h2 class="text-xl font-bold text-gray-800 mb-2">
-                Access Denied
-              </h2>
-              <p class="text-gray-500">
-                You do not have permission to view Appraisals.
-              </p>
-            </div>
-          </div>
-        </template>
-      </template>
+            </template>
 
-      <!-- Appraisal Edit Modal -->
+            <template if:true={hasNoAppraisals}>
+              <div class="text-center py-5">
+                <div
+                  class="avatar avatar-xl bg-light rounded-circle text-muted mx-auto mb-3 d-flex align-items-center justify-content-center"
+                  style="width: 54px; height: 54px"
+                >
+                  <i class="ti ti-file-analytics fs-2"></i>
+                </div>
+                <h6 class="fw-semibold">No Appraisals Found</h6>
+                <p class="text-muted small mb-3">
+                  Click "New Appraisal" above to create your review.
+                </p>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary"
+                  onclick={handleNewAppraisal}
+                >
+                  <i class="ti ti-plus me-1"></i>New Appraisal
+                </button>
+              </div>
+            </template>
+          </template>
+        </div>
+      </div>
+
+      <!-- Appraisal Modal -->
       <template if:true={showModal}>
         <div
-          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          class="modal fade show d-block"
+          role="dialog"
+          tabindex="-1"
+          style="display: block"
         >
-          <div
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-modal-enter"
-          >
-            <!-- Modal Header -->
-            <div
-              class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white"
-            >
-              <h2 class="text-lg font-bold">{modalTitle}</h2>
-              <button
-                class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
-                title="Close"
-                onclick={closeModal}
-              >
-                <lightning-icon
-                  icon-name="utility:close"
-                  size="small"
-                  class="text-white"
-                ></lightning-icon>
-              </button>
-            </div>
-
-            <!-- Modal Content -->
-            <div class="flex-1 overflow-y-auto p-6 space-y-6">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <lightning-input
-                    label="Appraisal Period"
-                    value={currentAppraisal.Appraisal_Period__c}
-                    onchange={handleFieldChange}
-                    data-field="Appraisal_Period__c"
-                    required
-                    disabled={isReadOnly}
-                  ></lightning-input>
-                </div>
-                <div>
-                  <lightning-combobox
-                    label="Status"
-                    value={currentAppraisal.Status__c}
-                    options={statusOptions}
-                    disabled
-                  ></lightning-combobox>
-                </div>
-                <div>
-                  <lightning-input
-                    type="date"
-                    label="Start Date"
-                    value={currentAppraisal.Start_Date__c}
-                    onchange={handleFieldChange}
-                    data-field="Start_Date__c"
-                    disabled={isReadOnly}
-                  ></lightning-input>
-                </div>
-                <div>
-                  <lightning-input
-                    type="date"
-                    label="End Date"
-                    value={currentAppraisal.End_Date__c}
-                    onchange={handleFieldChange}
-                    data-field="End_Date__c"
-                    disabled={isReadOnly}
-                  ></lightning-input>
-                </div>
+          <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow border-0">
+              <div class="modal-header">
+                <h5 class="modal-title fw-bold">{modalTitle}</h5>
+                <button
+                  type="button"
+                  class="btn-close"
+                  onclick={closeModal}
+                  aria-label="Close"
+                ></button>
               </div>
-
-              <!-- Self Assessment Section -->
-              <div>
-                <h3
-                  class="text-base font-semibold text-gray-800 pb-2 border-b border-gray-200 mb-4"
-                >
-                  Self Assessment
-                </h3>
-                <div class="space-y-4">
-                  <lightning-slider
-                    label="Self Rating (1-5)"
-                    value={currentAppraisal.Self_Rating__c}
-                    min="1"
-                    max="5"
-                    step="1"
-                    onchange={handleFieldChange}
-                    data-field="Self_Rating__c"
-                    disabled={isReadOnly}
-                  ></lightning-slider>
-
-                  <lightning-textarea
-                    label="Achievements & Goals Met"
-                    value={currentAppraisal.Achievements__c}
-                    onchange={handleFieldChange}
-                    data-field="Achievements__c"
-                    required
-                    class="tall-textarea"
-                    disabled={isReadOnly}
-                  ></lightning-textarea>
-                </div>
-              </div>
-
-              <!-- Manager Feedback Section (Read Only) -->
-              <template if:true={currentAppraisal.Feedback__c}>
-                <div>
-                  <h3
-                    class="text-base font-semibold text-gray-800 pb-2 border-b border-gray-200 mb-4"
-                  >
-                    Manager Feedback
-                  </h3>
-                  <div class="bg-gray-50 rounded-xl p-4 space-y-3">
-                    <div>
-                      <p
-                        class="text-xs uppercase tracking-wide text-gray-500 font-medium"
-                      >
-                        Overall Rating
-                      </p>
-                      <p class="text-lg font-bold text-gray-800">
-                        {currentAppraisal.Overall_Rating__c} / 5
-                      </p>
-                    </div>
-                    <div>
-                      <p
-                        class="text-xs uppercase tracking-wide text-gray-500 font-medium"
-                      >
-                        Feedback
-                      </p>
-                      <p class="text-gray-700 mt-1">
-                        {currentAppraisal.Feedback__c}
-                      </p>
-                    </div>
+              <div class="modal-body p-4">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label" for="modal-period"
+                      >Appraisal Period <span class="text-danger">*</span></label
+                    >
+                    <input
+                      type="text"
+                      id="modal-period"
+                      class="form-control"
+                      value={currentAppraisal.Appraisal_Period__c}
+                      data-field="Appraisal_Period__c"
+                      oninput={handleFieldChange}
+                      disabled={isReadOnly}
+                      required
+                    />
                   </div>
-                </div>
-              </template>
-            </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Status</label>
+                    <input
+                      type="text"
+                      class="form-control bg-light"
+                      value={currentAppraisal.Status__c}
+                      disabled
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="modal-start-date"
+                      >Start Date</label
+                    >
+                    <input
+                      type="date"
+                      id="modal-start-date"
+                      class="form-control"
+                      value={currentAppraisal.Start_Date__c}
+                      data-field="Start_Date__c"
+                      onchange={handleFieldChange}
+                      disabled={isReadOnly}
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="modal-end-date"
+                      >End Date</label
+                    >
+                    <input
+                      type="date"
+                      id="modal-end-date"
+                      class="form-control"
+                      value={currentAppraisal.End_Date__c}
+                      data-field="End_Date__c"
+                      onchange={handleFieldChange}
+                      disabled={isReadOnly}
+                    />
+                  </div>
 
-            <!-- Modal Footer -->
-            <div
-              class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50"
-            >
-              <lightning-button
-                label="Cancel"
-                onclick={closeModal}
-              ></lightning-button>
-              <template if:false={isReadOnly}>
-                <lightning-button
-                  variant="neutral"
-                  label="Save Draft"
-                  onclick={handleSaveDraft}
-                ></lightning-button>
-                <lightning-button
-                  variant="brand"
-                  label="Submit"
-                  onclick={handleSubmit}
-                ></lightning-button>
-              </template>
+                  <!-- Self Assessment -->
+                  <div class="col-12 mt-4">
+                    <h6 class="fw-bold border-bottom pb-2">Self Assessment</h6>
+                  </div>
+                  <div class="col-md-12">
+                    <label class="form-label" for="modal-self-rating"
+                      >Self Rating (1 to 5)</label
+                    >
+                    <select
+                      id="modal-self-rating"
+                      class="form-select"
+                      data-field="Self_Rating__c"
+                      value={currentAppraisal.Self_Rating__c}
+                      onchange={handleFieldChange}
+                      disabled={isReadOnly}
+                    >
+                      <option value="1">1 - Needs Improvement</option>
+                      <option value="2">2 - Developing</option>
+                      <option value="3">3 - Meets Expectations</option>
+                      <option value="4">4 - Exceeds Expectations</option>
+                      <option value="5">5 - Outstanding</option>
+                    </select>
+                  </div>
+                  <div class="col-md-12">
+                    <label class="form-label" for="modal-achievements"
+                      >Achievements & Goals Met
+                      <span class="text-danger">*</span></label
+                    >
+                    <textarea
+                      id="modal-achievements"
+                      class="form-control"
+                      rows="4"
+                      data-field="Achievements__c"
+                      oninput={handleFieldChange}
+                      disabled={isReadOnly}
+                      required
+                    >{currentAppraisal.Achievements__c}</textarea>
+                  </div>
+
+                  <!-- Manager Feedback (if exists) -->
+                  <template if:true={currentAppraisal.Feedback__c}>
+                    <div class="col-12 mt-4">
+                      <h6 class="fw-bold border-bottom pb-2">
+                        Manager Feedback
+                      </h6>
+                      <div class="bg-light rounded p-3 mt-2">
+                        <div class="mb-2">
+                          <span class="text-muted small"
+                            >Overall Rating:
+                          </span>
+                          <strong class="text-dark"
+                            >{currentAppraisal.Overall_Rating__c} / 5</strong
+                          >
+                        </div>
+                        <div>
+                          <span class="text-muted small">Feedback: </span>
+                          <p class="mb-0 text-dark">
+                            {currentAppraisal.Feedback__c}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-light"
+                  onclick={closeModal}
+                >
+                  Cancel
+                </button>
+                <template if:false={isReadOnly}>
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary"
+                    onclick={handleSaveDraft}
+                  >
+                    Save Draft
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    onclick={handleSubmit}
+                  >
+                    Submit
+                  </button>
+                </template>
+              </div>
             </div>
           </div>
         </div>
+        <div class="modal-backdrop fade show"></div>
       </template>
     </div>
   </div>

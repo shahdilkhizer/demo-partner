@@ -34,6 +34,8 @@ const COLUMNS = [
 ];
 
 export default class PwchronoAppraisalForm extends LightningElement {
+  static renderMode = "light";
+
   @track hasAccess = false;
   @track accessLoaded = false;
   @track allAppraisals = [];
@@ -132,6 +134,34 @@ export default class PwchronoAppraisalForm extends LightningElement {
     this.isLoading = false;
   }
 
+  get formattedAppraisals() {
+    return (this.appraisals || []).map((item) => {
+      let statusBadgeClass = "badge bg-secondary-transparent";
+      if (item.Status__c === "Submitted") {
+        statusBadgeClass = "badge bg-info-transparent";
+      } else if (item.Status__c === "In Progress") {
+        statusBadgeClass = "badge bg-warning-transparent";
+      } else if (
+        item.Status__c === "Completed" ||
+        item.Status__c === "Approved"
+      ) {
+        statusBadgeClass = "badge bg-success-transparent";
+      } else if (item.Status__c === "Rejected") {
+        statusBadgeClass = "badge bg-danger-transparent";
+      }
+      return {
+        ...item,
+        statusBadgeClass,
+        formattedStartDate: item.Start_Date__c || "—",
+        formattedEndDate: item.End_Date__c || "—",
+        selfRatingText: item.Self_Rating__c ? `${item.Self_Rating__c}/5` : "—",
+        managerRatingText: item.Overall_Rating__c
+          ? `${item.Overall_Rating__c}/5`
+          : "—"
+      };
+    });
+  }
+
   // Filter and Pagination Methods
   applyFilters() {
     let filtered = [...this.allAppraisals];
@@ -159,7 +189,7 @@ export default class PwchronoAppraisalForm extends LightningElement {
   }
 
   handleStatusFilterChange(event) {
-    this.statusFilter = event.detail.value;
+    this.statusFilter = event.target.value;
     this.currentPage = 1;
     this.applyFilters();
   }
@@ -171,7 +201,7 @@ export default class PwchronoAppraisalForm extends LightningElement {
   }
 
   handlePageSizeChange(event) {
-    this.pageSize = parseInt(event.detail.value, 10);
+    this.pageSize = parseInt(event.target.value, 10);
     this.currentPage = 1;
     this.applyFilters();
   }
@@ -232,6 +262,17 @@ export default class PwchronoAppraisalForm extends LightningElement {
     };
     this.isReadOnly = false;
     this.showModal = true;
+  }
+
+  handleViewEditRow(event) {
+    const id = event.currentTarget.dataset.id;
+    const row = this.appraisals.find((item) => item.Id === id);
+    if (row) {
+      this.currentAppraisal = { ...row };
+      this.isReadOnly =
+        row.Status__c === "Submitted" || row.Status__c === "Completed";
+      this.showModal = true;
+    }
   }
 
   handleRowAction(event) {
