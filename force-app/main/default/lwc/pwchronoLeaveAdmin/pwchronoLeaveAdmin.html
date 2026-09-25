@@ -400,4 +400,127 @@
       <!-- /Leaves list -->
     </div>
   </div>
+
+  <!-- New Leave Request Modal -->
+  <template if:true={isNewLeaveModalOpen}>
+    <div
+      class="modal fade show d-block leave-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="new-leave-title"
+      onkeydown={handleDialogKeydown}
+      tabindex="-1"
+      style="background: rgba(0, 0, 0, 0.5); z-index: 1060;"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" onsubmit={handleSubmitLeave}>
+          <div class="modal-header">
+            <h4 class="modal-title" id="new-leave-title">New Leave Request</h4>
+            <button
+              class="btn-close"
+              type="button"
+              aria-label="Close leave request"
+              onclick={handleCloseLeaveModal}
+              disabled={isSavingLeave}
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-12">
+                <label for="new-leave-type" class="form-label"
+                  >Leave Type <span class="text-danger">*</span></label
+                >
+                <select
+                  id="new-leave-type"
+                  class="form-select"
+                  name="leaveTypeId"
+                  onchange={handleNewLeaveFormChange}
+                  required
+                >
+                  <option value="">Select leave type</option>
+                  <template for:each={leaveTypes} for:item="type">
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  </template>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="new-leave-start" class="form-label"
+                  >From Date <span class="text-danger">*</span></label
+                >
+                <input
+                  id="new-leave-start"
+                  class="form-control"
+                  type="date"
+                  name="fromDate"
+                  value={newLeaveForm.fromDate}
+                  onchange={handleNewLeaveFormChange}
+                  required
+                />
+              </div>
+              <div class="col-md-6">
+                <label for="new-leave-end" class="form-label"
+                  >To Date <span class="text-danger">*</span></label
+                >
+                <input
+                  id="new-leave-end"
+                  class="form-control"
+                  type="date"
+                  name="toDate"
+                  min={newLeaveForm.fromDate}
+                  value={newLeaveForm.toDate}
+                  onchange={handleNewLeaveFormChange}
+                  required
+                />
+              </div>
+              <div class="col-12">
+                <label for="new-leave-reason" class="form-label">Reason</label>
+                <textarea
+                  id="new-leave-reason"
+                  class="form-control"
+                  name="reason"
+                  rows="3"
+                  onchange={handleNewLeaveFormChange}
+                ></textarea>
+              </div>
+              <div class="col-12">
+                <div class="form-check">
+                  <input
+                    id="new-leave-half"
+                    class="form-check-input"
+                    type="checkbox"
+                    name="halfDay"
+                    checked={newLeaveForm.halfDay}
+                    onchange={handleNewLeaveFormChange}
+                  />
+                  <label class="form-check-label" for="new-leave-half"
+                    >Half Day</label
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-white"
+              onclick={handleCloseLeaveModal}
+              disabled={isSavingLeave}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              disabled={isSavingLeave}
+            >
+              <template if:true={isSavingLeave}>Submitting…</template>
+              <template if:false={isSavingLeave}>Submit Request</template>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </template>
 </template>

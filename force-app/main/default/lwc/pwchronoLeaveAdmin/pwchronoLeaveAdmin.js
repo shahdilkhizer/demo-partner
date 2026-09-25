@@ -2,36 +2,15 @@ import { NavigationMixin } from "lightning/navigation";
 import { downloadCsv } from "c/pwchronoCsv";
 import getTeamLeavesForApproval from "@salesforce/apex/PWChrono_PortalApi.getTeamLeaves";
 import processLeaveApproval from "@salesforce/apex/PWChrono_PortalApi.processLeaveApproval";
+import getActiveLeaveTypes from "@salesforce/apex/PWChrono_LeaveController.getActiveLeaveTypes";
+import saveLeaveApplication from "@salesforce/apex/PWChrono_LeaveController.saveLeaveApplication";
 import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
-import { LightningElement, track } from "lwc";
+import { LightningElement, track, wire } from "lwc";
 
 export default class PwchronoLeaveAdmin extends NavigationMixin(
   LightningElement
 ) {
-  handleNewRequest() {
-    this[NavigationMixin.Navigate]({
-      type: "comm__namedPage",
-      attributes: { name: "Leaves__c" }
-    });
-  }
-  handleExportPdf() {
-    window.print();
-  }
-  handleExportCsv() {
-    downloadCsv(
-      "team-leave.csv",
-      ["Employee", "Leave type", "From", "To", "Days", "Status"],
-      this.teamLeaves.map((r) => [
-        r.employeeName,
-        r.leaveTypeName,
-        r.From_Date__c,
-        r.To_Date__c,
-        r.Total_Days__c,
-        r.Status__c
-      ])
-    );
-  }
   employeeId = getEmployeeId();
   sessionToken = getSessionToken();
   @track teamLeaves = [];
@@ -56,8 +35,134 @@ export default class PwchronoLeaveAdmin extends NavigationMixin(
   @track startDate = null;
   @track endDate = null;
 
+  // New Leave Modal State
+  @track isNewLeaveModalOpen = false;
+  @track isSavingLeave = false;
+  @track leaveTypes = [];
+  @track newLeaveForm = {
+    leaveTypeId: "",
+    fromDate: "",
+    toDate: "",
+    reason: "",
+    halfDay: false
+  };
+
+  @wire(getActiveLeaveTypes)
+  wiredLeaveTypes({ data }) {
+    if (data) {
+      this.leaveTypes = data.map((lt) => ({ label: lt.Name, value: lt.Id }));
+    }
+  }
+
   connectedCallback() {
+    this.employeeId = getEmployeeId();
+    this.sessionToken = getSessionToken();
     this.loadTeamLeaves();
+  }
+
+  handleNewRequest() {
+    this.newLeaveForm = {
+      leaveTypeId: "",
+      fromDate: "",
+      toDate: "",
+      reason: "",
+      halfDay: false
+    };
+    this.isNewLeaveModalOpen = true;
+  }
+
+  handleCloseLeaveModal() {
+    if (this.isSavingLeave) return;
+    this.isNewLeaveModalOpen = false;
+  }
+
+  handleDialogKeydown(event) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      this.handleCloseLeaveModal();
+    }
+  }
+
+  handleNewLeaveFormChange(event) {
+    const field = event.target.name;
+    const value =
+      event.target.type === "checkbox"
+        ? event.target.checked
+        : event.target.value;
+    this.newLeaveForm = { ...this.newLeaveForm, [field]: value };
+  }
+
+  async handleSubmitLeave(event) {
+    event?.preventDefault();
+    if (this.isSavingLeave) return;
+    const form = this.template.querySelector("form");
+    if (form && !form.reportValidity()) return;
+    if (this.newLeaveForm.toDate < this.newLeaveForm.fromDate) {
+      this.showToast(
+        "Validation",
+        "To Date must be on or after From Date.",
+        "warning"
+      );
+      return;
+    }
+    if (
+      !this.newLeaveForm.leaveTypeId ||
+      !this.newLeaveForm.fromDate ||
+      !this.newLeaveForm.toDate
+    ) {
+      this.showToast(
+        "Validation",
+        "Please fill in Leave Type, From Date and To Date.",
+        "warning"
+      );
+      return;
+    }
+    this.isSavingLeave = true;
+    try {
+      const leaveRecord = {
+        Leave_Type__c: this.newLeaveForm.leaveTypeId,
+        From_Date__c: this.newLeaveForm.fromDate,
+        To_Date__c: this.newLeaveForm.toDate,
+        Reason__c: this.newLeaveForm.reason,
+        Half_Day__c: this.newLeaveForm.halfDay,
+        Status__c: "Submitted"
+      };
+      await saveLeaveApplication({
+        leaveRecord,
+        portalUserId: this.employeeId,
+        sessionToken: this.sessionToken
+      });
+      this.isNewLeaveModalOpen = false;
+      this.showToast(
+        "Success",
+        "Leave request submitted successfully",
+        "success"
+      );
+      await this.loadTeamLeaves();
+    } catch (error) {
+      this.showToast("Error", error.body?.message || error.message, "error");
+    } finally {
+      this.isSavingLeave = false;
+    }
+  }
+
+  handleExportPdf() {
+    window.print();
+  }
+
+  handleExportCsv() {
+    downloadCsv(
+      "team-leave.csv",
+      ["Employee", "Leave type", "From", "To", "Days", "Status"],
+      this.teamLeaves.map((r) => [
+        r.employeeName,
+        r.leaveTypeName,
+        r.From_Date__c,
+        r.To_Date__c,
+        r.Total_Days__c,
+        r.Status__c
+      ])
+    );
   }
 
   async loadTeamLeaves() {
@@ -123,6 +228,10 @@ export default class PwchronoLeaveAdmin extends NavigationMixin(
       : this.selectedStatus;
   }
 
+  getStatusClass(status) {
+    return status;
+  }
+
   handleDropdownToggle(event) {
     if (event.target.open) {
       const dropdowns = this.template.querySelectorAll("details.native-menu");
@@ -153,10 +262,9 @@ export default class PwchronoLeaveAdmin extends NavigationMixin(
   }
 
   handleDateFilter(event) {
-    // Simple date filter implementation - expects YYYY-MM-DD
     const val = event.target.value;
     if (val) {
-      this.startDate = val; // For now just single date or start date
+      this.startDate = val;
     } else {
       this.startDate = null;
     }
@@ -184,20 +292,16 @@ export default class PwchronoLeaveAdmin extends NavigationMixin(
   }
 
   handleApprove(event) {
-    // Prevent default anchor behavior
     event.preventDefault();
     this.selectedLeaveId = event.currentTarget.dataset.id;
     this.modalAction = "Approve";
-    this.processApproval(); // Direct approve for now, or open modal
+    this.processApproval();
   }
 
   handleReject(event) {
     event.preventDefault();
     this.selectedLeaveId = event.currentTarget.dataset.id;
     this.modalAction = "Reject";
-    // For reject, we might want a reason, but for this UI we'll just trigger the action or show a simple prompt
-    // Since the UI doesn't have a modal in the HTML provided, we'll use a standard prompt or just process it.
-    // For safety, let's just process it as 'Reject' for now.
     this.processApproval();
   }
 
