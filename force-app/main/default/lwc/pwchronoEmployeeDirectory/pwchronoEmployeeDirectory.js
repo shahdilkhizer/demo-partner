@@ -98,6 +98,13 @@ export default class PwchronoEmployeeDirectory extends LightningElement {
     SWIFT_Code__c: "",
     Branch_Name_Code__c: ""
   };
+  @track isFamilyModalOpen = false;
+  @track familyForm = {
+    Family_Member_Name__c: "",
+    Family_Member_Relationship__c: "",
+    Family_Member_DOB__c: "",
+    Family_Member_Phone__c: ""
+  };
   @track modalTitle = "Add Employee";
   @track employeeForm = {
     Id: null,
@@ -664,6 +671,83 @@ export default class PwchronoEmployeeDirectory extends LightningElement {
       this.showToast(
         "Error",
         "Error updating Bank & Statutory: " + (err?.body?.message || err.message),
+        "error"
+      );
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  // Family Information Modal Handlers
+  handleOpenFamilyModal(event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (!this.selectedEmployee) {
+      return;
+    }
+    const family = this.selectedEmployee.familyInfo || {};
+    this.familyForm = {
+      Id: this.selectedEmployee.id,
+      Family_Member_Name__c:
+        !family.name || family.name === "Not provided" ? "" : family.name,
+      Family_Member_Relationship__c:
+        !family.relationship || family.relationship === "Not provided"
+          ? ""
+          : family.relationship,
+      Family_Member_DOB__c: family.dateOfBirthIso || "",
+      Family_Member_Phone__c:
+        !family.phone || family.phone === "Not provided" ? "" : family.phone
+    };
+    this.isFamilyModalOpen = true;
+  }
+
+  handleCloseFamilyModal() {
+    this.isFamilyModalOpen = false;
+  }
+
+  handleFamilyFormFieldChange(event) {
+    const field = event.target.name;
+    if (field) {
+      this.familyForm[field] = event.target.value;
+    }
+  }
+
+  async handleSaveFamilyInfo() {
+    if (!this.selectedEmployee?.id) {
+      return;
+    }
+    this.isLoading = true;
+    try {
+      const contactObj = {
+        sobjectType: "Contact",
+        Id: this.selectedEmployee.id,
+        LastName: this.selectedEmployee.lastName || "Employee",
+        Family_Member_Name__c: this.familyForm.Family_Member_Name__c || "",
+        Family_Member_Relationship__c:
+          this.familyForm.Family_Member_Relationship__c || "",
+        Family_Member_DOB__c: this.familyForm.Family_Member_DOB__c || null,
+        Family_Member_Phone__c: this.familyForm.Family_Member_Phone__c || ""
+      };
+
+      await saveEmployee({
+        contactRecord: contactObj,
+        callerPortalUserId: this.callerPortalUserId,
+        sessionToken: this.sessionToken
+      });
+
+      this.showToast(
+        "Success",
+        "Family information updated successfully!",
+        "success"
+      );
+      this.isFamilyModalOpen = false;
+      await this.fetchEmployeeDetail(this.selectedEmployee.id);
+      await this.loadEmployees();
+    } catch (err) {
+      this.showToast(
+        "Error",
+        "Error updating Family Information: " + (err?.body?.message || err.message),
         "error"
       );
     } finally {

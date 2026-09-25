@@ -1249,6 +1249,17 @@
                 class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between"
               >
                 <h5 class="fw-bold mb-0">Family Information</h5>
+                <template if:true={selectedEmployee.canViewSensitive}>
+                  <button
+                    type="button"
+                    class="btn btn-icon btn-sm text-muted"
+                    data-id={selectedEmployee.id}
+                    onclick={handleOpenFamilyModal}
+                    title="Edit Family Information"
+                  >
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                </template>
               </div>
               <div class="card-body p-3">
                 <template if:true={selectedEmployee.canViewSensitive}>
@@ -1818,6 +1829,95 @@
                   type="button"
                   class="btn btn-primary"
                   onclick={handleSaveBankInfo}
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ========================================================================= -->
+      <!-- EDIT FAMILY INFORMATION MODAL                                             -->
+      <!-- ========================================================================= -->
+      <template if:true={isFamilyModalOpen}>
+        <div
+          class="modal fade show d-block"
+          tabindex="-1"
+          style="background-color: rgba(0, 0, 0, 0.5)"
+        >
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow">
+              <div class="modal-header">
+                <h5 class="modal-title fw-bold">
+                  <i class="fa-solid fa-people-roof text-primary me-2"></i>Family Information
+                </h5>
+                <button
+                  type="button"
+                  class="btn-close"
+                  onclick={handleCloseFamilyModal}
+                ></button>
+              </div>
+              <div class="modal-body">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label fs-13 fw-medium">Member Name</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="Family_Member_Name__c"
+                      value={familyForm.Family_Member_Name__c}
+                      oninput={handleFamilyFormFieldChange}
+                      placeholder="e.g. Ortiz"
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fs-13 fw-medium">Relationship</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="Family_Member_Relationship__c"
+                      value={familyForm.Family_Member_Relationship__c}
+                      oninput={handleFamilyFormFieldChange}
+                      placeholder="e.g. Spouse / Child"
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fs-13 fw-medium">Date of Birth</label>
+                    <input
+                      type="date"
+                      class="form-control"
+                      name="Family_Member_DOB__c"
+                      value={familyForm.Family_Member_DOB__c}
+                      oninput={handleFamilyFormFieldChange}
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fs-13 fw-medium">Phone</label>
+                    <input
+                      type="tel"
+                      class="form-control"
+                      name="Family_Member_Phone__c"
+                      value={familyForm.Family_Member_Phone__c}
+                      oninput={handleFamilyFormFieldChange}
+                      placeholder="e.g. +1 555-123-4567"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-white"
+                  onclick={handleCloseFamilyModal}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  onclick={handleSaveFamilyInfo}
                 >
                   Save Changes
                 </button>

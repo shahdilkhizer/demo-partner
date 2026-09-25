@@ -67,6 +67,8 @@ public without sharing class PWChrono_EmployeeDirectoryController {
     @AuraEnabled
     public String dateOfBirth { get; set; }
     @AuraEnabled
+    public String dateOfBirthIso { get; set; }
+    @AuraEnabled
     public String phone { get; set; }
   }
 
@@ -588,6 +590,18 @@ public without sharing class PWChrono_EmployeeDirectoryController {
       if (contactRecord.Branch_Name_Code__c != null) {
         safeContact.Branch_Name_Code__c = contactRecord.Branch_Name_Code__c;
       }
+      if (contactRecord.Family_Member_Name__c != null) {
+        safeContact.Family_Member_Name__c = contactRecord.Family_Member_Name__c;
+      }
+      if (contactRecord.Family_Member_Relationship__c != null) {
+        safeContact.Family_Member_Relationship__c = contactRecord.Family_Member_Relationship__c;
+      }
+      if (contactRecord.Family_Member_DOB__c != null) {
+        safeContact.Family_Member_DOB__c = contactRecord.Family_Member_DOB__c;
+      }
+      if (contactRecord.Family_Member_Phone__c != null) {
+        safeContact.Family_Member_Phone__c = contactRecord.Family_Member_Phone__c;
+      }
       if (!isGuestRuntime()) {
         System.AccessType accessType = safeContact.Id == null
           ? System.AccessType.CREATABLE
@@ -939,6 +953,9 @@ public without sharing class PWChrono_EmployeeDirectoryController {
     info.dateOfBirth = c.Family_Member_DOB__c == null
       ? NOT_PROVIDED
       : formatDate(c.Family_Member_DOB__c);
+    info.dateOfBirthIso = c.Family_Member_DOB__c == null
+      ? ''
+      : String.valueOf(c.Family_Member_DOB__c);
     info.phone = displayValue(c.Family_Member_Phone__c);
     return info;
   }
