@@ -43,11 +43,9 @@ export default class PwchronoUiAssets extends LightningElement {
         pwchronoShell
       ];
 
-      globalThis[GLOBAL_PROMISE_KEY] = cssUrls
-        .reduce(
-          (p, url) => p.then(() => loadStyle(this, url)),
-          Promise.resolve()
-        )
+      globalThis[GLOBAL_PROMISE_KEY] = Promise.all(
+        cssUrls.map((url) => loadStyle(this, url))
+      )
         .then(() => {
           globalThis[GLOBAL_LOADED_KEY] = true;
         })

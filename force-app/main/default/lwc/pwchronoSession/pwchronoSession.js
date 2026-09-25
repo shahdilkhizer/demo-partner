@@ -1,6 +1,7 @@
 const USER_KEY = "portalUser";
 const PERM_KEY = "portalPermissions";
 const TOKEN_KEY = "portalSessionToken";
+const FEAT_KEY = "portalFeatures";
 
 // Fired whenever setSession/clearSession mutates the current session.
 // Used by pre-rendered tab components to refresh wire params after login completes.
@@ -12,7 +13,8 @@ export const SESSION_CHANGED_EVENT = "pwchrono-session-changed";
 let memorySession = {
   user: null,
   permissions: null,
-  sessionToken: null
+  sessionToken: null,
+  features: []
 };
 
 function safeJsonParse(text) {
@@ -54,21 +56,23 @@ export function getSession() {
     const userText = sessionStorage.getItem(USER_KEY);
     const permText = sessionStorage.getItem(PERM_KEY);
     const tokenText = sessionStorage.getItem(TOKEN_KEY);
+    const featText = sessionStorage.getItem(FEAT_KEY);
 
     const user = userText ? safeJsonParse(userText) : null;
     const permissions = permText ? safeJsonParse(permText) : null;
     const sessionToken = tokenText || null;
+    const features = featText ? safeJsonParse(featText) : [];
 
-    // Successful storage reads are authoritative, including removed credentials.
-    // Use memory only when storage access itself is unavailable.
     const finalUser = user;
     const finalPerms = permissions;
     const finalToken = sessionToken;
+    const finalFeatures = Array.isArray(features) ? features : [];
 
     return {
       user: finalUser,
       permissions: finalPerms,
       sessionToken: finalToken,
+      features: finalFeatures,
       isLoggedIn: !!(finalUser && finalPerms)
     };
   } catch {
@@ -77,6 +81,7 @@ export function getSession() {
       user: memorySession.user,
       permissions: memorySession.permissions,
       sessionToken: memorySession.sessionToken,
+      features: Array.isArray(memorySession.features) ? memorySession.features : [],
       isLoggedIn: !!(memorySession.user && memorySession.permissions)
     };
   }
@@ -92,29 +97,47 @@ export function getSessionToken() {
   return sessionToken || null;
 }
 
-export function setSession(user, permissions, sessionToken) {
-  // IMPORTANT:
-  // Never keep raw objects in memorySession, because Apex/Locker can return Proxy-wrapped
-  // values in Live Preview. If those Proxies leak into reactive state, LWR's mutation logging
-  // can recurse (ownKeys/getOwnPropertyNames) and crash the router.
-  //
-  // So: store ONLY plain JSON-cloned values in memory.
+export function getFeatures() {
+  const { features } = getSession();
+  return Array.isArray(features) ? features : [];
+}
+
+export function setFeatures(features) {
+  const cleanFeatures = Array.isArray(features) ? features : [];
+  const featText = safeJsonStringify(cleanFeatures);
+  memorySession.features = cleanFeatures;
+
+  try {
+    if (featText) sessionStorage.setItem(FEAT_KEY, featText);
+    else sessionStorage.removeItem(FEAT_KEY);
+  } catch {
+    // sessionStorage not available; memory fallback is already set.
+  }
+}
+
+export function setSession(user, permissions, sessionToken, features = null) {
   const userText = safeJsonStringify(user);
   const permText = safeJsonStringify(permissions);
   const tokenValue = sessionToken ? String(sessionToken) : null;
+  const cleanFeatures = Array.isArray(features) ? features : [];
+  const featText = safeJsonStringify(cleanFeatures);
 
   memorySession = {
     user: userText ? safeJsonParse(userText) : null,
     permissions: permText ? safeJsonParse(permText) : null,
-    sessionToken: tokenValue
+    sessionToken: tokenValue,
+    features: cleanFeatures
   };
 
   try {
-    // Only write to storage if serialization succeeded.
     if (userText) sessionStorage.setItem(USER_KEY, userText);
     if (permText) sessionStorage.setItem(PERM_KEY, permText);
     if (tokenValue) sessionStorage.setItem(TOKEN_KEY, tokenValue);
     else sessionStorage.removeItem(TOKEN_KEY);
+    if (features !== null) {
+      if (featText) sessionStorage.setItem(FEAT_KEY, featText);
+      else sessionStorage.removeItem(FEAT_KEY);
+    }
   } catch {
     // sessionStorage not available; memory fallback is already set.
   }
@@ -135,16 +158,18 @@ export function updateSessionUser(userPatch) {
   setSession(
     { ...current.user, ...userPatch },
     current.permissions,
-    current.sessionToken
+    current.sessionToken,
+    current.features
   );
 }
 
 export function clearSession() {
-  memorySession = { user: null, permissions: null, sessionToken: null };
+  memorySession = { user: null, permissions: null, sessionToken: null, features: [] };
   try {
     sessionStorage.removeItem(USER_KEY);
     sessionStorage.removeItem(PERM_KEY);
     sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(FEAT_KEY);
   } catch {
     // sessionStorage not available
   }

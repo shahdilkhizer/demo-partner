@@ -4,8 +4,10 @@ import revokePortalSession from "@salesforce/apex/PWChrono_AuthController.revoke
 import {
   clearSession,
   getEmployeeId,
+  getFeatures,
   getSession,
   getSessionToken,
+  setFeatures,
   setSession,
   SESSION_CHANGED_EVENT
 } from "c/pwchronoSession";
@@ -117,6 +119,15 @@ export default class PwchronoMainLayout extends NavigationMixin(
   connectedCallback() {
     this.sessionToken = getSessionToken();
     this.isUiReady = Boolean(globalThis[this.uiAssetsLoadedKey]);
+
+    // Populate cached session state immediately to prevent layout shifts
+    const session = getSession();
+    if (session.isLoggedIn) {
+      this.setSessionState(session.user, session.permissions);
+      if (session.features && session.features.length) {
+        this.features = session.features;
+      }
+    }
 
     // Safety fallback: if asset loading takes too long (>2.5s), display the page
     // eslint-disable-next-line @lwc/lwc/no-async-operation
@@ -298,13 +309,21 @@ export default class PwchronoMainLayout extends NavigationMixin(
 
       if (session.isLoggedIn) {
         this.setSessionState(session.user, session.permissions);
+        if (session.features && session.features.length) {
+          this.features = session.features;
+        }
+        // Optimistic UI rendering: Mark auth checked immediately so page renders without blocking loader
+        this.isAuthChecked = true;
+
         if (this.isExperienceBuilder || this.isLightningExperience) {
           await this.loadFeatureAccess(getEmployeeId());
         } else {
-          await this.checkActiveSession();
+          // Verify session in background asynchronously (Stale-While-Revalidate pattern)
+          this.checkActiveSession();
         }
       } else {
         await this.attemptAutoBootstrap();
+        this.isAuthChecked = true;
       }
     } finally {
       this.isAuthChecked = true;
@@ -334,9 +353,11 @@ export default class PwchronoMainLayout extends NavigationMixin(
       if (accessData?.hasAccess) {
         this.features = accessData.features || [];
         this.isSalesforceUser = accessData.isSalesforceUser || false;
+        setFeatures(this.features);
       } else {
         this.features = [];
         this.isSalesforceUser = false;
+        setFeatures([]);
       }
     } catch (error) {
       if (!isCurrent()) return;
@@ -383,6 +404,7 @@ export default class PwchronoMainLayout extends NavigationMixin(
 
         this.features = accessData.features || [];
         this.isSalesforceUser = true;
+        setFeatures(this.features);
         return;
       }
     } catch {
@@ -515,7 +537,7 @@ export default class PwchronoMainLayout extends NavigationMixin(
         break;
       default:
         return;
-    }
+      }
 
     if (pageName) {
       this[NavigationMixin.Navigate]({

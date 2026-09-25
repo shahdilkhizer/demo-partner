@@ -164,6 +164,10 @@ export default class PwchronoSidebar extends NavigationMixin(LightningElement) {
     } catch {
       // no-op
     }
+
+    if (globalThis.__pwchronoNavMenuCache) {
+      this.processIncomingMenuItems(globalThis.__pwchronoNavMenuCache);
+    }
   }
 
   disconnectedCallback() {
@@ -320,64 +324,70 @@ export default class PwchronoSidebar extends NavigationMixin(LightningElement) {
     this.activeSidebarTab = "menu";
   }
 
+  processIncomingMenuItems(data) {
+    if (!data || !Array.isArray(data)) return;
+    globalThis.__pwchronoNavMenuCache = data;
+    const flatMap = {};
+
+    // Recursive helper to map the incoming tree structure (which has subMenu)
+    // to our internal node structure.
+    const mapItem = (src, index, parentId = null) => {
+      // Fallback for ID if missing
+      const id = src.id || src.label || `menu-item-${index}`;
+      const key = String(id);
+
+      const node = {
+        id: id,
+        key: key,
+        label: src.label,
+        // Map actionType (from log) or type (standard)
+        type: src.actionType || src.type,
+        actionValue: src.actionValue,
+        target: src.target,
+        parentId: parentId,
+        iconClass: ICON_CLASS_MAP[src.label] || "fa-solid fa-circle fa-fw",
+        children: []
+      };
+
+      // Register in flat map for lookup
+      flatMap[key] = node;
+
+      // Recursively process subMenu
+      if (src.subMenu?.length > 0) {
+        node.children = src.subMenu.map((child, childIdx) =>
+          mapItem(child, childIdx, node.id)
+        );
+      }
+
+      return node;
+    };
+
+    // Map the top-level items
+    this.rawMenuItems = data.map((item, idx) => mapItem(item, idx));
+    this._allItemsByKey = flatMap;
+
+    // Expand the root menu that contains the currently active page (if any).
+    this.syncExpandedToActive();
+
+    // Ensure selected item is a valid lightning-vertical-navigation item name.
+    // Prefer Dashboard (always present) else first root item.
+    if (!this.activeNavKey) {
+      const allItems = Object.values(flatMap);
+      const dashboardItem = allItems.find((i) => i.label === "Dashboard");
+      this.activeNavKey =
+        dashboardItem?.key || this.rawMenuItems?.[0]?.key || null;
+    }
+
+    this.detectCurrentPage();
+  }
+
   @wire(getNavigationMenuItems, {
     menuName: "Default Navigation",
     publishedState: "Live"
   })
   wiredMenuItems({ error, data }) {
     if (data) {
-      const flatMap = {};
-
-      // Recursive helper to map the incoming tree structure (which has subMenu)
-      // to our internal node structure.
-      const mapItem = (src, index, parentId = null) => {
-        // Fallback for ID if missing
-        const id = src.id || src.label || `menu-item-${index}`;
-        const key = String(id);
-
-        const node = {
-          id: id,
-          key: key,
-          label: src.label,
-          // Map actionType (from log) or type (standard)
-          type: src.actionType || src.type,
-          actionValue: src.actionValue,
-          target: src.target,
-          parentId: parentId,
-          iconClass: ICON_CLASS_MAP[src.label] || "fa-solid fa-circle fa-fw",
-          children: []
-        };
-
-        // Register in flat map for lookup
-        flatMap[key] = node;
-
-        // Recursively process subMenu
-        if (src.subMenu?.length > 0) {
-          node.children = src.subMenu.map((child, childIdx) =>
-            mapItem(child, childIdx, node.id)
-          );
-        }
-
-        return node;
-      };
-
-      // Map the top-level items
-      this.rawMenuItems = data.map((item, idx) => mapItem(item, idx));
-      this._allItemsByKey = flatMap;
-
-      // Expand the root menu that contains the currently active page (if any).
-      this.syncExpandedToActive();
-
-      // Ensure selected item is a valid lightning-vertical-navigation item name.
-      // Prefer Dashboard (always present) else first root item.
-      if (!this.activeNavKey) {
-        const allItems = Object.values(flatMap);
-        const dashboardItem = allItems.find((i) => i.label === "Dashboard");
-        this.activeNavKey =
-          dashboardItem?.key || this.rawMenuItems?.[0]?.key || null;
-      }
-
-      this.detectCurrentPage();
+      this.processIncomingMenuItems(data);
     } else if (error) {
       // Avoid logging raw wire error objects (can contain proxies in Live Preview).
       // Keep UI silent; navigation can be retried on refresh.
