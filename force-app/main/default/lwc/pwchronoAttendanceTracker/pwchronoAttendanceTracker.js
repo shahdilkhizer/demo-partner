@@ -161,6 +161,11 @@ export default class PwchronoAttendanceTracker extends NavigationMixin(
     return this.userName.substring(0, 2).toUpperCase();
   }
 
+  get userPhotoUrl() {
+    const session = getSession();
+    return session?.user?.Photo_Url__c || null;
+  }
+
   handleViewChange(event) {
     this.viewMode = event.currentTarget.dataset.view;
   }
