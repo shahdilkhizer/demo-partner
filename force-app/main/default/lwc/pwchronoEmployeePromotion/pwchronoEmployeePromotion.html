@@ -340,16 +340,10 @@
 
       <!-- Create / Edit / View Modal -->
       <template if:true={showModal}>
-        <div
-          class="modal d-block"
-          tabindex="-1"
-          role="dialog"
-          aria-modal="true"
-          style="background: rgba(0, 0, 0, 0.5)"
-        >
-          <div class="modal-dialog modal-xl modal-dialog-scrollable">
-            <div class="modal-content">
-              <div class="modal-header">
+        <section class="modal-layer" role="dialog" aria-modal="true" aria-label={modalTitle}>
+          <div class="modal-backdrop" aria-label="Close dialog" onclick={handleModalClose}></div>
+          <div class="modal-card" onclick={handleModalCardClick}>
+            <div class="modal-header">
                 <h5 class="modal-title fw-semibold">
                   <i
                     class="fa-solid fa-arrow-trend-up fa-fw me-2 text-primary"
@@ -393,7 +387,7 @@
 
                 <div class="row g-3">
                   <!-- Employee -->
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >Employee <span class="text-danger">*</span></label
                     >
@@ -416,7 +410,7 @@
                     </select>
                   </div>
                   <!-- Employee Name -->
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >Employee Name</label
                     >
@@ -428,12 +422,11 @@
                       disabled
                     />
                     <div class="form-text">
-                      The name and current department, designation and reporting
-                      manager come from the employee record.
+                      Current department, designation &amp; manager load from the employee record.
                     </div>
                   </div>
                   <!-- Company -->
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small">Company</label>
                     <input
                       type="text"
@@ -446,7 +439,7 @@
                     />
                   </div>
                   <!-- Promotion Date -->
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >Promotion Date <span class="text-danger">*</span></label
                     >
@@ -470,7 +463,7 @@
                       Designation
                     </p>
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >Current Designation</label
                     >
@@ -482,7 +475,7 @@
                       disabled
                     />
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >New Designation</label
                     >
@@ -512,7 +505,7 @@
                       Department
                     </p>
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >Current Department</label
                     >
@@ -524,7 +517,7 @@
                       disabled
                     />
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >New Department</label
                     >
@@ -554,7 +547,7 @@
                       Grade &amp; Branch
                     </p>
                   </div>
-                  <div class="col-md-3">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >Current Grade</label
                     >
@@ -568,7 +561,7 @@
                       disabled={isReadOnly}
                     />
                   </div>
-                  <div class="col-md-3">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >New Grade</label
                     >
@@ -582,7 +575,7 @@
                       disabled={isReadOnly}
                     />
                   </div>
-                  <div class="col-md-3">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >Current Branch</label
                     >
@@ -596,7 +589,7 @@
                       disabled={isReadOnly}
                     />
                   </div>
-                  <div class="col-md-3">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >New Branch</label
                     >
@@ -618,7 +611,7 @@
                       Reports To
                     </p>
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >Current Reports To</label
                     >
@@ -630,7 +623,7 @@
                       disabled
                     />
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >New Reports To</label
                     >
@@ -660,7 +653,7 @@
                       Salary
                     </p>
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >Current Salary</label
                     >
@@ -675,7 +668,7 @@
                       disabled={isReadOnly}
                     />
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >New Salary</label
                     >
@@ -870,7 +863,7 @@
               </div>
             </div>
           </div>
-        </div>
+        </section>
       </template>
     </div>
   </div>

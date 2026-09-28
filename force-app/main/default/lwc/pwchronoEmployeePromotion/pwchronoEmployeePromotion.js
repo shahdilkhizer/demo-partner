@@ -807,6 +807,12 @@ export default class PwchronoEmployeePromotion extends NavigationMixin(
     this.errorMessage = "";
   }
 
+  handleModalCardClick(event) {
+    if (event && event.stopPropagation) {
+      event.stopPropagation();
+    }
+  }
+
   handleHome(evt) {
     evt?.preventDefault();
     this[NavigationMixin.Navigate]({

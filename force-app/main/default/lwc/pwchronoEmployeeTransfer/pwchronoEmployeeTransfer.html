@@ -325,16 +325,10 @@
 
       <!-- Create / Edit / View Modal -->
       <template if:true={showModal}>
-        <div
-          class="modal d-block"
-          tabindex="-1"
-          role="dialog"
-          aria-modal="true"
-          style="background: rgba(0, 0, 0, 0.5)"
-        >
-          <div class="modal-dialog modal-xl modal-dialog-scrollable">
-            <div class="modal-content">
-              <div class="modal-header">
+        <section class="modal-layer" role="dialog" aria-modal="true" aria-label={modalTitle}>
+          <div class="modal-backdrop" aria-label="Close dialog" onclick={handleModalClose}></div>
+          <div class="modal-card" onclick={handleModalCardClick}>
+            <div class="modal-header">
                 <h5 class="modal-title fw-semibold">
                   <i class="fa-solid fa-right-left fa-fw me-2 text-primary"></i>
                   {modalTitle}
@@ -376,7 +370,7 @@
 
                 <div class="row g-3">
                   <!-- Employee -->
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >Employee <span class="text-danger">*</span></label
                     >
@@ -399,7 +393,7 @@
                     </select>
                   </div>
                   <!-- Employee Name -->
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >Employee Name</label
                     >
@@ -411,12 +405,11 @@
                       disabled
                     />
                     <div class="form-text">
-                      The name and current department, designation and reporting
-                      manager come from the employee record.
+                      Current details are loaded automatically from the employee record.
                     </div>
                   </div>
                   <!-- Company -->
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small">Company</label>
                     <input
                       type="text"
@@ -429,7 +422,7 @@
                     />
                   </div>
                   <!-- Transfer Date -->
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >Transfer Date <span class="text-danger">*</span></label
                     >
@@ -453,7 +446,7 @@
                       Branch
                     </p>
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >Current Branch</label
                     >
@@ -467,7 +460,7 @@
                       disabled={isReadOnly}
                     />
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >New Branch</label
                     >
@@ -489,7 +482,7 @@
                       Department
                     </p>
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >Current Department</label
                     >
@@ -501,7 +494,7 @@
                       disabled
                     />
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >New Department</label
                     >
@@ -531,7 +524,7 @@
                       Designation
                     </p>
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >Current Designation</label
                     >
@@ -543,7 +536,7 @@
                       disabled
                     />
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >New Designation</label
                     >
@@ -573,7 +566,7 @@
                       Reports To
                     </p>
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >Current Reports To</label
                     >
@@ -585,7 +578,7 @@
                       disabled
                     />
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <label class="form-label fw-semibold small"
                       >New Reports To</label
                     >
@@ -628,7 +621,7 @@
                   </div>
                 </div>
               </div>
-              <div class="modal-footer">
+              <div class="modal-footer d-flex align-items-center justify-content-between p-3 bg-light">
                 <template if:true={canDeleteInModal}>
                   <button
                     type="button"
@@ -666,7 +659,7 @@
               </div>
             </div>
           </div>
-        </div>
+        </section>
       </template>
     </div>
   </div>
