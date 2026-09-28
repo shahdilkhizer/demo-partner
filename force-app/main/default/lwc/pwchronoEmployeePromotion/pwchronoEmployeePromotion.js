@@ -321,9 +321,15 @@ export default class PwchronoEmployeePromotion extends NavigationMixin(
         statusBadgeClass: STATUS_BADGE[perms.status] ?? "badge bg-secondary",
         employeeName: r.Employee__r?.Name ?? r.Employee_Name__c ?? "—",
         promotionDateFormatted: formatDate(r.Promotion_Date__c),
-        currentDesignationName: r.Current_Designation__r?.Name ?? "—",
+        currentDesignationName:
+          r.Current_Designation__r?.Name ||
+          r.Employee__r?.Designation__c ||
+          "—",
         newDesignationName: r.New_Designation__r?.Name ?? "—",
-        currentDepartmentName: r.Current_Department__r?.Name ?? "—",
+        currentDepartmentName:
+          r.Current_Department__r?.Name ||
+          r.Employee__r?.Department__c ||
+          "—",
         newDepartmentName: r.New_Department__r?.Name ?? "—",
         deptChanged:
           !!r.New_Department__c &&
@@ -502,14 +508,26 @@ export default class PwchronoEmployeePromotion extends NavigationMixin(
     const id = evt.currentTarget.dataset.id;
     const rec = this.records.find((r) => r.Id === id);
     if (!rec) return;
+    const emp = this.employees.find((e) => e.Id === rec.Employee__c);
     const perms = this._permissionsFor(rec);
     const record = {
       Id: rec.Id,
       Status__c: perms.status,
       Employee_Name__c: rec.Employee_Name__c ?? rec.Employee__r?.Name ?? "",
-      currentDepartmentName: rec.Current_Department__r?.Name ?? "",
-      currentDesignationName: rec.Current_Designation__r?.Name ?? "",
-      currentReportsToName: rec.Current_Reports_To__r?.Name ?? "",
+      currentDepartmentName:
+        rec.Current_Department__r?.Name ||
+        rec.Employee__r?.Department__c ||
+        emp?.Department__c ||
+        "",
+      currentDesignationName:
+        rec.Current_Designation__r?.Name ||
+        rec.Employee__r?.Designation__c ||
+        emp?.Designation__c ||
+        "",
+      currentReportsToName:
+        rec.Current_Reports_To__r?.Name ||
+        rec.Employee__r?.Reports_To__r?.Name ||
+        "",
       canEdit: perms.canEdit,
       canDelete: perms.canDelete,
       readOnlyReason: perms.readOnlyReason

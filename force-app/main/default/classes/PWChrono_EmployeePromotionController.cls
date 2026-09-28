@@ -90,7 +90,7 @@ public without sharing class PWChrono_EmployeePromotionController {
   };
 
   private static final String PROMOTION_FIELDS =
-    'SELECT Id, Name, Employee__c, Employee__r.Name, Employee_Name__c,' +
+    'SELECT Id, Name, Employee__c, Employee__r.Name, Employee__r.Designation__c, Employee__r.Department__c, Employee_Name__c,' +
     ' Company__c, Promotion_Date__c,' +
     ' Current_Designation__c, Current_Designation__r.Name,' +
     ' New_Designation__c, New_Designation__r.Name,' +
@@ -714,25 +714,41 @@ public without sharing class PWChrono_EmployeePromotionController {
     promotion.Current_Department__c = null;
     promotion.Current_Designation__c = null;
     if (String.isNotBlank(employee.Department__c)) {
-      for (PWChrono_Department__c department : [
+      List<PWChrono_Department__c> depts = [
         SELECT Id
         FROM PWChrono_Department__c
         WHERE Name = :employee.Department__c
         ORDER BY Is_Active__c DESC, CreatedDate ASC
         LIMIT 1
-      ]) {
-        promotion.Current_Department__c = department.Id;
+      ];
+      if (!depts.isEmpty()) {
+        promotion.Current_Department__c = depts[0].Id;
+      } else {
+        PWChrono_Department__c newDept = new PWChrono_Department__c(
+          Name = employee.Department__c,
+          Is_Active__c = true
+        );
+        insert newDept;
+        promotion.Current_Department__c = newDept.Id;
       }
     }
     if (String.isNotBlank(employee.Designation__c)) {
-      for (PWChrono_Designation__c designation : [
+      List<PWChrono_Designation__c> desigs = [
         SELECT Id
         FROM PWChrono_Designation__c
         WHERE Name = :employee.Designation__c
         ORDER BY Is_Active__c DESC, CreatedDate ASC
         LIMIT 1
-      ]) {
-        promotion.Current_Designation__c = designation.Id;
+      ];
+      if (!desigs.isEmpty()) {
+        promotion.Current_Designation__c = desigs[0].Id;
+      } else {
+        PWChrono_Designation__c newDesig = new PWChrono_Designation__c(
+          Name = employee.Designation__c,
+          Is_Active__c = true
+        );
+        insert newDesig;
+        promotion.Current_Designation__c = newDesig.Id;
       }
     }
   }
