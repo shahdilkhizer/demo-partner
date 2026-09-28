@@ -1,256 +1,361 @@
 <template>
   <div class="page-wrapper">
-    <div class="content container-fluid pt-2 ps-2 pe-3 pb-0">
-      <!-- Standard Header -->
-      <div class="page-header d-flex align-items-center justify-content-between mb-4">
-        <div>
-          <h2 class="page-title mb-1">Tax Declarations</h2>
-          <p class="page-subtitle text-muted mb-0">
-            Manage your tax declarations and investments
-          </p>
+    <div class="content">
+      <!-- Breadcrumb & Header -->
+      <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
+        <div class="my-auto mb-2">
+          <h2 class="mb-1">Tax Declarations</h2>
+          <nav>
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item">
+                <a href="javascript:void(0);"><i class="ti ti-smart-home"></i></a>
+              </li>
+              <li class="breadcrumb-item">Payroll</li>
+              <li class="breadcrumb-item active" aria-current="page">Tax Declarations</li>
+            </ol>
+          </nav>
         </div>
-        <div>
-          <button type="button" class="btn btn-primary" onclick={handleNew}>
-            <lightning-icon icon-name="utility:add" size="x-small" class="me-1 text-white"></lightning-icon>
-            New Declaration
-          </button>
+        <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+          <div class="mb-2">
+            <button class="btn btn-primary d-flex align-items-center" onclick={handleNew}>
+              <i class="ti ti-circle-plus me-2"></i>New Declaration
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- Feedback Notice Banner -->
+      <!-- Feedback Alert Notice Banner -->
       <template lwc:if={feedback}>
-        <div class={feedbackClass} role="status">
-          <lightning-icon icon-name={feedbackIcon} size="x-small"></lightning-icon>
+        <div class={feedbackClass} role="alert">
           <div>
-            <strong>{feedback.title}</strong>
-            <p>{feedback.message}</p>
+            <strong>{feedback.title}: </strong> {feedback.message}
           </div>
-          <button type="button" class="icon-button" onclick={clearFeedback} aria-label="Dismiss">×</button>
+          <button type="button" class="btn-close ms-2" onclick={clearFeedback} aria-label="Close"></button>
         </div>
       </template>
 
-      <!-- Filters Card -->
-      <div class="card filter-card mb-4 border-0 shadow-sm">
-        <div class="card-body p-3">
-          <div class="row g-3 align-items-end">
-            <div class="col-md-4 col-sm-6">
-              <label for="yearFilter" class="form-label text-xs fw-semibold text-secondary mb-1">Fiscal Year</label>
+      <!-- Main Content Card -->
+      <div class="card">
+        <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+          <h5 class="mb-0">Tax Declaration List</h5>
+          <div class="d-flex my-xl-auto right-content align-items-center flex-wrap gap-2">
+            <div class="filter-item">
               <input
-                id="yearFilter"
                 type="text"
                 class="form-control form-control-sm"
-                placeholder="e.g., 2026-2027"
+                placeholder="Search Fiscal Year..."
                 value={yearFilter}
-                onkeyup={handleYearFilter}
+                oninput={handleYearFilter}
               />
             </div>
-            <div class="col-md-4 col-sm-6">
-              <lightning-combobox
-                label="Status"
-                value={statusFilter}
-                options={statusOptions}
-                onchange={handleStatusFilter}
-                placeholder="All Statuses"
-                class="compact-combo"
-              ></lightning-combobox>
+            <div class="filter-item">
+              <select class="form-select form-select-sm" onchange={handleStatusFilter}>
+                <template for:each={statusOptions} for:item="opt">
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                </template>
+              </select>
             </div>
-            <div class="col-md-2 col-sm-6">
-              <lightning-combobox
-                label="Per Page"
-                value={pageSize}
-                options={pageSizeOptions}
-                onchange={handlePageSizeChange}
-                class="compact-combo"
-              ></lightning-combobox>
+            <div class="filter-item">
+              <select class="form-select form-select-sm" onchange={handlePageSizeChange}>
+                <template for:each={pageSizeOptions} for:item="opt">
+                  <option key={opt.value} value={opt.value}>{opt.label} / page</option>
+                </template>
+              </select>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Main Datatable Card -->
-      <div class="card border-0 shadow-sm mb-4">
         <div class="card-body p-0">
           <template lwc:if={isLoading}>
-            <div class="loading-container p-5 text-center">
-              <lightning-spinner alternative-text="Loading declarations" size="medium"></lightning-spinner>
+            <div class="p-5 text-center">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
               <p class="text-muted mt-2 mb-0">Loading declarations...</p>
             </div>
           </template>
 
           <template lwc:elseif={hasDeclarations}>
             <div class="table-responsive">
-              <lightning-datatable
-                key-field="Id"
-                data={declarations}
-                columns={columns}
-                onrowaction={handleRowAction}
-                hide-checkbox-column
-              ></lightning-datatable>
+              <table class="table datatable dataTable no-footer mb-0">
+                <thead class="thead-light">
+                  <tr>
+                    <th class="sorting" data-field="Fiscal_Year__c" onclick={handleSort}>
+                      <span class="d-flex align-items-center cursor-pointer">
+                        Fiscal Year
+                        <i class="ti ti-arrows-sort ms-1 text-muted fs-12"></i>
+                      </span>
+                    </th>
+                    <th class="sorting" data-field="Status__c" onclick={handleSort}>
+                      <span class="d-flex align-items-center cursor-pointer">
+                        Status
+                        <i class="ti ti-arrows-sort ms-1 text-muted fs-12"></i>
+                      </span>
+                    </th>
+                    <th class="sorting text-end" data-field="Total_Declared_Amount__c" onclick={handleSort}>
+                      <span class="d-flex align-items-center justify-content-end cursor-pointer">
+                        Total Declared
+                        <i class="ti ti-arrows-sort ms-1 text-muted fs-12"></i>
+                      </span>
+                    </th>
+                    <th class="sorting" data-field="CreatedDate" onclick={handleSort}>
+                      <span class="d-flex align-items-center cursor-pointer">
+                        Created Date
+                        <i class="ti ti-arrows-sort ms-1 text-muted fs-12"></i>
+                      </span>
+                    </th>
+                    <th class="text-end">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template for:each={declarations} for:item="row">
+                    <tr key={row.Id}>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <i class="ti ti-calendar text-primary me-2 fs-16"></i>
+                          <span class="fw-semibold text-dark">{row.Fiscal_Year__c}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span class={row.statusBadgeClass}>
+                          <i class="ti ti-point-filled me-1"></i>{row.Status__c}
+                        </span>
+                      </td>
+                      <td class="text-end">
+                        <span class="fw-bold text-dark fs-14">{row.formattedTotal}</span>
+                      </td>
+                      <td>
+                        <span class="text-muted fs-13">{row.formattedDate}</span>
+                      </td>
+                      <td class="text-end">
+                        <div class="action-btn-group d-inline-flex gap-1">
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-white border"
+                            data-id={row.Id}
+                            onclick={handleEditRow}
+                            disabled={row.isLocked}
+                            title="Edit Declaration"
+                          >
+                            <i class="ti ti-edit me-1 text-secondary"></i>Edit
+                          </button>
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-light border"
+                            data-id={row.Id}
+                            onclick={handleViewRow}
+                            title="View Declaration"
+                          >
+                            <i class="ti ti-eye me-1 text-primary"></i>View
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
             </div>
 
-            <!-- Pagination Footer -->
-            <div class="pagination-footer d-flex align-items-center justify-content-between p-3 border-top bg-light">
-              <span class="text-sm text-secondary">{paginationInfo}</span>
-              <div class="d-flex align-items-center gap-2">
-                <lightning-button-icon
-                  icon-name="utility:chevronleft"
-                  alternative-text="Previous"
+            <!-- Table Pagination Footer -->
+            <div class="d-flex align-items-center justify-content-between p-3 border-top bg-light flex-wrap gap-2">
+              <span class="text-muted fs-13">{paginationInfo}</span>
+              <div class="d-flex align-items-center gap-1">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-white border"
                   onclick={handlePrevPage}
                   disabled={isPrevDisabled}
-                  variant="border-filled"
-                  size="small"
-                ></lightning-button-icon>
-                <span class="text-sm text-secondary px-2">Page {currentPage} of {totalPages}</span>
-                <lightning-button-icon
-                  icon-name="utility:chevronright"
-                  alternative-text="Next"
+                  aria-label="Previous page"
+                >
+                  <i class="ti ti-chevron-left"></i>
+                </button>
+                <span class="px-2 text-muted fs-13">Page {currentPage} of {totalPages}</span>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-white border"
                   onclick={handleNextPage}
                   disabled={isNextDisabled}
-                  variant="border-filled"
-                  size="small"
-                ></lightning-button-icon>
+                  aria-label="Next page"
+                >
+                  <i class="ti ti-chevron-right"></i>
+                </button>
               </div>
             </div>
           </template>
 
           <template lwc:else>
-            <div class="empty-state p-5 text-center">
-              <div class="empty-state-icon mb-3">
-                <lightning-icon icon-name="utility:file" size="large" class="text-muted"></lightning-icon>
+            <div class="p-5 text-center">
+              <div class="empty-icon-circle mx-auto mb-3">
+                <i class="ti ti-file-description fs-32 text-muted"></i>
               </div>
               <h5 class="fw-bold mb-1">No declarations found</h5>
-              <p class="text-muted text-sm mb-0">No tax declarations available for the selected filters.</p>
+              <p class="text-muted fs-13 mb-3">You have not submitted any tax declarations matching your filters.</p>
+              <button type="button" class="btn btn-primary btn-sm" onclick={handleNew}>
+                <i class="ti ti-circle-plus me-1"></i>Create First Declaration
+              </button>
             </div>
           </template>
         </div>
       </div>
+    </div>
 
-      <!-- Floating Modal Dialog -->
-      <template lwc:if={isModalOpen}>
-        <section class="modal-layer" role="dialog" aria-modal="true" aria-labelledby="taxDeclarationModalTitle">
-          <div class="modal-backdrop" aria-label="Close dialog" onclick={closeModal}></div>
-          <div class="modal-card" onclick={handleModalCardClick}>
-            <!-- Modal Header -->
-            <div class="modal-header">
-              <h3 id="taxDeclarationModalTitle" class="modal-title">{modalTitle}</h3>
-              <button type="button" class="icon-close-btn" aria-label="Close dialog" onclick={closeModal}>
-                ×
-              </button>
+    <!-- Floating Modal Dialog -->
+    <template lwc:if={isModalOpen}>
+      <section class="modal-layer" role="dialog" aria-modal="true" aria-labelledby="taxModalTitle">
+        <div class="modal-backdrop" aria-label="Close dialog" onclick={closeModal}></div>
+        <div class="modal-card" onclick={handleModalCardClick}>
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <h4 id="taxModalTitle" class="modal-title mb-0 fw-bold">{modalTitle}</h4>
+            <button type="button" class="btn-close" aria-label="Close" onclick={closeModal}></button>
+          </div>
+
+          <!-- Modal Body -->
+          <div class="modal-body p-4">
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label for="modalFiscalYear" class="form-label fw-semibold fs-13 mb-1">
+                  Fiscal Year <span class="text-danger">*</span>
+                </label>
+                <select
+                  id="modalFiscalYear"
+                  name="Fiscal_Year__c"
+                  class="form-select"
+                  onchange={handleFieldChange}
+                  disabled={isReadOnly}
+                >
+                  <template for:each={fiscalYearOptions} for:item="yr">
+                    <option key={yr.value} value={yr.value}>{yr.label}</option>
+                  </template>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="modalStatus" class="form-label fw-semibold fs-13 mb-1">Status</label>
+                <input
+                  id="modalStatus"
+                  type="text"
+                  class="form-control bg-light"
+                  value={currentRecord.Status__c}
+                  disabled
+                  readonly
+                />
+              </div>
             </div>
 
-            <!-- Modal Body -->
-            <div class="modal-body">
-              <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                  <lightning-combobox
-                    name="Fiscal_Year__c"
-                    label="Fiscal Year"
-                    value={currentRecord.Fiscal_Year__c}
-                    options={fiscalYearOptions}
-                    onchange={handleFieldChange}
-                    required
-                    disabled={isReadOnly}
-                  ></lightning-combobox>
-                </div>
-                <div class="col-md-6">
-                  <lightning-input
-                    type="text"
-                    label="Status"
-                    value={currentRecord.Status__c}
-                    disabled
-                  ></lightning-input>
-                </div>
-              </div>
+            <div class="section-divider mb-3 mt-4">
+              <h6 class="fs-14 fw-bold text-dark mb-0 pb-2 border-bottom">
+                <i class="ti ti-coins me-1 text-primary"></i> Deductions &amp; Exemptions
+              </h6>
+            </div>
 
-              <div class="section-divider mb-3">
-                <h6 class="section-title">Deductions & Exemptions</h6>
-              </div>
-
-              <div class="row g-3 mb-4">
-                <div class="col-md-6">
-                  <lightning-input
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label for="modal80C" class="form-label fw-semibold fs-13 mb-1">Section 80C</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input
+                    id="modal80C"
                     type="number"
+                    step="0.01"
+                    min="0"
                     name="Section_80C__c"
-                    label="Section 80C"
+                    class="form-control"
+                    placeholder="0.00"
                     value={currentRecord.Section_80C__c}
-                    formatter="currency"
-                    step="0.01"
-                    onchange={handleFieldChange}
+                    oninput={handleFieldChange}
                     disabled={isReadOnly}
-                  ></lightning-input>
-                </div>
-                <div class="col-md-6">
-                  <lightning-input
-                    type="number"
-                    name="HRA__c"
-                    label="HRA (Rent Paid)"
-                    value={currentRecord.HRA__c}
-                    formatter="currency"
-                    step="0.01"
-                    onchange={handleFieldChange}
-                    disabled={isReadOnly}
-                  ></lightning-input>
-                </div>
-                <div class="col-md-6">
-                  <lightning-input
-                    type="number"
-                    name="Medical_Insurance__c"
-                    label="Medical Insurance"
-                    value={currentRecord.Medical_Insurance__c}
-                    formatter="currency"
-                    step="0.01"
-                    onchange={handleFieldChange}
-                    disabled={isReadOnly}
-                  ></lightning-input>
-                </div>
-                <div class="col-md-6">
-                  <lightning-input
-                    type="number"
-                    name="NPS__c"
-                    label="NPS"
-                    value={currentRecord.NPS__c}
-                    formatter="currency"
-                    step="0.01"
-                    onchange={handleFieldChange}
-                    disabled={isReadOnly}
-                  ></lightning-input>
+                  />
                 </div>
               </div>
-
-              <!-- Total Declared Summary Box -->
-              <div class="total-summary-card p-3 rounded-3">
-                <div class="d-flex align-items-center justify-content-between">
-                  <span class="fw-semibold text-secondary">Total Declared Amount:</span>
-                  <span class="fs-5 fw-bold text-primary">
-                    <lightning-formatted-number
-                      value={totalDeclared}
-                      format-style="currency"
-                      currency-code={currencyCode}
-                    ></lightning-formatted-number>
-                  </span>
+              <div class="col-md-6">
+                <label for="modalHRA" class="form-label fw-semibold fs-13 mb-1">HRA (Rent Paid)</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input
+                    id="modalHRA"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    name="HRA__c"
+                    class="form-control"
+                    placeholder="0.00"
+                    value={currentRecord.HRA__c}
+                    oninput={handleFieldChange}
+                    disabled={isReadOnly}
+                  />
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="modalMedIns" class="form-label fw-semibold fs-13 mb-1">Medical Insurance</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input
+                    id="modalMedIns"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    name="Medical_Insurance__c"
+                    class="form-control"
+                    placeholder="0.00"
+                    value={currentRecord.Medical_Insurance__c}
+                    oninput={handleFieldChange}
+                    disabled={isReadOnly}
+                  />
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="modalNPS" class="form-label fw-semibold fs-13 mb-1">NPS</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input
+                    id="modalNPS"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    name="NPS__c"
+                    class="form-control"
+                    placeholder="0.00"
+                    value={currentRecord.NPS__c}
+                    oninput={handleFieldChange}
+                    disabled={isReadOnly}
+                  />
                 </div>
               </div>
             </div>
 
-            <!-- Modal Footer -->
-            <div class="modal-footer d-flex align-items-center justify-content-end gap-2">
-              <button type="button" class="btn btn-secondary" onclick={closeModal}>
-                Cancel
-              </button>
-              <template lwc:if={isEditable}>
-                <button type="button" class="btn btn-outline-primary" onclick={handleSave}>
-                  Save Draft
-                </button>
-                <template lwc:if={currentRecord.Id}>
-                  <button type="button" class="btn btn-success" onclick={handleSubmit}>
-                    Submit
-                  </button>
-                </template>
-              </template>
+            <!-- Total Declared Summary Box (Highlighted Card) -->
+            <div class="total-summary-card p-3 rounded-3 d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center gap-2">
+                <div class="summary-icon-box rounded-circle d-flex align-items-center justify-content-center">
+                  <i class="ti ti-calculator fs-18 text-primary"></i>
+                </div>
+                <div>
+                  <span class="fs-12 text-muted fw-medium d-block">Calculated Total</span>
+                  <span class="fs-14 fw-bold text-dark">Total Declared Amount:</span>
+                </div>
+              </div>
+              <div class="total-amount-display">
+                <span class="fs-18 fw-bold text-primary">{formattedTotalDeclared}</span>
+              </div>
             </div>
           </div>
-        </section>
-      </template>
-    </div>
+
+          <!-- Modal Footer -->
+          <div class="modal-footer d-flex align-items-center justify-content-end gap-2 p-3 bg-light">
+            <button type="button" class="btn btn-light" onclick={closeModal}>
+              Cancel
+            </button>
+            <template lwc:if={isEditable}>
+              <button type="button" class="btn btn-outline-primary" onclick={handleSave}>
+                Save Draft
+              </button>
+              <button type="button" class="btn btn-primary" onclick={handleSubmit}>
+                Submit
+              </button>
+            </template>
+          </div>
+        </div>
+      </section>
+    </template>
   </div>
 </template>
