@@ -547,6 +547,16 @@ export default class PwchronoSalarySlipViewer extends LightningElement {
 
   async handlePayrollMonthChange(event) {
     this.payrollMonth = event.target.value;
+    if (this.payrollMonth) {
+      const parts = this.payrollMonth.split("-");
+      const year = Number(parts[0]);
+      const month = Number(parts[1]);
+      const today = new Date();
+      let day = today.getDate();
+      const lastDay = new Date(year, month, 0).getDate();
+      if (day > lastDay) day = lastDay;
+      this.paymentDate = `${this.payrollMonth}-${String(day).padStart(2, "0")}`;
+    }
     await this.loadPayrollWorkspace();
   }
 
