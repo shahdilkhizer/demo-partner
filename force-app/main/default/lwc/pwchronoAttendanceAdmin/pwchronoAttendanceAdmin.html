@@ -49,14 +49,24 @@
               <div
                 class="d-flex align-items-center border bg-white rounded p-1 me-2 icon-list"
               >
-                <a href="javascript:void(0);" class="btn btn-icon btn-sm me-1"
-                  ><i class="ti ti-list-numbers"></i
-                ></a>
-                <a
-                  href="javascript:void(0);"
-                  class="btn btn-icon btn-sm active bg-primary text-white"
-                  ><i class="ti ti-calendar-stats"></i
-                ></a>
+                <button
+                  type="button"
+                  class={listViewButtonClass}
+                  data-view="list"
+                  onclick={handleViewModeChange}
+                  title="List View"
+                >
+                  <i class="ti ti-layout-list"></i>
+                </button>
+                <button
+                  type="button"
+                  class={gridViewButtonClass}
+                  data-view="grid"
+                  onclick={handleViewModeChange}
+                  title="Grid View"
+                >
+                  <i class="ti ti-layout-grid"></i>
+                </button>
               </div>
             </div>
             <div class="me-2 mb-2">
@@ -324,100 +334,214 @@
             </div>
           </div>
           <div class="card-body p-0">
-            <div class="custom-datatable-filter table-responsive">
-              <table class="table datatable">
-                <thead class="thead-light">
-                  <tr>
-                    <th class="no-sort">
-                      <div class="form-check form-check-md">
-                        <input
-                          class="form-check-input"
-                          type="checkbox"
-                          id="select-all"
-                        />
-                      </div>
-                    </th>
-                    <th>Employee</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                    <th>Check In</th>
-                    <th>Check Out</th>
-                    <th>Production</th>
-                    <th>Overtime</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <template for:each={attendanceData} for:item="record">
-                    <tr key={record.Id}>
-                      <td>
+            <template if:true={isListView}>
+              <div class="custom-datatable-filter table-responsive">
+                <table class="table datatable">
+                  <thead class="thead-light">
+                    <tr>
+                      <th class="no-sort">
                         <div class="form-check form-check-md">
-                          <input class="form-check-input" type="checkbox" />
+                          <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="select-all"
+                          />
                         </div>
-                      </td>
-                      <td>
-                        <div class="d-flex align-items-center file-name-icon">
-                          <a
-                            href="javascript:void(0);"
-                            class="avatar avatar-md border avatar-rounded"
-                          >
-                            <i class="ti ti-user"></i>
-                          </a>
-                          <div class="ms-2">
-                            <h6 class="fw-medium">
-                              <button
-                                type="button"
-                                class="btn btn-link p-0 fw-medium text-start"
-                                data-employee-id={record.Employees__c}
-                                onclick={handleViewEmployee}
-                                aria-label={record.employeeName}
-                              >
-                                {record.employeeName}
-                              </button>
-                            </h6>
-                            <span class="fs-12 fw-normal">{record.role}</span>
+                      </th>
+                      <th>Employee</th>
+                      <th>Status</th>
+                      <th>Date</th>
+                      <th>Check In</th>
+                      <th>Check Out</th>
+                      <th>Production</th>
+                      <th>Overtime</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template for:each={attendanceData} for:item="record">
+                      <tr key={record.Id}>
+                        <td>
+                          <div class="form-check form-check-md">
+                            <input class="form-check-input" type="checkbox" />
                           </div>
-                        </div>
-                      </td>
-                      <td>
-                        <span class={record.statusClass}>
-                          <i class="ti ti-circle-filled me-1"></i
-                          >{record.Status__c}
-                        </span>
-                      </td>
-                      <td>{record.Attendance_Date__c}</td>
-                      <td>{record.From_Time__c}</td>
-                      <td>{record.To_Time__c}</td>
-                      <td>{record.productionHours}</td>
-                      <td>
-                        <span
-                          class="badge badge-success d-inline-flex align-items-center"
+                        </td>
+                        <td>
+                          <div class="d-flex align-items-center file-name-icon">
+                            <a
+                              href="javascript:void(0);"
+                              class="avatar avatar-md border avatar-rounded"
+                            >
+                              <i class="ti ti-user"></i>
+                            </a>
+                            <div class="ms-2">
+                              <h6 class="fw-medium">
+                                <button
+                                  type="button"
+                                  class="btn btn-link p-0 fw-medium text-start"
+                                  data-employee-id={record.Employees__c}
+                                  onclick={handleViewEmployee}
+                                  aria-label={record.employeeName}
+                                >
+                                  {record.employeeName}
+                                </button>
+                              </h6>
+                              <span class="fs-12 fw-normal">{record.role}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span class={record.statusClass}>
+                            <i class="ti ti-circle-filled me-1"></i
+                            >{record.Status__c}
+                          </span>
+                        </td>
+                        <td>{record.Attendance_Date__c}</td>
+                        <td>{record.From_Time__c}</td>
+                        <td>{record.To_Time__c}</td>
+                        <td>{record.productionHours}</td>
+                        <td>
+                          <span
+                            class="badge badge-success d-inline-flex align-items-center"
+                          >
+                            <i class="ti ti-clock me-1"></i>{record.overtime}
+                          </span>
+                        </td>
+                        <td>
+                          <div class="action-icon d-inline-flex">
+                            <template if:true={canManage}>
+                              <template if:true={record.hasAttendanceRecord}>
+                                <button
+                                  type="button"
+                                  class="btn btn-link p-0 me-2"
+                                  data-id={record.Id}
+                                  onclick={handleEdit}
+                                  aria-label="Edit attendance"
+                                >
+                                  <i class="ti ti-edit" aria-hidden="true"></i>
+                                </button>
+                              </template>
+                            </template>
+                          </div>
+                        </td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </template>
+
+            <template if:true={isGridView}>
+              <div class="p-3">
+                <div class="row g-3">
+                  <template for:each={attendanceData} for:item="record">
+                    <div
+                      key={record.Id}
+                      class="col-xxl-3 col-xl-4 col-md-6 col-12"
+                    >
+                      <div class="card shadow-sm border h-100 mb-0">
+                        <div
+                          class="card-body p-3 d-flex flex-column justify-content-between"
                         >
-                          <i class="ti ti-clock me-1"></i>{record.overtime}
-                        </span>
-                      </td>
-                      <td>
-                        <div class="action-icon d-inline-flex">
+                          <div
+                            class="d-flex align-items-center justify-content-between mb-3"
+                          >
+                            <div class="d-flex align-items-center">
+                              <div
+                                class="avatar avatar-md border rounded-circle bg-light d-flex align-items-center justify-content-center me-2 text-primary fw-bold"
+                                style="width: 42px; height: 42px;"
+                              >
+                                {record.initials}
+                              </div>
+                              <div>
+                                <h6 class="fs-14 fw-semibold mb-0">
+                                  <button
+                                    type="button"
+                                    class="btn btn-link p-0 fw-semibold text-dark text-start"
+                                    data-employee-id={record.Employees__c}
+                                    onclick={handleViewEmployee}
+                                  >
+                                    {record.employeeName}
+                                  </button>
+                                </h6>
+                                <span
+                                  class="badge bg-light text-muted border fs-11 mt-1"
+                                  >{record.role}</span
+                                >
+                              </div>
+                            </div>
+                            <div>
+                              <span class={record.statusClass}
+                                >{record.Status__c}</span
+                              >
+                            </div>
+                          </div>
+
+                          <div class="bg-light rounded p-2 mb-3">
+                            <div class="row g-2 text-center">
+                              <div class="col-6 border-end">
+                                <span class="text-muted fs-11 d-block"
+                                  >Check In</span
+                                >
+                                <span class="fw-semibold fs-12 text-dark"
+                                  >{record.From_Time__c}</span
+                                >
+                              </div>
+                              <div class="col-6">
+                                <span class="text-muted fs-11 d-block"
+                                  >Check Out</span
+                                >
+                                <span class="fw-semibold fs-12 text-dark"
+                                  >{record.To_Time__c}</span
+                                >
+                              </div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <div
+                              class="d-flex align-items-center justify-content-between mb-1"
+                            >
+                              <span class="fs-12 text-muted"
+                                >Production Hours</span
+                              >
+                              <span class="fs-12 fw-bold text-dark"
+                                >{record.productionHours}</span
+                              >
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                              <div
+                                class={record.progressBarClass}
+                                role="progressbar"
+                                style={record.progressBarStyle}
+                                aria-valuenow={record.progressPercent}
+                                aria-valuemin="0"
+                                aria-valuemax="100"
+                              ></div>
+                            </div>
+                          </div>
+
                           <template if:true={canManage}>
-                            <template if:true={record.hasAttendanceRecord}>
+                            <div
+                              class="mt-3 pt-2 border-top d-flex justify-content-end"
+                            >
                               <button
                                 type="button"
-                                class="btn btn-link p-0 me-2"
+                                class="btn btn-sm btn-outline-primary"
                                 data-id={record.Id}
                                 onclick={handleEdit}
-                                aria-label="Edit attendance"
                               >
-                                <i class="ti ti-edit" aria-hidden="true"></i>
+                                <i class="ti ti-edit me-1"></i>Edit Attendance
                               </button>
-                            </template>
+                            </div>
                           </template>
                         </div>
-                      </td>
-                    </tr>
+                      </div>
+                    </div>
                   </template>
-                </tbody>
-              </table>
-            </div>
+                </div>
+              </div>
+            </template>
           </div>
         </div>
 

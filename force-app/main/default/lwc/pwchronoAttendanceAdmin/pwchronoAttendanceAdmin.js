@@ -105,6 +105,31 @@ export default class PwchronoAttendanceAdmin extends NavigationMixin(
       : "Review attendance for employees within your assigned scope.";
   }
 
+  @track viewMode = "list"; // 'list' or 'grid'
+
+  get isListView() {
+    return this.viewMode === "list";
+  }
+
+  get isGridView() {
+    return this.viewMode === "grid";
+  }
+
+  get listViewButtonClass() {
+    return `btn btn-icon btn-sm me-1 ${this.isListView ? "active bg-primary text-white" : ""}`;
+  }
+
+  get gridViewButtonClass() {
+    return `btn btn-icon btn-sm ${this.isGridView ? "active bg-primary text-white" : ""}`;
+  }
+
+  handleViewModeChange(event) {
+    const view = event.currentTarget.dataset.view;
+    if (view) {
+      this.viewMode = view;
+    }
+  }
+
   get employeeOptions() {
     if (this.allEmployeeOptions && this.allEmployeeOptions.length > 0) {
       return this.allEmployeeOptions;
@@ -224,26 +249,54 @@ export default class PwchronoAttendanceAdmin extends NavigationMixin(
       });
 
       if (result) {
-        this.allAttendanceData = result.map((record) => ({
-          ...record,
-          Id: record.attendanceRecordId || `employee-${record.employeeId}`,
-          Employees__c: record.employeeId,
-          Attendance_Date__c: record.attendanceDate,
-          From_Time__c: record.checkIn,
-          To_Time__c: record.checkOut,
-          Status__c: record.status,
-          Request_Status__c: record.requestStatus || "Approved",
-          Correction_Type__c: record.correctionType || "Other",
-          employeeName: record.employeeName || "Unknown",
-          role: record.role || "Employee",
-          hasAttendanceRecord: Boolean(record.attendanceRecordId),
-          statusClass: this.getStatusClass(record.status),
-          productionHours: this.calculateProductionHours(
+        this.allAttendanceData = result.map((record) => {
+          const fromTime = record.checkIn || "—";
+          const toTime = record.checkOut || "—";
+          const prodHoursStr = this.calculateProductionHours(
             record.checkIn,
             record.checkOut
-          ),
-          overtime: "—"
-        }));
+          );
+          const prodNumeric = parseFloat(prodHoursStr) || 0;
+          const progressPercent = Math.min(
+            Math.round((prodNumeric / 8) * 100),
+            100
+          );
+          let progressBarClass = "progress-bar bg-success";
+          if (progressPercent < 50) {
+            progressBarClass = "progress-bar bg-danger";
+          } else if (progressPercent < 80) {
+            progressBarClass = "progress-bar bg-warning";
+          }
+
+          const name = record.employeeName || "Unknown";
+          const parts = name.trim().split(" ");
+          const initials =
+            parts.length > 1
+              ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+              : name.substring(0, 2).toUpperCase();
+
+          return {
+            ...record,
+            Id: record.attendanceRecordId || `employee-${record.employeeId}`,
+            Employees__c: record.employeeId,
+            Attendance_Date__c: record.attendanceDate,
+            From_Time__c: fromTime,
+            To_Time__c: toTime,
+            Status__c: record.status,
+            Request_Status__c: record.requestStatus || "Approved",
+            Correction_Type__c: record.correctionType || "Other",
+            employeeName: name,
+            initials,
+            role: record.role || "Employee",
+            hasAttendanceRecord: Boolean(record.attendanceRecordId),
+            statusClass: this.getStatusClass(record.status),
+            productionHours: prodHoursStr,
+            progressPercent,
+            progressBarStyle: `width: ${progressPercent}%;`,
+            progressBarClass,
+            overtime: "—"
+          };
+        });
         this.attendanceData = [...this.allAttendanceData];
         this.calculateMetrics();
         this.setDefaultReportData();
