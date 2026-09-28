@@ -1,7 +1,7 @@
 /**
  * Persistent WFH, overtime, and timesheet operations with portal RBAC.
  */
-public inherited sharing class PWChrono_WorkLogController {
+public without sharing class PWChrono_WorkLogController {
   private static final Set<String> WORK_TYPES = new Set<String>{
     'Work From Home',
     'Overtime',

@@ -3,7 +3,7 @@
  *              Profile features are grants; role policies are hard ceilings.
  *              Client-side menu filtering is never treated as authorization.
  */
-public inherited sharing class PWChrono_AccessController {
+public without sharing class PWChrono_AccessController {
   public static final String ROLE_EMPLOYEE = 'Employee';
   public static final String ROLE_MANAGER = 'Manager';
   public static final String ROLE_HR_MANAGER = 'HR Manager';
