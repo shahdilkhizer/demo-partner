@@ -62,9 +62,9 @@ export default class PwchronoAppraisalForm extends LightningElement {
   filterStatusOptions = [
     { label: "All Statuses", value: "" },
     { label: "Draft", value: "Draft" },
-    { label: "Submitted", value: "Submitted" },
     { label: "In Progress", value: "In Progress" },
-    { label: "Completed", value: "Completed" }
+    { label: "Completed", value: "Completed" },
+    { label: "Approved", value: "Approved" }
   ];
 
   pageSizeOptions = [
@@ -104,9 +104,9 @@ export default class PwchronoAppraisalForm extends LightningElement {
   get statusOptions() {
     return [
       { label: "Draft", value: "Draft" },
-      { label: "Submitted", value: "Submitted" },
       { label: "In Progress", value: "In Progress" },
-      { label: "Completed", value: "Completed" }
+      { label: "Completed", value: "Completed" },
+      { label: "Approved", value: "Approved" }
     ];
   }
 
@@ -137,10 +137,8 @@ export default class PwchronoAppraisalForm extends LightningElement {
   get formattedAppraisals() {
     return (this.appraisals || []).map((item) => {
       let statusBadgeClass = "badge bg-secondary-transparent";
-      if (item.Status__c === "Submitted") {
+      if (item.Status__c === "In Progress") {
         statusBadgeClass = "badge bg-info-transparent";
-      } else if (item.Status__c === "In Progress") {
-        statusBadgeClass = "badge bg-warning-transparent";
       } else if (
         item.Status__c === "Completed" ||
         item.Status__c === "Approved"
@@ -284,7 +282,9 @@ export default class PwchronoAppraisalForm extends LightningElement {
         Feedback__c: row.Feedback__c
       };
       this.isReadOnly =
-        row.Status__c === "Submitted" || row.Status__c === "Completed";
+        row.Status__c === "In Progress" ||
+        row.Status__c === "Completed" ||
+        row.Status__c === "Approved";
       this.showModal = true;
     }
   }
@@ -305,7 +305,9 @@ export default class PwchronoAppraisalForm extends LightningElement {
         Feedback__c: row.Feedback__c
       };
       this.isReadOnly =
-        row.Status__c === "Submitted" || row.Status__c === "Completed";
+        row.Status__c === "In Progress" ||
+        row.Status__c === "Completed" ||
+        row.Status__c === "Approved";
       this.showModal = true;
     }
   }
@@ -333,7 +335,7 @@ export default class PwchronoAppraisalForm extends LightningElement {
     if (!this.validateFields()) {
       return;
     }
-    this.saveRecord("Submitted");
+    this.saveRecord("In Progress");
   }
 
   validateFields() {
@@ -378,7 +380,7 @@ export default class PwchronoAppraisalForm extends LightningElement {
       .then(() => {
         this.showToast(
           "Success",
-          `Appraisal ${status === "Submitted" ? "submitted" : "saved"} successfully`,
+          `Appraisal ${status === "In Progress" ? "submitted" : "saved"} successfully`,
           "success"
         );
         this.closeModal();
