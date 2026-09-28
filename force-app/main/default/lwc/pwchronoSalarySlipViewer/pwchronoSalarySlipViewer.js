@@ -142,12 +142,34 @@ export default class PwchronoSalarySlipViewer extends LightningElement {
   payrollMonth = currentMonthValue();
   paymentDate = todayValue();
   paymentMethod = "Bank Transfer";
-
   @track showConfirmationModal = false;
   confirmationAction;
   confirmationTitle;
   confirmationMessage;
   confirmationButtonLabel;
+  @track payrollFeedback;
+
+  get payrollFeedbackClass() {
+    return this.payrollFeedback?.type === "error"
+      ? "notice notice_error"
+      : "notice notice_success";
+  }
+
+  get payrollFeedbackIcon() {
+    return this.payrollFeedback?.type === "error"
+      ? "utility:error"
+      : "utility:success";
+  }
+
+  clearPayrollFeedback() {
+    this.payrollFeedback = null;
+  }
+
+  handleModalCardClick(event) {
+    if (event && event.stopPropagation) {
+      event.stopPropagation();
+    }
+  }
 
   connectedCallback() {
     const session = getSession();
@@ -619,54 +641,82 @@ export default class PwchronoSalarySlipViewer extends LightningElement {
 
   async handleConfirmAction() {
     const action = this.confirmationAction;
-    this.showConfirmationModal = false;
+    let operation;
+    let busyLabel;
+    let successTitle;
+
     if (action === "submit") {
-      await this.runPayrollMutation(
-        "Finalizing payroll...",
-        () =>
-          submitPayroll({
-            payrollPeriod: this.payrollPeriod,
-            portalUserId: this.portalUserId,
-            sessionToken: this.sessionToken
-          }),
-        "Payroll finalized"
-      );
+      busyLabel = "Finalizing payroll...";
+      successTitle = "Payroll finalized";
+      operation = () =>
+        submitPayroll({
+          payrollPeriod: this.payrollPeriod,
+          portalUserId: this.portalUserId,
+          sessionToken: this.sessionToken
+        });
     } else if (action === "paid") {
-      await this.runPayrollMutation(
-        "Recording payment...",
-        () =>
-          markPayrollPaid({
-            payrollPeriod: this.payrollPeriod,
-            paymentDate: this.paymentDate,
-            paymentMethod: this.paymentMethod,
-            portalUserId: this.portalUserId,
-            sessionToken: this.sessionToken
-          }),
-        "Payroll marked paid"
-      );
+      busyLabel = "Recording payment...";
+      successTitle = "Payroll marked paid";
+      operation = () =>
+        markPayrollPaid({
+          payrollPeriod: this.payrollPeriod,
+          paymentDate: this.paymentDate,
+          paymentMethod: this.paymentMethod,
+          portalUserId: this.portalUserId,
+          sessionToken: this.sessionToken
+        });
+    }
+
+    if (!operation) {
+      this.showConfirmationModal = false;
+      return;
+    }
+
+    const success = await this.runPayrollMutation(
+      busyLabel,
+      operation,
+      successTitle
+    );
+    if (success) {
+      this.showConfirmationModal = false;
     }
   }
 
   async runPayrollMutation(busyLabel, operation, successTitle) {
-    if (this.isPayrollBusy) return;
+    if (this.isPayrollBusy) return false;
     this.isPayrollBusy = true;
     this.payrollBusyLabel = busyLabel;
+    this.payrollFeedback = null;
     try {
       const result = await operation();
+      const message = result?.message || "Payroll updated successfully.";
       showSuccessToast(
         this.dispatchEvent.bind(this),
         successTitle,
-        result?.message || "Payroll updated successfully."
+        message
       );
+      this.payrollFeedback = {
+        type: "success",
+        title: successTitle,
+        message: message
+      };
       await this.loadPayrollWorkspace();
       if (this.wiredSlipsResult) await refreshApex(this.wiredSlipsResult);
+      return true;
     } catch (mutationError) {
       logError("pwchronoSalarySlipViewer.runPayrollMutation", mutationError);
+      const errMsg = readError(mutationError, "Unable to update payroll.");
       showErrorToast(
         this.dispatchEvent.bind(this),
         "Payroll update failed",
-        readError(mutationError, "Unable to update payroll.")
+        errMsg
       );
+      this.payrollFeedback = {
+        type: "error",
+        title: "Payroll update failed",
+        message: errMsg
+      };
+      return false;
     } finally {
       this.isPayrollBusy = false;
     }

@@ -853,23 +853,42 @@ select {
 }
 
 .modal-backdrop {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  width: 100%;
+  width: 100vw;
+  height: 100vh;
   border: 0;
-  background: rgb(16 24 40 / 54%);
-  cursor: default;
+  background: rgba(16, 24, 40, 0.54);
+  cursor: pointer;
+  z-index: 1;
 }
 
 .modal-card {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   width: 100%;
   max-height: calc(100vh - 40px);
   overflow: auto;
   border-radius: 14px;
   background: #fff;
-  box-shadow: 0 24px 60px rgb(16 24 40 / 28%);
+  box-shadow: 0 24px 60px rgba(16, 24, 40, 0.28);
+}
+
+.modal-busy-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 16px;
+  min-height: 120px;
+  position: relative;
+}
+
+.modal-busy-label {
+  margin-top: 44px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #273247;
 }
 
 .modal-card_small {

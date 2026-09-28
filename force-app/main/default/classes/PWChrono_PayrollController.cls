@@ -72,8 +72,13 @@ public without sharing class PWChrono_PayrollController {
       return;
     }
 
+    Id currentPortalUserId = String.isNotBlank(portalUserId)
+      ? (Id) portalUserId
+      : PWChrono_Utils.getCurrentEmployeeId(UserInfo.getUserId());
+
     if (
       FeatureManagement.checkPermission('PWChrono_Send_Payslips') ||
+      PWChrono_AccessController.isAdmin(currentPortalUserId) ||
       PWChrono_AccessController.isAdmin(null)
     ) {
       return;

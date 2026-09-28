@@ -104,6 +104,27 @@
               </div>
             </section>
 
+            <template lwc:if={payrollFeedback}>
+              <div class={payrollFeedbackClass} role="status">
+                <lightning-icon
+                  icon-name={payrollFeedbackIcon}
+                  size="x-small"
+                ></lightning-icon>
+                <div>
+                  <strong>{payrollFeedback.title}</strong>
+                  <p>{payrollFeedback.message}</p>
+                </div>
+                <button
+                  type="button"
+                  class="icon-button"
+                  onclick={clearPayrollFeedback}
+                  aria-label="Dismiss message"
+                >
+                  ×
+                </button>
+              </div>
+            </template>
+
             <template lwc:if={payrollError}>
               <div class="notice notice_error" role="alert">
                 <lightning-icon
@@ -547,32 +568,42 @@
       aria-modal="true"
       aria-labelledby="confirmationTitle"
     >
-      <button
-        type="button"
+      <div
         class="modal-backdrop"
         aria-label="Close confirmation"
         onclick={closeConfirmation}
-      ></button>
-      <div class="modal-card modal-card_small">
-        <div class="confirmation-icon" aria-hidden="true">!</div>
-        <h2 id="confirmationTitle">{confirmationTitle}</h2>
-        <p>{confirmationMessage}</p>
-        <div class="modal-actions">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            onclick={closeConfirmation}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="btn btn-primary"
-            onclick={handleConfirmAction}
-          >
-            {confirmationButtonLabel}
-          </button>
-        </div>
+      ></div>
+      <div class="modal-card modal-card_small" onclick={handleModalCardClick}>
+        <template lwc:if={isPayrollBusy}>
+          <div class="modal-busy-state">
+            <lightning-spinner
+              alternative-text={payrollBusyLabel}
+              size="medium"
+            ></lightning-spinner>
+            <p class="modal-busy-label">{payrollBusyLabel}</p>
+          </div>
+        </template>
+        <template lwc:else>
+          <div class="confirmation-icon" aria-hidden="true">!</div>
+          <h2 id="confirmationTitle">{confirmationTitle}</h2>
+          <p>{confirmationMessage}</p>
+          <div class="modal-actions">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              onclick={closeConfirmation}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick={handleConfirmAction}
+            >
+              {confirmationButtonLabel}
+            </button>
+          </div>
+        </template>
       </div>
     </section>
   </template>
@@ -584,13 +615,12 @@
       aria-modal="true"
       aria-labelledby="salarySlipDialogTitle"
     >
-      <button
-        type="button"
+      <div
         class="modal-backdrop"
         aria-label="Close salary slip"
         onclick={closeModal}
-      ></button>
-      <div class="modal-card modal-card_large">
+      ></div>
+      <div class="modal-card modal-card_large" onclick={handleModalCardClick}>
         <header class="modal-header">
           <div>
             <p class="eyebrow">Payroll statement</p>
@@ -729,13 +759,12 @@
       aria-modal="true"
       aria-labelledby="emailDialogTitle"
     >
-      <button
-        type="button"
+      <div
         class="modal-backdrop"
         aria-label="Close email dialog"
         onclick={handleCloseEmailModal}
-      ></button>
-      <div class="modal-card modal-card_medium">
+      ></div>
+      <div class="modal-card modal-card_medium" onclick={handleModalCardClick}>
         <header class="modal-header">
           <h2 id="emailDialogTitle">Send salary slip</h2>
           <button
