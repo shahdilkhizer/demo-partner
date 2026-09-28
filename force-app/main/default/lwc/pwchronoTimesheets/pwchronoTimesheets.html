@@ -256,7 +256,11 @@
     </div>
 
     <template if:true={isModalOpen}>
-      <dialog class="modal fade show d-block" open>
+      <div
+        class="modal fade show d-block"
+        tabindex="-1"
+        style="background: rgba(0, 0, 0, 0.5);"
+      >
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <div class="modal-header">
@@ -358,8 +362,7 @@
             </form>
           </div>
         </div>
-      </dialog>
-      <div class="modal-backdrop fade show"></div>
+      </div>
     </template>
 
     <div
