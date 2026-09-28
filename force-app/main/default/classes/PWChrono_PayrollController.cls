@@ -3,7 +3,7 @@
  * @author PWChrono Team
  */
 @SuppressWarnings('PMD.ApexSOQLInjection')
-public inherited sharing class PWChrono_PayrollController {
+public without sharing class PWChrono_PayrollController {
   @TestVisible
   private static String testUserTypeOverride;
 
@@ -51,28 +51,7 @@ public inherited sharing class PWChrono_PayrollController {
       portalUserId,
       sessionToken
     );
-    List<Portal_Users__c> portalUsers = [
-      SELECT Portal_User_Profile__c
-      FROM Portal_Users__c
-      WHERE Id = :verifiedPortalUserId AND Is_Active__c = TRUE
-      LIMIT 1
-    ];
-    if (
-      portalUsers.isEmpty() || portalUsers[0].Portal_User_Profile__c == null
-    ) {
-      throw new AuraHandledException('Unauthorized.');
-    }
-    Id profileId = portalUsers[0].Portal_User_Profile__c;
-    if (
-      [
-        SELECT COUNT()
-        FROM Portal_Profile_Feature__c
-        WHERE
-          Portal_User_Profile__c = :profileId
-          AND Feature_Key__c = 'Payroll'
-          AND Is_Enabled__c = TRUE
-      ] == 0
-    ) {
+    if (!PWChrono_AccessController.hasFeature(verifiedPortalUserId, 'Payroll')) {
       throw new AuraHandledException('Unauthorized.');
     }
     return verifiedPortalUserId;
@@ -87,18 +66,7 @@ public inherited sharing class PWChrono_PayrollController {
         portalUserId,
         sessionToken
       );
-      Portal_Users__c caller = [
-        SELECT Role__c
-        FROM Portal_Users__c
-        WHERE Id = :verifiedPortalUserId AND Is_Active__c = TRUE
-        LIMIT 1
-      ];
-      if (
-        caller.Role__c != PWChrono_Constants.ROLE_HR_ADMIN &&
-        caller.Role__c != PWChrono_AccessController.ROLE_PAYROLL_ADMIN &&
-        caller.Role__c != PWChrono_AccessController.ROLE_SYSTEM_ADMIN &&
-        caller.Role__c != 'System Admin'
-      ) {
+      if (!PWChrono_AccessController.isAdmin(verifiedPortalUserId)) {
         throw new AuraHandledException('Unauthorized payroll administration.');
       }
       return;

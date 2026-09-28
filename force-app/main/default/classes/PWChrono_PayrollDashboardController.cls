@@ -5,7 +5,7 @@
  *              before any data is returned.
  */
 @SuppressWarnings('PMD.ApexCRUDViolation')
-public inherited sharing class PWChrono_PayrollDashboardController {
+public without sharing class PWChrono_PayrollDashboardController {
   /** @description Data transfer object carrying Payroll Dashboard metrics. */
   public class PayrollDashboardDTO {
     @AuraEnabled
