@@ -1,122 +1,157 @@
-<template>
+<template lwc:render-mode="light">
   <div class="page-wrapper">
-    <div class="content roster-page container-fluid p-3 pb-0">
-      <!-- Page Header (Standardized) -->
+    <div class="content">
+      <!-- Breadcrumb & Header -->
       <div
         class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3"
       >
         <div class="my-auto mb-2">
-          <h2 class="mb-1 text-2xl font-bold text-gray-900">My Shift Roster</h2>
-          <p class="text-muted text-sm text-gray-500">
-            View your weekly work schedule
-          </p>
+          <h2 class="mb-1">My Shift Roster</h2>
+          <nav>
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item">
+                <a href="javascript:void(0);"><i class="ti ti-smart-home"></i></a>
+              </li>
+              <li class="breadcrumb-item">Attendance</li>
+              <li class="breadcrumb-item active" aria-current="page">
+                Shift Roster
+              </li>
+            </ol>
+          </nav>
         </div>
-        <div class="week-nav flex items-center gap-3">
-          <lightning-button-icon
-            icon-name="utility:chevronleft"
-            alternative-text="Previous"
-            variant="border-filled"
+        <div class="d-flex align-items-center bg-white border rounded px-3 py-2 shadow-sm">
+          <button
+            type="button"
+            class="btn btn-icon btn-sm btn-light border-0 me-2"
             onclick={handlePrevWeek}
-          ></lightning-button-icon>
-          <span class="week-label font-semibold text-gray-700"
-            >{weekLabel}</span
+            title="Previous Week"
           >
-          <lightning-button-icon
-            icon-name="utility:chevronright"
-            alternative-text="Next"
-            variant="border-filled"
+            <i class="ti ti-chevron-left fs-16"></i>
+          </button>
+          <span class="fs-14 fw-semibold text-dark me-2">{weekLabel}</span>
+          <button
+            type="button"
+            class="btn btn-icon btn-sm btn-light border-0"
             onclick={handleNextWeek}
-          ></lightning-button-icon>
+            title="Next Week"
+          >
+            <i class="ti ti-chevron-right fs-16"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Weekly Summary Stat Widgets -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-6 col-xl-3">
+          <div class="card border shadow-sm mb-0">
+            <div
+              class="card-body p-3 d-flex align-items-center justify-content-between"
+            >
+              <div>
+                <span class="text-muted fs-12 d-block mb-1">Working Days</span>
+                <h4 class="mb-0 fw-bold text-primary">{workingDaysCount} Days</h4>
+              </div>
+              <span
+                class="avatar avatar-md rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center"
+                style="width: 44px; height: 44px;"
+              >
+                <i class="ti ti-clock-check fs-20"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+          <div class="card border shadow-sm mb-0">
+            <div
+              class="card-body p-3 d-flex align-items-center justify-content-between"
+            >
+              <div>
+                <span class="text-muted fs-12 d-block mb-1">Days Off</span>
+                <h4 class="mb-0 fw-bold text-secondary">{offDaysCount} Days</h4>
+              </div>
+              <span
+                class="avatar avatar-md rounded-circle bg-light text-secondary d-flex align-items-center justify-content-center"
+                style="width: 44px; height: 44px;"
+              >
+                <i class="ti ti-calendar-off fs-20"></i>
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Loading State -->
       <template if:true={isLoading}>
-        <div class="loading-state">
-          <div class="loading-pulse">
-            <div class="pulse-ring"></div>
-            <div class="pulse-dot"></div>
+        <div class="card border shadow-sm p-5 text-center">
+          <div class="spinner-border text-primary mx-auto mb-3" role="status">
+            <span class="visually-hidden">Loading...</span>
           </div>
-          <p>Loading shift schedule...</p>
+          <p class="text-muted mb-0">Loading shift schedule...</p>
         </div>
       </template>
 
-      <!-- Roster Content -->
+      <!-- Shift Roster Card Grid -->
       <template if:false={isLoading}>
-        <!-- Weekly Summary -->
-        <div class="summary-bar">
-          <div class="summary-item">
-            <lightning-icon
-              icon-name="utility:clock"
-              size="x-small"
-            ></lightning-icon>
-            <span>{workingDaysCount} working days</span>
+        <div class="card border shadow-sm mb-4">
+          <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <h5 class="mb-0">Weekly Shift Schedule</h5>
+            <div class="d-flex align-items-center gap-3 fs-13">
+              <span class="d-inline-flex align-items-center text-muted">
+                <span class="legend-dot bg-success me-1"></span> Working Day
+              </span>
+              <span class="d-inline-flex align-items-center text-muted">
+                <span class="legend-dot bg-secondary me-1"></span> Day Off
+              </span>
+              <span class="d-inline-flex align-items-center text-muted">
+                <span class="legend-dot bg-primary me-1"></span> Today
+              </span>
+            </div>
           </div>
-          <div class="summary-item">
-            <lightning-icon
-              icon-name="utility:date_input"
-              size="x-small"
-            ></lightning-icon>
-            <span>{offDaysCount} days off</span>
-          </div>
-        </div>
-
-        <!-- Shift Cards -->
-        <div class="roster-grid">
-          <template for:each={weekDays} for:item="day">
-            <article
-              key={day.isoDate}
-              class={day.cardClass}
-              data-today={day.isToday}
-            >
-              <div class="day-header">
-                <span class="day-name">{day.dayName}</span>
-                <span class="day-date">{day.dateString}</span>
-                <template if:true={day.isToday}>
-                  <span class="today-badge">Today</span>
-                </template>
-              </div>
-
-              <div class="day-body">
-                <template if:true={day.shift}>
-                  <div class="shift-info">
-                    <div class="shift-name">{day.shift.name}</div>
-                    <div class="shift-time">
-                      <lightning-icon
-                        icon-name="utility:clock"
-                        size="xx-small"
-                      ></lightning-icon>
-                      <span>{day.shift.start} - {day.shift.end}</span>
+          <div class="card-body p-3">
+            <div class="shift-roster-grid">
+              <template for:each={weekDays} for:item="day">
+                <div key={day.isoDate} class="roster-col">
+                  <div class={day.cardClass}>
+                    <div class={day.headerClass}>
+                      <div>
+                        <span class="fw-bold fs-14 text-dark d-block">{day.dayName}</span>
+                        <span class="fs-12 text-muted">{day.dateString}</span>
+                      </div>
+                      <template if:true={day.isToday}>
+                        <span class="badge bg-primary text-white fs-10 px-2 py-1">Today</span>
+                      </template>
+                    </div>
+                    <div class="card-body p-3 d-flex flex-column justify-content-between text-center min-h-140">
+                      <template if:true={day.shift}>
+                        <div class="mb-2">
+                          <span class="badge bg-success-subtle text-success border border-success-subtle fs-12 px-2 py-1 mb-2 d-inline-block">
+                            {day.shift.name}
+                          </span>
+                          <p class="fs-12 text-dark fw-medium mb-0 d-flex align-items-center justify-content-center">
+                            <i class="ti ti-clock me-1 text-muted"></i>
+                            {day.shift.start} - {day.shift.end}
+                          </p>
+                        </div>
+                        <div class="mt-auto">
+                          <span class="badge bg-light text-success border fs-11">
+                            <i class="ti ti-point-filled me-1"></i>Working Day
+                          </span>
+                        </div>
+                      </template>
+                      <template if:false={day.shift}>
+                        <div class="py-3">
+                          <i class="ti ti-coffee text-muted fs-28 d-block mb-1"></i>
+                          <span class="fs-13 text-muted fw-medium d-block">Day Off</span>
+                        </div>
+                        <div class="mt-auto">
+                          <span class="badge bg-light text-muted border fs-11">Rest Day</span>
+                        </div>
+                      </template>
                     </div>
                   </div>
-                </template>
-                <template if:false={day.shift}>
-                  <div class="off-day">
-                    <lightning-icon
-                      icon-name="utility:home"
-                      size="small"
-                    ></lightning-icon>
-                    <span>Day Off</span>
-                  </div>
-                </template>
-              </div>
-            </article>
-          </template>
-        </div>
-
-        <!-- Legend -->
-        <div class="legend">
-          <div class="legend-item">
-            <span class="legend-dot working"></span>
-            <span>Working Day</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-dot off"></span>
-            <span>Day Off</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-dot today"></span>
-            <span>Today</span>
+                </div>
+              </template>
+            </div>
           </div>
         </div>
       </template>

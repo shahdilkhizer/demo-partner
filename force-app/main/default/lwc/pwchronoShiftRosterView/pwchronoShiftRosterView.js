@@ -22,11 +22,11 @@ export default class PwchronoShiftRosterView extends LightningElement {
   }
 
   get workingDaysCount() {
-    return this.weekDays.filter((day) => day.shift).length;
+    return this.weekDays.filter((day) => day.hasShift).length;
   }
 
   get offDaysCount() {
-    return this.weekDays.filter((day) => !day.shift).length;
+    return this.weekDays.filter((day) => !day.hasShift).length;
   }
 
   formatDate(date) {
@@ -52,6 +52,7 @@ export default class PwchronoShiftRosterView extends LightningElement {
     for (let i = 0; i < 7; i++) {
       const d = new Date(start);
       d.setDate(start.getDate() + i);
+      const isToday = new Date().toDateString() === d.toDateString();
       days.push({
         date: d,
         dayName: d.toLocaleDateString("en-US", { weekday: "short" }),
@@ -60,7 +61,11 @@ export default class PwchronoShiftRosterView extends LightningElement {
           day: "numeric"
         }),
         isoDate: d.toISOString().split("T")[0],
-        isToday: new Date().toDateString() === d.toDateString()
+        isToday,
+        hasShift: false,
+        shift: null,
+        cardClass: `card border shadow-sm h-100 mb-0 ${isToday ? "border-primary border-2 shadow" : ""}`,
+        headerClass: `card-header py-2 px-3 border-bottom d-flex align-items-center justify-content-between ${isToday ? "bg-primary-subtle" : "bg-light"}`
       });
     }
     this.weekDays = days;
@@ -94,7 +99,7 @@ export default class PwchronoShiftRosterView extends LightningElement {
       sessionToken: getSessionToken()
     })
       .then((data) => {
-        this.processShifts(data);
+        this.processShifts(data || []);
       })
       .catch((error) => {
         logError("ShiftRosterView.loadShifts", error);
@@ -111,7 +116,7 @@ export default class PwchronoShiftRosterView extends LightningElement {
 
   processShifts(data) {
     const shiftMap = {};
-    data.forEach((shift) => {
+    (data || []).forEach((shift) => {
       if (!shift.Shift_Type__r) {
         return; // Skip records without shift type to avoid errors
       }
@@ -144,16 +149,17 @@ export default class PwchronoShiftRosterView extends LightningElement {
     });
 
     this.weekDays = this.weekDays.map((day) => {
-      const hasShift = !!shiftMap[day.isoDate];
-      let cardClass = "day-card";
-      if (day.isToday) cardClass += " today";
-      if (hasShift) cardClass += " working";
-      else cardClass += " off";
+      const shift = shiftMap[day.isoDate];
+      const hasShift = !!shift;
+      const cardClass = `card border shadow-sm h-100 mb-0 ${day.isToday ? "border-primary border-2 shadow" : ""}`;
+      const headerClass = `card-header py-2 px-3 border-bottom d-flex align-items-center justify-content-between ${day.isToday ? "bg-primary-subtle" : "bg-light"}`;
 
       return {
         ...day,
-        shift: shiftMap[day.isoDate],
-        cardClass
+        shift,
+        hasShift,
+        cardClass,
+        headerClass
       };
     });
   }

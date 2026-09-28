@@ -1,0 +1,74 @@
+.shift-roster-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.min-h-140 {
+  min-height: 140px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.bg-primary-subtle {
+  background-color: #eef2ff !important;
+}
+
+.bg-success-subtle {
+  background-color: #ecfdf5 !important;
+}
+
+.border-success-subtle {
+  border-color: #a7f3d0 !important;
+}
+
+.fs-10 {
+  font-size: 10px !important;
+}
+
+.fs-11 {
+  font-size: 11px !important;
+}
+
+.fs-12 {
+  font-size: 12px !important;
+}
+
+.fs-13 {
+  font-size: 13px !important;
+}
+
+.fs-14 {
+  font-size: 14px !important;
+}
+
+.fs-20 {
+  font-size: 20px !important;
+}
+
+.fs-28 {
+  font-size: 28px !important;
+}
+
+@media (max-width: 1200px) {
+  .shift-roster-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .shift-roster-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .shift-roster-grid {
+    grid-template-columns: 1fr;
+  }
+}
