@@ -20,12 +20,13 @@ public without sharing class PWChrono_LeaveLedgerService {
    * @param approverId Who approved it
    */
   public static void recordLeaveUsed(Leave__c leave, Id approverId) {
+    Decimal days = leave.Total_Days__c != null ? leave.Total_Days__c : 1;
     createEntry(
       leave.Employees__c,
       leave.Leave_Type__c,
       leave.Id,
       TYPE_USED,
-      -leave.Total_Days__c, // Negative = debit
+      -days, // Negative = debit
       'Leave approved: ' + leave.Name,
       approverId
     );
@@ -37,12 +38,13 @@ public without sharing class PWChrono_LeaveLedgerService {
    * @param cancelledBy Who cancelled it
    */
   public static void recordLeaveCancelled(Leave__c leave, Id cancelledBy) {
+    Decimal days = leave.Total_Days__c != null ? leave.Total_Days__c : 1;
     createEntry(
       leave.Employees__c,
       leave.Leave_Type__c,
       leave.Id,
       TYPE_CANCELLED,
-      leave.Total_Days__c, // Positive = credit (reversal)
+      days, // Positive = credit (reversal)
       'Approved leave cancelled: ' + leave.Name,
       cancelledBy
     );

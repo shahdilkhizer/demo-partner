@@ -173,6 +173,12 @@ public without sharing class PWChrono_LeaveService {
     }
 
     if (normalizedAction == 'Approve') {
+      Decimal effectiveDays = leave.Total_Days__c != null
+        ? leave.Total_Days__c
+        : (leave.From_Date__c != null && leave.To_Date__c != null
+            ? (leave.From_Date__c.daysBetween(leave.To_Date__c) + 1)
+            : 1);
+      leave.Total_Days__c = effectiveDays;
       leave.Status__c = PWChrono_Constants.STATUS_APPROVED;
       leave.Approval_Date__c = Date.today();
       leave.Approver_Comments__c = String.isNotBlank(comments)
@@ -185,7 +191,7 @@ public without sharing class PWChrono_LeaveService {
       PWChrono_LeaveBalanceService.deductBalance(
         leave.Employees__c,
         leave.Leave_Type__c,
-        leave.Total_Days__c
+        effectiveDays
       );
 
       // Create ledger entry

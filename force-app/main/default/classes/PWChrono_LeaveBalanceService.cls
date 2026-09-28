@@ -258,7 +258,8 @@ public without sharing class PWChrono_LeaveBalanceService {
     }
 
     PWChrono_Leave_Allocation__c alloc = allocations[0];
-    alloc.Total_Leaves_Used__c = safeDecimal(alloc.Total_Leaves_Used__c) + days;
+    Decimal safeDays = days != null ? days : 0;
+    alloc.Total_Leaves_Used__c = safeDecimal(alloc.Total_Leaves_Used__c) + safeDays;
     update alloc;
   }
 
