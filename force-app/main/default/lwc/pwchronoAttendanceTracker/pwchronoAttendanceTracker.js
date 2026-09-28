@@ -1,6 +1,7 @@
 import { LightningElement, track, wire } from "lwc";
 import getUserAccessById from "@salesforce/apex/PWChrono_AccessController.getUserAccessById";
 import getAttendanceTrackerDataForEmployee from "@salesforce/apex/PWChrono_PortalApi.getAttendanceTrackerDataForEmployee";
+import getAttendanceEmployeeOptions from "@salesforce/apex/PWChrono_PortalApi.getAttendanceEmployeeOptions";
 import { showErrorToast, logError } from "c/pwchronoErrorHandler";
 import { getSession, getEmployeeId, getSessionToken } from "c/pwchronoSession";
 import { downloadCsv } from "c/pwchronoCsv";
@@ -120,7 +121,17 @@ export default class PwchronoAttendanceTracker extends NavigationMixin(
     );
   }
 
+  @track allEmployeeOptions = [];
+  @track canManageAttendance = false;
+
   get employeeOptions() {
+    if (
+      this.canManageAttendance &&
+      this.allEmployeeOptions &&
+      this.allEmployeeOptions.length > 0
+    ) {
+      return this.allEmployeeOptions;
+    }
     const employeeId = this.targetEmployeeId || this.employeeId;
     return employeeId
       ? [{ label: this.userName || "Employee", value: employeeId }]
@@ -358,12 +369,34 @@ export default class PwchronoAttendanceTracker extends NavigationMixin(
         this.hasAccess = true;
         this.loadData();
       }
+      if (
+        accessData.features &&
+        (accessData.features.includes("Attendance Administration") ||
+          accessData.features.includes("Attendance Team"))
+      ) {
+        this.canManageAttendance = true;
+        this.loadEmployeeOptions();
+      }
       this.accessLoaded = true;
     } catch (error) {
       const message = error?.body?.message || error?.message || "Unknown error";
       this.debugInfo = "Error: " + message;
       this.hasAccess = false;
       this.accessLoaded = true;
+    }
+  }
+
+  async loadEmployeeOptions() {
+    try {
+      const options = await getAttendanceEmployeeOptions({
+        portalUserId: this.employeeId,
+        sessionToken: this.sessionToken
+      });
+      if (options && options.length > 0) {
+        this.allEmployeeOptions = options;
+      }
+    } catch (error) {
+      logError("pwchronoAttendanceTracker.loadEmployeeOptions", error);
     }
   }
 

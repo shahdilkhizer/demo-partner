@@ -1,4 +1,5 @@
 import getAttendanceAdminRows from "@salesforce/apex/PWChrono_PortalApi.getAttendanceAdminRows";
+import getAttendanceEmployeeOptions from "@salesforce/apex/PWChrono_PortalApi.getAttendanceEmployeeOptions";
 import getUserAccessById from "@salesforce/apex/PWChrono_AccessController.getUserAccessById";
 import { logError } from "c/pwchronoErrorHandler";
 import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
@@ -62,13 +63,27 @@ export default class PwchronoAttendanceAdmin extends NavigationMixin(
       this.canManage = features.includes("Attendance Administration");
       this.accessRole = access?.role || "";
       if (this.hasAccess) {
-        await this.loadAttendance();
+        await Promise.all([this.loadAttendance(), this.loadEmployeeOptions()]);
       }
     } catch (error) {
       logError("pwchronoAttendanceAdmin.initializeAccess", error);
       this.hasAccess = false;
     } finally {
       this.accessLoaded = true;
+    }
+  }
+
+  async loadEmployeeOptions() {
+    try {
+      const options = await getAttendanceEmployeeOptions({
+        portalUserId: this.employeeId,
+        sessionToken: this.sessionToken
+      });
+      if (options && options.length > 0) {
+        this.allEmployeeOptions = options;
+      }
+    } catch (error) {
+      logError("pwchronoAttendanceAdmin.loadEmployeeOptions", error);
     }
   }
 
@@ -91,10 +106,21 @@ export default class PwchronoAttendanceAdmin extends NavigationMixin(
   }
 
   get employeeOptions() {
-    return this.allAttendanceData.map((record) => ({
-      label: record.employeeName,
-      value: record.Employees__c
-    }));
+    if (this.allEmployeeOptions && this.allEmployeeOptions.length > 0) {
+      return this.allEmployeeOptions;
+    }
+    const seen = new Set();
+    const options = [];
+    for (const record of this.allAttendanceData || []) {
+      if (record.Employees__c && !seen.has(record.Employees__c)) {
+        seen.add(record.Employees__c);
+        options.push({
+          label: record.employeeName,
+          value: record.Employees__c
+        });
+      }
+    }
+    return options.sort((a, b) => a.label.localeCompare(b.label));
   }
 
   renderedCallback() {

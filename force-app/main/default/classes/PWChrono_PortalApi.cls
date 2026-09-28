@@ -523,6 +523,21 @@ public without sharing class PWChrono_PortalApi {
     );
   }
 
+  @AuraEnabled(cacheable=true)
+  public static List<Map<String, String>> getAttendanceEmployeeOptions(
+    String portalUserId,
+    String sessionToken
+  ) {
+    PWChrono_GuestSession.requireVerifiedPortalUserId(
+      (String) portalUserId,
+      sessionToken
+    );
+    return PWChrono_AttendanceController.getAttendanceEmployeeOptions(
+      portalUserId,
+      sessionToken
+    );
+  }
+
   @AuraEnabled(cacheable=false)
   public static List<PWChrono_Shift_Assignment__c> getMyShiftAssignments(
     Date startDate,

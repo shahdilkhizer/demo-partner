@@ -1039,6 +1039,52 @@ public inherited sharing class PWChrono_AttendanceController {
   }
 
   /**
+   * @description Get all active employees for attendance dropdown (admin/manager view).
+   */
+  @AuraEnabled(cacheable=true)
+  public static List<Map<String, String>> getAttendanceEmployeeOptions(
+    String portalUserId,
+    String sessionToken
+  ) {
+    try {
+      Id actorEmployeeId = PWChrono_RequestValidator.resolveEmployeeId(
+        portalUserId,
+        sessionToken
+      );
+      requireAttendanceTeamOrAdminAccess(actorEmployeeId);
+      Set<Id> visibleEmployeeIds = PWChrono_AccessController.getVisibleEmployeeIds(
+        actorEmployeeId
+      );
+      if (visibleEmployeeIds.isEmpty()) {
+        return new List<Map<String, String>>();
+      }
+
+      List<Portal_Users__c> employees = [
+        SELECT Id, Name, Contact__r.Name
+        FROM Portal_Users__c
+        WHERE Is_Active__c = TRUE AND Id IN :visibleEmployeeIds
+        ORDER BY Name ASC
+      ];
+
+      List<Map<String, String>> options = new List<Map<String, String>>();
+      for (Portal_Users__c emp : employees) {
+        String empName = emp.Contact__r != null &&
+          String.isNotBlank(emp.Contact__r.Name)
+          ? emp.Contact__r.Name
+          : emp.Name;
+        options.add(new Map<String, String>{
+          'label' => empName,
+          'value' => (String) emp.Id
+        });
+      }
+      return options;
+    } catch (Exception e) {
+      PWChrono_Logger.error('Error fetching attendance employee options', e);
+      return new List<Map<String, String>>();
+    }
+  }
+
+  /**
    * @description All attendance records for a given date (admin view).
    */
   @AuraEnabled(cacheable=false)
