@@ -169,6 +169,12 @@ export default class PwchronoNewUserForm extends LightningElement {
     return true;
   }
 
+  handleModalCardClick(event) {
+    if (event && event.stopPropagation) {
+      event.stopPropagation();
+    }
+  }
+
   closeModal() {
     this.dispatchEvent(new CustomEvent("close"));
   }

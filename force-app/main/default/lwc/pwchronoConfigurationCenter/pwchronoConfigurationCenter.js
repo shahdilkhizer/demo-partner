@@ -36,6 +36,10 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
   employeeId = getEmployeeId();
   sessionToken = getSessionToken();
 
+  // Sorting
+  @track sortBy = "userName";
+  @track sortDirection = "asc";
+
   // Pagination
   @track currentPage = 1;
   @track pageSize = 10;
@@ -47,32 +51,27 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
     { label: "50", value: "50" }
   ];
 
-  userColumns = [
-    { label: "Name", fieldName: "userName", type: "text", sortable: true },
-    { label: "Email", fieldName: "userEmail", type: "email", sortable: true },
-    {
-      label: "Portal User Profile",
-      fieldName: "profileName",
-      type: "text",
-      sortable: true
-    },
-    { label: "Role", fieldName: "roleName", type: "text", sortable: true },
-    {
-      label: "Reports To",
-      fieldName: "managerName",
-      type: "text",
-      sortable: true
-    },
-    {
-      type: "action",
-      typeAttributes: {
-        rowActions: [
-          { label: "Manage Access", name: "manage_access" },
-          { label: "View Record", name: "view_record" }
-        ]
-      }
-    }
-  ];
+  get roleOptionsMap() {
+    return {
+      "HR Admin": "badge badge-soft-purple",
+      "Employee": "badge badge-soft-info",
+      "Manager": "badge badge-soft-warning",
+      "HR Manager": "badge badge-soft-warning",
+      "Project Manager": "badge badge-soft-warning",
+      "Payroll Admin": "badge badge-soft-success"
+    };
+  }
+
+  getRoleBadge(role) {
+    return this.roleOptionsMap[role] || "badge badge-soft-secondary";
+  }
+
+  getUserInitials(name) {
+    if (!name) return "U";
+    const parts = name.trim().split(" ");
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
 
   @wire(getAllUsersWithAccess, {
     portalUserId: "$employeeId",
@@ -94,7 +93,13 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
           user.managerName && user.managerName !== "Unassigned"
             ? user.managerName
             : this.reportingByUserId.get(user.userId)?.managerName ||
-              "Unassigned"
+              "Unassigned",
+        userInitials: this.getUserInitials(user.userName),
+        roleBadgeClass: this.getRoleBadge(user.roleName),
+        statusBadgeClass: user.isActive
+          ? "badge badge-soft-success"
+          : "badge badge-soft-danger",
+        statusText: user.isActive ? "Active" : "Inactive"
       }));
       this.filterUsers();
     } else if (error) {
@@ -182,7 +187,7 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
     if (data) {
       this.globalSettings = { ...data };
     } else if (error) {
-      this.showToast("Error", error.body.message, "error");
+      this.showToast("Error", error.body?.message || "Error loading settings", "error");
     }
   }
 
@@ -192,25 +197,37 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
     this.filterUsers();
   }
 
-  sortBy = "userName";
-  sortDirection = "asc";
   get pageSizeValue() {
     return String(this.pageSize);
   }
+
   handleSort(event) {
-    this.sortBy = event.detail.fieldName;
-    this.sortDirection = event.detail.sortDirection;
+    const field = event.currentTarget.dataset.field;
+    if (this.sortBy === field) {
+      this.sortDirection = this.sortDirection === "asc" ? "desc" : "asc";
+    } else {
+      this.sortBy = field;
+      this.sortDirection = "asc";
+    }
     this.currentPage = 1;
     this.filterUsers();
   }
+
   filterUsers() {
-    if (this.searchTerm) {
+    if (this.searchTerm && this.searchTerm.trim() !== "") {
+      const term = this.searchTerm.trim();
       this.filteredUsers = this.users.filter(
         (user) =>
           (user.userName &&
-            user.userName.toLowerCase().includes(this.searchTerm)) ||
+            user.userName.toLowerCase().includes(term)) ||
           (user.userEmail &&
-            user.userEmail.toLowerCase().includes(this.searchTerm))
+            user.userEmail.toLowerCase().includes(term)) ||
+          (user.roleName &&
+            user.roleName.toLowerCase().includes(term)) ||
+          (user.profileName &&
+            user.profileName.toLowerCase().includes(term)) ||
+          (user.department &&
+            user.department.toLowerCase().includes(term))
       );
     } else {
       this.filteredUsers = [...this.users];
@@ -234,8 +251,8 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
     this.paginatedUsers = this.filteredUsers.slice(start, end);
   }
 
-  handlePageSizeChange(event) {
-    this.pageSize = parseInt(event.detail.value, 10);
+  handlePageSizeSelect(event) {
+    this.pageSize = parseInt(event.target.value, 10) || 10;
     this.currentPage = 1;
     this.applyPagination();
   }
@@ -263,10 +280,10 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
   }
 
   get paginationInfo() {
-    if (this.totalRecords === 0) return "0 users";
+    if (this.totalRecords === 0) return "Showing 0 to 0 of 0 entries";
     const start = (this.currentPage - 1) * this.pageSize + 1;
     const end = Math.min(this.currentPage * this.pageSize, this.totalRecords);
-    return `${start}-${end} of ${this.totalRecords}`;
+    return `Showing ${start} to ${end} of ${this.totalRecords} entries`;
   }
 
   get isPrevDisabled() {
@@ -294,14 +311,19 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
     return refreshApex(this.wiredUsersResult);
   }
 
-  handleRowAction(event) {
-    const actionName = event.detail.action.name;
-    const row = event.detail.row;
+  handleManageAccessClick(event) {
+    const userId = event.currentTarget.dataset.id;
+    const user = this.users.find((u) => u.userId === userId);
+    if (user) {
+      this.openManageAccessModal(user);
+    }
+  }
 
-    if (actionName === "manage_access") {
-      this.openManageAccessModal(row);
-    } else if (actionName === "view_record") {
-      this.openViewRecordModal(row);
+  handleViewRecordClick(event) {
+    const userId = event.currentTarget.dataset.id;
+    const user = this.users.find((u) => u.userId === userId);
+    if (user) {
+      this.openViewRecordModal(user);
     }
   }
 
@@ -309,8 +331,8 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
     this.viewingUser = {
       ...user,
       statusBadgeClass: user.isActive
-        ? "badge bg-success-subtle text-success"
-        : "badge bg-danger-subtle text-danger",
+        ? "badge badge-soft-success"
+        : "badge badge-soft-danger",
       statusText: user.isActive ? "Active" : "Inactive"
     };
     this.showViewRecordModal = true;
@@ -341,6 +363,12 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
     this.selectedUser = null;
     this.selectedProfileId = "";
     this.selectedManagerId = "";
+  }
+
+  handleModalCardClick(event) {
+    if (event && event.stopPropagation) {
+      event.stopPropagation();
+    }
   }
 
   handleProfileChange(event) {
@@ -462,7 +490,7 @@ export default class PwchronoConfigurationCenter extends NavigationMixin(
         this.showToast("Success", "Global settings saved", "success");
       })
       .catch((error) => {
-        this.showToast("Error", error.body.message, "error");
+        this.showToast("Error", error.body?.message || "Failed to save settings", "error");
       })
       .finally(() => {
         this.isSaving = false;

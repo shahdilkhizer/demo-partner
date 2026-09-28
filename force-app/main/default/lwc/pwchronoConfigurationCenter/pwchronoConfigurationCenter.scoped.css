@@ -1,0 +1,222 @@
+:host {
+  display: block;
+}
+
+/* Nav Pills / Tabs */
+.custom-nav-pills .nav-link {
+  color: #4b5563;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+}
+
+.custom-nav-pills .nav-link:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.custom-nav-pills .nav-link.active {
+  background: #bd511c !important;
+  color: #ffffff !important;
+}
+
+/* Header Controls */
+.search-input-wrap {
+  min-width: 240px;
+}
+
+.search-input-wrap input {
+  height: 36px;
+  font-size: 13px;
+}
+
+.page-size-wrap select {
+  height: 36px;
+  font-size: 13px;
+  min-width: 100px;
+}
+
+/* Theme Buttons */
+.btn-primary {
+  background: #bd511c !important;
+  border-color: #bd511c !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  height: 36px;
+  font-size: 13px;
+  border-radius: 6px;
+  padding: 0 14px;
+}
+
+.btn-primary:hover {
+  background: #a34212 !important;
+  border-color: #a34212 !important;
+  color: #ffffff !important;
+}
+
+.btn-white {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  color: #374151 !important;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.btn-white:hover:not(:disabled) {
+  background: #f9fafb !important;
+  border-color: #d1d5db !important;
+}
+
+.btn-light {
+  background: #f3f4f6 !important;
+  border: 1px solid #e5e7eb !important;
+  color: #374151 !important;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.btn-light:hover {
+  background: #e5e7eb !important;
+}
+
+/* User Avatar Initials */
+.user-avatar-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffedd5;
+  color: #bd511c;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 12px;
+}
+
+.badge-soft-purple {
+  background-color: #f3e8ff !important;
+  color: #7e22ce !important;
+}
+
+.badge-soft-info {
+  background-color: #e0f2fe !important;
+  color: #0369a1 !important;
+}
+
+.badge-soft-warning {
+  background-color: #fef3c7 !important;
+  color: #b45309 !important;
+}
+
+.badge-soft-success {
+  background-color: #dcfce7 !important;
+  color: #15803d !important;
+}
+
+.badge-soft-danger {
+  background-color: #fee2e2 !important;
+  color: #b91c1c !important;
+}
+
+.badge-soft-secondary {
+  background-color: #f3f4f6 !important;
+  color: #4b5563 !important;
+}
+
+/* Empty State Circle */
+.empty-icon-circle {
+  width: 56px;
+  height: 56px;
+  background-color: #f3f4f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Modal Layer Overlay */
+.modal-layer {
+  position: fixed;
+  z-index: 99999;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(16, 24, 40, 0.54);
+  cursor: pointer;
+  z-index: 1;
+  backdrop-filter: blur(2px);
+}
+
+.modal-card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 680px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 24px 60px rgba(16, 24, 40, 0.28);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-card-sm {
+  max-width: 540px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.modal-title {
+  font-size: 17px;
+  color: #111827;
+}
+
+.modal-body {
+  overflow-y: auto;
+}
+
+.modal-footer {
+  border-top: 1px solid #e5e7eb;
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+  user-select: none;
+}
