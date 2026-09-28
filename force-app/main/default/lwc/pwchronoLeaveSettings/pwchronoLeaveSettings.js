@@ -1,6 +1,6 @@
 import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
 import createLeaveType from "@salesforce/apex/PWChrono_PortalApi.createLeaveType";
-import getActiveLeaveTypes from "@salesforce/apex/PWChrono_LeaveController.getActiveLeaveTypes";
+import getLeaveTypes from "@salesforce/apex/PWChrono_PortalApi.getLeaveTypes";
 import updateLeaveType from "@salesforce/apex/PWChrono_PortalApi.updateLeaveType";
 import { logError, getErrorMessage } from "c/pwchronoErrorHandler";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
@@ -45,7 +45,10 @@ export default class PwchronoLeaveSettings extends LightningElement {
   async loadLeaveTypes() {
     this.isLoading = true;
     try {
-      const result = await getActiveLeaveTypes({ includeInactive: true });
+      const result = await getLeaveTypes({
+        includeInactive: true,
+        ...this.sessionParams
+      });
       this.leaveTypes = result.map((type) => ({
         ...type,
         carryForwardLimit: type.Is_Carry_Forward__c

@@ -415,6 +415,19 @@ public without sharing class PWChrono_PortalApi {
     );
   }
 
+  @AuraEnabled(cacheable=false)
+  public static List<PWChrono_Leave_Type__c> getLeaveTypes(
+    Boolean includeInactive,
+    String employeeId,
+    String sessionToken
+  ) {
+    PWChrono_GuestSession.requireVerifiedPortalUserId(
+      (String) employeeId,
+      sessionToken
+    );
+    return PWChrono_LeaveSelector.getActiveLeaveTypes(includeInactive == true);
+  }
+
   @AuraEnabled
   public static PWChrono_Leave_Type__c createLeaveType(
     PWChrono_Leave_Type__c leaveType,
