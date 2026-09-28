@@ -81,6 +81,33 @@ export default class PwchronoTaxDeclarationForm extends LightningElement {
   @track isModalOpen = false;
   @track currentRecord = {};
   @track isReadOnly = false;
+  @track feedback = null;
+
+  get feedbackClass() {
+    return this.feedback?.type === "error"
+      ? "notice notice_error mb-3"
+      : "notice notice_success mb-3";
+  }
+
+  get feedbackIcon() {
+    return this.feedback?.type === "error"
+      ? "utility:error"
+      : "utility:success";
+  }
+
+  clearFeedback() {
+    this.feedback = null;
+  }
+
+  get isEditable() {
+    return !this.isReadOnly;
+  }
+
+  handleModalCardClick(event) {
+    if (event && event.stopPropagation) {
+      event.stopPropagation();
+    }
+  }
 
   // Pagination
   @track currentPage = 1;
@@ -285,6 +312,11 @@ export default class PwchronoTaxDeclarationForm extends LightningElement {
       sessionToken: this.sessionToken
     })
       .then(() => {
+        this.feedback = {
+          type: "success",
+          title: "Success",
+          message: "Tax declaration saved as draft."
+        };
         this.dispatchEvent(
           new ShowToastEvent({
             title: "Success",
@@ -296,10 +328,16 @@ export default class PwchronoTaxDeclarationForm extends LightningElement {
         return refreshApex(this.wiredDeclarationsResult);
       })
       .catch((error) => {
+        const errMsg = this.normalizeWireError(error);
+        this.feedback = {
+          type: "error",
+          title: "Error saving declaration",
+          message: errMsg
+        };
         this.dispatchEvent(
           new ShowToastEvent({
             title: "Error saving declaration",
-            message: error.body.message,
+            message: errMsg,
             variant: "error"
           })
         );
@@ -313,6 +351,11 @@ export default class PwchronoTaxDeclarationForm extends LightningElement {
       sessionToken: this.sessionToken
     })
       .then(() => {
+        this.feedback = {
+          type: "success",
+          title: "Success",
+          message: "Tax declaration submitted successfully."
+        };
         this.dispatchEvent(
           new ShowToastEvent({
             title: "Success",
@@ -324,10 +367,16 @@ export default class PwchronoTaxDeclarationForm extends LightningElement {
         return refreshApex(this.wiredDeclarationsResult);
       })
       .catch((error) => {
+        const errMsg = this.normalizeWireError(error);
+        this.feedback = {
+          type: "error",
+          title: "Error submitting declaration",
+          message: errMsg
+        };
         this.dispatchEvent(
           new ShowToastEvent({
             title: "Error submitting declaration",
-            message: error.body.message,
+            message: errMsg,
             variant: "error"
           })
         );

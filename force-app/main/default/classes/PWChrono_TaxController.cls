@@ -2,7 +2,7 @@
  * @description Controller for Tax Declaration LWC Components
  * @author PWChrono Team
  */
-public inherited sharing class PWChrono_TaxController {
+public without sharing class PWChrono_TaxController {
   /**
    * @description Get tax declarations for current employee
    * @return List of tax declarations
@@ -22,6 +22,10 @@ public inherited sharing class PWChrono_TaxController {
       } else {
         Id currentUserId = UserInfo.getUserId();
         employeeId = PWChrono_Utils.getCurrentEmployeeId(currentUserId);
+      }
+
+      if (employeeId == null && String.isNotBlank(portalUserId)) {
+        employeeId = (Id) portalUserId;
       }
 
       if (employeeId == null) {
@@ -79,6 +83,10 @@ public inherited sharing class PWChrono_TaxController {
       } else {
         Id currentUserId = UserInfo.getUserId();
         employeeId = PWChrono_Utils.getCurrentEmployeeId(currentUserId);
+      }
+
+      if (employeeId == null && String.isNotBlank(portalUserId)) {
+        employeeId = (Id) portalUserId;
       }
 
       if (employeeId == null) {
@@ -148,6 +156,10 @@ public inherited sharing class PWChrono_TaxController {
       } else {
         Id currentUserId = UserInfo.getUserId();
         employeeId = PWChrono_Utils.getCurrentEmployeeId(currentUserId);
+      }
+
+      if (employeeId == null && String.isNotBlank(portalUserId)) {
+        employeeId = (Id) portalUserId;
       }
 
       PWChrono_Tax_Declaration__c declaration = [
