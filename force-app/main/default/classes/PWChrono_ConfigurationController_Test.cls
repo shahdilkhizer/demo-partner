@@ -2,7 +2,11 @@
 private class PWChrono_ConfigurationController_Test {
   @TestSetup
   static void makeData() {
-    Portal_User_Profile__c adminProfile = new Portal_User_Profile__c();
+    Portal_User_Profile__c adminProfile = new Portal_User_Profile__c(
+      Display_Name__c = 'Admin Profile',
+      Profile_Type__c = 'System Administrator',
+      Is_Active__c = true
+    );
     insert adminProfile;
 
     Portal_Object__c portalUserObject = new Portal_Object__c(
@@ -15,6 +19,12 @@ private class PWChrono_ConfigurationController_Test {
       Can_View__c = true,
       Can_Edit__c = true
     );
+    insert new Portal_Profile_Feature__c(
+      Portal_User_Profile__c = adminProfile.Id,
+      Feature_Key__c = 'Configuration',
+      Feature_Label__c = 'Configuration',
+      Is_Enabled__c = true
+    );
 
     List<Portal_Users__c> portalUsers = new List<Portal_Users__c>();
     for (Integer i = 0; i < 5; i++) {
@@ -22,6 +32,7 @@ private class PWChrono_ConfigurationController_Test {
         new Portal_Users__c(
           Name = 'Test User ' + i,
           Email__c = 'test' + i + '@test.com',
+          Role__c = 'HR Admin',
           Is_Active__c = true,
           Portal_User_Profile__c = adminProfile.Id
         )

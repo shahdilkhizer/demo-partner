@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Default_Approval_Profile__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <label>Default Approval Profile</label>
+    <referenceTo>Portal_User_Profile__c</referenceTo>
+    <relationshipLabel>Source Approval Profiles</relationshipLabel>
+    <relationshipName>Source_Approval_Profiles</relationshipName>
+    <required>false</required>
+    <trackHistory>true</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>
