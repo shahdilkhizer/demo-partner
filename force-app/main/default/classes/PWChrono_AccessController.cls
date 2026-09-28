@@ -247,12 +247,15 @@ public without sharing class PWChrono_AccessController {
     Id targetEmployeeId,
     Id assignedApproverId
   ) {
-    if (actorEmployeeId == null || actorEmployeeId == targetEmployeeId) {
+    if (actorEmployeeId == null) {
       return false;
     }
     AccessContext context = getAccessContext(actorEmployeeId);
     if (isAdminContext(context)) {
       return true;
+    }
+    if (actorEmployeeId == targetEmployeeId) {
+      return false;
     }
     if (!context.canApprove || !isManagerRole(context.role)) {
       return false;
