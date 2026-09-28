@@ -147,6 +147,41 @@ public without sharing class PWChrono_ReportingManagerController {
     validateReportingManager(null, managerPortalUserId);
     userRecord.Portal_User_Profile__c = profileId;
     userRecord.Reports_To__c = managerPortalUserId;
+
+    // Synchronize Contact record for Employee Directory and HR workflows
+    if (userRecord.Contact__c == null) {
+      List<Contact> existingContacts = [
+        SELECT Id
+        FROM Contact
+        WHERE Email = :userRecord.Email__c
+        LIMIT 1
+      ];
+      if (!existingContacts.isEmpty()) {
+        userRecord.Contact__c = existingContacts[0].Id;
+      } else {
+        String fullName = userRecord.Name.trim();
+        String firstName = '';
+        String lastName = fullName;
+        Integer firstSpace = fullName.indexOf(' ');
+        if (firstSpace > 0) {
+          firstName = fullName.substring(0, firstSpace).trim();
+          lastName = fullName.substring(firstSpace + 1).trim();
+        }
+        Contact newContact = new Contact(
+          FirstName = firstName,
+          LastName = String.isNotBlank(lastName) ? lastName : fullName,
+          Email = userRecord.Email__c,
+          Phone = userRecord.Phone__c,
+          Title = userRecord.Designation__c
+        );
+        if (String.isNotBlank(userRecord.Department__c)) {
+          newContact.Department = userRecord.Department__c;
+        }
+        insert newContact;
+        userRecord.Contact__c = newContact.Id;
+      }
+    }
+
     insert userRecord;
     return userRecord.Id;
   }
