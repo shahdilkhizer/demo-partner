@@ -6,7 +6,7 @@
  *              PWChrono_RequestValidator for shared rules.
  *              No DML in this class.
  */
-public inherited sharing class PWChrono_ExpenseValidator {
+public without sharing class PWChrono_ExpenseValidator {
   /** Maximum days in the past an employee may claim expenses for. */
   @TestVisible
   private static final Integer BACKDATED_LIMIT_DAYS = 90;

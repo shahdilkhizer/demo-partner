@@ -5,7 +5,7 @@
  *              Called by PWChrono_AttendanceService; reuses
  *              PWChrono_RequestValidator for shared rules.
  */
-public inherited sharing class PWChrono_AttendanceValidator {
+public without sharing class PWChrono_AttendanceValidator {
   /** Maximum days in the past an employee may submit a correction for. */
   @TestVisible
   private static final Integer BACKDATED_LIMIT_DAYS = 30;

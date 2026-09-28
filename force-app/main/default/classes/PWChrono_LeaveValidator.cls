@@ -4,7 +4,7 @@
  *              Returns a list of error strings; empty list = valid.
  */
 @SuppressWarnings('PMD.CognitiveComplexity')
-public inherited sharing class PWChrono_LeaveValidator {
+public without sharing class PWChrono_LeaveValidator {
   /**
    * @description Validate a leave request before submission.
    * @param dto Leave data transfer object

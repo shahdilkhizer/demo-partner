@@ -4,7 +4,7 @@
  *              Contains reusable checks that are common across request types.
  *              Pure validation — no DML.
  */
-public inherited sharing class PWChrono_RequestValidator {
+public without sharing class PWChrono_RequestValidator {
   /**
    * @description Validate that the employee record is active
    * @param employeeId Portal_Users__c Id

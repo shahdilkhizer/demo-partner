@@ -9,7 +9,7 @@
  *              preserve the existing PWChrono_ExpenseController wiring.
  */
 @SuppressWarnings('PMD.ApexCRUDViolation')
-public inherited sharing class PWChrono_ExpenseService {
+public without sharing class PWChrono_ExpenseService {
 
   private static final String OBJECT_API_NAME = 'PWChrono_Expense_Claim__c';
   private static final String MODULE_LABEL    = 'Expense';

@@ -4,7 +4,7 @@
  * @author PWChrono Team
  */
 @SuppressWarnings('PMD.CognitiveComplexity,PMD.ExcessiveParameterList')
-public inherited sharing class PWChrono_LeaveController {
+public without sharing class PWChrono_LeaveController {
   // ── READ Operations ──
 
   /**

@@ -4,7 +4,7 @@
  *              Called by PWChrono_ExpenseService and
  *              PWChrono_ExpenseController only.
  */
-public inherited sharing class PWChrono_ExpenseSelector {
+public without sharing class PWChrono_ExpenseSelector {
   // ── Field sets (DRY — avoid repeating field lists) ───────────────────────
 
   private static final String CLAIM_FIELDS =

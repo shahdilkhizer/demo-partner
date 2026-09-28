@@ -3,7 +3,7 @@
  *              All leave-related reads go through this class for reusability and consistency.
  *              No DML — read-only.
  */
-public inherited sharing class PWChrono_LeaveSelector {
+public without sharing class PWChrono_LeaveSelector {
   private static final Integer DEFAULT_LIMIT = PWChrono_Constants.DEFAULT_QUERY_LIMIT;
 
   // ── Leave Application Queries ──

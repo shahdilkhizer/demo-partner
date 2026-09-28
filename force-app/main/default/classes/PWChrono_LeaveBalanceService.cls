@@ -4,7 +4,7 @@
  *              and produces balance DTOs for the UI.
  *              This was a missing dependency — referenced by PWChrono_LeaveController.
  */
-public inherited sharing class PWChrono_LeaveBalanceService {
+public without sharing class PWChrono_LeaveBalanceService {
   /**
    * @description Get leave balances for an employee across all active leave types.
    *              Returns one LeaveBalanceWrapper per leave type that has an allocation.

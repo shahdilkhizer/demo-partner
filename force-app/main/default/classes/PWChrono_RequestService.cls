@@ -2,7 +2,7 @@
  * @description Shared service for request-based modules (Leave, Attendance, Expense, etc.).
  *              Handles status transitions, notification dispatch, and common orchestration.
  */
-public inherited sharing class PWChrono_RequestService {
+public without sharing class PWChrono_RequestService {
   /**
    * @description Transition a request record's status with validation.
    * @param currentStatus Current status value

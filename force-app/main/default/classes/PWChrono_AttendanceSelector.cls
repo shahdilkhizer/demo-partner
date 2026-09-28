@@ -3,7 +3,7 @@
  *              Static methods only; queries use bind variables.
  *              Guest access is controlled by the calling portal session layer.
  */
-public inherited sharing class PWChrono_AttendanceSelector {
+public without sharing class PWChrono_AttendanceSelector {
   // ─────────────────────── Single record reads ─────────────────────────────
 
   /**

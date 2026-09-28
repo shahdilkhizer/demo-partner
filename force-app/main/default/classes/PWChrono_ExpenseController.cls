@@ -10,7 +10,7 @@
  *              existing pwchronoExpenseClaimPortal component.
  */
 @SuppressWarnings('PMD.ApexCRUDViolation')
-public inherited sharing class PWChrono_ExpenseController {
+public without sharing class PWChrono_ExpenseController {
   // ═══════════════════════════════════════════════════════════════════════════
   // READ  —  Employee
   // ═══════════════════════════════════════════════════════════════════════════

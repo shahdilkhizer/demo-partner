@@ -10,7 +10,7 @@
  *              with existing LWC components and are marked accordingly.
  */
 @SuppressWarnings('PMD.ApexCRUDViolation')
-public inherited sharing class PWChrono_AttendanceController {
+public without sharing class PWChrono_AttendanceController {
   // ═══════════════════════════════════════════════════════════════════════════
   // READ  —  Employee
   // ═══════════════════════════════════════════════════════════════════════════

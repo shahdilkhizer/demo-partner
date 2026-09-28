@@ -5,7 +5,7 @@
  *
  *              Persists balance movements into PWChrono_Leave_Ledger__c.
  */
-public inherited sharing class PWChrono_LeaveLedgerService {
+public without sharing class PWChrono_LeaveLedgerService {
   // Transaction types
   public static final String TYPE_ALLOCATION = 'Allocation';
   public static final String TYPE_USED = 'Used';

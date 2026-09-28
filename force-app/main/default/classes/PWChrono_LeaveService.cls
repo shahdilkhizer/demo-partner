@@ -5,7 +5,7 @@
  *              Called by PWChrono_LeaveController (thin controller pattern).
  */
 @SuppressWarnings('PMD.ApexCRUDViolation')
-public inherited sharing class PWChrono_LeaveService {
+public without sharing class PWChrono_LeaveService {
   /**
    * @description Submit a new leave application or update a draft.
    * @param dto Leave data from the LWC form

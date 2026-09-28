@@ -6,7 +6,7 @@
  *              RequestValidator, RequestCommentService, RequestAttachmentService).
  */
 @SuppressWarnings('PMD.ApexCRUDViolation')
-public inherited sharing class PWChrono_AttendanceService {
+public without sharing class PWChrono_AttendanceService {
   private static final String OBJECT_API_NAME = 'PWChrono_Attendance_Request__c';
   private static final String MODULE_LABEL = 'Attendance';
 
