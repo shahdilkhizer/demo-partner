@@ -13,7 +13,9 @@ export default class PwchronoGoalManagement extends LightningElement {
   @track isSaving = false;
   @track error;
   @track isModalOpen = false;
+  @track isViewModalOpen = false;
   @track currentGoal = {};
+  @track selectedGoal = {};
   @track selectedStatus = "All";
   @track searchTerm = "";
   @track employeeId;
@@ -169,7 +171,28 @@ export default class PwchronoGoalManagement extends LightningElement {
   }
 
   handleModalKeydown(event) {
-    if (event.key === "Escape") this.closeModal();
+    if (event.key === "Escape") {
+      this.closeViewModal();
+      this.closeModal();
+    }
+  }
+
+  handleViewGoal(event) {
+    const goalId = event.currentTarget.dataset.id;
+    const goal = this.goals.find((g) => g.Id === goalId);
+    if (!goal) return;
+    this.selectedGoal = { ...goal };
+    this.isViewModalOpen = true;
+  }
+
+  closeViewModal() {
+    this.isViewModalOpen = false;
+  }
+
+  handleSwitchToEdit() {
+    this.isViewModalOpen = false;
+    this.currentGoal = { ...this.selectedGoal };
+    this.isModalOpen = true;
   }
 
   handleNewGoal() {
@@ -187,6 +210,7 @@ export default class PwchronoGoalManagement extends LightningElement {
   handleEditGoal(event) {
     const goalId = event.currentTarget.dataset.id;
     const goal = this.goals.find((g) => g.Id === goalId);
+    if (!goal) return;
     this.currentGoal = { ...goal };
     this.isModalOpen = true;
   }

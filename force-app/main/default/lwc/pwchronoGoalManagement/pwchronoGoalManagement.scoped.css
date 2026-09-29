@@ -386,6 +386,71 @@
 .form-field label span {
   color: #c34839;
 }
+.view-detail-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.view-detail-header {
+  padding-bottom: 16px;
+  border-bottom: 1px solid #edf0f5;
+}
+.view-goal-title-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.view-goal-title {
+  margin: 0;
+  color: #17253f;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.view-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.view-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.view-detail-item.full {
+  grid-column: 1 / -1;
+}
+.detail-label {
+  color: #748198;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.detail-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #24324b;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.progress-value {
+  color: #f26522;
+}
+.detail-description {
+  margin: 0;
+  color: #4a5568;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+.text-muted {
+  color: #a0aec0;
+  font-style: italic;
+}
 .sr-only {
   position: absolute;
   width: 1px;

@@ -181,7 +181,7 @@
                     class="goal-name"
                     type="button"
                     data-id={goal.Id}
-                    onclick={handleEditGoal}
+                    onclick={handleViewGoal}
                   >
                     {goal.Name}
                   </button>
@@ -268,6 +268,113 @@
     </div>
   </div>
 
+  <!-- View Goal Detail Modal -->
+  <template if:true={isViewModalOpen}>
+    <div
+      class="modal-overlay"
+      role="presentation"
+      onclick={closeViewModal}
+      onkeydown={handleModalKeydown}
+    >
+      <section
+        class="modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="view-goal-modal-title"
+        onclick={stopPropagation}
+      >
+        <header class="modal-header">
+          <div>
+            <p class="eyebrow">Performance</p>
+            <h2 id="view-goal-modal-title">Goal Details</h2>
+          </div>
+          <button
+            class="icon-button"
+            type="button"
+            onclick={closeViewModal}
+            title="Close"
+          >
+            <lightning-icon
+              icon-name="utility:close"
+              size="x-small"
+              alternative-text="Close"
+            ></lightning-icon>
+          </button>
+        </header>
+        <div class="modal-body">
+          <div class="view-detail-card">
+            <div class="view-detail-header">
+              <div class="view-goal-title-group">
+                <h3 class="view-goal-title">{selectedGoal.Name}</h3>
+                <span class={selectedGoal.badgeClass}>{selectedGoal.Status__c}</span>
+              </div>
+            </div>
+
+            <div class="view-detail-grid">
+              <div class="view-detail-item">
+                <span class="detail-label">Target Date</span>
+                <span class="detail-value">
+                  <lightning-icon
+                    icon-name="utility:event"
+                    size="xx-small"
+                    alternative-text=""
+                  ></lightning-icon>
+                  {selectedGoal.formattedDate}
+                </span>
+              </div>
+              <div class="view-detail-item">
+                <span class="detail-label">Progress</span>
+                <span class="detail-value progress-value">{selectedGoal.Progress__c}% Completed</span>
+              </div>
+              <div class="view-detail-item full">
+                <div
+                  class="progress-track"
+                  role="progressbar"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow={selectedGoal.Progress__c}
+                  aria-label={selectedGoal.Name}
+                >
+                  <span style={selectedGoal.progressStyle}></span>
+                </div>
+              </div>
+              <div class="view-detail-item full">
+                <span class="detail-label">Description</span>
+                <p class="detail-description">
+                  <template if:true={selectedGoal.Description__c}>
+                    {selectedGoal.Description__c}
+                  </template>
+                  <template if:false={selectedGoal.Description__c}>
+                    <span class="text-muted">No description provided.</span>
+                  </template>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="modal-footer">
+          <button class="btn btn-outline" type="button" onclick={closeViewModal}>
+            Close
+          </button>
+          <button
+            class="btn btn-primary"
+            type="button"
+            onclick={handleSwitchToEdit}
+          >
+            <lightning-icon
+              icon-name="utility:edit"
+              size="x-small"
+              variant="inverse"
+              alternative-text=""
+            ></lightning-icon>
+            Edit Goal
+          </button>
+        </footer>
+      </section>
+    </div>
+  </template>
+
+  <!-- Edit / New Goal Modal -->
   <template if:true={isModalOpen}>
     <div
       class="modal-overlay"
