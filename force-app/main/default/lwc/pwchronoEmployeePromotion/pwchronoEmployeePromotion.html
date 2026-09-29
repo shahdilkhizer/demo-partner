@@ -344,24 +344,26 @@
           <div class="modal-backdrop" aria-label="Close dialog" onclick={handleModalClose}></div>
           <div class="modal-card" onclick={handleModalCardClick}>
             <div class="modal-header">
+              <div class="modal-title-wrap">
                 <h5 class="modal-title fw-semibold">
                   <i
                     class="fa-solid fa-arrow-trend-up fa-fw me-2 text-primary"
                   ></i>
                   {modalTitle}
-                  <template if:true={isEditMode}>
-                    <span class={modalStatusBadgeClass} data-id="modal-status"
-                      >{modalStatus}</span
-                    >
-                  </template>
                 </h5>
-                <button
-                  type="button"
-                  class="btn-close"
-                  aria-label="Close"
-                  onclick={handleModalClose}
-                ></button>
+                <template if:true={isEditMode}>
+                  <span class={modalStatusBadgeClass} data-id="modal-status"
+                    >{modalStatus}</span
+                  >
+                </template>
               </div>
+              <button
+                type="button"
+                class="btn-close"
+                aria-label="Close"
+                onclick={handleModalClose}
+              ></button>
+            </div>
               <div class="modal-body">
                 <!-- Read-only notice -->
                 <template if:true={isReadOnly}>
@@ -457,9 +459,8 @@
                   </div>
 
                   <!-- Section: Designation -->
-                  <div class="col-12">
-                    <hr class="my-1" />
-                    <p class="fw-semibold small mb-0 text-muted text-uppercase">
+                  <div class="col-12 section-heading-box">
+                    <p class="section-heading-text">
                       Designation
                     </p>
                   </div>
@@ -499,9 +500,8 @@
                   </div>
 
                   <!-- Section: Department -->
-                  <div class="col-12">
-                    <hr class="my-1" />
-                    <p class="fw-semibold small mb-0 text-muted text-uppercase">
+                  <div class="col-12 section-heading-box">
+                    <p class="section-heading-text">
                       Department
                     </p>
                   </div>
@@ -541,9 +541,8 @@
                   </div>
 
                   <!-- Section: Grade & Branch -->
-                  <div class="col-12">
-                    <hr class="my-1" />
-                    <p class="fw-semibold small mb-0 text-muted text-uppercase">
+                  <div class="col-12 section-heading-box">
+                    <p class="section-heading-text">
                       Grade &amp; Branch
                     </p>
                   </div>
@@ -605,9 +604,8 @@
                   </div>
 
                   <!-- Section: Reports To -->
-                  <div class="col-12">
-                    <hr class="my-1" />
-                    <p class="fw-semibold small mb-0 text-muted text-uppercase">
+                  <div class="col-12 section-heading-box">
+                    <p class="section-heading-text">
                       Reports To
                     </p>
                   </div>
@@ -647,9 +645,8 @@
                   </div>
 
                   <!-- Section: Salary -->
-                  <div class="col-12">
-                    <hr class="my-1" />
-                    <p class="fw-semibold small mb-0 text-muted text-uppercase">
+                  <div class="col-12 section-heading-box">
+                    <p class="section-heading-text">
                       Salary
                     </p>
                   </div>
@@ -689,9 +686,8 @@
                   </div>
 
                   <!-- Promotion Details (textarea) -->
-                  <div class="col-12">
-                    <hr class="my-1" />
-                    <p class="fw-semibold small mb-0 text-muted text-uppercase">
+                  <div class="col-12 section-heading-box">
+                    <p class="section-heading-text">
                       Details / Notes
                     </p>
                   </div>
@@ -702,19 +698,16 @@
                       data-field="Promotion_Details__c"
                       onchange={handleFieldChange}
                       disabled={isReadOnly}
-                    >
-{editRecord.Promotion_Details__c}</textarea
-                    >
+                    >{editRecord.Promotion_Details__c}</textarea>
                   </div>
 
                   <!-- Promotion Detail Lines -->
-                  <div class="col-12">
-                    <hr class="my-1" />
+                  <div class="col-12 section-heading-box">
                     <div
-                      class="d-flex justify-content-between align-items-center mb-2"
+                      class="d-flex justify-content-between align-items-center"
                     >
                       <p
-                        class="fw-semibold small mb-0 text-muted text-uppercase"
+                        class="section-heading-text"
                       >
                         Promotion Detail Lines
                       </p>
@@ -862,7 +855,6 @@
                 </template>
               </div>
             </div>
-          </div>
         </section>
       </template>
     </div>
