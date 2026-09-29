@@ -26,7 +26,8 @@ const COLUMNS = [
       title: "Cancel Registration",
       variant: "destructive-text",
       disabled: { fieldName: "isPast" }
-    }
+    },
+    fixedWidth: 120
   }
 ];
 
@@ -37,6 +38,40 @@ export default class PwchronoTrainingRegistration extends LightningElement {
   get sessionParams() {
     return { portalUserId: getEmployeeId(), sessionToken: getSessionToken() };
   }
+  @track activeTab = "upcoming";
+
+  get isUpcomingTab() {
+    return this.activeTab === "upcoming";
+  }
+
+  get isRegistrationsTab() {
+    return this.activeTab === "registrations";
+  }
+
+  get upcomingTabClass() {
+    return `nav-tab ${this.isUpcomingTab ? "nav-tab_active" : ""}`;
+  }
+
+  get registrationsTabClass() {
+    return `nav-tab ${this.isRegistrationsTab ? "nav-tab_active" : ""}`;
+  }
+
+  get upcomingCount() {
+    return this.upcomingTrainings?.length || 0;
+  }
+
+  get registrationsCount() {
+    return this.allRegistrations?.length || 0;
+  }
+
+  handleSelectUpcomingTab() {
+    this.activeTab = "upcoming";
+  }
+
+  handleSelectRegistrationsTab() {
+    this.activeTab = "registrations";
+  }
+
   @track upcomingTrainings;
   @track allRegistrations = [];
   @track myRegistrations = [];
@@ -84,14 +119,18 @@ export default class PwchronoTrainingRegistration extends LightningElement {
   wiredRegistrations(result) {
     this.wiredRegistrationsResult = result;
     if (result.data) {
-      this.allRegistrations = result.data.map((row) => ({
-        ...row,
-        ProgramName:
-          row.Training_Event__r?.Training_Program__r?.Name || "Unknown",
-        StartDate: row.Training_Event__r?.Start_Date__c,
-        Location: row.Training_Event__r?.Location__c || "TBD",
-        isPast: new Date(row.Training_Event__r?.Start_Date__c) < new Date()
-      }));
+      this.allRegistrations = result.data.map((row) => {
+        const startDate = row.Training_Event__r?.Start_Date__c;
+        const isPast = startDate ? new Date(startDate) < new Date() : false;
+        return {
+          ...row,
+          ProgramName:
+            row.Training_Event__r?.Training_Program__r?.Name || "Unknown",
+          StartDate: startDate,
+          Location: row.Training_Event__r?.Location__c || "TBD",
+          isPast: isPast
+        };
+      });
       this.applyFilters();
     } else if (result.error) {
       this.showToast(
@@ -192,6 +231,14 @@ export default class PwchronoTrainingRegistration extends LightningElement {
     const row = event.detail.row;
 
     if (actionName === "cancel") {
+      if (row.isPast) {
+        this.showToast(
+          "Cannot Cancel",
+          "Cannot cancel past training registrations.",
+          "warning"
+        );
+        return;
+      }
       LightningConfirm.open({
         message: "Are you sure you want to cancel this registration?",
         variant: "header",
