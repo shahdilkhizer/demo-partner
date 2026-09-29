@@ -248,7 +248,7 @@ public without sharing class PWChrono_EmployeeDirectoryController {
       sessionToken
     );
     List<Portal_Users__c> callers = [
-      SELECT Id, Contact__c, Portal_User_Profile__c
+      SELECT Id, Contact__c, Portal_User_Profile__c, Portal_User_Profile__r.Name
       FROM Portal_Users__c
       WHERE Id = :verifiedPortalUserId
       LIMIT 1
@@ -256,6 +256,10 @@ public without sharing class PWChrono_EmployeeDirectoryController {
     if (callers.isEmpty() || callers[0].Portal_User_Profile__c == null) {
       throw new AuraHandledException('Unauthorized.');
     }
+
+    Boolean isProfileAdmin =
+      callers[0].Portal_User_Profile__r != null &&
+      callers[0].Portal_User_Profile__r.Name == 'PUP-0000';
 
     List<Portal_Object_Permission__c> permissions = [
       SELECT
@@ -271,16 +275,26 @@ public without sharing class PWChrono_EmployeeDirectoryController {
         AND Portal_Object__r.Object_API_Name__c = 'Contact'
       LIMIT 1
     ];
-    if (permissions.isEmpty()) {
+    if (permissions.isEmpty() && !isProfileAdmin) {
       throw new AuraHandledException('Unauthorized.');
     }
 
-    Portal_Object_Permission__c permission = permissions[0];
+    Portal_Object_Permission__c permission = permissions.isEmpty()
+      ? new Portal_Object_Permission__c(
+          Can_View__c = true,
+          Can_View_All__c = true,
+          Can_Create__c = true,
+          Can_Edit__c = true,
+          Can_Delete__c = true,
+          Can_Modify_All__c = true
+        )
+      : permissions[0];
+
     Boolean isOwnContact =
       targetContactId != null &&
       callers[0].Contact__c == targetContactId;
-    Boolean allowed = operation == 'create'
-      ? permission.Can_Create__c
+    Boolean allowed = isProfileAdmin || (operation == 'create'
+      ? (permission.Can_Create__c || permission.Can_Modify_All__c)
       : operation == 'edit'
           ? (permission.Can_Modify_All__c ||
             (permission.Can_Edit__c && isOwnContact))
@@ -289,18 +303,16 @@ public without sharing class PWChrono_EmployeeDirectoryController {
                 (permission.Can_Delete__c && isOwnContact))
               : (permission.Can_View__c ||
                 permission.Can_View_All__c ||
-                permission.Can_Modify_All__c);
+                permission.Can_Modify_All__c));
     if (!allowed) {
       throw new AuraHandledException('Unauthorized.');
     }
 
     context.canViewSensitive =
-      targetContactId != null &&
-      (isOwnContact ||
-      permission.Can_View__c ||
+      isProfileAdmin ||
+      permission.Can_Modify_All__c ||
       permission.Can_View_All__c ||
-      permission.Can_Edit__c ||
-      permission.Can_Modify_All__c);
+      (targetContactId != null && isOwnContact);
     return context;
   }
 
@@ -666,6 +678,10 @@ public without sharing class PWChrono_EmployeeDirectoryController {
         update safeContact;
       }
       return safeContact;
+    } catch (EmployeeDirectoryException ede) {
+      throw ede;
+    } catch (AuraHandledException ahe) {
+      throw ahe;
     } catch (Exception e) {
       PWChrono_Logger.error('Error saving employee', e);
       throw new EmployeeDirectoryException(

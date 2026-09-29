@@ -712,6 +712,7 @@ select {
 }
 
 .slips-view {
+  position: relative;
   border: 1px solid var(--payroll-border);
   border-radius: 12px;
   background: #fff;
@@ -719,6 +720,8 @@ select {
 }
 
 .filter-card {
+  position: relative;
+  z-index: 20;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
@@ -727,6 +730,14 @@ select {
   border-radius: 10px;
   padding: 14px;
   background: #f9fafb;
+}
+
+.filter-card lightning-combobox {
+  position: relative;
+}
+
+.filter-card lightning-combobox:focus-within {
+  z-index: 25;
 }
 
 .slips-view > .notice,
@@ -738,10 +749,21 @@ select {
 }
 
 .salary-records {
+  position: relative;
+  z-index: 5;
+  overflow: visible;
   box-shadow: none;
 }
 
+.salary-records lightning-datatable {
+  border-top-left-radius: 11px;
+  border-top-right-radius: 11px;
+  overflow: hidden;
+}
+
 .pagination-bar {
+  position: relative;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -749,10 +771,14 @@ select {
   border-top: 1px solid var(--payroll-border);
   padding: 11px 14px;
   background: #fafbfc;
+  border-bottom-left-radius: 11px;
+  border-bottom-right-radius: 11px;
 }
 
 .pagination-bar lightning-combobox {
-  width: 145px;
+  width: 155px;
+  position: relative;
+  z-index: 15;
 }
 
 .pagination-bar > div {

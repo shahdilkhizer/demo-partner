@@ -103,8 +103,8 @@ export default class PwchronoSalarySlipViewer extends LightningElement {
 
   @track hasAccess = false;
   @track accessLoaded = false;
-  @track selectedYear;
-  @track selectedMonth;
+  @track selectedYear = "";
+  @track selectedMonth = "";
   @track salarySlips = [];
   @track error;
   @track isLoading = true;
@@ -130,7 +130,7 @@ export default class PwchronoSalarySlipViewer extends LightningElement {
 
   @track allSlips = [];
   @track currentPage = 1;
-  @track pageSize = 10;
+  @track pageSize = "10";
   wiredSlipsResult;
 
   @track payrollWorkspace;
@@ -433,8 +433,12 @@ export default class PwchronoSalarySlipViewer extends LightningElement {
     return this.allSlips.length;
   }
 
+  get pageSizeNumber() {
+    return Number.parseInt(this.pageSize, 10) || 10;
+  }
+
   get totalPages() {
-    return Math.ceil(this.allSlips.length / this.pageSize) || 1;
+    return Math.ceil(this.allSlips.length / this.pageSizeNumber) || 1;
   }
 
   get isPrevDisabled() {
@@ -447,9 +451,9 @@ export default class PwchronoSalarySlipViewer extends LightningElement {
 
   get pageInfo() {
     if (!this.allSlips.length) return "0 records";
-    const start = (this.currentPage - 1) * this.pageSize + 1;
+    const start = (this.currentPage - 1) * this.pageSizeNumber + 1;
     const end = Math.min(
-      this.currentPage * this.pageSize,
+      this.currentPage * this.pageSizeNumber,
       this.allSlips.length
     );
     return `${start}–${end} of ${this.allSlips.length}`;
@@ -733,12 +737,12 @@ export default class PwchronoSalarySlipViewer extends LightningElement {
   }
 
   applyPagination() {
-    const start = (this.currentPage - 1) * this.pageSize;
-    this.salarySlips = this.allSlips.slice(start, start + this.pageSize);
+    const start = (this.currentPage - 1) * this.pageSizeNumber;
+    this.salarySlips = this.allSlips.slice(start, start + this.pageSizeNumber);
   }
 
   handlePageSizeChange(event) {
-    this.pageSize = Number.parseInt(event.detail.value, 10);
+    this.pageSize = String(event.detail.value);
     this.currentPage = 1;
     this.applyPagination();
   }
@@ -760,14 +764,17 @@ export default class PwchronoSalarySlipViewer extends LightningElement {
   handleEmployeeChange(event) {
     this.selectedContactId = event.detail.value;
     this.contactId = event.detail.value;
+    this.isLoading = true;
   }
 
   handleYearChange(event) {
     this.selectedYear = event.detail.value;
+    this.isLoading = true;
   }
 
   handleMonthChange(event) {
     this.selectedMonth = event.detail.value;
+    this.isLoading = true;
   }
 
   handleRowAction(event) {
