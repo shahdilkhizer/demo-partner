@@ -259,11 +259,22 @@
           </template>
 
           <template if:false={profile}>
-            <div class="d-flex justify-content-center p-5">
-              <output class="spinner-border text-primary">
-                <span class="visually-hidden">Loading...</span>
-              </output>
-            </div>
+            <template if:true={error}>
+              <div class="alert alert-danger d-flex align-items-center justify-content-between p-3" role="alert">
+                <div>
+                  <i class="fa-solid fa-circle-exclamation me-2"></i>
+                  Unable to load profile data. Please refresh or try logging in again.
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick={handleRefreshProfile}>Retry</button>
+              </div>
+            </template>
+            <template if:false={error}>
+              <div class="d-flex justify-content-center p-5">
+                <output class="spinner-border text-primary">
+                  <span class="visually-hidden">Loading...</span>
+                </output>
+              </div>
+            </template>
           </template>
         </div>
       </div>

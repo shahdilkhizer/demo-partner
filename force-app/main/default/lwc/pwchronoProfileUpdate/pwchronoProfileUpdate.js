@@ -38,7 +38,7 @@ export default class PwchronoProfileUpdate extends LightningElement {
 
   wiredProfileResult;
 
-  sessionToken;
+  sessionToken = getSessionToken();
 
   updatedFields = {};
 
@@ -136,6 +136,12 @@ export default class PwchronoProfileUpdate extends LightningElement {
     this.handleCancelUpload();
     if (this.profile) {
       this.resetFormState();
+    }
+  }
+
+  handleRefreshProfile() {
+    if (this.wiredProfileResult) {
+      refreshApex(this.wiredProfileResult);
     }
   }
 
