@@ -90,11 +90,55 @@ export default class PwchronoLogin extends NavigationMixin(LightningElement) {
   ];
 
   connectedCallback() {
+    this.injectThemeLayoutOverrides();
     // Render only after shared CSS is loaded to avoid a flash of unstyled content.
     this.isUiReady = Boolean(globalThis[this.uiAssetsLoadedKey]);
   }
 
+  injectThemeLayoutOverrides() {
+    try {
+      const styleId = "pwchrono-lwr-layout-override";
+      let styleEl = document.getElementById(styleId);
+      if (!styleEl) {
+        styleEl = document.createElement("style");
+        styleEl.id = styleId;
+        document.head.appendChild(styleEl);
+      }
+      styleEl.textContent = `
+        community_layout-simple-theme-layout > header,
+        community_layout-simple-theme-layout > footer,
+        header[data-f6-region],
+        footer[data-f6-region] {
+          display: none !important;
+          height: 0 !important;
+          min-height: 0 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          visibility: hidden !important;
+        }
+        community_layout-simple-theme-layout,
+        community_layout-simple-theme-layout > main {
+          padding: 0 !important;
+          margin: 0 !important;
+          height: 100vh !important;
+          max-height: 100vh !important;
+          overflow: hidden !important;
+        }
+        body, html {
+          margin: 0 !important;
+          padding: 0 !important;
+          height: 100vh !important;
+          max-height: 100vh !important;
+          overflow: hidden !important;
+        }
+      `;
+    } catch {
+      // no-op if DOM manipulation is restricted
+    }
+  }
+
   handleAssetsReady() {
+    this.injectThemeLayoutOverrides();
     this.isUiReady = true;
   }
 

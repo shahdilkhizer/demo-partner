@@ -405,31 +405,15 @@ public without sharing class PWChrono_LeaveSelector {
     Id employeeDepartmentId
   ) {
     Set<Date> blockedDates = new Set<Date>();
-    List<PWChrono_Leave_Block_Date__c> blockedDateRecords;
-    if (employeeDepartmentId == null) {
-      blockedDateRecords = [
-        SELECT Block_Date__c
-        FROM PWChrono_Leave_Block_Date__c
-        WHERE
-          Is_Active__c = TRUE
-          AND Allow_Exceptions__c = FALSE
-          AND Block_Date__c >= :startDate
-          AND Block_Date__c <= :endDate
-          AND Department__c = NULL
-      ];
-    } else {
-      blockedDateRecords = [
-        SELECT Block_Date__c
-        FROM PWChrono_Leave_Block_Date__c
-        WHERE
-          Is_Active__c = TRUE
-          AND Allow_Exceptions__c = FALSE
-          AND Block_Date__c >= :startDate
-          AND Block_Date__c <= :endDate
-          AND (Department__c = NULL
-          OR Department__c = :employeeDepartmentId)
-      ];
-    }
+    List<PWChrono_Leave_Block_Date__c> blockedDateRecords = [
+      SELECT Block_Date__c
+      FROM PWChrono_Leave_Block_Date__c
+      WHERE
+        Is_Active__c = TRUE
+        AND Allow_Exceptions__c = FALSE
+        AND Block_Date__c >= :startDate
+        AND Block_Date__c <= :endDate
+    ];
 
     for (PWChrono_Leave_Block_Date__c blockDate : blockedDateRecords) {
       blockedDates.add(blockDate.Block_Date__c);
@@ -527,13 +511,28 @@ public without sharing class PWChrono_LeaveSelector {
     }
 
     List<Portal_Users__c> employees = [
-      SELECT Departments__c
+      SELECT Department__c, Departments__c
       FROM Portal_Users__c
       WHERE Id = :employeeId
       LIMIT 1
     ];
 
-    return employees.isEmpty() ? null : employees[0].Departments__c;
+    if (employees.isEmpty()) {
+      return null;
+    }
+
+    String dept = String.isNotBlank(employees[0].Department__c)
+      ? employees[0].Department__c
+      : employees[0].Departments__c;
+
+    if (dept != null && (dept.length() == 15 || dept.length() == 18)) {
+      try {
+        return (Id) dept;
+      } catch (Exception e) {
+        return null;
+      }
+    }
+    return null;
   }
 
   /**

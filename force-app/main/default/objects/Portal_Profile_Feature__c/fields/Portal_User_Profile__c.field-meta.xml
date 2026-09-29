@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Portal_User_Profile__c</fullName>
+    <label>Portal User Profile</label>
+    <referenceTo>Portal_User_Profile__c</referenceTo>
+    <relationshipLabel>Profile Features</relationshipLabel>
+    <relationshipName>Profile_Features</relationshipName>
+    <relationshipOrder>0</relationshipOrder>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <trackTrending>false</trackTrending>
+    <type>MasterDetail</type>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

@@ -88,7 +88,8 @@ export default class PwchronoLeaveEmployee extends LightningElement {
     fromDate: "",
     toDate: "",
     reason: "",
-    halfDay: false
+    halfDay: false,
+    halfDaySession: "Session 1"
   };
   hasRendered = false;
   _boundCloseDropdowns;
@@ -178,12 +179,13 @@ export default class PwchronoLeaveEmployee extends LightningElement {
         let totalRemaining = 0;
         balances.forEach((b) => {
           const type = (b.leaveType || "").toLowerCase();
+          const allocated = b.totalAllocated ?? b.allocated ?? 0;
           if (type.includes("annual")) {
-            this.annualLeaveCount = b.allocated || 0;
+            this.annualLeaveCount += allocated;
           } else if (type.includes("medical") || type.includes("sick")) {
-            this.medicalLeaveCount = b.allocated || 0;
+            this.medicalLeaveCount += allocated;
           } else {
-            this.otherLeaveCount += b.allocated || 0;
+            this.otherLeaveCount += allocated;
           }
           totalRemaining += b.remaining || 0;
         });
@@ -291,7 +293,8 @@ export default class PwchronoLeaveEmployee extends LightningElement {
       fromDate: "",
       toDate: "",
       reason: "",
-      halfDay: false
+      halfDay: false,
+      halfDaySession: "Session 1"
     };
     this.isNewLeaveModalOpen = true;
   }
@@ -325,6 +328,13 @@ export default class PwchronoLeaveEmployee extends LightningElement {
     }
   }
 
+  get isHalfDayDisabled() {
+    if (!this.newLeaveForm.fromDate || !this.newLeaveForm.toDate) {
+      return false;
+    }
+    return this.newLeaveForm.fromDate !== this.newLeaveForm.toDate;
+  }
+
   handleNewLeaveFormChange(event) {
     this.modalError = "";
     const field = event.target.name;
@@ -332,7 +342,15 @@ export default class PwchronoLeaveEmployee extends LightningElement {
       event.target.type === "checkbox"
         ? event.target.checked
         : event.target.value;
-    this.newLeaveForm = { ...this.newLeaveForm, [field]: value };
+    const updatedForm = { ...this.newLeaveForm, [field]: value };
+    if (
+      updatedForm.fromDate &&
+      updatedForm.toDate &&
+      updatedForm.fromDate !== updatedForm.toDate
+    ) {
+      updatedForm.halfDay = false;
+    }
+    this.newLeaveForm = updatedForm;
   }
 
   async handleSubmitLeave(event) {
@@ -361,6 +379,9 @@ export default class PwchronoLeaveEmployee extends LightningElement {
         To_Date__c: this.newLeaveForm.toDate,
         Reason__c: this.newLeaveForm.reason,
         Half_Day__c: this.newLeaveForm.halfDay,
+        Half_Day_Session__c: this.newLeaveForm.halfDay
+          ? this.newLeaveForm.halfDaySession || "Session 1"
+          : null,
         Status__c: "Submitted"
       };
       await saveLeaveApplication({

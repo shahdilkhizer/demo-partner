@@ -27,7 +27,7 @@ public without sharing class PWChrono_LeaveService {
     // Validate
     List<String> errors = PWChrono_LeaveValidator.validate(dto, employeeId);
     if (!errors.isEmpty()) {
-      throw new AuraHandledException(String.join(errors, '\n'));
+      throw createAuraException(String.join(errors, '\n'));
     }
 
     // Build the SObject
@@ -503,5 +503,11 @@ public without sharing class PWChrono_LeaveService {
     }
 
     return action;
+  }
+
+  private static AuraHandledException createAuraException(String message) {
+    AuraHandledException ahe = new AuraHandledException(message);
+    ahe.setMessage(message);
+    return ahe;
   }
 }

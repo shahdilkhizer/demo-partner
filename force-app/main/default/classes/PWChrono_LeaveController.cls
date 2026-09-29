@@ -555,6 +555,7 @@ public without sharing class PWChrono_LeaveController {
       dto.fromDate = leaveRecord.From_Date__c;
       dto.toDate = leaveRecord.To_Date__c;
       dto.halfDay = leaveRecord.Half_Day__c;
+      dto.halfDaySession = leaveRecord.Half_Day_Session__c;
       dto.reason = leaveRecord.Reason__c;
       dto.status = leaveRecord.Status__c;
 
@@ -563,7 +564,9 @@ public without sharing class PWChrono_LeaveController {
       throw ahe;
     } catch (Exception e) {
       PWChrono_Logger.error('Error saving leave application', e);
-      throw new AuraHandledException('Error saving leave application.');
+      AuraHandledException ahe = new AuraHandledException(e.getMessage());
+      ahe.setMessage(e.getMessage());
+      throw ahe;
     }
   }
 

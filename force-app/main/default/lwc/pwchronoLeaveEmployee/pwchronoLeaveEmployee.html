@@ -210,7 +210,12 @@
                       <td class="fw-medium text-dark">{leave.leaveTypeName}</td>
                       <td>{leave.formattedStartDate}</td>
                       <td>{leave.formattedEndDate}</td>
-                      <td>{leave.totalDays}</td>
+                      <td>
+                        {leave.totalDays}
+                        <template if:true={leave.Half_Day__c}>
+                          <span class="badge bg-info-light ms-1">Half Day</span>
+                        </template>
+                      </td>
                       <td class="leave-reason">{leave.Reason__c}</td>
                       <td>
                         <span class={leave.statusClass}>{leave.Status__c}</span>
@@ -332,12 +337,29 @@
                     type="checkbox"
                     name="halfDay"
                     checked={newLeaveForm.halfDay}
+                    disabled={isHalfDayDisabled}
                     onchange={handleNewLeaveFormChange}
                   /><label class="form-check-label" for="new-leave-half"
                     >Half Day</label
                   >
                 </div>
               </div>
+              <template if:true={newLeaveForm.halfDay}>
+                <div class="col-12">
+                  <label for="new-leave-session" class="form-label"
+                    >Half Day Session</label
+                  ><select
+                    id="new-leave-session"
+                    class="form-select"
+                    name="halfDaySession"
+                    value={newLeaveForm.halfDaySession}
+                    onchange={handleNewLeaveFormChange}
+                  >
+                    <option value="Session 1">First Half (Session 1)</option>
+                    <option value="Session 2">Second Half (Session 2)</option>
+                  </select>
+                </div>
+              </template>
             </div>
           </div>
           <div class="modal-footer">
