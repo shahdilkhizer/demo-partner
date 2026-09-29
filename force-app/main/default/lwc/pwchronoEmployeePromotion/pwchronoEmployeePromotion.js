@@ -423,6 +423,10 @@ export default class PwchronoEmployeePromotion extends NavigationMixin(
     }));
   }
 
+  get employees() {
+    return this._employees || [];
+  }
+
   /** Employees who can be promoted: everyone except the current user. */
   get employeeOptions() {
     return this._employees
@@ -508,7 +512,7 @@ export default class PwchronoEmployeePromotion extends NavigationMixin(
     const id = evt.currentTarget.dataset.id;
     const rec = this.records.find((r) => r.Id === id);
     if (!rec) return;
-    const emp = this.employees.find((e) => e.Id === rec.Employee__c);
+    const emp = this._employees?.find((e) => e.Id === rec.Employee__c);
     const perms = this._permissionsFor(rec);
     const record = {
       Id: rec.Id,
