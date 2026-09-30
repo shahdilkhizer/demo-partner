@@ -77,15 +77,15 @@
 
       </template>
 
-      <!-- ── CLAIM FORM MODAL ────────────────────────────────────────────── -->
-      <template if:true={showClaimForm}>
-        <c-pwchrono-expense-claim-form
-          claim-id={editClaimId}
-          onclaimsubmitted={handleClaimSubmitted}
-          oncancel={handleFormCancel}
-        ></c-pwchrono-expense-claim-form>
-      </template>
-
     </div>
   </div>
+
+  <!-- ── CLAIM FORM MODAL (Outside page-wrapper) ────────────────────────── -->
+  <template if:true={showClaimForm}>
+    <c-pwchrono-expense-claim-form
+      claim-id={editClaimId}
+      onclaimsubmitted={handleClaimSubmitted}
+      oncancel={handleFormCancel}
+    ></c-pwchrono-expense-claim-form>
+  </template>
 </template>
