@@ -113,6 +113,14 @@ public without sharing class PWChrono_LeaveService {
       ) {
         continue;
       }
+      if (
+        leaveRecord.Status__c == PWChrono_Constants.STATUS_APPROVED ||
+        leaveRecord.Status__c == PWChrono_Constants.STATUS_REJECTED ||
+        leaveRecord.Status__c == PWChrono_Constants.STATUS_CANCELLED ||
+        leaveRecord.Status__c == PWChrono_Constants.STATUS_DRAFT
+      ) {
+        continue;
+      }
 
       String balanceError = PWChrono_LeaveBalanceService.checkSufficientBalance(
         leaveRecord.Employees__c,
@@ -143,7 +151,7 @@ public without sharing class PWChrono_LeaveService {
   ) {
     Leave__c leave = PWChrono_LeaveSelector.getLeaveById(leaveId);
     if (leave == null) {
-      throw new AuraHandledException('Leave record not found.');
+      throw createAuraException('Leave record not found.');
     }
 
     // Security: must be the assigned approver or an admin
@@ -151,14 +159,14 @@ public without sharing class PWChrono_LeaveService {
       leave.Approvers__c != approverId &&
       !PWChrono_RequestValidator.isCurrentUserAdmin(approverId)
     ) {
-      throw new AuraHandledException(
+      throw createAuraException(
         'Access denied: Not authorized to process this request.'
       );
     }
 
     // Validate status transition
     if (leave.Status__c != PWChrono_Constants.STATUS_SUBMITTED) {
-      throw new AuraHandledException(
+      throw createAuraException(
         'Only submitted requests can be approved/rejected. Current status: ' +
         leave.Status__c
       );
@@ -169,7 +177,7 @@ public without sharing class PWChrono_LeaveService {
     String normalizedAction = normalizeAction(action);
 
     if (leave.Employees__c == approverId) {
-      throw new AuraHandledException('Self-approval is not allowed.');
+      throw createAuraException('Self-approval is not allowed.');
     }
 
     if (normalizedAction == 'Approve') {
@@ -217,7 +225,7 @@ public without sharing class PWChrono_LeaveService {
       );
     } else if (normalizedAction == 'Reject') {
       if (String.isBlank(comments)) {
-        throw new AuraHandledException('Rejection reason is required.');
+        throw createAuraException('Rejection reason is required.');
       }
 
       leave.Status__c = PWChrono_Constants.STATUS_REJECTED;
@@ -244,7 +252,7 @@ public without sharing class PWChrono_LeaveService {
         approverId
       );
     } else {
-      throw new AuraHandledException(
+      throw createAuraException(
         'Invalid action. Must be Approve or Reject.'
       );
     }

@@ -12,7 +12,34 @@ public inherited sharing class PWChrono_LeaveTriggerHandler {
     List<Leave__c> leaves,
     Map<Id, Leave__c> oldMap
   ) {
-    PWChrono_LeaveService.validateLeaveBalance(leaves);
+    if (leaves == null || leaves.isEmpty()) {
+      return;
+    }
+    List<Leave__c> toValidate = new List<Leave__c>();
+    for (Leave__c l : leaves) {
+      if (l.Status__c == PWChrono_Constants.STATUS_APPROVED ||
+          l.Status__c == PWChrono_Constants.STATUS_REJECTED ||
+          l.Status__c == PWChrono_Constants.STATUS_CANCELLED ||
+          l.Status__c == PWChrono_Constants.STATUS_DRAFT) {
+        continue;
+      }
+      if (l.Status__c == PWChrono_Constants.STATUS_SUBMITTED) {
+        if (oldMap != null && oldMap.containsKey(l.Id)) {
+          Leave__c oldLeave = oldMap.get(l.Id);
+          if (oldLeave.Status__c == PWChrono_Constants.STATUS_SUBMITTED &&
+              oldLeave.From_Date__c == l.From_Date__c &&
+              oldLeave.To_Date__c == l.To_Date__c &&
+              oldLeave.Total_Days__c == l.Total_Days__c &&
+              oldLeave.Leave_Type__c == l.Leave_Type__c) {
+            continue;
+          }
+        }
+        toValidate.add(l);
+      }
+    }
+    if (!toValidate.isEmpty()) {
+      PWChrono_LeaveService.validateLeaveBalance(toValidate);
+    }
   }
 
   /**

@@ -442,10 +442,13 @@ public without sharing class PWChrono_LeaveController {
         empId
       );
     } catch (AuraHandledException ahe) {
+      ahe.setMessage(ahe.getMessage());
       throw ahe;
     } catch (Exception e) {
       PWChrono_Logger.error('Error processing leave approval', e);
-      throw new AuraHandledException('Error processing leave approval.');
+      AuraHandledException ahe = new AuraHandledException(e.getMessage());
+      ahe.setMessage(e.getMessage());
+      throw ahe;
     }
   }
 

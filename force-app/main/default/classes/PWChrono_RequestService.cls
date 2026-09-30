@@ -107,7 +107,7 @@ public without sharing class PWChrono_RequestService {
     notif.TLG_Notification_Title__c = title;
     notif.TLG_Task_Detail__c = message;
     notif.TLG_Notified__c = false;
-    if (relatedRecordId != null) {
+    if (relatedRecordId != null && relatedRecordId.getSObjectType() == Task.SObjectType) {
       notif.TLG_Tasks__c = relatedRecordId;
     }
     return notif;

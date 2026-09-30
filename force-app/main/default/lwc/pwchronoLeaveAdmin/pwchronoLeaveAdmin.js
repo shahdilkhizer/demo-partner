@@ -4,7 +4,11 @@ import getTeamLeavesForApproval from "@salesforce/apex/PWChrono_PortalApi.getTea
 import processLeaveApproval from "@salesforce/apex/PWChrono_PortalApi.processLeaveApproval";
 import getActiveLeaveTypes from "@salesforce/apex/PWChrono_LeaveController.getActiveLeaveTypes";
 import saveLeaveApplication from "@salesforce/apex/PWChrono_LeaveController.saveLeaveApplication";
-import { getEmployeeId, getSessionToken } from "c/pwchronoSession";
+import {
+  getEmployeeId,
+  getSessionToken,
+  SESSION_CHANGED_EVENT
+} from "c/pwchronoSession";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { LightningElement, track, wire } from "lwc";
 
@@ -27,7 +31,9 @@ export default class PwchronoLeaveAdmin extends NavigationMixin(
   @track showApprovalModal = false;
   @track modalAction = "";
   @track rejectionReason = "";
+  @track approvalModalError = "";
   selectedLeaveId = null;
+  boundHandleSessionChange = null;
 
   // Filters
   @track selectedStatus = "All";
@@ -55,9 +61,30 @@ export default class PwchronoLeaveAdmin extends NavigationMixin(
   }
 
   connectedCallback() {
+    this.syncSession();
+    this.loadTeamLeaves();
+    this.boundHandleSessionChange = () => {
+      this.syncSession();
+      this.loadTeamLeaves();
+    };
+    window.addEventListener(
+      SESSION_CHANGED_EVENT,
+      this.boundHandleSessionChange
+    );
+  }
+
+  disconnectedCallback() {
+    if (this.boundHandleSessionChange) {
+      window.removeEventListener(
+        SESSION_CHANGED_EVENT,
+        this.boundHandleSessionChange
+      );
+    }
+  }
+
+  syncSession() {
     this.employeeId = getEmployeeId();
     this.sessionToken = getSessionToken();
-    this.loadTeamLeaves();
   }
 
   @track modalError = "";
@@ -207,26 +234,31 @@ export default class PwchronoLeaveAdmin extends NavigationMixin(
         sessionToken: this.sessionToken
       });
       if (result) {
-        this.allTeamLeaves = result.map((record) => ({
-          ...record,
-          employeeName: record.Employees__r
-            ? record.Employees__r.Name
-            : "Unknown",
-          leaveTypeName: record.Leave_Type__r
-            ? record.Leave_Type__r.Name
-            : "Other",
-          statusClass: this.getStatusClass(record.Status__c),
-          isPending:
-            record.Status__c === "Pending" || record.Status__c === "Submitted"
-        }));
+        this.allTeamLeaves = result.map((record) => {
+          const isSelf = record.Employees__c === this.employeeId;
+          return {
+            ...record,
+            employeeName: record.Employees__r
+              ? record.Employees__r.Name
+              : "Unknown",
+            leaveTypeName: record.Leave_Type__r
+              ? record.Leave_Type__r.Name
+              : "Other",
+            statusClass: this.getStatusClass(record.Status__c),
+            isPending:
+              record.Status__c === "Pending" || record.Status__c === "Submitted",
+            isSelf,
+            approveTooltip: isSelf ? "Self-approval is not allowed" : "Approve",
+            rejectTooltip: isSelf ? "Self-approval is not allowed" : "Reject"
+          };
+        });
         this.teamLeaves = [...this.allTeamLeaves];
         this.calculateMetrics();
       }
     } catch (error) {
       this.showToast(
         "Error",
-        "Failed to load leave requests: " +
-          (error.body ? error.body.message : error.message),
+        "Failed to load leave requests: " + this.extractErrorMessage(error),
         "error"
       );
     } finally {
@@ -340,41 +372,124 @@ export default class PwchronoLeaveAdmin extends NavigationMixin(
     this.teamLeaves = filtered;
   }
 
+  get modalTitle() {
+    return this.modalAction === "Approve"
+      ? "Approve Leave Request"
+      : "Reject Leave Request";
+  }
+
+  get modalPromptMessage() {
+    return this.modalAction === "Approve"
+      ? "Are you sure you want to approve this leave request?"
+      : "Please provide a reason for rejecting this leave request.";
+  }
+
+  get isRejectionAction() {
+    return this.modalAction === "Reject";
+  }
+
+  get modalCommentLabel() {
+    return this.modalAction === "Reject" ? "Rejection Reason" : "Comments";
+  }
+
+  get modalCommentPlaceholder() {
+    return this.modalAction === "Reject"
+      ? "Enter reason for rejection..."
+      : "Add optional comments...";
+  }
+
+  get modalSubmitButtonClass() {
+    return this.modalAction === "Reject" ? "btn btn-danger" : "btn btn-success";
+  }
+
+  get modalActionLabel() {
+    return this.modalAction === "Reject" ? "Reject Request" : "Approve Request";
+  }
+
   handleApprove(event) {
     event.preventDefault();
     this.selectedLeaveId = event.currentTarget.dataset.id;
     this.modalAction = "Approve";
-    this.processApproval();
+    this.rejectionReason = "";
+    this.approvalModalError = "";
+    this.showApprovalModal = true;
   }
 
   handleReject(event) {
     event.preventDefault();
     this.selectedLeaveId = event.currentTarget.dataset.id;
     this.modalAction = "Reject";
+    this.rejectionReason = "";
+    this.approvalModalError = "";
+    this.showApprovalModal = true;
+  }
+
+  handleCloseApprovalModal() {
+    this.showApprovalModal = false;
+    this.selectedLeaveId = null;
+    this.modalAction = "";
+    this.rejectionReason = "";
+    this.approvalModalError = "";
+  }
+
+  handleRejectionReasonChange(event) {
+    this.rejectionReason = event.target.value;
+    if (this.approvalModalError) {
+      this.approvalModalError = "";
+    }
+  }
+
+  handleConfirmApproval() {
+    if (this.modalAction === "Reject" && !this.rejectionReason?.trim()) {
+      this.approvalModalError = "Rejection reason is required.";
+      return;
+    }
     this.processApproval();
   }
 
   processApproval() {
     this.isLoading = true;
+    this.approvalModalError = "";
     processLeaveApproval({
       leaveId: this.selectedLeaveId,
       action: this.modalAction,
-      comments: this.rejectionReason || "Processed via Admin Console",
+      comments:
+        this.rejectionReason?.trim() ||
+        (this.modalAction === "Approve" ? "Approved via Admin Console" : ""),
       employeeId: this.employeeId,
       sessionToken: this.sessionToken
     })
       .then(() => {
         this.showToast(
           "Success",
-          `Leave request ${this.modalAction}ed successfully`,
+          `Leave request ${this.modalAction.toLowerCase() === "approve" ? "approved" : "rejected"} successfully`,
           "success"
         );
+        this.handleCloseApprovalModal();
         return this.loadTeamLeaves();
       })
       .catch((error) => {
-        this.showToast("Error", error.body.message, "error");
+        const errorMsg = this.extractErrorMessage(error);
+        this.approvalModalError = errorMsg;
+        this.showToast("Error", errorMsg, "error");
+      })
+      .finally(() => {
         this.isLoading = false;
       });
+  }
+
+  handleRowClick(event) {
+    event.preventDefault();
+    const leaveId = event.currentTarget.dataset.id;
+    if (leaveId) {
+      this.dispatchEvent(
+        new CustomEvent("viewdetail", {
+          detail: { leaveId },
+          bubbles: true,
+          composed: true
+        })
+      );
+    }
   }
 
   showToast(title, message, variant) {
