@@ -116,9 +116,15 @@
   </c-pwchrono-main-layout>
 
   <template if:true={isModalOpen}>
-    <div class="modal fade show d-block" role="dialog" tabindex="-1">
-      <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content">
+    <div
+      class="modal fade show d-block"
+      role="dialog"
+      aria-modal="true"
+      tabindex="-1"
+      style="background: rgba(0, 0, 0, 0.5); z-index: 1060; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; overflow-y: auto;"
+    >
+      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content shadow-lg">
           <div class="modal-header">
             <h5 class="modal-title">{modalTitle}</h5>
             <button type="button" class="btn-close" onclick={closeModal}></button>
@@ -267,6 +273,5 @@
         </div>
       </div>
     </div>
-    <div class="modal-backdrop fade show"></div>
   </template>
 </template>

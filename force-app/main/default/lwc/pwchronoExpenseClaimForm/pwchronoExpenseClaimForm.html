@@ -1,12 +1,19 @@
 <template lwc:render-mode="light">
   <!-- Modal overlay -->
-  <div class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-      <div class="modal-content">
+  <div
+    class="modal fade show d-block"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="expense-claim-title"
+    style="background: rgba(0, 0, 0, 0.5); z-index: 1060; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; overflow-y: auto;"
+  >
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content shadow-lg">
 
         <!-- Header -->
         <div class="modal-header">
-          <h5 class="modal-title fw-semibold">{modalTitle}</h5>
+          <h5 class="modal-title fw-semibold" id="expense-claim-title">{modalTitle}</h5>
           <button type="button" class="btn-close" onclick={handleCancel} aria-label="Close"></button>
         </div>
 
